@@ -23,6 +23,6 @@ class Report extends Model implements HasMedia
 
     public function tasks()
     {
-        return $this->belongsToMany(DailyWork::class, 'task_has_report', 'report_id', 'task_id');
+        return $this->belongsToMany(DailyWork::class, 'daily_work_has_report', 'report_id', 'daily_work_id');
     }
 }
