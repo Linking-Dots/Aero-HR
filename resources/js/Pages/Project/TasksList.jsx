@@ -23,9 +23,7 @@ import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
 import axios from 'axios';
 import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
-import {Toast} from "primereact/toast";
 import Grow from "@mui/material/Grow";
-import {mode} from "@chakra-ui/theme-tools";
 import TaskTable from '@/Components/TaskTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 

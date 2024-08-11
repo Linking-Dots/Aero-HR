@@ -6,7 +6,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TimerIcon from '@mui/icons-material/Timer';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import {usePage} from "@inertiajs/react";
-import { mode } from '@chakra-ui/theme-tools';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 

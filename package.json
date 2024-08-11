@@ -17,19 +17,12 @@
         "vite": "^5.0"
     },
     "dependencies": {
-        "@chakra-ui/theme-tools": "^2.1.2",
-        "@coreui/coreui": "^5.1.0",
-        "@coreui/icons": "^3.0.1",
-        "@coreui/icons-react": "^2.3.0",
-        "@coreui/react": "^5.2.0",
-        "@heroicons/react": "^2.1.5",
         "@inertiajs/inertia": "^0.11.1",
         "@material-tailwind/react": "^2.1.9",
-        "@mui/icons-material": "^5.16.6",
+        "@mui/icons-material": "^5.16.7",
         "@mui/lab": "^5.0.0-alpha.173",
         "@mui/material": "^5.16.7",
         "@mui/x-date-pickers": "^7.12.1",
-        "flowbite-react": "^0.10.1",
         "jszip": "^3.10.1",
         "leaflet": "^1.9.4",
         "leaflet-routing-machine": "^3.2.12",
@@ -42,7 +35,6 @@
         "react-pro-sidebar": "^1.1.0",
         "react-router-dom": "^6.25.1",
         "react-timer-hook": "^3.0.7",
-        "react-toastify": "^10.0.5",
-        "remixicon": "^4.3.0"
+        "react-toastify": "^10.0.5"
     }
 }

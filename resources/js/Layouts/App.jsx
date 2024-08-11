@@ -3,22 +3,26 @@ import {ThemeProvider, createTheme, CssBaseline, Select, MenuItem, Avatar, TextF
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
 import BottomNavigation from "@/Layouts/BottomNav.jsx";
-import 'normalize.css';
 import {usePage} from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 function App({ children }) {
-    const [darkMode, setDarkMode] = useState(false);
     const { auth } = usePage().props;
 
-    useEffect(() => {
-        // Save darkMode state to localStorage whenever it changes
-        localStorage.setItem('darkMode', darkMode);
+    const [darkMode, setDarkMode] = useState(() => {
+        const savedDarkMode = localStorage.getItem('darkMode');
+        return savedDarkMode === 'true';
+    });
 
+    // Update local storage whenever darkMode changes
+    useEffect(() => {
+        localStorage.setItem('darkMode', darkMode);
     }, [darkMode]);
+
     const toggleDarkMode = () => {
         setDarkMode(!darkMode);
+        console.log(darkMode)
     };
 
     const theme = useTheme(darkMode);

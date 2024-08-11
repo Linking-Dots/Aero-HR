@@ -3,7 +3,6 @@ import {Box, Card, CardContent, Typography, Avatar, Button, CircularProgress, Co
 import {usePage} from "@inertiajs/react";
 import { useTimer } from 'react-timer-hook';
 import {toast} from "react-toastify";
-import { mode } from '@chakra-ui/theme-tools';
 import Grow from '@mui/material/Grow';
 import Fade from '@mui/material/Fade';
 import GlassCard from "@/Components/GlassCard.jsx";
@@ -215,11 +214,7 @@ const PunchStatusCard = () => {
                             borderRadius: '20px',
                             minWidth: '0px',
                             wordWrap: 'break-word',
-                            bg: mode('#ffffff', 'navy.800'),
-                            boxShadow: mode(
-                                '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
-                                'unset',
-                            ),
+                            boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
                             backgroundClip: 'border-box',
                         }}>
                             <Typography variant="body2" id="punch-in">
@@ -288,11 +283,7 @@ const PunchStatusCard = () => {
                             borderRadius: '20px',
                             minWidth: '0px',
                             wordWrap: 'break-word',
-                            bg: mode('#ffffff', 'navy.800'),
-                            boxShadow: mode(
-                                '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
-                                'unset',
-                            ),
+                            boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
                             backgroundClip: 'border-box',
                         }}>
                             <Typography variant="body2" id="punch-out">

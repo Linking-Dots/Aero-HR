@@ -8,7 +8,7 @@ import {
     TableCell, TableContainer,
     TableHead,
     TableRow,
-    Typography
+    Typography,
 } from "@mui/material";
 import { usePage, Link } from '@inertiajs/react';
 import {AccountCircle, Delete, Edit} from '@mui/icons-material';
@@ -23,6 +23,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
     const theme = useTheme();
+    console.log(theme);
     const [anchorEls, setAnchorEls] = useState({});
 
     async function handleChange(key, id, event) {
@@ -259,7 +260,11 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                                 />
                                 <Typography sx={{ marginLeft: '10px' }}>
                                     <Link
-                                        sx={{ textDecoration: 'none' }}
+                                        style={{
+                                            textDecoration: 'none',
+                                            color: theme.palette.text.primary,
+                                            fontWeight: 'bold' // Make text bold
+                                        }}
                                         href={route('profile', { user: user.id })}
                                     >
                                         {user.name || 'N/A'}

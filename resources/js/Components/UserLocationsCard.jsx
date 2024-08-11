@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import {usePage} from "@inertiajs/react";
-import { mode } from '@chakra-ui/theme-tools';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 

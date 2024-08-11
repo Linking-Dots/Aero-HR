@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import {
     Container,

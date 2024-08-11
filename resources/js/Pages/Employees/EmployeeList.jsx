@@ -5,7 +5,6 @@ import {
 } from '@mui/material';
 
 import App from "@/Layouts/App.jsx";
-import {Toast} from "primereact/toast";
 import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import {Add} from "@mui/icons-material";
@@ -17,7 +16,6 @@ const EmployeesList = ({title, allUsers, departments, designations}) => {
         <App>
             <Head title={title}/>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <Toast ref={toast} />
                 <Grow in>
                     <GlassCard>
                         <CardHeader

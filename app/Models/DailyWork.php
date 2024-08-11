@@ -31,6 +31,6 @@ class DailyWork extends Model
 
     public function reports()
     {
-        return $this->belongsToMany(Report::class, 'task_has_report', 'task_id','report_id');
+        return $this->belongsToMany(Report::class, 'daily_work_has_report', 'daily_work_id','report_id');
     }
 }

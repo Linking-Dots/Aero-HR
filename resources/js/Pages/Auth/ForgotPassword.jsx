@@ -14,10 +14,7 @@ import {
     InputAdornment
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../../../../public/assets/images/logo.png';
-import { mode } from '@chakra-ui/theme-tools';
 import App from "@/Layouts/App.jsx";
 import Grow from '@mui/material/Grow';
 

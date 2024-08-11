@@ -14,9 +14,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import App from "@/Layouts/App.jsx";
 import logo from "../../../../public/assets/images/logo.png";
 import Grow from "@mui/material/Grow";
-import {mode} from "@chakra-ui/theme-tools";
-import VisibilityOff from "@mui/icons-material/VisibilityOff.js";
-import Visibility from "@mui/icons-material/Visibility.js";
 
 export default function ForgotPassword({ status }) {
     const [data, setData] = useState({

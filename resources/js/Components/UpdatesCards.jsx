@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Grid, Link, Avatar } from '@mui/material';
-import { mode } from '@chakra-ui/theme-tools';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 

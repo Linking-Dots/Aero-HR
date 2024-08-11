@@ -11,14 +11,28 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
+
 import { Settings, AccountCircle, ExitToApp } from '@mui/icons-material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import WorkIcon from '@mui/icons-material/Work';
+import BlogIcon from '@mui/icons-material/Article';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import LeaveIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+
 import { Switch } from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
 import { usePage, Link } from '@inertiajs/react';
-import {mode} from "@chakra-ui/theme-tools";
+import {useState} from "react";
 
 // Styled Menu component
 const StyledMenu = styled((props) => (
@@ -40,7 +54,6 @@ const StyledMenu = styled((props) => (
         backgroundColor: theme.glassCard.backgroundColor,
         border: theme.glassCard.border,
         borderRadius: 10,
-        bg: mode('#ffffff', 'navy.800'),
         backgroundClip: 'border-box',
         marginTop: theme.spacing(1),
         minWidth: 180,
@@ -66,31 +79,30 @@ function Header({ darkMode, toggleDarkMode }) {
     const [anchorElUser, setAnchorElUser] = React.useState(null);
     const [anchorElSubMenu, setAnchorElSubMenu] = React.useState(null);
     const [openSubMenu, setOpenSubMenu] = React.useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const pages = [
-        { name: 'Dashboard', icon: <Settings />, route: 'dashboard' },
-        { name: 'Leaves', route: 'leaves-employee', icon: <Settings /> },
-        { name: 'Attendance', route: 'attendance-employee', icon: <Settings /> },
-        { name: 'Employees', icon: <Settings />, subMenu: [
-                { name: 'All Employees', route: 'employees', icon: <Settings /> },
-                { name: 'Holidays', route: 'holidays', icon: <Settings /> },
-                {
-                    name: 'Leaves',
-                    route: 'leaves',
-                    icon: <Settings />,
-                    badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' }
-                },
-                { name: 'Leave Settings', route: 'leave-settings', icon: <Settings /> },
-                { name: 'Attendances', route: 'attendances', icon: <Settings /> },
-                { name: 'Departments', route: 'departments', icon: <Settings /> },
-                { name: 'Designations', route: 'designations', icon: <Settings /> },
-                { name: 'Timesheet', route: 'timesheet', icon: <Settings /> },
-
+        { name: 'Dashboard', icon: <DashboardIcon />, route: 'dashboard' },
+        { name: 'Leaves', icon: <LeaveIcon />, route: 'leaves-employee' },
+        { name: 'Attendance', icon: <CalendarTodayIcon />, route: 'attendance-employee' },
+        { name: 'Employees', icon: <PeopleIcon />, subMenu: [
+                { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
+                { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
+                { name: 'Leaves', icon: <LeaveIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
+                { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
+                { name: 'Attendances', icon: <CalendarTodayIcon />, route: 'attendances' },
+                { name: 'Departments', icon: <HomeIcon />, route: 'departments' },
+                { name: 'Designations', icon: <WorkIcon />, route: 'designations' },
+                { name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' },
             ]
         },
-        { name: 'Projects', icon: <Settings />, subMenu: [{ name: 'Projects', route: 'dashboard', icon: <Settings /> }, { name: 'Tasks', route: 'tasks', icon: <Settings /> }] },
-        { name: 'Blog', icon: <Settings />, route: 'dashboard' }
+        { name: 'Projects', icon: <WorkIcon />, subMenu: [
+                { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
+                { name: 'Tasks', icon: <ListAltIcon />, route: 'tasks' }
+            ] },
+        { name: 'Blog', icon: <BlogIcon />, route: 'dashboard' }
     ];
+
 
     const settings = [
         { name: 'Settings', route: 'dashboard', icon: <Settings /> },
@@ -101,6 +113,7 @@ function Header({ darkMode, toggleDarkMode }) {
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
+        setMenuOpen(true);
     };
 
     const handleOpenUserMenu = (event) => {
@@ -115,6 +128,7 @@ function Header({ darkMode, toggleDarkMode }) {
 
     const handleCloseNavMenu = () => {
         setAnchorElNav(null);
+        setMenuOpen(false);
     };
 
     const handleCloseUserMenu = () => {
@@ -165,6 +179,7 @@ function Header({ darkMode, toggleDarkMode }) {
 
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                                 <IconButton
+                                    sx={{ color: theme.palette.text.primary }}
                                     size="large"
                                     aria-label="account of current user"
                                     aria-controls="menu-appbar"
@@ -172,7 +187,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                     onClick={handleOpenNavMenu}
                                     color="inherit"
                                 >
-                                    <Settings />
+                                    {menuOpen ? <CloseIcon /> : <MenuIcon />}
                                 </IconButton>
                                 <StyledMenu
                                     id="menu-appbar"
@@ -218,7 +233,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                             onClick={handleCloseSubMenu}
                                                             sx={{ color: theme.palette.text.primary }}
                                                         >
-                                                            <Link as="button" href={route(subPage.route)}
+                                                            <Link as={'a'} href={route(subPage.route)}
                                                                   method={subPage.method || undefined} style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
@@ -234,7 +249,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                             </div>
                                         ) : (
                                             <MenuItem key={page.name} onClick={handleCloseNavMenu} sx={{ color: theme.palette.text.primary }}>
-                                                <Link as="button" href={route(page.route)} method={page.method || undefined} style={{
+                                                <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     color: 'inherit',
@@ -283,7 +298,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                         onClick={handleCloseSubMenu}
                                                         sx={{ color: theme.palette.text.primary }}
                                                     >
-                                                        <Link as="button" href={route(subPage.route)} method={subPage.method || undefined} style={{
+                                                        <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             color: 'inherit',
@@ -298,7 +313,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                         </div>
                                     ) : (
                                         <MenuItem key={page.name} onClick={handleCloseNavMenu} sx={{ color: theme.palette.text.primary }}>
-                                            <Link as="button" href={route(page.route)} method={page.method || undefined} style={{
+                                            <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 color: 'inherit',
@@ -332,7 +347,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                 >
                                     <MenuItem key={'Profile'} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
                                         <Link
-                                            as="button"
+                                            as={'a'}
                                             href={route('profile', { user: auth.user.id })}
                                             method="get"
                                             style={{
@@ -350,7 +365,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                     </MenuItem>
                                     {settings.map((setting) => (
                                         <MenuItem key={setting.name} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
-                                            <Link as="button" href={route(setting.route)} method={setting.method || undefined} style={{
+                                            <Link as={'a'} href={route(setting.route)} method={setting.method || undefined} style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 color: 'inherit',

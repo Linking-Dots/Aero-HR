@@ -18,7 +18,6 @@ import { Head } from '@inertiajs/react';
 import App from "@/Layouts/App.jsx";
 import logo from "../../../../public/assets/images/logo.png";
 import Grow from "@mui/material/Grow";
-import {mode} from "@chakra-ui/theme-tools";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 export default function Register(props) {

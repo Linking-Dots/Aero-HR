@@ -36,6 +36,7 @@ import ProfileDialog from '@/Modals/ProfileDialog.jsx';
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 import PersonalInformationDialog from "@/Modals/PersonalInformationDialog.jsx";
+import EmergencyContactDialog from "@/Modals/EmergencyContactDialog.jsx";
 
 
 
@@ -122,6 +123,16 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                     handleChange={handleChange}
                 />
             )}
+            {openModalType === 'emergency' && (
+                <EmergencyContactDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'emergency'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                />
+            )}
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
@@ -171,7 +182,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                 <Grid item xs={12} md={6}>
                                     <List>
                                         <ListItem>
-                                            <Grid container xs={12}>
+                                            <Grid container spacing={2}>
                                                 <Grid item xs={5}>
                                                     <ListItemText primary="Phone:" />
                                                 </Grid>
@@ -370,6 +381,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('emergency')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -381,31 +393,31 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         {/* Primary Section */}
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Name:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="John Doe" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_primary_name || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Relationship:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="Father" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_primary_relationship || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Phone:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="9876543210, 9876543210" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_primary_phone || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
@@ -416,31 +428,31 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         {/* Secondary Section */}
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Name:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="Karen Wills" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_secondary_name || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Relationship:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="Brother" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_secondary_relationship || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
                                         <ListItem>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={3}>
+                                                <Grid item xs={5}>
                                                     <ListItemText primary="Phone:" />
                                                 </Grid>
-                                                <Grid item xs={9}>
-                                                    <ListItemText primary="9876543210, 9876543210" />
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.emergency_contact_secondary_phone || "N/A"} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
