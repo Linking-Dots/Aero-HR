@@ -436,7 +436,7 @@
 
 import React from 'react';
 import DataTable, { createTheme } from 'react-data-table-component';
-import {Select, MenuItem, TextField, Button, InputLabel, FormControl, Avatar} from '@mui/material';
+import {Select, MenuItem, TextField, Button, InputLabel, FormControl, Avatar, Collapse} from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
@@ -767,15 +767,18 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
     };
 
     return (
-        <CustomDataTable
-            columns={columns}
-            data={tasks}
-            pagination
-            fixedHeader
-            fixedHeaderScrollHeight="500px"
-            highlightOnHover
-            pointerOnHover
-        />
+        <Collapse in timeout={3000}>
+            <CustomDataTable
+                columns={columns}
+                data={tasks}
+                pagination
+                fixedHeader
+                fixedHeaderScrollHeight="500px"
+                highlightOnHover
+                pointerOnHover
+            />
+        </Collapse>
+
     );
 };
 

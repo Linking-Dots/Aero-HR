@@ -60,7 +60,6 @@ const TasksList = () => {
         <App>
             <Head title={title}/>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <Toast ref={toast} />
                 <Grow in>
                     <GlassCard>
                         <CardHeader
