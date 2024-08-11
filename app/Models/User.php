@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+use NotificationChannels\WebPush\HasPushSubscriptions;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasPushSubscriptions;
+
+
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'employee_id', 'user_name', 'phone', 'email', 'dob', 'address', 'about',
+        'report_to', 'password', 'designation', 'nid', 'name', 'profile_image',
+        'department', 'date_of_joining', 'birthday', 'gender', 'passport_no',
+        'passport_exp_date', 'nationality', 'religion', 'marital_status',
+        'employment_of_spouse', 'number_of_children', 'emergency_contact_primary_name',
+        'emergency_contact_primary_relationship', 'emergency_contact_primary_phone',
+        'emergency_contact_secondary_name', 'emergency_contact_secondary_relationship',
+        'emergency_contact_secondary_phone', 'bank_name', 'bank_account_no', 'ifsc_code',
+        'pan_no', 'family_member_name', 'family_member_relationship', 'family_member_dob',
+        'family_member_phone', 'education_ug_institution', 'education_ug_degree',
+        'education_ug_start_year', 'education_ug_end_year', 'education_pg_institution',
+        'education_pg_degree', 'education_pg_start_year', 'education_pg_end_year',
+        'experience_1_company', 'experience_1_position', 'experience_1_start_date',
+        'experience_1_end_date', 'experience_2_company', 'experience_2_position',
+        'experience_2_start_date', 'experience_2_end_date', 'experience_3_company',
+        'experience_3_position', 'experience_3_start_date', 'experience_3_end_date',
+        'salary_basis', 'salary_amount', 'payment_type', 'pf_contribution', 'pf_no',
+        'employee_pf_rate', 'additional_pf_rate', 'total_pf_rate', 'esi_contribution',
+        'esi_no', 'employee_esi_rate', 'additional_esi_rate', 'total_esi_rate', 'email_verified_at',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    public function ledProjects()
+    {
+        return $this->hasMany(Project::class, 'project_leader_id');
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user');
+    }
+
+}

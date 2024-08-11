@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Designation extends Model
+{
+    use HasFactory;
+
+    // Specify the table name if it's different from the default
+    protected $table = 'designations';
+
+    // Define the fillable attributes
+    protected $fillable = [
+        'title',
+        'department_id',
+    ];
+
+    // Define the relationship with the Department model
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+}
