@@ -16,7 +16,7 @@ server: {
       hmr: {
         host: 'erp.dhakabypass.com',
         port: 3001,
-        protocol: 'wss'
+        protocol: 'ssl'
       }
     }
 });
