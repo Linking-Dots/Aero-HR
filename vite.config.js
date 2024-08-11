@@ -14,7 +14,7 @@ server: {
       port: 3000,
       https: true,
       hmr: {
-        host: 'yourhost.local',
+        host: 'erp.dhakabypass.com',
         port: 3001,
         protocol: 'wss'
       }
