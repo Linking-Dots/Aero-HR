@@ -25,14 +25,12 @@ import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import {Toast} from "primereact/toast";
 import Grow from "@mui/material/Grow";
-import { useToast } from "@/Contexts/ToastContext";
 import {mode} from "@chakra-ui/theme-tools";
 import TaskTable from '@/Components/TaskTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 
 const TasksList = () => {
     const { auth, title, allincharges, reports } = usePage().props;
-    const toast = useToast();
     const [dateRange, setDateRange] = useState('');
     const [status, setStatus] = useState('');
     const [report, setReport] = useState('');
