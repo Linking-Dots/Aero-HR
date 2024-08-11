@@ -35,6 +35,7 @@ import Menu from "@mui/material/Menu";
 import ProfileDialog from '@/Modals/ProfileDialog.jsx';
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
+import PersonalInformationDialog from "@/Modals/PersonalInformationDialog.jsx";
 
 
 
@@ -109,6 +110,16 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                     handleChange={handleChange}
                     handleImageChange={handleImageChange}
                     selectedImage={selectedImage}
+                />
+            )}
+            {openModalType === 'personal' && (
+                <PersonalInformationDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'personal'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
                 />
             )}
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -266,6 +277,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('personal')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -280,7 +292,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                     <ListItemText primary="Passport No.:" />
                                                 </Grid>
                                                 <Grid item xs={7}>
-                                                    <ListItemText primary={user.passportNo || 'N/A'} />
+                                                    <ListItemText primary={user.passport_no || 'N/A'} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
@@ -290,17 +302,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                     <ListItemText primary="Passport Exp Date.:" />
                                                 </Grid>
                                                 <Grid item xs={7}>
-                                                    <ListItemText primary={user.passportExpDate || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Phone:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.phone || 'N/A'} />
+                                                    <ListItemText primary={user.passport_exp_date || 'N/A'} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
@@ -330,7 +332,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                     <ListItemText primary="Marital Status:" />
                                                 </Grid>
                                                 <Grid item xs={7}>
-                                                    <ListItemText primary={user.maritalStatus || 'N/A'} />
+                                                    <ListItemText primary={user.marital_status || 'N/A'} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
@@ -340,7 +342,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                     <ListItemText primary="Employment of Spouse:" />
                                                 </Grid>
                                                 <Grid item xs={7}>
-                                                    <ListItemText primary={user.employmentOfSpouse || 'N/A'} />
+                                                    <ListItemText primary={user.employment_of_spouse || 'N/A'} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>
@@ -350,7 +352,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                     <ListItemText primary="No. of Children:" />
                                                 </Grid>
                                                 <Grid item xs={7}>
-                                                    <ListItemText primary={user.noOfChildren || 'N/A'} />
+                                                    <ListItemText primary={user.number_of_children || 'N/A'} />
                                                 </Grid>
                                             </Grid>
                                         </ListItem>

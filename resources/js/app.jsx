@@ -3,7 +3,6 @@ import '../css/app.css';
 // import "bootstrap/dist/css/bootstrap.css";
 // import 'bootstrap/dist/js/bootstrap.bundle.js';
 import React from 'react';
-import "primereact/resources/themes/lara-dark-cyan/theme.css";
 import 'remixicon/fonts/remixicon.css';
 
 import { createRoot } from 'react-dom/client';
