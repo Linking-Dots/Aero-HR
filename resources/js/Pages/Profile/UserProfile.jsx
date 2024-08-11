@@ -25,24 +25,31 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { blue } from '@mui/material/colors';
-import {Head, usePage} from "@inertiajs/react";
+import {Head, useForm, usePage} from "@inertiajs/react";
 import {Add, Delete, Edit} from "@mui/icons-material";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
-import ProfileModal from '@/Modals/ProfileModal.jsx';
+import ProfileDialog from '@/Modals/ProfileDialog.jsx';
+import {toast} from "react-toastify";
+import {useTheme} from "@mui/material/styles";
 
 
 
 
-const UserProfile = ({ title, user, report_to }) => {
-    console.log(user,report_to)
+const UserProfile = ({ title, allUsers, report_to, departments, designations }) => {
+    const [user, setUser] = useState(usePage().props.user);
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [tabIndex, setTabIndex] = React.useState(0);
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const [openModalType, setOpenModalType] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const theme = useTheme();
 
     const openModal = (modalType) => {
         setOpenModalType(modalType);
@@ -50,6 +57,9 @@ const UserProfile = ({ title, user, report_to }) => {
 
     const closeModal = () => {
         setOpenModalType(null);
+        setUpdatedUser({
+            id: user.id
+        });
     };
 
     const handleTabChange = (event, newIndex) => {
@@ -66,12 +76,40 @@ const UserProfile = ({ title, user, report_to }) => {
 
     const open = Boolean(anchorEl);
 
+    const handleChange = (key, value) => {
+        if (key === 'department' && user.department !== value) {
+            user.designation = null;
+            user.report_to = null;
+        }
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setSelectedImage(URL.createObjectURL(file));
+        }
+    };
+
+
+
     return (
         <App>
             <Head title={user.name}/>
             {/* Profile Modal */}
             {openModalType === 'profile' && (
-                <ProfileModal user={user} open={openModalType === 'profile'} closeModal={closeModal} />
+                <ProfileDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    allUsers={allUsers}
+                    departments={departments}
+                    designations={designations}
+                    open={openModalType === 'profile'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                    handleImageChange={handleImageChange}
+                    selectedImage={selectedImage}
+                />
             )}
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
@@ -108,8 +146,8 @@ const UserProfile = ({ title, user, report_to }) => {
                                         <Grid item xs={12} md>
                                             <Box direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'center', md: 'flex-start' }} sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
                                                 <Typography variant="h5">{user.name}</Typography>
-                                                <Typography variant="subtitle1" color="textSecondary">{user.department || 'N/A'}</Typography>
-                                                <Typography variant="body2" color="textSecondary">{user.position  || 'N/A'}</Typography>
+                                                <Typography variant="subtitle1" color="textSecondary">{departments.find((department) => department.id === user.department)?.name || 'N/A'}</Typography>
+                                                <Typography variant="body2" color="textSecondary">{designations.find((designation) => designation.id === user.designation)?.title || 'N/A'}</Typography>
                                                 <Typography variant="body2" color="textSecondary">Employee ID : {user.employee_id  || 'N/A'}</Typography>
                                                 <Typography variant="body2" color="textSecondary">Date of Join : {user.date_of_joining  || 'N/A'}</Typography>
                                                 <Button variant="outlined" color="primary" sx={{ mt: 1 }}>Send Message</Button>
@@ -179,16 +217,17 @@ const UserProfile = ({ title, user, report_to }) => {
                                                 <Grid item xs={7}>
                                                     <ListItemText
                                                         primary={
+                                                            allUsers.find((found) => found.id === user.report_to)?
                                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Avatar
-                                                                    src={`/assets/images/users/${report_to.user_name}.jpg`}
+                                                                    src={`/assets/images/users/${allUsers.find((found) => found.id === user.report_to)?.user_name}.jpg`}
                                                                     alt={report_to.name}
                                                                     sx={{ width: 24, height: 24, mr: 1 }}
                                                                 />
                                                                 <Typography color="primary">
-                                                                    {report_to.name}
+                                                                    {allUsers.find((found) => found.id === user.report_to)?.name}
                                                                 </Typography>
-                                                            </Box>
+                                                            </Box> : 'N/A'
                                                         }
                                                     />
                                                 </Grid>

@@ -11,7 +11,7 @@ import {
     Typography
 } from "@mui/material";
 import { usePage, Link } from '@inertiajs/react';
-import { Delete, Edit } from '@mui/icons-material';
+import {AccountCircle, Delete, Edit} from '@mui/icons-material';
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
@@ -243,7 +243,6 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Join Date</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Department</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Reports To</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
                             Action
                         </TableCell>
@@ -346,103 +345,34 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                                 </FormControl>
                             </TableCell>
 
-                            {/*<TableCell sx={{ whiteSpace: 'nowrap' }}>*/}
-                            {/*    <FormControl size="small" fullWidth>*/}
-                            {/*        <InputLabel id="report_to">Reports To</InputLabel>*/}
-                            {/*        <Select*/}
-                            {/*            labelId="report_to"*/}
-                            {/*            id={`report_to-select-${user.id}`}*/}
-                            {/*            value={user.report_to || 'na'}*/}
-                            {/*            onChange={(event) => handleChange('designation', user.id, event)}*/}
-                            {/*            disabled={!user.department}*/}
-                            {/*            label="Reports To"*/}
-                            {/*            MenuProps={{*/}
-                            {/*                PaperProps: {*/}
-                            {/*                    sx: {*/}
-                            {/*                        backdropFilter: 'blur(16px) saturate(200%)',*/}
-                            {/*                        backgroundColor: theme.glassCard.backgroundColor,*/}
-                            {/*                        border: theme.glassCard.border,*/}
-                            {/*                        borderRadius: 2,*/}
-                            {/*                        boxShadow:*/}
-                            {/*                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',*/}
-                            {/*                    },*/}
-                            {/*                },*/}
-                            {/*            }}*/}
-                            {/*        >*/}
-                            {/*            <MenuItem value="na" disabled>*/}
-                            {/*                --*/}
-                            {/*            </MenuItem>*/}
-                            {/*            {allUsers*/}
-                            {/*                .filter((person) => person.department === user.department)*/}
-                            {/*                .map((pers) => (*/}
-                            {/*                    <MenuItem key={pers.id} value={pers.id}>*/}
-                            {/*                        {pers.name}*/}
-                            {/*                    </MenuItem>*/}
-                            {/*                ))}*/}
-                            {/*        </Select>*/}
-                            {/*    </FormControl>*/}
-                            {/*</TableCell>*/}
-
                             <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
                                 <IconButton
-                                    aria-controls={`simple-menu-${user.id}`}
-                                    aria-haspopup="true"
-                                    onClick={(event) => handleClick(event, user.id)}
+                                    component={Link}
+                                    href={route('profile', { user: user.id })} // Assuming this is the intended route
+                                    onClick={() => {
+                                        handleClose(user.id);
+                                    }}
                                 >
-                                    <MoreVertIcon />
+                                    <AccountCircle />
                                 </IconButton>
-                                <Menu
-                                    id={`simple-menu-${user.id}`}
-                                    anchorEl={anchorEls[user.id]}
-                                    keepMounted
-                                    open={Boolean(anchorEls[user.id])}
-                                    onClose={() => handleClose(user.id)}
-                                    anchorOrigin={{
-                                        vertical: 'bottom',
-                                        horizontal: 'right',
-                                    }}
-                                    transformOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right',
-                                    }}
-                                    sx={{
-                                        '& .MuiMenu-paper': {
-                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                            backgroundColor: theme.glassCard.backgroundColor,
-                                            border: theme.glassCard.border,
-                                            borderRadius: 2,
-                                            boxShadow:
-                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                        },
+                                <IconButton
+                                    component={Link}
+                                    href={route('profile', { user: user.id })} // Assuming this is the intended route
+                                    onClick={() => {
+                                        handleClose(user.id);
                                     }}
                                 >
-                                    <MenuItem
-                                        key={'Edit'}
-                                        component={Link}
-                                        href={route('profile', { user: user.id })}
-                                        method="get"
-                                        onClick={() => handleClose(user.id)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            color: 'inherit',
-                                            textDecoration: 'none',
-                                        }}
-                                    >
-                                        <Edit />
-                                        <Typography sx={{ ml: 1 }} textAlign="center">
-                                            Edit
-                                        </Typography>
-                                    </MenuItem>
-
-
-                                    <MenuItem onClick={() => handleDelete(user.id)}>
-                                        <Delete />
-                                        <Typography sx={{ ml: 1 }} textAlign="center">
-                                            Delete
-                                        </Typography>
-                                    </MenuItem>
-                                </Menu>
+                                    <Edit />
+                                </IconButton>
+                                <IconButton
+                                    component={Link}
+                                    href={route('profile', { user: user.id })} // Or change the route if different action is required
+                                    onClick={() => {
+                                        handleDelete(user.id);
+                                    }}
+                                >
+                                    <Delete /> {/* Changed to a different icon for clarity */}
+                                </IconButton>
                             </TableCell>
                         </TableRow>
                     ))}
