@@ -24,11 +24,12 @@ class ProfileController extends Controller
     public function index(Request $request, User $user): Response
     {
         $reportTo = User::find($user->report_to);
-        $user = User::with(['educations', 'experiences'])->find($user->id);
+        $userDetails = User::with(['educations', 'experiences'])->where('id', $user->id)->first();
+
 
         return Inertia::render('Profile/UserProfile', [
             'title' => 'Profile',
-            'user' => $user,
+            'user' => $userDetails,
             'allUsers' => User::all(),
             'departments' => Department::all(),
             'designations' => Designation::all(),
@@ -87,14 +88,14 @@ class ProfileController extends Controller
                 'family_member_dob' => 'nullable|date',
                 'family_member_phone' => 'nullable|string',
 
-                'education' => 'nullable|array',
-                'education.*.id' => 'nullable|exists:educations,id',
-                'education.*.institution' => 'nullable|string',
-                'education.*.subject' => 'nullable|string',
-                'education.*.starting_date' => 'nullable|string',
-                'education.*.complete_date' => 'nullable|string',
-                'education.*.degree' => 'nullable|string',
-                'education.*.grade' => 'nullable|string',
+                'educations' => 'nullable|array',
+                'educations.*.id' => 'nullable|exists:educations,id',
+                'educations.*.institution' => 'nullable|string',
+                'educations.*.subject' => 'nullable|string',
+                'educations.*.starting_date' => 'nullable|date',
+                'educations.*.complete_date' => 'nullable|date',
+                'educations.*.degree' => 'nullable|string',
+                'educations.*.grade' => 'nullable|string',
 
                 'experience_1_company' => 'nullable|string',
                 'experience_1_position' => 'nullable|string',
@@ -132,16 +133,16 @@ class ProfileController extends Controller
             $messages = [];
 
             // Handle Education updates
-            if (isset($validated['education'])) {
+            if (isset($validated['educations'])) {
                 $existingEducationIds = $user->educations()->pluck('id')->toArray();
-                $requestEducationIds = array_filter(array_column($validated['education'], 'id'));
+                $requestEducationIds = array_filter(array_column($validated['educations'], 'id'));
 
                 // Delete educations that are not in the request
                 $educationsToDelete = array_diff($existingEducationIds, $requestEducationIds);
                 Education::destroy($educationsToDelete);
 
                 // Update or create educations
-                foreach ($validated['education'] as $educationData) {
+                foreach ($validated['educations'] as $educationData) {
                     if (isset($educationData['id'])) {
                         // Update existing education
                         $education = Education::find($educationData['id']);
@@ -247,9 +248,11 @@ class ProfileController extends Controller
                                 'total_esi_rate' => 'Total ESI Rate',
                             ];
 
-                            $humanReadableKey = $fieldNames[$key] ?? str_replace('_', ' ', ucfirst($key));
-                            $messages[] = $humanReadableKey . ' updated successfully to ' . $value;
-                            $user->{$key} = $value;
+                            if (array_key_exists($key, $fieldNames)) {
+                                $humanReadableKey = $fieldNames[$key];
+                                $messages[] = $humanReadableKey . ' updated successfully to ' . $value;
+                                $user->{$key} = $value;
+                            }
                             break;
                     }
                 }

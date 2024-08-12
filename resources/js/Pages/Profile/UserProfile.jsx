@@ -46,6 +46,7 @@ import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx"
 
 const UserProfile = ({ title, allUsers, report_to, departments, designations }) => {
     const [user, setUser] = useState(usePage().props.user);
+    console.log(user)
     const [updatedUser, setUpdatedUser] = useState({
         id: user.id
     });
@@ -711,36 +712,25 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    {user.education_ug_institution || user.education_pg_institution ? (
+                                    {user.educations && user.educations.length > 0 ? (
                                         <List>
-                                            {user.education_ug_institution && (
-                                                <>
+                                            {user.educations.map((education, index) => (
+                                                <React.Fragment key={education.id}>
                                                     <ListItem disableGutters>
-                                                        <Typography variant="h6">• {user.education_ug_institution}</Typography>
+                                                        <Typography variant="h6">• {education.institution}</Typography>
                                                     </ListItem>
                                                     <ListItem disableGutters>
-                                                        <Typography variant="body1">{user.education_ug_degree || 'N/A'}</Typography>
+                                                        <Typography variant="body1">{education.degree || 'N/A'}</Typography>
                                                     </ListItem>
                                                     <ListItem disableGutters>
-                                                        <Typography variant="body2">{user.education_ug_start_year || 'N/A'} - {user.education_ug_end_year || 'N/A'}</Typography>
+                                                        <Typography variant="body2">
+                                                            {education.starting_date ? new Date(education.starting_date).getFullYear() : 'N/A'} -
+                                                            {education.complete_date ? new Date(education.complete_date).getFullYear() : 'N/A'}
+                                                        </Typography>
                                                     </ListItem>
-                                                    <Divider sx={{ my: 1 }} />
-                                                </>
-                                            )}
-                                            {user.education_pg_institution && (
-                                                <>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="h6">• {user.education_pg_institution}</Typography>
-                                                    </ListItem>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="body1">{user.education_pg_degree || 'N/A'}</Typography>
-                                                    </ListItem>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="body2">{user.education_pg_start_year || 'N/A'} - {user.education_pg_end_year || 'N/A'}</Typography>
-                                                    </ListItem>
-                                                    <Divider sx={{ my: 1 }} />
-                                                </>
-                                            )}
+                                                    {index < user.educations.length - 1 && <Divider sx={{ my: 1 }} />}
+                                                </React.Fragment>
+                                            ))}
                                         </List>
                                     ) : (
                                         <Typography>No education information</Typography>

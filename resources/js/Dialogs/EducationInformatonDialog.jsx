@@ -24,13 +24,12 @@ import GlassCard from "@/Components/GlassCard.jsx";
 const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeModal, handleChange }) => {
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
-    const [educationList, setEducationList] = useState(user.education || [{ institution: "",subject: "", degree: "", starting_date: "", complete_date: "", grade: "" }]);
+    const [educationList, setEducationList] = useState(user.educations || [{ institution: "",subject: "", degree: "", starting_date: "", complete_date: "", grade: "" }]);
     const theme = useTheme();
 
     async function handleSubmit(event) {
         event.preventDefault();
         setProcessing(true);
-        console.log({ education: educationList });
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await fetch(route('profile.update'), {
@@ -39,7 +38,7 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify({ ...updatedUser, education: educationList }),
+                    body: JSON.stringify({ ...updatedUser, educations: educationList }),
                 });
                 console.log(response)
 
@@ -49,7 +48,7 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                     setUser(prevUser => ({
                         ...prevUser,
                         ...updatedUser,
-                        education: educationList
+                        educations: educationList
                     }));
                     console.log(user)
                     setProcessing(false);
@@ -183,7 +182,8 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                                                 <TextField
                                                     label="Institution"
                                                     fullWidth
-                                                    value={education.institution}
+                                                    required
+                                                    value={education.institution || ''}
                                                     onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
                                                 />
                                             </Grid>
@@ -191,7 +191,8 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                                                 <TextField
                                                     label="Degree"
                                                     fullWidth
-                                                    value={education.degree}
+                                                    required
+                                                    value={education.degree || ''}
                                                     onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
                                                 />
                                             </Grid>
@@ -199,25 +200,30 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                                                 <TextField
                                                     label="Subject"
                                                     fullWidth
-                                                    value={education.subject}
+                                                    required
+                                                    value={education.subject || ''}
                                                     onChange={(e) => handleEducationChange(index, 'subject', e.target.value)}
                                                 />
                                             </Grid>
                                             <Grid item xs={12} md={6}>
                                                 <TextField
                                                     label="Starting Year"
-                                                    type="number"
+                                                    type="date"
                                                     fullWidth
-                                                    value={education.starting_date}
+                                                    required
+                                                    InputLabelProps={{shrink: true}}
+                                                    value={education.starting_date || ''}
                                                     onChange={(e) => handleEducationChange(index, 'starting_date', e.target.value)}
                                                 />
                                             </Grid>
                                             <Grid item xs={12} md={6}>
                                                 <TextField
                                                     label="Complete Year"
-                                                    type="number"
+                                                    type="date"
                                                     fullWidth
-                                                    value={education.complete_date}
+                                                    required
+                                                    InputLabelProps={{shrink: true}}
+                                                    value={education.complete_date || ''}
                                                     onChange={(e) => handleEducationChange(index, 'complete_date', e.target.value)}
                                                 />
                                             </Grid>
@@ -225,7 +231,8 @@ const EducationInformationDialog = ({ user, updatedUser, setUser, open, closeMod
                                                 <TextField
                                                     label="Grade"
                                                     fullWidth
-                                                    value={education.grade}
+                                                    required
+                                                    value={education.grade || ''}
                                                     onChange={(e) => handleEducationChange(index, 'grade', e.target.value)}
                                                 />
                                             </Grid>
