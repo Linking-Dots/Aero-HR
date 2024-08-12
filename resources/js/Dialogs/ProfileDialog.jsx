@@ -24,13 +24,24 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
-const ProfileDialog = ({user, updatedUser, allUsers, departments, designations,setUpdatedUser,setUser, open, closeModal, handleChange, handleImageChange, selectedImage }) => {
+const ProfileDialog = ({user, allUsers, departments, designations,setUser, open, closeModal, handleImageChange, selectedImage }) => {
 
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
     const [hover, setHover] = useState(false);
 
     const theme = useTheme();
+
+    const handleChange = (key, value) => {
+        if (key === 'department' && user.department !== value) {
+            user.designation = null;
+            user.report_to = null;
+        }
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
 
     async function handleSubmit(event) {
         event.preventDefault();

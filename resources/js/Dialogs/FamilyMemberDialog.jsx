@@ -16,11 +16,18 @@ import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 
-const FamilyMemberDialog = ({ user, open, closeModal, handleChange, handleDelete, updatedUser, setUser }) => {
+const FamilyMemberDialog = ({ user, open, closeModal, handleDelete, setUser }) => {
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
 
     const theme = useTheme();
+
+    const handleChange = (key, value) => {
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
 
     async function handleSubmit(event) {
         event.preventDefault();

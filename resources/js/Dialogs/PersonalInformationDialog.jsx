@@ -24,12 +24,23 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
-const PersonalInformationDialog = ({user, updatedUser,setUser, open, closeModal, handleChange }) => {
+const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
 
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
 
     const theme = useTheme();
+
+    const handleChange = (key, value) => {
+        if (key === 'department' && user.department !== value) {
+            user.designation = null;
+            user.report_to = null;
+        }
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -202,6 +213,18 @@ const PersonalInformationDialog = ({user, updatedUser,setUser, open, closeModal,
                                     onChange={(e) => handleChange('marital_status', e.target.value)}
                                     label="Marital status"
                                     error={Boolean(errors.marital_status)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                backdropFilter: 'blur(16px) saturate(200%)',
+                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                border: theme.glassCard.border,
+                                                borderRadius: 2,
+                                                boxShadow:
+                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                            },
+                                        },
+                                    }}
                                 >
                                     <MenuItem value="na">-</MenuItem>
                                     <MenuItem value="Single">Single</MenuItem>
@@ -214,7 +237,7 @@ const PersonalInformationDialog = ({user, updatedUser,setUser, open, closeModal,
                             <TextField
                                 label="Employment of spouse"
                                 fullWidth
-                                value={updatedUser.employment_of_spouse || user.employment_of_spouse}
+                                value={updatedUser.employment_of_spouse || user.employment_of_spouse || ''}
                                 onChange={(e) => handleChange('employment_of_spouse', e.target.value)}
                                 error={Boolean(errors.employment_of_spouse)}
                                 helperText={errors.employment_of_spouse}
@@ -224,7 +247,8 @@ const PersonalInformationDialog = ({user, updatedUser,setUser, open, closeModal,
                             <TextField
                                 label="No. of children"
                                 fullWidth
-                                value={updatedUser.number_of_children || user.number_of_children}
+                                type="number"
+                                value={updatedUser.number_of_children || user.number_of_children || ''}
                                 onChange={(e) => handleChange('number_of_children', e.target.value)}
                                 error={Boolean(errors.number_of_children)}
                                 helperText={errors.number_of_children}

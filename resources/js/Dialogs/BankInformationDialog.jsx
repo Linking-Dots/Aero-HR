@@ -20,11 +20,18 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 
-const BankInformationDialog = ({ user, updatedUser, setUser, open, closeModal, handleChange }) => {
+const BankInformationDialog = ({ user, setUser, open, closeModal }) => {
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
 
     const theme = useTheme();
+
+    const handleChange = (key, value) => {
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
 
     async function handleSubmit(event) {
         event.preventDefault();

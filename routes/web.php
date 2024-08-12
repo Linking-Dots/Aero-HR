@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\EducationController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveSettingController;
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/{user}', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete');
+
+    //Education Routes:
+    Route::post('/education/update', [EducationController::class, 'update'])->name('education.update');
+    Route::delete('/education/delete', [EducationController::class, 'delete'])->name('education.delete');
 
 
 

@@ -46,10 +46,7 @@ import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx"
 
 const UserProfile = ({ title, allUsers, report_to, departments, designations }) => {
     const [user, setUser] = useState(usePage().props.user);
-    console.log(user)
-    const [updatedUser, setUpdatedUser] = useState({
-        id: user.id
-    });
+
     const [tabIndex, setTabIndex] = React.useState(0);
     const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -63,9 +60,6 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 
     const closeModal = () => {
         setOpenModalType(null);
-        setUpdatedUser({
-            id: user.id
-        });
     };
 
     const handleTabChange = (event, newIndex) => {
@@ -82,13 +76,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 
     const open = Boolean(anchorEl);
 
-    const handleChange = (key, value) => {
-        if (key === 'department' && user.department !== value) {
-            user.designation = null;
-            user.report_to = null;
-        }
-        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
-    };
+
     const handleImageChange = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -97,6 +85,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     };
 
 
+    console.log('reruned')
 
     return (
         <App>
@@ -105,14 +94,12 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
             {openModalType === 'profile' && (
                 <ProfileDialog
                     user={user}
-                    updatedUser={updatedUser}
                     allUsers={allUsers}
                     departments={departments}
                     designations={designations}
                     open={openModalType === 'profile'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                     handleImageChange={handleImageChange}
                     selectedImage={selectedImage}
                 />
@@ -120,61 +107,49 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
             {openModalType === 'personal' && (
                 <PersonalInformationDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'personal'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             {openModalType === 'emergency' && (
                 <EmergencyContactDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'emergency'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             {openModalType === 'bank' && (
                 <BankInformationDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'bank'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             {openModalType === 'family' && (
                 <FamilyMemberDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'family'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             {openModalType === 'education' && (
                 <EducationInformationDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'education'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             {openModalType === 'experience' && (
                 <FamilyMemberDialog
                     user={user}
-                    updatedUser={updatedUser}
                     open={openModalType === 'experience'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleChange={handleChange}
                 />
             )}
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>

@@ -24,12 +24,18 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
-const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, handleChange }) => {
+const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
 
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
 
     const theme = useTheme();
+    const handleChange = (key, value) => {
+        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+    };
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -61,7 +67,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                 } else {
                     setProcessing(false);
                     setErrors(data.errors);
-                    reject(data.errors);
+                    reject([...data.errors]);
                     console.error(data.errors);
                 }
             } catch (error) {
@@ -164,7 +170,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_primary_name || user.emergency_contact_primary_name || ""}
-                                                onChange={(e) => handleChange("primaryContact.name", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_primary_name", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
@@ -173,7 +179,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_primary_relationship || user.emergency_contact_primary_relationship || ""}
-                                                onChange={(e) => handleChange("primaryContact.relationship", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_primary_relationship", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
@@ -182,7 +188,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_primary_phone || user.emergency_contact_primary_phone || ""}
-                                                onChange={(e) => handleChange("primaryContact.phone", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_primary_phone", e.target.value)}
                                             />
                                         </Grid>
                                     </Grid>
@@ -204,7 +210,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_secondary_name || user.emergency_contact_secondary_name || ""}
-                                                onChange={(e) => handleChange("secondaryContact.name", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_secondary_name", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
@@ -213,7 +219,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_secondary_relationship || user.emergency_contact_secondary_relationship || ""}
-                                                onChange={(e) => handleChange("secondaryContact.relationship", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_secondary_relationship", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
@@ -222,7 +228,7 @@ const EmergencyContactDialog = ({user, updatedUser,setUser, open, closeModal, ha
                                                 required
                                                 fullWidth
                                                 value={updatedUser.emergency_contact_secondary_phone || user.emergency_contact_secondary_phone || ""}
-                                                onChange={(e) => handleChange("secondaryContact.phone", e.target.value)}
+                                                onChange={(e) => handleChange("emergency_contact_secondary_phone", e.target.value)}
                                             />
                                         </Grid>
                                     </Grid>

@@ -88,14 +88,14 @@ class ProfileController extends Controller
                 'family_member_dob' => 'nullable|date',
                 'family_member_phone' => 'nullable|string',
 
-                'educations' => 'nullable|array',
-                'educations.*.id' => 'nullable|exists:educations,id',
-                'educations.*.institution' => 'nullable|string',
-                'educations.*.subject' => 'nullable|string',
-                'educations.*.starting_date' => 'nullable|date',
-                'educations.*.complete_date' => 'nullable|date',
-                'educations.*.degree' => 'nullable|string',
-                'educations.*.grade' => 'nullable|string',
+                'education' => 'nullable|array',
+                'education.*.id' => 'nullable|exists:education,id',
+                'education.*.institution' => 'nullable|string',
+                'education.*.subject' => 'nullable|string',
+                'education.*.starting_date' => 'nullable|date',
+                'education.*.complete_date' => 'nullable|date',
+                'education.*.degree' => 'nullable|string',
+                'education.*.grade' => 'nullable|string',
 
                 'experience_1_company' => 'nullable|string',
                 'experience_1_position' => 'nullable|string',
@@ -133,29 +133,36 @@ class ProfileController extends Controller
             $messages = [];
 
             // Handle Education updates
-            if (isset($validated['educations'])) {
-                $existingEducationIds = $user->educations()->pluck('id')->toArray();
-                $requestEducationIds = array_filter(array_column($validated['educations'], 'id'));
-
-                // Delete educations that are not in the request
-                $educationsToDelete = array_diff($existingEducationIds, $requestEducationIds);
-                Education::destroy($educationsToDelete);
+            if (isset($validated['education'])) {
+                $educationIds = [];
 
                 // Update or create educations
-                foreach ($validated['educations'] as $educationData) {
+                foreach ($validated['education'] as $educationData) {
                     if (isset($educationData['id'])) {
                         // Update existing education
                         $education = Education::find($educationData['id']);
-                        $education->update($educationData);
-                        $messages[] = 'Education updated successfully: ' . $educationData['institution'];
+                        if ($education) {
+                            $education->update($educationData);
+                            $educationIds[] = $education->id; // Keep track of the updated education IDs
+                            $messages[] = 'Education updated successfully: ' . $educationData['institution'];
+                        }
                     } else {
                         // Create new education
                         $educationData['user_id'] = $user->id;
-                        Education::create($educationData);
+                        $newEducation = Education::create($educationData);
+                        $educationIds[] = $newEducation->id; // Keep track of the new education IDs
                         $messages[] = 'New education added: ' . $educationData['institution'];
                     }
                 }
+
+                // Delete any educations not present in the incoming request
+                Education::where('user_id', $user->id)
+                    ->whereNotIn('id', $educationIds)
+                    ->delete();
+
+                $messages[] = 'Removed outdated education records.';
             }
+
 
             // Check if department changed
             if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
