@@ -32,11 +32,14 @@ import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
-import ProfileDialog from '@/Modals/ProfileDialog.jsx';
+import ProfileDialog from '@/Dialogs/ProfileDialog.jsx';
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
-import PersonalInformationDialog from "@/Modals/PersonalInformationDialog.jsx";
-import EmergencyContactDialog from "@/Modals/EmergencyContactDialog.jsx";
+import PersonalInformationDialog from "@/Dialogs/PersonalInformationDialog.jsx";
+import EmergencyContactDialog from "@/Dialogs/EmergencyContactDialog.jsx";
+import BankInformationDialog from "@/Dialogs/BankInformationDialog.jsx";
+import FamilyMemberDialog from "@/Dialogs/FamilyMemberDialog.jsx";
+import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx";
 
 
 
@@ -128,6 +131,46 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                     user={user}
                     updatedUser={updatedUser}
                     open={openModalType === 'emergency'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                />
+            )}
+            {openModalType === 'bank' && (
+                <BankInformationDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'bank'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                />
+            )}
+            {openModalType === 'family' && (
+                <FamilyMemberDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'family'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                />
+            )}
+            {openModalType === 'education' && (
+                <EducationInformationDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'education'}
+                    setUser={setUser}
+                    closeModal={closeModal}
+                    handleChange={handleChange}
+                />
+            )}
+            {openModalType === 'experience' && (
+                <FamilyMemberDialog
+                    user={user}
+                    updatedUser={updatedUser}
+                    open={openModalType === 'experience'}
                     setUser={setUser}
                     closeModal={closeModal}
                     handleChange={handleChange}
@@ -296,78 +339,109 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <List>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Passport No.:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.passport_no || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Passport Exp Date.:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.passport_exp_date || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Nationality:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.nationality || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Religion:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.religion || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Marital Status:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.marital_status || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Employment of Spouse:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.employment_of_spouse || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="No. of Children:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.number_of_children || 'N/A'} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                    </List>
+                                    {user.passport_no || user.passport_exp_date || user.nationality || user.religion || user.marital_status || user.employment_of_spouse || user.number_of_children ? (
+                                        <List>
+                                            {/* Passport No */}
+                                            {user.passport_no && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Passport No.:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.passport_no || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* Passport Exp Date */}
+                                            {user.passport_exp_date && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Passport Exp Date.:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.passport_exp_date || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* Nationality */}
+                                            {user.nationality && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Nationality:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.nationality || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* Religion */}
+                                            {user.religion && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Religion:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.religion || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* Marital Status */}
+                                            {user.marital_status && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Marital Status:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.marital_status || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* Employment of Spouse */}
+                                            {user.employment_of_spouse && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Employment of Spouse:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.employment_of_spouse || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {/* No. of Children */}
+                                            {user.number_of_children && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• No. of Children:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.number_of_children || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No personal information available</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>
@@ -389,74 +463,83 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <List>
-                                        {/* Primary Section */}
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Name:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_primary_name || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Relationship:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_primary_relationship || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Phone:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_primary_phone || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-
-                                        {/* Divider */}
-                                        <Divider sx={{ my: 2 }} />
-
-                                        {/* Secondary Section */}
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Name:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_secondary_name || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Relationship:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_secondary_relationship || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                        <ListItem>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={5}>
-                                                    <ListItemText primary="Phone:" />
-                                                </Grid>
-                                                <Grid item xs={7}>
-                                                    <ListItemText primary={user.emergency_contact_secondary_phone || "N/A"} />
-                                                </Grid>
-                                            </Grid>
-                                        </ListItem>
-                                    </List>
+                                    {user.emergency_contact_primary_name || user.emergency_contact_secondary_name ? (
+                                        <List>
+                                            {/* Primary Section */}
+                                            {user.emergency_contact_primary_name && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Name:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_primary_name || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Relationship:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_primary_relationship || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Phone:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_primary_phone || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 2 }} />
+                                                </>
+                                            )}
+                                            {/* Secondary Section */}
+                                            {user.emergency_contact_secondary_name && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Name:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_secondary_name || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Relationship:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_secondary_relationship || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={5}>
+                                                                <ListItemText primary="• Phone:" />
+                                                            </Grid>
+                                                            <Grid item xs={7}>
+                                                                <ListItemText primary={user.emergency_contact_secondary_phone || "N/A"} />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </ListItem>
+                                                </>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No emergency contact information</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>
@@ -470,6 +553,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('bank')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -477,10 +561,60 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <Typography variant="body1">Bank Name: ICICI Bank</Typography>
-                                    <Typography variant="body1">Bank Account No.: 159843014641</Typography>
-                                    <Typography variant="body1">IFSC Code: ICI24504</Typography>
-                                    <Typography variant="body1">PAN No: TC000Y56</Typography>
+                                    {user.bank_name || user.bank_account_no || user.ifsc_code || user.pan_no ? (
+                                        <List>
+                                            {user.bank_name && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Bank Name:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.bank_name} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.bank_account_no && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Bank Account No.:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.bank_account_no} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.ifsc_code && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• IFSC Code:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.ifsc_code} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.pan_no && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• PAN No:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.pan_no} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No bank information</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>
@@ -494,6 +628,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('family')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -501,40 +636,60 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <TableContainer>
-                                        <Table>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell>Name</TableCell>
-                                                    <TableCell>Relationship</TableCell>
-                                                    <TableCell>Date of Birth</TableCell>
-                                                    <TableCell>Phone</TableCell>
-                                                    <TableCell />
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                <TableRow>
-                                                    <TableCell>Leo</TableCell>
-                                                    <TableCell>Brother</TableCell>
-                                                    <TableCell>Feb 16th, 2019</TableCell>
-                                                    <TableCell>9876543210</TableCell>
-                                                    <TableCell align="right">
-                                                        <IconButton onClick={handleMenuOpen}>
-                                                            <MoreVertIcon />
-                                                        </IconButton>
-                                                        <Menu
-                                                            anchorEl={anchorEl}
-                                                            open={open}
-                                                            onClose={handleMenuClose}
-                                                        >
-                                                            <MenuItem onClick={handleMenuClose}><Edit sx={{ mr: 1 }} /> Edit</MenuItem>
-                                                            <MenuItem onClick={handleMenuClose}><Delete sx={{ mr: 1 }} /> Delete</MenuItem>
-                                                        </Menu>
-                                                    </TableCell>
-                                                </TableRow>
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
+                                    {user.family_member_name || user.family_member_relationship || user.family_member_dob || user.family_member_phone ? (
+                                        <List>
+                                            {user.family_member_name && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Name:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.family_member_name} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.family_member_relationship && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Relationship:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.family_member_relationship} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.family_member_dob && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Date of Birth:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.family_member_dob} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                            {user.family_member_phone && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• Phone:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.family_member_phone} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No family member information</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>
@@ -548,6 +703,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('education')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -555,13 +711,40 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <Typography variant="h6">International College of Arts and Science (UG)</Typography>
-                                    <Typography variant="body1">BSc Computer Science</Typography>
-                                    <Typography variant="body2">2000 - 2003</Typography>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Typography variant="h6">International College of Arts and Science (PG)</Typography>
-                                    <Typography variant="body1">MSc Computer Science</Typography>
-                                    <Typography variant="body2">2000 - 2003</Typography>
+                                    {user.education_ug_institution || user.education_pg_institution ? (
+                                        <List>
+                                            {user.education_ug_institution && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="h6">• {user.education_ug_institution}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body1">{user.education_ug_degree || 'N/A'}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body2">{user.education_ug_start_year || 'N/A'} - {user.education_ug_end_year || 'N/A'}</Typography>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 1 }} />
+                                                </>
+                                            )}
+                                            {user.education_pg_institution && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="h6">• {user.education_pg_institution}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body1">{user.education_pg_degree || 'N/A'}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body2">{user.education_pg_start_year || 'N/A'} - {user.education_pg_end_year || 'N/A'}</Typography>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 1 }} />
+                                                </>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No education information</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>
@@ -575,6 +758,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <IconButton
                                             variant="outlined"
                                             color="primary"
+                                            onClick={() => openModal('experience')}
                                             sx={{ position: 'absolute', top: 16, right: 16 }}
                                         >
                                             <EditIcon />
@@ -582,14 +766,57 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    <Typography variant="h6">Web Designer at Zen Corporation</Typography>
-                                    <Typography variant="body1">Jan 2013 - Present (5 years 2 months)</Typography>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Typography variant="h6">Web Designer at Ron-tech</Typography>
-                                    <Typography variant="body1">Jan 2013 - Present (5 years 2 months)</Typography>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Typography variant="h6">Web Designer at Dalt Technology</Typography>
-                                    <Typography variant="body1">Jan 2013 - Present (5 years 2 months)</Typography>
+                                    {user.experience_1_company || user.experience_2_company || user.experience_3_company ? (
+                                        <List>
+                                            {user.experience_1_company && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="h6">• {user.experience_1_position} at {user.experience_1_company}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body1">
+                                                            {user.experience_1_start_date ? new Date(user.experience_1_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
+                                                            {' - '}
+                                                            {user.experience_1_end_date ? new Date(user.experience_1_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
+                                                        </Typography>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 1 }} />
+                                                </>
+                                            )}
+                                            {user.experience_2_company && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="h6">• {user.experience_2_position} at {user.experience_2_company}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body1">
+                                                            {user.experience_2_start_date ? new Date(user.experience_2_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
+                                                            {' - '}
+                                                            {user.experience_2_end_date ? new Date(user.experience_2_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
+                                                        </Typography>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 1 }} />
+                                                </>
+                                            )}
+                                            {user.experience_3_company && (
+                                                <>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="h6">• {user.experience_3_position} at {user.experience_3_company}</Typography>
+                                                    </ListItem>
+                                                    <ListItem disableGutters>
+                                                        <Typography variant="body1">
+                                                            {user.experience_3_start_date ? new Date(user.experience_3_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
+                                                            {' - '}
+                                                            {user.experience_3_end_date ? new Date(user.experience_3_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
+                                                        </Typography>
+                                                    </ListItem>
+                                                    <Divider sx={{ my: 1 }} />
+                                                </>
+                                            )}
+                                        </List>
+                                    ) : (
+                                        <Typography>No experience information</Typography>
+                                    )}
                                 </CardContent>
                             </GlassCard>
                         </Grid>

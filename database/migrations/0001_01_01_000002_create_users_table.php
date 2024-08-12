@@ -50,26 +50,7 @@ return new class extends Migration
             $table->string('family_member_relationship')->nullable();
             $table->date('family_member_dob')->nullable();
             $table->string('family_member_phone')->nullable();
-            $table->string('education_ug_institution')->nullable();
-            $table->string('education_ug_degree')->nullable();
-            $table->year('education_ug_start_year')->nullable();
-            $table->year('education_ug_end_year')->nullable();
-            $table->string('education_pg_institution')->nullable();
-            $table->string('education_pg_degree')->nullable();
-            $table->year('education_pg_start_year')->nullable();
-            $table->year('education_pg_end_year')->nullable();
-            $table->string('experience_1_company')->nullable();
-            $table->string('experience_1_position')->nullable();
-            $table->date('experience_1_start_date')->nullable();
-            $table->date('experience_1_end_date')->nullable();
-            $table->string('experience_2_company')->nullable();
-            $table->string('experience_2_position')->nullable();
-            $table->date('experience_2_start_date')->nullable();
-            $table->date('experience_2_end_date')->nullable();
-            $table->string('experience_3_company')->nullable();
-            $table->string('experience_3_position')->nullable();
-            $table->date('experience_3_start_date')->nullable();
-            $table->date('experience_3_end_date')->nullable();
+
             $table->string('salary_basis')->nullable();
             $table->decimal('salary_amount', 10, 2)->nullable();
             $table->string('payment_type')->nullable();

@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\Education;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +24,7 @@ class ProfileController extends Controller
     public function index(Request $request, User $user): Response
     {
         $reportTo = User::find($user->report_to);
+        $user = User::with(['educations', 'experiences'])->find($user->id);
 
         return Inertia::render('Profile/UserProfile', [
             'title' => 'Profile',
@@ -83,14 +86,16 @@ class ProfileController extends Controller
                 'family_member_relationship' => 'nullable|string',
                 'family_member_dob' => 'nullable|date',
                 'family_member_phone' => 'nullable|string',
-                'education_ug_institution' => 'nullable|string',
-                'education_ug_degree' => 'nullable|string',
-                'education_ug_start_year' => 'nullable|integer',
-                'education_ug_end_year' => 'nullable|integer',
-                'education_pg_institution' => 'nullable|string',
-                'education_pg_degree' => 'nullable|string',
-                'education_pg_start_year' => 'nullable|integer',
-                'education_pg_end_year' => 'nullable|integer',
+
+                'education' => 'nullable|array',
+                'education.*.id' => 'nullable|exists:educations,id',
+                'education.*.institution' => 'nullable|string',
+                'education.*.subject' => 'nullable|string',
+                'education.*.starting_date' => 'nullable|string',
+                'education.*.complete_date' => 'nullable|string',
+                'education.*.degree' => 'nullable|string',
+                'education.*.grade' => 'nullable|string',
+
                 'experience_1_company' => 'nullable|string',
                 'experience_1_position' => 'nullable|string',
                 'experience_1_start_date' => 'nullable|date',
@@ -118,10 +123,38 @@ class ProfileController extends Controller
                 'total_esi_rate' => 'nullable|string',
             ]);
 
+            Log::info('Received data:', $validated);
+
+
             // Find the user
             $user = User::findOrFail($validated['id']);
 
             $messages = [];
+
+            // Handle Education updates
+            if (isset($validated['education'])) {
+                $existingEducationIds = $user->educations()->pluck('id')->toArray();
+                $requestEducationIds = array_filter(array_column($validated['education'], 'id'));
+
+                // Delete educations that are not in the request
+                $educationsToDelete = array_diff($existingEducationIds, $requestEducationIds);
+                Education::destroy($educationsToDelete);
+
+                // Update or create educations
+                foreach ($validated['education'] as $educationData) {
+                    if (isset($educationData['id'])) {
+                        // Update existing education
+                        $education = Education::find($educationData['id']);
+                        $education->update($educationData);
+                        $messages[] = 'Education updated successfully: ' . $educationData['institution'];
+                    } else {
+                        // Create new education
+                        $educationData['user_id'] = $user->id;
+                        Education::create($educationData);
+                        $messages[] = 'New education added: ' . $educationData['institution'];
+                    }
+                }
+            }
 
             // Check if department changed
             if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
@@ -186,14 +219,7 @@ class ProfileController extends Controller
                                 'family_member_relationship' => 'Family Member Relationship',
                                 'family_member_dob' => 'Family Member Date of Birth',
                                 'family_member_phone' => 'Family Member Phone Number',
-                                'education_ug_institution' => 'Undergraduate Institution',
-                                'education_ug_degree' => 'Undergraduate Degree',
-                                'education_ug_start_year' => 'Undergraduate Start Year',
-                                'education_ug_end_year' => 'Undergraduate End Year',
-                                'education_pg_institution' => 'Postgraduate Institution',
-                                'education_pg_degree' => 'Postgraduate Degree',
-                                'education_pg_start_year' => 'Postgraduate Start Year',
-                                'education_pg_end_year' => 'Postgraduate End Year',
+
                                 'experience_1_company' => 'Experience 1 Company',
                                 'experience_1_position' => 'Experience 1 Position',
                                 'experience_1_start_date' => 'Experience 1 Start Date',

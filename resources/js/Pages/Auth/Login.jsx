@@ -17,7 +17,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../../../../public/assets/images/logo.png';
-import App from "@/Layouts/App.jsx";
+import App from '@/Layouts/App.jsx'
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
