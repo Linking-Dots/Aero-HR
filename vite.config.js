@@ -9,15 +9,6 @@ export default defineConfig({
             refresh: true,
         }),
         react(),
-    ],
-server: {
-      port: 3000,
-      https: true,
-      hmr: {
-        host: 'erp.dhakabypass.com',
-        port: 3001,
-        protocol: 'ssl'
-      }
-    }
+    ]
 });
 
