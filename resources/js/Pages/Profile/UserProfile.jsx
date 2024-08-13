@@ -40,6 +40,7 @@ import EmergencyContactDialog from "@/Dialogs/EmergencyContactDialog.jsx";
 import BankInformationDialog from "@/Dialogs/BankInformationDialog.jsx";
 import FamilyMemberDialog from "@/Dialogs/FamilyMemberDialog.jsx";
 import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx";
+import ExperienceInformationDialog from "@/Dialogs/ExperienceInformationDialog.jsx";
 
 
 
@@ -143,7 +144,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'experience' && (
-                <FamilyMemberDialog
+                <ExperienceInformationDialog
                     user={user}
                     open={openModalType === 'experience'}
                     setUser={setUser}
@@ -730,53 +731,41 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     }
                                 />
                                 <CardContent>
-                                    {user.experience_1_company || user.experience_2_company || user.experience_3_company ? (
+                                    {user.experiences && user.experiences.length > 0 ? (
                                         <List>
-                                            {user.experience_1_company && (
-                                                <>
+                                            {user.experiences.map((experience, index) => (
+                                                <React.Fragment key={index}>
                                                     <ListItem disableGutters>
-                                                        <Typography variant="h6">• {user.experience_1_position} at {user.experience_1_company}</Typography>
+                                                        <Typography variant="h6">
+                                                            • {experience.job_position} at {experience.company_name}
+                                                        </Typography>
                                                     </ListItem>
                                                     <ListItem disableGutters>
                                                         <Typography variant="body1">
-                                                            {user.experience_1_start_date ? new Date(user.experience_1_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
+                                                            {experience.period_from
+                                                                ? new Date(experience.period_from).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+                                                                : 'N/A'}{' '}
                                                             {' - '}
-                                                            {user.experience_1_end_date ? new Date(user.experience_1_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
+                                                            {experience.period_to
+                                                                ? new Date(experience.period_to).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+                                                                : 'Present'}
                                                         </Typography>
                                                     </ListItem>
-                                                    <Divider sx={{ my: 1 }} />
-                                                </>
-                                            )}
-                                            {user.experience_2_company && (
-                                                <>
                                                     <ListItem disableGutters>
-                                                        <Typography variant="h6">• {user.experience_2_position} at {user.experience_2_company}</Typography>
-                                                    </ListItem>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="body1">
-                                                            {user.experience_2_start_date ? new Date(user.experience_2_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
-                                                            {' - '}
-                                                            {user.experience_2_end_date ? new Date(user.experience_2_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
+                                                        <Typography variant="body2">
+                                                            {experience.location}
                                                         </Typography>
                                                     </ListItem>
+                                                    {experience.description && (
+                                                        <ListItem disableGutters>
+                                                            <Typography variant="body2">
+                                                                {experience.description}
+                                                            </Typography>
+                                                        </ListItem>
+                                                    )}
                                                     <Divider sx={{ my: 1 }} />
-                                                </>
-                                            )}
-                                            {user.experience_3_company && (
-                                                <>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="h6">• {user.experience_3_position} at {user.experience_3_company}</Typography>
-                                                    </ListItem>
-                                                    <ListItem disableGutters>
-                                                        <Typography variant="body1">
-                                                            {user.experience_3_start_date ? new Date(user.experience_3_start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}
-                                                            {' - '}
-                                                            {user.experience_3_end_date ? new Date(user.experience_3_end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Present'}
-                                                        </Typography>
-                                                    </ListItem>
-                                                    <Divider sx={{ my: 1 }} />
-                                                </>
-                                            )}
+                                                </React.Fragment>
+                                            ))}
                                         </List>
                                     ) : (
                                         <Typography>No experience information</Typography>
