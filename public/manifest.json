@@ -1,17 +1,17 @@
 {
   "background_color": "#ffffff",
-  "description": "Multipurpose Tasks Management Application for DBEDC",
+  "description": "Enterprise Resource Planning for DBEDC",
   "dir": "ltr",
   "display": "standalone",
-  "name": "DBEDC Daily Task Management",
+  "name": "DBEDC ERP",
   "orientation": "any",
   "scope": "/",
-  "short_name": "DBEDC DTM",
+  "short_name": "DBEDC ERP",
   "start_url": "/",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "https://qcd.dhakabypass.com/assets/images/favicon.ico"
+      "src": "https://erp.dhakabypass.com/assets/images/favicon.ico"
     },
     {
       "src": "/favicon.ico",
@@ -466,7 +466,7 @@
           "sizes": "1024x1024"
       }
   ],
-  "id": "qcd.dbedc",
+  "id": "erp.dbedc",
   "lang": "en",
   "display_override": [
     "standalone",
