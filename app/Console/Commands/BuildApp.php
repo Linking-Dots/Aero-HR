@@ -43,7 +43,7 @@ class BuildApp extends Command
 		}
 
 		$content = Str::replace(config('app.url') . '/build/assets/', '', $content);
-		$content = Str::replace("window.app_base_url = 'https://capacitor.test'", "window.app_base_url = '" . config('app.exposed_url') . "'", $content);
+		$content = Str::replace("window.app_base_url = 'https://erp.dhakabypass.com'", "window.app_base_url = '" . config('app.exposed_url') . "'", $content);
 
 		file_put_contents(
 			public_path('build/assets/index.html'), $content
