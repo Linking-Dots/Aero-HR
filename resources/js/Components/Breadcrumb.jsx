@@ -44,10 +44,10 @@ const Breadcrumb = ({ }) => {
         <Box sx={{
             display: 'flex',
             justifyContent: 'center',
-            p: 2,
+            padding: '0px 16px 0px 16px'
         }}>
             <Grow in>
-                <Grid container spacing={2}>
+                <Grid container>
                     <Grid item xs={12}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'right' }}>
                             <Box>

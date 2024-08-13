@@ -7,6 +7,7 @@ import {usePage} from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Grow from "@mui/material/Grow";
 function App({ children }) {
     const { auth } = usePage().props;
 
@@ -40,9 +41,13 @@ function App({ children }) {
                 draggable
                 pauseOnHover
                 theme="colored"
-                transition: Bounce
+                style={{
+                    whiteSpace: 'nowrap',
+                    maxWidth: 'none',
+                    width: 'auto'
+                }}
             />
-                <CssBaseline />
+            <CssBaseline />
                 {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
                 {auth.user && <Breadcrumb/>}
                 {children}

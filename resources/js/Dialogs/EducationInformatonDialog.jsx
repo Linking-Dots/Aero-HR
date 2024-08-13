@@ -20,6 +20,9 @@ import { useTheme } from '@mui/material/styles';
 import { toast } from 'react-toastify';
 
 const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
+    const [updatedUser, setUpdatedUser] = useState({
+        id: user.id
+    });
     const [educationList, setEducationList] = useState(user.educations.length > 0 ? user.educations : [{ institution: "", subject: "", degree: "", starting_date: "", complete_date: "", grade: "" }]);
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
@@ -43,12 +46,12 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
             );
         });
 
-        setUser(prevUser => ({
+        setUpdatedUser(prevUser => ({
             ...prevUser,
-            education: changedEducations,
+            educations: [...changedEducations],
         }));
-        console.log(educationList)
     };
+
 
     const handleEducationRemove = async (index) => {
         const removedEducation = educationList[index];
@@ -64,16 +67,21 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                         },
-                        body: JSON.stringify({ id: removedEducation.id }),
+                        body: JSON.stringify({ id: removedEducation.id, user_id: user.id }),
                     });
 
                     const data = await response.json();
 
                     if (response.ok) {
-                        // Update the user state
+                        // Update the user state with the returned educations from the server
+                        setUpdatedUser(prevUser => ({
+                            ...prevUser,
+                            educations: data.educations,
+                        }));
+
                         setUser(prevUser => ({
                             ...prevUser,
-                            education: updatedList,
+                            educations: data.educations,
                         }));
 
                         // Resolve with the message returned from the server
@@ -138,6 +146,7 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
     };
 
 
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setProcessing(true);
@@ -156,13 +165,14 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
                 const data = await response.json();
 
                 if (response.ok) {
+                    // Update the user state with the returned educations from the server
                     setUser(prevUser => ({
                         ...prevUser,
-                        education: educationList,
+                        educations: data.educations,
                     }));
                     setProcessing(false);
                     closeModal();
-                    resolve(data.message || 'Education records updated successfully.');
+                    resolve([...data.messages]);
                 } else {
                     setProcessing(false);
                     setErrors([...data.errors]);
@@ -196,15 +206,21 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
                 },
                 success: {
                     render({ data }) {
-                        return <>{data}</>;
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
                     },
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
+                        color: theme.palette.text.primary,
+                    },
                 },
                 error: {
                     render({ data }) {
@@ -223,9 +239,9 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
     };
 
 
+
     const handleAddMore = async () => {
         setEducationList([...educationList, { institution: "", subject: "", degree: "", starting_date: "", complete_date: "", grade: "" }]);
-        console.log(educationList)
     };
 
     return (
@@ -253,8 +269,8 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
                                             : "High School";
 
                                 return (
-                                    <Grid item xs={12}>
-                                        <GlassCard key={index}>
+                                    <Grid item xs={12} key={index}>
+                                        <GlassCard>
                                             <CardContent>
                                                 <Typography variant="h6" gutterBottom>
                                                     {educationType}

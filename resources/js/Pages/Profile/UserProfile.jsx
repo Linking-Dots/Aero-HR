@@ -46,10 +46,8 @@ import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx"
 
 const UserProfile = ({ title, allUsers, report_to, departments, designations }) => {
     const [user, setUser] = useState(usePage().props.user);
-
     const [tabIndex, setTabIndex] = React.useState(0);
     const [anchorEl, setAnchorEl] = React.useState(null);
-
     const [openModalType, setOpenModalType] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const theme = useTheme();
@@ -85,7 +83,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     };
 
 
-    console.log('reruned')
+
 
     return (
         <App>
@@ -474,12 +472,12 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                             </Grid>
                                                         </Grid>
                                                     </ListItem>
-                                                    <Divider sx={{ my: 2 }} />
                                                 </>
                                             )}
                                             {/* Secondary Section */}
                                             {user.emergency_contact_secondary_name && (
                                                 <>
+                                                    <Divider sx={{ my: 2 }} />
                                                     <ListItem disableGutters>
                                                         <Grid container spacing={2}>
                                                             <Grid item xs={5}>
@@ -688,6 +686,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                 />
                                 <CardContent>
                                     {user.educations && user.educations.length > 0 ? (
+
                                         <List>
                                             {user.educations.map((education, index) => (
                                                 <React.Fragment key={education.id}>
@@ -814,3 +813,4 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 };
 
 export default UserProfile;
+

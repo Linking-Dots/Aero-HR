@@ -25,8 +25,9 @@ import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
 const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
-    const [updatedUser, setUpdatedUser] = useState({
-        id: user.id
+    const [updatedUserData, setUpdatedUserData] = useState(user);
+    const [changedUserData, setChangedUserData] = useState({
+        id: user.id,
     });
 
     const [errors, setErrors] = useState({});
@@ -34,12 +35,12 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
 
     const theme = useTheme();
     const handleChange = (key, value) => {
-        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+        setUpdatedUserData((prevUser) => ({ ...prevUser, [key]: value }));
+        setChangedUserData((prevUser) => ({ ...prevUser, [key]: value }));
     };
 
     async function handleSubmit(event) {
         event.preventDefault();
-        console.log(updatedUser);
         setProcessing(true);
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -50,7 +51,7 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify(updatedUser),
+                    body: JSON.stringify(changedUserData),
                 });
 
                 const data = await response.json();
@@ -58,7 +59,7 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                 if (response.ok) {
                     setUser(prevUser => ({
                         ...prevUser,
-                        ...updatedUser
+                        ...changedUserData
                     }));
                     setProcessing(false);
                     closeModal();
@@ -169,7 +170,7 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                                                 label="Name"
                                                 required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_primary_name || user.emergency_contact_primary_name || ""}
+                                                value={changedUserData.emergency_contact_primary_name || updatedUserData.emergency_contact_primary_name || ""}
                                                 onChange={(e) => handleChange("emergency_contact_primary_name", e.target.value)}
                                             />
                                         </Grid>
@@ -178,7 +179,7 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                                                 label="Relationship"
                                                 required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_primary_relationship || user.emergency_contact_primary_relationship || ""}
+                                                value={changedUserData.emergency_contact_primary_relationship || updatedUserData.emergency_contact_primary_relationship || ""}
                                                 onChange={(e) => handleChange("emergency_contact_primary_relationship", e.target.value)}
                                             />
                                         </Grid>
@@ -187,7 +188,7 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                                                 label="Phone"
                                                 required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_primary_phone || user.emergency_contact_primary_phone || ""}
+                                                value={changedUserData.emergency_contact_primary_phone || updatedUserData.emergency_contact_primary_phone || ""}
                                                 onChange={(e) => handleChange("emergency_contact_primary_phone", e.target.value)}
                                             />
                                         </Grid>
@@ -207,27 +208,24 @@ const EmergencyContactDialog = ({user,setUser, open, closeModal }) => {
                                         <Grid item xs={12} md={6}>
                                             <TextField
                                                 label="Name"
-                                                required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_secondary_name || user.emergency_contact_secondary_name || ""}
+                                                value={changedUserData.emergency_contact_secondary_name || updatedUserData.emergency_contact_secondary_name || ""}
                                                 onChange={(e) => handleChange("emergency_contact_secondary_name", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
                                             <TextField
                                                 label="Relationship"
-                                                required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_secondary_relationship || user.emergency_contact_secondary_relationship || ""}
+                                                value={changedUserData.emergency_contact_secondary_relationship || updatedUserData.emergency_contact_secondary_relationship || ""}
                                                 onChange={(e) => handleChange("emergency_contact_secondary_relationship", e.target.value)}
                                             />
                                         </Grid>
                                         <Grid item xs={12} md={6}>
                                             <TextField
                                                 label="Phone"
-                                                required
                                                 fullWidth
-                                                value={updatedUser.emergency_contact_secondary_phone || user.emergency_contact_secondary_phone || ""}
+                                                value={changedUserData.emergency_contact_secondary_phone || updatedUserData.emergency_contact_secondary_phone || ""}
                                                 onChange={(e) => handleChange("emergency_contact_secondary_phone", e.target.value)}
                                             />
                                         </Grid>

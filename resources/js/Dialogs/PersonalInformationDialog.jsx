@@ -25,9 +25,9 @@ import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
 const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
-
-    const [updatedUser, setUpdatedUser] = useState({
-        id: user.id
+    const [updatedUserData, setUpdatedUserData] = useState(user);
+    const [changedUserData, setChangedUserData] = useState({
+        id: user.id,
     });
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
@@ -39,12 +39,13 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
             user.designation = null;
             user.report_to = null;
         }
-        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
+        setUpdatedUserData((prevUser) => ({ ...prevUser, [key]: value }));
+        setChangedUserData((prevUser) => ({ ...prevUser, [key]: value }));
     };
 
     async function handleSubmit(event) {
         event.preventDefault();
-        console.log(updatedUser);
+        console.log(changedUserData);
         setProcessing(true);
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -55,7 +56,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify(updatedUser),
+                    body: JSON.stringify(changedUserData),
                 });
 
                 const data = await response.json();
@@ -63,7 +64,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                 if (response.ok) {
                     setUser(prevUser => ({
                         ...prevUser,
-                        ...updatedUser
+                        ...changedUserData
                     }));
                     setProcessing(false);
                     closeModal();
@@ -165,11 +166,10 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                             <TextField
                                 label="Passport No"
                                 fullWidth
-                                value={updatedUser.passport_no || user.passport_no || ''}
+                                value={changedUserData.passport_no || updatedUserData.passport_no || ''}
                                 onChange={(e) => handleChange('passport_no', e.target.value)}
                                 error={Boolean(errors.passport_no)}
                                 helperText={errors.passport_no}
-
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
@@ -177,7 +177,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                                 label="Passport Expiry Date"
                                 fullWidth
                                 type="date"
-                                value={updatedUser.passport_exp_date || user.passport_exp_date || ''}
+                                value={changedUserData.passport_exp_date || updatedUserData.passport_exp_date || ''}
                                 onChange={(e) => handleChange('passport_exp_date', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
                                 error={Boolean(errors.passport_exp_date)}
@@ -188,7 +188,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                             <TextField
                                 label="Nationality"
                                 fullWidth
-                                value={updatedUser.nationality || user.nationality || ''}
+                                value={changedUserData.nationality || updatedUserData.nationality || ''}
                                 onChange={(e) => handleChange('nationality', e.target.value)}
                                 error={Boolean(errors.nationality)}
                                 helperText={errors.nationality}
@@ -198,7 +198,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                             <TextField
                                 label="Religion"
                                 fullWidth
-                                value={updatedUser.religion || user.religion || ''}
+                                value={changedUserData.religion || updatedUserData.religion || ''}
                                 onChange={(e) => handleChange('religion', e.target.value)}
                                 error={Boolean(errors.religion)}
                                 helperText={errors.religion}
@@ -209,7 +209,7 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                                 <InputLabel id="marital-status-label">Marital status</InputLabel>
                                 <Select
                                     labelId="marital-status-label"
-                                    value={updatedUser.marital_status || user.marital_status || "na"}
+                                    value={changedUserData.marital_status || updatedUserData.marital_status || "na"}
                                     onChange={(e) => handleChange('marital_status', e.target.value)}
                                     label="Marital status"
                                     error={Boolean(errors.marital_status)}
@@ -237,10 +237,11 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                             <TextField
                                 label="Employment of spouse"
                                 fullWidth
-                                value={updatedUser.employment_of_spouse || user.employment_of_spouse || ''}
+                                value={changedUserData.employment_of_spouse || updatedUserData.employment_of_spouse || ''}
                                 onChange={(e) => handleChange('employment_of_spouse', e.target.value)}
                                 error={Boolean(errors.employment_of_spouse)}
                                 helperText={errors.employment_of_spouse}
+                                disabled={changedUserData.marital_status === 'Single' || updatedUserData.marital_status === 'Single'}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
@@ -248,10 +249,11 @@ const PersonalInformationDialog = ({user,setUser, open, closeModal }) => {
                                 label="No. of children"
                                 fullWidth
                                 type="number"
-                                value={updatedUser.number_of_children || user.number_of_children || ''}
+                                value={changedUserData.number_of_children || updatedUserData.number_of_children || ''}
                                 onChange={(e) => handleChange('number_of_children', e.target.value)}
                                 error={Boolean(errors.number_of_children)}
                                 helperText={errors.number_of_children}
+                                disabled={changedUserData.marital_status === 'Single' || updatedUserData.marital_status === 'Single'}
                             />
                         </Grid>
                     </Grid>

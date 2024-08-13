@@ -33,25 +33,39 @@ class EducationController extends Controller
                 'educations.*.user_id.exists' => 'The specified user ID does not exist.',
             ]);
 
+            $messages = [];
+
             foreach ($validated['educations'] as $educationData) {
                 if (isset($educationData['id'])) {
-                    $education = Education::find($educationData['id']);
+                    $education = Education::where('id', $educationData['id'])
+                        ->where('user_id', $educationData['user_id'])
+                        ->first();
                     if ($education) {
                         $education->update($educationData);
+                        $messages[] = 'Education record updated: ' . $educationData['institution'];
                     } else {
                         return response()->json(['error' => 'Education record not found.'], 404);
                     }
                 } else {
                     Education::create($educationData);
+                    $messages[] = 'Education record added: ' . $educationData['institution'];
                 }
             }
 
-            return response()->json(['message' => 'Education records updated successfully.']);
+            // Retrieve the updated education list for the user
+            $updatedEducations = Education::where('user_id', $validated['educations'][0]['user_id'])->get();
+
+            return response()->json([
+                'messages' => $messages,
+                'educations' => $updatedEducations,
+            ]);
         } catch (\Exception $e) {
-            Log::error('Update Education Error: '.$e->getMessage());
-            return response()->json(['error' => 'Update Education Error: '.$e->getMessage()], 500);
+            Log::error('Update Education Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Update Education Error: ' . $e->getMessage()], 500);
         }
     }
+
+
 
 
 
@@ -61,15 +75,28 @@ class EducationController extends Controller
         try {
             $validated = $request->validate([
                 'id' => 'required|exists:education,id',
+                'user_id' => 'required|exists:users,id',
             ], [
                 'id.required' => 'Education ID is required.',
                 'id.exists' => 'The specified education ID does not exist.',
+                'user_id.required' => 'User ID is required.',
+                'user_id.exists' => 'The specified user ID does not exist.',
             ]);
 
-            $education = Education::find($validated['id']);
+            $education = Education::where('id', $validated['id'])
+                ->where('user_id', $validated['user_id'])
+                ->first();
+
             if ($education) {
                 $education->delete();
-                return response()->json(['message' => 'Education record deleted successfully.']);
+
+                // Retrieve the updated education list for the user
+                $updatedEducations = Education::where('user_id', $validated['user_id'])->get();
+
+                return response()->json([
+                    'message' => 'Education record deleted successfully.',
+                    'educations' => $updatedEducations,
+                ]);
             } else {
                 return response()->json(['error' => 'Education record not found.'], 404);
             }
@@ -79,5 +106,6 @@ class EducationController extends Controller
             return response()->json(['error' => 'Delete Education Error: '.$e->getMessage()], 500);
         }
     }
+
 
 }
