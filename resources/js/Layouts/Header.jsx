@@ -35,17 +35,11 @@ import { usePage, Link } from '@inertiajs/react';
 import {useState} from "react";
 
 // Styled Menu component
-const StyledMenu = styled((props) => (
+const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
     <Menu
         elevation={0}
-        anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left', // Ensure submenu opens relative to left of the anchor
-        }}
-        transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left', // Ensure submenu aligns with the left of the anchor
-        }}
+        anchorOrigin={anchorOrigin}
+        transformOrigin={transformOrigin}
         {...props}
     />
 ))(({ theme }) => ({
@@ -66,9 +60,6 @@ const StyledMenu = styled((props) => (
         },
     },
 }));
-
-
-
 
 
 
@@ -141,23 +132,28 @@ function Header({ darkMode, toggleDarkMode }) {
     };
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box sx={{ p: 2 }}>
             <Grow in>
                 <AppBar sx={{
                     backdropFilter: 'blur(16px) saturate(200%)',
                     backgroundColor: theme.glassCard.backgroundColor,
                     borderRadius: '12px',
                     border: theme.glassCard.border
-                }} position="sticky">
+                }} position="static">
                     <Container maxWidth="xl">
                         <Toolbar disableGutters>
-                            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-                                <img alt="Logo" src={logo} style={{
-                                    mr: 1,
-                                    marginRight: '8px',
-                                    height: '40px',
-                                    width: '40px'
-                                }} />
+                            {/* Desktop Logo Area */}
+                                <Box
+                                    component="img"
+                                    alt="Logo"
+                                    src={logo}
+                                    sx={{
+                                        display: { xs: 'none', md: 'flex' },
+                                        mr: 1,
+                                        height: '40px',
+                                        width: '40px',
+                                    }}
+                                />
                                 <Typography
                                     variant="h6"
                                     noWrap
@@ -175,8 +171,8 @@ function Header({ darkMode, toggleDarkMode }) {
                                 >
                                     DBEDC
                                 </Typography>
-                            </Box>
 
+                            {/* Mobile Menu Area */}
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                                 <IconButton
                                     sx={{ color: theme.palette.text.primary }}
@@ -185,7 +181,6 @@ function Header({ darkMode, toggleDarkMode }) {
                                     aria-controls="menu-appbar"
                                     aria-haspopup="true"
                                     onClick={handleOpenNavMenu}
-                                    color="inherit"
                                 >
                                     {menuOpen ? <CloseIcon /> : <MenuIcon />}
                                 </IconButton>
@@ -194,6 +189,14 @@ function Header({ darkMode, toggleDarkMode }) {
                                     anchorEl={anchorElNav}
                                     open={Boolean(anchorElNav)}
                                     onClose={handleCloseNavMenu}
+                                    anchorOrigin={{
+                                        vertical: 'bottom',
+                                        horizontal: 'left',
+                                    }}
+                                    transformOrigin={{
+                                        vertical: 'top',
+                                        horizontal: 'left',
+                                    }}
                                     PaperProps={{
                                         sx: {
                                             backgroundColor: theme.glassCard.backgroundColor,
@@ -214,16 +217,21 @@ function Header({ darkMode, toggleDarkMode }) {
                                                     </Typography>
                                                 </MenuItem>
                                                 <StyledMenu
-                                                    anchorEl={anchorElSubMenu} // Ensure this is the menu item element
-                                                    open={Boolean(anchorElSubMenu)} // Check if submenu should be open
+                                                    anchorEl={anchorElSubMenu} // Correct anchor element for submenu
+                                                    open={Boolean(openSubMenu === page.name)}
                                                     onClose={handleCloseSubMenu}
+                                                    anchorOrigin={{
+                                                        vertical: 'bottom',
+                                                        horizontal: 'left',
+                                                    }}
+                                                    transformOrigin={{
+                                                        vertical: 'top',
+                                                        horizontal: 'left',
+                                                    }}
                                                     PaperProps={{
                                                         sx: {
                                                             backgroundColor: theme.glassCard.backgroundColor,
                                                             border: theme.glassCard.border,
-                                                            position: 'absolute', // Ensure it's positioned absolutely
-                                                            top: '100%', // Place directly below the anchor
-                                                            left: 0, // Align to the left of the anchor
                                                         },
                                                     }}
                                                 >
@@ -237,7 +245,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                                   method={subPage.method || undefined} style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                color: 'inherit',
+                                                                color: theme.palette.text.primary,
                                                                 textDecoration: 'none'
                                                             }}>
                                                                 {subPage.icon}
@@ -252,7 +260,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                 <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    color: 'inherit',
+                                                    color: theme.palette.text.primary,
                                                     textDecoration: 'none'
                                                 }}>
                                                     {page.icon}
@@ -263,7 +271,19 @@ function Header({ darkMode, toggleDarkMode }) {
                                     ))}
                                 </StyledMenu>
                             </Box>
-
+                            {/* Mobile Logo Area */}
+                            <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }}}>
+                                <Box
+                                    component="img"
+                                    alt="Logo"
+                                    src={logo}
+                                    sx={{
+                                        height: '40px',
+                                        width: '40px',
+                                    }}
+                                />
+                            </Box>
+                            {/* Desktop Menu Area */}
                             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                                 {pages.map((page) => (
                                     page.subMenu ? (
@@ -281,14 +301,18 @@ function Header({ darkMode, toggleDarkMode }) {
                                                 anchorEl={anchorElSubMenu} // Correct anchor element for submenu
                                                 open={Boolean(openSubMenu === page.name)}
                                                 onClose={handleCloseSubMenu}
+                                                anchorOrigin={{
+                                                    vertical: 'bottom',
+                                                    horizontal: 'left',
+                                                }}
+                                                transformOrigin={{
+                                                    vertical: 'top',
+                                                    horizontal: 'left',
+                                                }}
                                                 PaperProps={{
                                                     sx: {
                                                         backgroundColor: theme.glassCard.backgroundColor,
                                                         border: theme.glassCard.border,
-                                                        // Position submenu below the parent menu item
-                                                        position: 'absolute',
-                                                        top: '100%', // Position directly below
-                                                        left: 0,
                                                     },
                                                 }}
                                             >
@@ -301,7 +325,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                         <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            color: 'inherit',
+                                                            color: theme.palette.text.primary,
                                                             textDecoration: 'none'
                                                         }}>
                                                             {subPage.icon}
@@ -316,7 +340,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                             <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                color: 'inherit',
+                                                color: theme.palette.text.primary,
                                                 textDecoration: 'none'
                                             }}>
                                                 {page.icon}
@@ -338,6 +362,14 @@ function Header({ darkMode, toggleDarkMode }) {
                                     anchorEl={anchorElUser}
                                     open={Boolean(anchorElUser)}
                                     onClose={handleCloseUserMenu}
+                                    anchorOrigin={{
+                                        vertical: 'bottom',
+                                        horizontal: 'right',
+                                    }}
+                                    transformOrigin={{
+                                        vertical: 'top',
+                                        horizontal: 'right',
+                                    }}
                                     PaperProps={{
                                         sx: {
                                             backgroundColor: theme.glassCard.backgroundColor,
@@ -353,7 +385,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                color: 'inherit',
+                                                color: theme.palette.text.primary,
                                                 textDecoration: 'none',
                                             }}
                                         >
@@ -368,7 +400,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                             <Link as={'a'} href={route(setting.route)} method={setting.method || undefined} style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                color: 'inherit',
+                                                color: theme.palette.text.primary,
                                                 textDecoration: 'none'
                                             }}>
                                                 {setting.icon}

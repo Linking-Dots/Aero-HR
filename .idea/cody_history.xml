@@ -13,14 +13,6 @@
                   <llm>
                     <model value="anthropic/claude-3-5-sonnet-20240620" />
                     <provider value="Anthropic" />
-                    <tags>
-                      <list>
-                        <option value="gateway" />
-                        <option value="accuracy" />
-                        <option value="recommended" />
-                        <option value="free" />
-                      </list>
-                    </tags>
                     <title value="Claude 3.5 Sonnet" />
                     <usage>
                       <list>
@@ -30,6 +22,12 @@
                     </usage>
                   </llm>
                 </llm>
+              </chat>
+              <chat>
+                <internalId value="27564585-7f15-4029-bf95-e7bc5c191e2a" />
+              </chat>
+              <chat>
+                <internalId value="16e1b931-6a74-459d-ad4c-509007af3609" />
               </chat>
             </list>
           </chats>
