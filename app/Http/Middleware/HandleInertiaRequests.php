@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ class HandleInertiaRequests extends Middleware
      *
      * @var string
      */
-    protected $rootView = 'default';
+    protected $rootView = 'app';
 
     /**
      * Determine the current asset version.
