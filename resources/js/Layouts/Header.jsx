@@ -27,6 +27,9 @@ import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+
 
 import { Switch } from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
@@ -138,10 +141,11 @@ function Header({ darkMode, toggleDarkMode }) {
                     backdropFilter: 'blur(16px) saturate(200%)',
                     backgroundColor: theme.glassCard.backgroundColor,
                     borderRadius: '12px',
-                    border: theme.glassCard.border
+                    border: theme.glassCard.border,
+                    flexGrow: 1
                 }} position="static">
                     <Container maxWidth="xl">
-                        <Toolbar disableGutters>
+                        <Toolbar disableGutters >
                             {/* Desktop Logo Area */}
                                 <Box
                                     component="img"
@@ -271,6 +275,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                     ))}
                                 </StyledMenu>
                             </Box>
+
                             {/* Mobile Logo Area */}
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }}}>
                                 <Box
@@ -283,8 +288,9 @@ function Header({ darkMode, toggleDarkMode }) {
                                     }}
                                 />
                             </Box>
+
                             {/* Desktop Menu Area */}
-                            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+                            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, flexWrap: 'wrap'}}>
                                 {pages.map((page) => (
                                     page.subMenu ? (
                                         <div key={page.name}>
@@ -296,6 +302,7 @@ function Header({ darkMode, toggleDarkMode }) {
                                                 <Typography sx={{ ml: 1 }} textAlign="center">
                                                     {page.name}
                                                 </Typography>
+                                                {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                                             </MenuItem>
                                             <StyledMenu
                                                 anchorEl={anchorElSubMenu} // Correct anchor element for submenu

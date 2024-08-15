@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Education;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class EducationController extends Controller
 {
@@ -25,9 +26,9 @@ class EducationController extends Controller
                 'educations.*.institution.required' => 'Institution is required.',
                 'educations.*.subject.required' => 'Subject is required.',
                 'educations.*.degree.required' => 'Degree is required.',
-                'educations.*.starting_date.required' => 'Starting date is required.',
-                'educations.*.starting_date.date' => 'Starting date must be a valid date.',
-                'educations.*.complete_date.required' => 'Complete date is required.',
+                'educations.*.starting_date.required' => 'Started in is required.',
+                'educations.*.starting_date.date' => 'Started in must be a valid date.',
+                'educations.*.complete_date.required' => 'Completed in is required.',
                 'educations.*.complete_date.date' => 'Complete date must be a valid date.',
                 'educations.*.grade.required' => 'Grade is required.',
                 'educations.*.user_id.exists' => 'The specified user ID does not exist.',
@@ -36,6 +37,12 @@ class EducationController extends Controller
             $messages = [];
 
             foreach ($validated['educations'] as $educationData) {
+                if (isset($educationData['starting_date'])) {
+                    $educationData['starting_date'] = date('Y-m-d', strtotime($educationData['starting_date']));
+                }
+                if (isset($educationData['complete_date'])) {
+                    $educationData['complete_date'] = date('Y-m-d', strtotime($educationData['complete_date']));
+                }
                 if (isset($educationData['id'])) {
                     $education = Education::where('id', $educationData['id'])
                         ->where('user_id', $educationData['user_id'])
@@ -55,12 +62,22 @@ class EducationController extends Controller
             // Retrieve the updated education list for the user
             $updatedEducations = Education::where('user_id', $validated['educations'][0]['user_id'])->get();
 
+            foreach ($updatedEducations as $education) {
+                $education->starting_date = date('Y-m', strtotime($education->starting_date));
+                $education->complete_date = date('Y-m', strtotime($education->complete_date));
+            }
+
             return response()->json([
                 'messages' => $messages,
                 'educations' => $updatedEducations,
             ]);
+        } catch (ValidationException $e) {
+            Log::error($e->errors());
+            return response()->json([
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            Log::error('Update Education Error: ' . $e->getMessage());
+            Log::error($e->getMessage());
             return response()->json(['error' => 'Update Education Error: ' . $e->getMessage()], 500);
         }
     }
@@ -100,8 +117,11 @@ class EducationController extends Controller
             } else {
                 return response()->json(['error' => 'Education record not found.'], 404);
             }
+        } catch (ValidationException $e) {
+            return response()->json([
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            // Log the exception or handle it
             Log::error('Delete Education Error: '.$e->getMessage());
             return response()->json(['error' => 'Delete Education Error: '.$e->getMessage()], 500);
         }

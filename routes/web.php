@@ -3,6 +3,7 @@
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EducationController;
+use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveSettingController;
@@ -78,7 +79,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/education/update', [EducationController::class, 'update'])->name('education.update');
     Route::delete('/education/delete', [EducationController::class, 'delete'])->name('education.delete');
 
-
+    //Experience Routes:
+    Route::post('/experience/update', [ExperienceController::class, 'update'])->name('experience.update');
+    Route::delete('/experience/delete', [ExperienceController::class, 'delete'])->name('experience.delete');
 
 });
 

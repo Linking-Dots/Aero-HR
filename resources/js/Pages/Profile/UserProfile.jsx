@@ -1,49 +1,82 @@
 import React, {useState} from 'react';
 import {
-    Box,
-    Typography,
     Avatar,
+    Box,
     Button,
+    CardContent,
+    CardHeader,
+    CircularProgress,
+    Divider,
+    Grid,
+    IconButton, LinearProgress,
     List,
     ListItem,
     ListItemText,
-    IconButton,
-    CardHeader,
-    CardContent,
-    Grid,
-    Divider,
-    Tabs,
     Tab,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    MenuItem,
-    TableContainer,
-    Table,
-    CircularProgress, DialogTitle, DialogContent, Dialog
+    Tabs,
+    Typography
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { blue } from '@mui/material/colors';
-import {Head, useForm, usePage} from "@inertiajs/react";
-import {Add, Delete, Edit} from "@mui/icons-material";
+import {Head, usePage, Link} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import Menu from "@mui/material/Menu";
-import ProfileDialog from '@/Dialogs/ProfileDialog.jsx';
-import {toast} from "react-toastify";
+import ProfileForm from '@/Forms/ProfileForm.jsx';
 import {useTheme} from "@mui/material/styles";
-import PersonalInformationDialog from "@/Dialogs/PersonalInformationDialog.jsx";
-import EmergencyContactDialog from "@/Dialogs/EmergencyContactDialog.jsx";
-import BankInformationDialog from "@/Dialogs/BankInformationDialog.jsx";
-import FamilyMemberDialog from "@/Dialogs/FamilyMemberDialog.jsx";
-import EducationInformationDialog from "@/Dialogs/EducationInformatonDialog.jsx";
-import ExperienceInformationDialog from "@/Dialogs/ExperienceInformationDialog.jsx";
+import PersonalInformationForm from "@/Forms/PersonalInformationForm.jsx";
+import EmergencyContactForm from "@/Forms/EmergencyContactForm.jsx";
+import BankInformationForm from "@/Forms/BankInformationForm.jsx";
+import FamilyMemberForm from "@/Forms/FamilyMemberForm.jsx";
+import EducationInformationDialog from "@/Forms/EducationInformationForm.jsx";
+import ExperienceInformationForm from "@/Forms/ExperienceInformationForm.jsx";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Tooltip from "@mui/material/Tooltip";
+import AvatarGroup from '@mui/material/AvatarGroup';
+import SalaryInformationForm from "@/Forms/SalaryInformationForm.jsx";
 
-
-
+const projects = [
+    {
+        title: "Office Management",
+        openTasks: 1,
+        completedTasks: 9,
+        description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+        deadline: "17 Apr 2019",
+        leaders: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        team: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        progress: 40
+    },
+    {
+        title: "Office Management",
+        openTasks: 1,
+        completedTasks: 9,
+        description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+        deadline: "17 Apr 2019",
+        leaders: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        team: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        progress: 40
+    },
+    // Add other projects similarly...
+];
 
 const UserProfile = ({ title, allUsers, report_to, departments, designations }) => {
     const [user, setUser] = useState(usePage().props.user);
@@ -52,6 +85,8 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     const [openModalType, setOpenModalType] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const theme = useTheme();
+
+    console.log(user);
 
     const openModal = (modalType) => {
         setOpenModalType(modalType);
@@ -91,7 +126,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
             <Head title={user.name}/>
             {/* Profile Modal */}
             {openModalType === 'profile' && (
-                <ProfileDialog
+                <ProfileForm
                     user={user}
                     allUsers={allUsers}
                     departments={departments}
@@ -104,7 +139,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'personal' && (
-                <PersonalInformationDialog
+                <PersonalInformationForm
                     user={user}
                     open={openModalType === 'personal'}
                     setUser={setUser}
@@ -112,7 +147,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'emergency' && (
-                <EmergencyContactDialog
+                <EmergencyContactForm
                     user={user}
                     open={openModalType === 'emergency'}
                     setUser={setUser}
@@ -120,7 +155,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'bank' && (
-                <BankInformationDialog
+                <BankInformationForm
                     user={user}
                     open={openModalType === 'bank'}
                     setUser={setUser}
@@ -128,7 +163,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'family' && (
-                <FamilyMemberDialog
+                <FamilyMemberForm
                     user={user}
                     open={openModalType === 'family'}
                     setUser={setUser}
@@ -144,7 +179,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 />
             )}
             {openModalType === 'experience' && (
-                <ExperienceInformationDialog
+                <ExperienceInformationForm
                     user={user}
                     open={openModalType === 'experience'}
                     setUser={setUser}
@@ -277,24 +312,19 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                 </Grid>
                             </Grid>
                         </CardContent>
-                    </GlassCard>
-                </Grow>
-            </Box>
-
-            <Box sx={{ p: 2 }}>
-                <Grow in>
-                    <GlassCard>
-                        <CardContent>
+                        <CardContent sx={{paddingBottom: "0px !important"}}>
                             <Tabs value={tabIndex} onChange={handleTabChange} aria-label="User Profile Tabs">
                                 <Tab label="Profile" />
                                 <Tab label="Projects" />
-                                <Tab label="Bank & Statutory" />
+                                <Tab label="Salary & Statutory" />
                                 <Tab label="Assets" />
                             </Tabs>
                         </CardContent>
                     </GlassCard>
                 </Grow>
+            </Box>
 
+            <Box sx={{ p: 2 }}>
                 {tabIndex === 0 && (
                     <Grid container spacing={2} sx={{ display: 'flex', alignItems: 'stretch' }}>
                         <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -339,6 +369,19 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                         </Grid>
                                                         <Grid item xs={7}>
                                                             <ListItemText primary={user.passport_exp_date || 'N/A'} />
+                                                        </Grid>
+                                                    </Grid>
+                                                </ListItem>
+                                            )}
+
+                                            {user.nid && (
+                                                <ListItem disableGutters>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={5}>
+                                                            <ListItemText primary="• NID No.:" />
+                                                        </Grid>
+                                                        <Grid item xs={7}>
+                                                            <ListItemText primary={user.nid || 'N/A'} />
                                                         </Grid>
                                                     </Grid>
                                                 </ListItem>
@@ -763,7 +806,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                             </Typography>
                                                         </ListItem>
                                                     )}
-                                                    <Divider sx={{ my: 1 }} />
+                                                    {index < user.experiences.length - 1 && <Divider sx={{my: 1}}/>}
                                                 </React.Fragment>
                                             ))}
                                         </List>
@@ -777,22 +820,68 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 )}
 
                 {tabIndex === 1 && (
-                    <Box>
-                        {/* Project content will be similar to Profile section, use Card, Typography, etc. */}
-                        <GlassCard variant="outlined" sx={{ mb: 2 }}>
-                            <CardContent>
-                                <Typography variant="h6">Office Management</Typography>
-                                <Typography variant="body2">1 open tasks, 9 tasks completed</Typography>
-                                <Typography variant="body2" color="text.secondary">Lorem Ipsum is simply dummy text...</Typography>
-                                <Box display="flex" justifyContent="space-between" sx={{ mt: 2 }}>
-                                    <Typography variant="body2">Deadline: 17 Apr 2019</Typography>
-                                    <Typography variant="body2">Progress: 40%</Typography>
-                                </Box>
-                                <CircularProgress variant="determinate" value={40} sx={{ width: '100%', mt: 1 }} />
-                            </CardContent>
-                        </GlassCard>
-                        {/* Repeat for other projects */}
-                    </Box>
+                    <Grid container spacing={2} sx={{ display: 'flex', alignItems: 'stretch' }}>
+                        {projects.map((project, index) => (
+                            <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }} key={project.id || index}>
+                                <GlassCard>
+                                    <Box sx={{ p: 2 }}>
+                                        <Typography variant="h6" gutterBottom>
+                                            <Link style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                color: theme.palette.text.primary,
+                                                textDecoration: 'none'
+                                            }} href="/" as={'a'}>{project.title}</Link>
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                                            <b>{project.openTasks}</b> open tasks, <b>{project.completedTasks}</b> tasks completed
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                                            {project.description}
+                                        </Typography>
+                                        <Box mb={2}>
+                                            <Typography variant="subtitle2" color="textPrimary">Deadline:</Typography>
+                                            <Typography variant="body2" color="textSecondary">{project.deadline}</Typography>
+                                        </Box>
+                                        <Box mb={2}>
+                                            <Typography variant="subtitle2" color="textPrimary">Project Leaders:</Typography>
+                                            <Box display="flex">
+                                                <AvatarGroup max={4} total={5}>
+                                                    {project.leaders.map((leader, index) => (
+                                                        <Tooltip key={index} title={leader.name} arrow>
+                                                            <Avatar src={leader.avatar} alt={leader.name} />
+                                                        </Tooltip>
+                                                    ))}
+                                                </AvatarGroup>
+                                            </Box>
+                                        </Box>
+                                        <Box mb={2}>
+                                            <Typography variant="subtitle2" color="textPrimary">Project Members:</Typography>
+                                            <Box display="flex">
+                                                <AvatarGroup max={4} total={24}>
+                                                    {project.team.map((member, index) => (
+                                                        <Tooltip key={index} title={member.name} arrow>
+                                                            <Avatar src={member.avatar} alt={member.name} />
+                                                        </Tooltip>
+                                                    ))}
+                                                </AvatarGroup>
+                                            </Box>
+                                        </Box>
+                                        <Typography variant="body2" gutterBottom>
+                                            Progress <span style={{ float: 'right' }}>{project.progress}%</span>
+                                        </Typography>
+                                        <LinearProgress variant="determinate" value={project.progress} />
+                                    </Box>
+                                </GlassCard>
+                            </Grid>
+
+                        ))}
+
+                    </Grid>
+                )}
+
+                {tabIndex === 2 && (
+                    <SalaryInformationForm user={user} setUser={setUser}/>
                 )}
 
             </Box>

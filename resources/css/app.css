@@ -20,19 +20,21 @@ body {
     border-bottom-right-radius: 30vh;
 }
 
-.p-toast {
-    max-width: 90%;
-    left: 5%;
-    right: 5%;
-    top: 10px;
-    transform: none;
-}
-
-.p-toast-message {
-    word-wrap: break-word;
-}
 
 .dataTables-center {
     text-align: center;
     background-color: transparent;
 }
+
+/*.toast-container {*/
+/*    white-space: nowrap;*/
+/*    max-width: none;*/
+/*    width: auto;*/
+/*}*/
+
+/*!* Styling for mobile devices *!*/
+/*@media (max-width: 600px) {*/
+/*    .toast-container {*/
+/*        width: 90%;  !* Adjust width for mobile devices *!*/
+/*    }*/
+/*}*/

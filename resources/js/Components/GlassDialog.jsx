@@ -3,6 +3,19 @@ import Dialog from '@mui/material/Dialog';
 import Grow from "@mui/material/Grow";
 import { forwardRef } from "react";
 import { useTheme } from "@mui/material/styles";
+import Draggable from "react-draggable";
+import {Paper} from "@mui/material";
+
+const PaperComponent = (props) => {
+    return (
+        <Draggable
+            handle="#draggable-dialog-title"
+            cancel={'[class*="MuiDialogContent-root"]'}
+        >
+            <Paper {...props} />
+        </Draggable>
+    );
+};
 
 const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) => {
     const theme = useTheme();
@@ -15,6 +28,8 @@ const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) =
             onClose={closeModal}
             maxWidth="md"
             TransitionComponent={Grow}
+            PaperComponent={PaperComponent}
+            aria-labelledby="draggable-dialog-title"
             PaperProps={{
                 sx: {
                     backdropFilter: 'blur(16px) saturate(200%)',

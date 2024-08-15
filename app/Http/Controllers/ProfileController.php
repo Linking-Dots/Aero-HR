@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Department;
 use App\Models\Designation;
-use App\Models\Education;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -26,6 +24,13 @@ class ProfileController extends Controller
         $reportTo = User::find($user->report_to);
         $userDetails = User::with(['educations', 'experiences'])->where('id', $user->id)->first();
 
+        if ($userDetails) {
+            foreach ($userDetails->educations as $education) {
+                $education->starting_date = date('Y-m', strtotime($education->starting_date));
+                $education->complete_date = date('Y-m', strtotime($education->complete_date));
+            }
+        }
+
 
         return Inertia::render('Profile/UserProfile', [
             'title' => 'Profile',
@@ -45,84 +50,167 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
+        $user = User::find($request->id);
         try {
-            // Validate the request
-            $validated = $request->validate([
+            $rules = [
                 'id' => 'required|exists:users,id',
-                'employee_id' => 'nullable|integer',
-                'user_name' => 'nullable|string',
-                'phone' => 'nullable|string|unique:users,phone,' . $request->id,
-                'email' => 'nullable|string|email|unique:users,email,' . $request->id,
-                'dob' => 'nullable|date',
-                'address' => 'nullable|string',
-                'about' => 'nullable|string',
-                'report_to' => 'nullable|exists:users,id',
-                'password' => 'nullable|string',
-                'designation' => 'nullable|exists:designations,id',
-                'nid' => 'nullable|string',
-                'name' => 'nullable|string',
-                'profile_image' => 'nullable|string',
-                'department' => 'nullable|exists:departments,id',
-                'date_of_joining' => 'nullable|date',
-                'birthday' => 'nullable|date',
-                'gender' => 'nullable|string',
-                'passport_no' => 'nullable|string',
-                'passport_exp_date' => 'nullable|date',
-                'nationality' => 'nullable|string',
-                'religion' => 'nullable|string',
-                'marital_status' => 'nullable|string',
-                'employment_of_spouse' => 'nullable|string',
-                'number_of_children' => 'nullable|integer',
-                'emergency_contact_primary_name' => 'nullable|string',
-                'emergency_contact_primary_relationship' => 'nullable|string',
-                'emergency_contact_primary_phone' => 'nullable|string',
-                'emergency_contact_secondary_name' => 'nullable|string',
-                'emergency_contact_secondary_relationship' => 'nullable|string',
-                'emergency_contact_secondary_phone' => 'nullable|string',
-                'bank_name' => 'nullable|string',
-                'bank_account_no' => 'nullable|string',
-                'ifsc_code' => 'nullable|string',
-                'pan_no' => 'nullable|string',
-                'family_member_name' => 'nullable|string',
-                'family_member_relationship' => 'nullable|string',
-                'family_member_dob' => 'nullable|date',
-                'family_member_phone' => 'nullable|string',
+            ];
 
-                'education' => 'nullable|array',
-                'education.*.id' => 'nullable|exists:education,id',
-                'education.*.institution' => 'nullable|string',
-                'education.*.subject' => 'nullable|string',
-                'education.*.starting_date' => 'nullable|date',
-                'education.*.complete_date' => 'nullable|date',
-                'education.*.degree' => 'nullable|string',
-                'education.*.grade' => 'nullable|string',
+            $messages = [
+                'id.required' => 'The user ID is required.',
+                'id.exists' => 'The selected user ID does not exist.',
 
-                'experience_1_company' => 'nullable|string',
-                'experience_1_position' => 'nullable|string',
-                'experience_1_start_date' => 'nullable|date',
-                'experience_1_end_date' => 'nullable|date',
-                'experience_2_company' => 'nullable|string',
-                'experience_2_position' => 'nullable|string',
-                'experience_2_start_date' => 'nullable|date',
-                'experience_2_end_date' => 'nullable|date',
-                'experience_3_company' => 'nullable|string',
-                'experience_3_position' => 'nullable|string',
-                'experience_3_start_date' => 'nullable|date',
-                'experience_3_end_date' => 'nullable|date',
-                'salary_basis' => 'nullable|string',
-                'salary_amount' => 'nullable|numeric',
-                'payment_type' => 'nullable|string',
-                'pf_contribution' => 'nullable|boolean',
-                'pf_no' => 'nullable|string',
-                'employee_pf_rate' => 'nullable|string',
-                'additional_pf_rate' => 'nullable|string',
-                'total_pf_rate' => 'nullable|string',
-                'esi_contribution' => 'nullable|boolean',
-                'esi_no' => 'nullable|string',
-                'employee_esi_rate' => 'nullable|string',
-                'additional_esi_rate' => 'nullable|string',
-                'total_esi_rate' => 'nullable|string',
-            ]);
+                'name.required' => 'The name field is required.',
+                'name.string' => 'The name must be a string.',
+
+                'gender.required' => 'The gender field is required.',
+                'gender.string' => 'The gender must be a string.',
+
+                'birthday.date' => 'The birthday must be a valid date.',
+                'date_of_joining.date' => 'The date of joining must be a valid date.',
+                'address.string' => 'The address must be a string.',
+                'employee_id.required' => 'The employee ID is required.',
+                'employee_id.integer' => 'The employee ID must be an integer.',
+                'phone.required' => 'The phone number is required.',
+                'phone.string' => 'The phone number must be a string.',
+                'phone.unique' => 'The phone number has already been taken.',
+                'email.required' => 'The email field is required.',
+                'email.string' => 'The email must be a string.',
+                'email.email' => 'The email must be a valid email address.',
+                'email.unique' => 'The email has already been taken.',
+                'department.required' => 'The department field is required.',
+                'department.exists' => 'The selected department does not exist.',
+                'designation.required' => 'The designation field is required.',
+                'designation.exists' => 'The selected designation does not exist.',
+                'profile_image.string' => 'The profile image must be a string.',
+                'report_to.required' => 'The report to field is required.',
+                'report_to.exists' => 'The selected report to user does not exist.',
+
+                'nid.required' => 'The NID field is required.',
+                'nid.string' => 'The NID must be a string.',
+                'passport_no.string' => 'The passport number must be a string.',
+                'passport_exp_date.date' => 'The passport expiration date must be a valid date.',
+                'nationality.required' => 'The nationality field is required.',
+                'nationality.string' => 'The nationality must be a string.',
+                'religion.required' => 'The religion field is required.',
+                'religion.string' => 'The religion must be a string.',
+                'marital_status.required' => 'The marital status field is required.',
+                'marital_status.string' => 'The marital status must be a string.',
+                'employment_of_spouse.string' => 'The employment of spouse must be a string.',
+                'number_of_children.integer' => 'The number of children must be an integer.',
+
+                'emergency_contact_primary_name.required' => 'The primary emergency contact name is required.',
+                'emergency_contact_primary_name.string' => 'The primary emergency contact name must be a string.',
+                'emergency_contact_primary_relationship.required' => 'The primary emergency contact relationship is required.',
+                'emergency_contact_primary_relationship.string' => 'The primary emergency contact relationship must be a string.',
+                'emergency_contact_primary_phone.required' => 'The primary emergency contact phone number is required.',
+                'emergency_contact_primary_phone.string' => 'The primary emergency contact phone number must be a string.',
+                'emergency_contact_secondary_name.string' => 'The secondary emergency contact name must be a string.',
+                'emergency_contact_secondary_relationship.string' => 'The secondary emergency contact relationship must be a string.',
+                'emergency_contact_secondary_phone.string' => 'The secondary emergency contact phone number must be a string.',
+
+                'bank_name.required' => 'The bank name is required.',
+                'bank_name.string' => 'The bank name must be a string.',
+                'bank_account_no.required' => 'The bank account number is required.',
+                'bank_account_no.numeric' => 'The bank account number must be numeric.',
+                'ifsc_code.string' => 'The IFSC code must be a string.',
+                'pan_no.string' => 'The PAN number must be a string.',
+
+                'family_member_name.required' => 'The family member name is required.',
+                'family_member_name.string' => 'The family member name must be a string.',
+                'family_member_relationship.required' => 'The family member relationship is required.',
+                'family_member_relationship.string' => 'The family member relationship must be a string.',
+                'family_member_dob.required' => 'The family member date of birth is required.',
+                'family_member_dob.date' => 'The family member date of birth must be a valid date.',
+                'family_member_phone.required' => 'The family member phone number is required.',
+                'family_member_phone.string' => 'The family member phone number must be a string.',
+
+                'salary_basis.required' => 'The salary basis is required.',
+                'salary_basis.string' => 'The salary basis must be a string.',
+                'salary_amount.required' => 'The salary amount is required.',
+                'salary_amount.numeric' => 'The salary amount must be numeric.',
+                'payment_type.required' => 'The payment type is required.',
+                'payment_type.string' => 'The payment type must be a string.',
+                'pf_contribution.boolean' => 'The PF contribution must be a boolean value.',
+                'pf_no.string' => 'The PF number must be a string.',
+                'employee_pf_rate.string' => 'The employee PF rate must be a string.',
+                'additional_pf_rate.string' => 'The additional PF rate must be a string.',
+                'total_pf_rate.string' => 'The total PF rate must be a string.',
+                'esi_contribution.boolean' => 'The ESI contribution must be a boolean value.',
+                'esi_no.string' => 'The ESI number must be a string.',
+                'employee_esi_rate.string' => 'The employee ESI rate must be a string.',
+                'additional_esi_rate.string' => 'The additional ESI rate must be a string.',
+                'total_esi_rate.string' => 'The total ESI rate must be a string.',
+            ];
+
+            if ($request->ruleSet == 'profile') {
+                $rules += [
+                    'name' => 'required|string',
+                    'gender' => 'required|string',
+                    'birthday' => 'nullable|date',
+                    'date_of_joining' => 'nullable|date',
+                    'address' => 'nullable|string',
+                    'employee_id' => 'required|integer',
+                    'phone' => 'required|string|unique:users,phone,' . $request->id,
+                    'email' => 'required|string|email|unique:users,email,' . $request->id,
+                    'department' => 'required|exists:departments,id',
+                    'designation' => 'required|exists:designations,id',
+                    'profile_image' => 'nullable|string',
+                    'report_to' => 'required|exists:users,id',
+                ];
+            } elseif ($request->ruleSet == 'personal') {
+                $rules += [
+                    'nid' => 'required|string',
+                    'passport_no' => 'nullable|string',
+                    'passport_exp_date' => 'nullable|date',
+                    'nationality' => 'required|string',
+                    'religion' => 'required|string',
+                    'marital_status' => 'required|string',
+                    'employment_of_spouse' => 'nullable|string',
+                    'number_of_children' => 'nullable|integer',
+                ];
+            } elseif ($request->ruleSet == 'emergency'){
+                $rules += [
+                    'emergency_contact_primary_name' => 'required|string',
+                    'emergency_contact_primary_relationship' => 'required|string',
+                    'emergency_contact_primary_phone' =>  'required|string',
+                    'emergency_contact_secondary_name' => 'nullable|string',
+                    'emergency_contact_secondary_relationship' => 'nullable|string',
+                    'emergency_contact_secondary_phone' => 'nullable|string',
+                ];
+            } elseif ($request->ruleSet == 'bank'){
+                $rules += [
+                    'bank_name' => 'required|string',
+                    'bank_account_no' => 'required|numeric',
+                    'ifsc_code' => 'nullable|string',
+                    'pan_no' => 'nullable|string',
+                ];
+            } elseif ($request->ruleSet == 'family'){
+                $rules += [
+                    'family_member_name' => 'required|string',
+                    'family_member_relationship' => 'required|string',
+                    'family_member_dob' => 'required|date',
+                    'family_member_phone' => 'required|string',
+                ];
+            } elseif ($request->ruleSet == 'salary'){
+                $rules += [
+                    'salary_basis' => 'required|string',
+                    'salary_amount' => 'required|numeric',
+                    'payment_type' => 'required|string',
+                    'pf_contribution' => 'nullable|boolean',
+                    'pf_no' => 'nullable|string',
+                    'employee_pf_rate' => 'nullable|numeric',
+                    'additional_pf_rate' => 'nullable|numeric',
+                    'total_pf_rate' => 'nullable|numeric',
+                    'esi_contribution' => 'nullable|boolean',
+                    'esi_no' => 'nullable|string',
+                    'employee_esi_rate' => 'nullable|numeric',
+                    'additional_esi_rate' => 'nullable|numeric',
+                    'total_esi_rate' => 'nullable|numeric',
+                ];
+            }
+
+            $validated = $request->validate($rules, $messages);
 
             Log::info('Received data:', $validated);
 
@@ -131,37 +219,6 @@ class ProfileController extends Controller
             $user = User::findOrFail($validated['id']);
 
             $messages = [];
-
-            // Handle Education updates
-            if (isset($validated['education'])) {
-                $educationIds = [];
-
-                // Update or create educations
-                foreach ($validated['education'] as $educationData) {
-                    if (isset($educationData['id'])) {
-                        // Update existing education
-                        $education = Education::find($educationData['id']);
-                        if ($education) {
-                            $education->update($educationData);
-                            $educationIds[] = $education->id; // Keep track of the updated education IDs
-                            $messages[] = 'Education updated successfully: ' . $educationData['institution'];
-                        }
-                    } else {
-                        // Create new education
-                        $educationData['user_id'] = $user->id;
-                        $newEducation = Education::create($educationData);
-                        $educationIds[] = $newEducation->id; // Keep track of the new education IDs
-                        $messages[] = 'New education added: ' . $educationData['institution'];
-                    }
-                }
-
-                // Delete any educations not present in the incoming request
-                Education::where('user_id', $user->id)
-                    ->whereNotIn('id', $educationIds)
-                    ->delete();
-
-                $messages[] = 'Removed outdated education records.';
-            }
 
 
             // Check if department changed
@@ -228,18 +285,6 @@ class ProfileController extends Controller
                                 'family_member_dob' => 'Family Member Date of Birth',
                                 'family_member_phone' => 'Family Member Phone Number',
 
-                                'experience_1_company' => 'Experience 1 Company',
-                                'experience_1_position' => 'Experience 1 Position',
-                                'experience_1_start_date' => 'Experience 1 Start Date',
-                                'experience_1_end_date' => 'Experience 1 End Date',
-                                'experience_2_company' => 'Experience 2 Company',
-                                'experience_2_position' => 'Experience 2 Position',
-                                'experience_2_start_date' => 'Experience 2 Start Date',
-                                'experience_2_end_date' => 'Experience 2 End Date',
-                                'experience_3_company' => 'Experience 3 Company',
-                                'experience_3_position' => 'Experience 3 Position',
-                                'experience_3_start_date' => 'Experience 3 Start Date',
-                                'experience_3_end_date' => 'Experience 3 End Date',
                                 'salary_basis' => 'Salary Basis',
                                 'salary_amount' => 'Salary Amount',
                                 'payment_type' => 'Payment Type',
@@ -255,10 +300,40 @@ class ProfileController extends Controller
                                 'total_esi_rate' => 'Total ESI Rate',
                             ];
 
-                            if (array_key_exists($key, $fieldNames)) {
-                                $humanReadableKey = $fieldNames[$key];
-                                $messages[] = $humanReadableKey . ' updated successfully to ' . $value;
+                            if (array_key_exists($key, $fieldNames) && ($user->{$key} !== $value)) {
                                 $user->{$key} = $value;
+                                $humanReadableKey = $fieldNames[$key];
+                                if ($key === 'marital_status' && $value === 'Single') {
+                                    $user->employment_of_spouse = null;
+                                    $user->number_of_children = null;
+                                }
+                                if ($key === 'pf_contribution') {
+                                    $messageValue = $value === 0 ? 'No' : ($value === 1 ? 'Yes' : $value);
+                                    $messages[] = $humanReadableKey . ' updated to ' . $messageValue . '.';
+
+                                    if ($value === 0) {
+                                        // Delete related fields if pf_contribution is 0
+                                        $user->pf_no = null;
+                                        $user->employee_pf_rate = 0;
+                                        $user->additional_pf_rate = 0;
+                                        $user->total_pf_rate = 0;
+                                    }
+                                } elseif ($key === 'esi_contribution') {
+                                    $messageValue = $value === 0 ? 'No' : ($value === 1 ? 'Yes' : $value);
+                                    $messages[] = $humanReadableKey . ' updated to ' . $messageValue . '.';
+
+                                    if ($value === 0) {
+                                        // Delete related fields if esi_contribution is 0
+                                        $user->esi_no = null;
+                                        $user->employee_esi_rate = 0;
+                                        $user->additional_esi_rate = 0;
+                                        $user->total_esi_rate = 0;
+                                    }
+                                } else {
+                                    // Handle other fields
+                                    $messages[] = $humanReadableKey . ' updated to ' . $value . '.';
+                                }
+
                             }
                             break;
                     }
@@ -268,9 +343,13 @@ class ProfileController extends Controller
             // Save the user
             $user->save();
 
-            return response()->json(['messages' => $messages]);
+            return response()->json([
+                'messages' => $messages,
+                'user' => $user
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error( $e->errors());
             // Return validation errors if any
             return response()->json(['errors' => $e->errors()], 422);
         }

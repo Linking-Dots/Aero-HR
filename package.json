@@ -35,6 +35,7 @@
         "react-bootstrap": "^2.10.4",
         "react-data-table-component": "^7.6.2",
         "react-datepicker": "^7.3.0",
+        "react-draggable": "^4.4.6",
         "react-icons": "^5.2.1",
         "react-preloaders": "^3.0.3",
         "react-pro-sidebar": "^1.1.0",

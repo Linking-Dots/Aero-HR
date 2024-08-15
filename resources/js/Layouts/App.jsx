@@ -41,11 +41,6 @@ function App({ children }) {
                 draggable
                 pauseOnHover
                 theme="colored"
-                style={{
-                    whiteSpace: 'nowrap',
-                    maxWidth: 'none',
-                    width: 'auto'
-                }}
             />
             <CssBaseline />
                 {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
