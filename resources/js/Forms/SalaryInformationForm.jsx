@@ -23,7 +23,7 @@ const SalaryInformationForm = ({user, setUser}) => {
         id: user.id,
         // New fields
         salary_basis: user.salary_basis || '', // Required string
-        salary_amount: user.salary_amount || 0, // Required numeric, default to 0
+        salary_amount: user.salary_amount || '', // Required numeric, default to 0
         payment_type: user.payment_type || '', // Required string
         pf_contribution: user.pf_contribution ?? false, // Nullable boolean, default to false
         pf_no: user.pf_no || '', // Nullable string
@@ -235,6 +235,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.salary_basis || initialUserData.salary_basis || 'na'}
                                     onChange={(e) => handleChange('salary_basis', e.target.value)}
                                     error={Boolean(errors.salary_basis)}
+                                    helperText={errors.salary_basis}
                                     label="Salary basis"
                                     MenuProps={{
                                         PaperProps: {
@@ -282,6 +283,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.payment_type || initialUserData.payment_type || 'na'}
                                     onChange={(e) => handleChange('payment_type', e.target.value)}
                                     error={Boolean(errors.payment_type)}
+                                    helperText={errors.payment_type}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -324,6 +326,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     }
                                     onChange={(e) => handleChange('pf_contribution', e.target.value)}
                                     error={Boolean(errors.pf_contribution)}
+                                    helperText={errors.pf_contribution}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -367,6 +370,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.employee_pf_rate || initialUserData.employee_pf_rate || 'na'}
                                     onChange={(e) => handleChange('employee_pf_rate', e.target.value)}
                                     error={Boolean(errors.employee_pf_rate)}
+                                    helperText={errors.employee_pf_rate}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -398,6 +402,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.additional_pf_rate || initialUserData.additional_pf_rate || 'na'}
                                     onChange={(e) => handleChange('additional_pf_rate', e.target.value)}
                                     error={Boolean(errors.additional_pf_rate)}
+                                    helperText={errors.additional_pf_rate}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -429,6 +434,8 @@ const SalaryInformationForm = ({user, setUser}) => {
                                 InputProps={{
                                     readOnly: true,
                                 }}
+                                error={Boolean(errors.total_pf_rate)}
+                                helperText={errors.total_pf_rate}
                             />
                         </Grid>
                     </Grid>
@@ -452,6 +459,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     }
                                     onChange={(e) => handleChange('esi_contribution', e.target.value)}
                                     error={Boolean(errors.esi_contribution)}
+                                    helperText={errors.esi_contribution}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -495,6 +503,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.employee_esi_rate || initialUserData.employee_esi_rate || 'na'}
                                     onChange={(e) => handleChange('employee_esi_rate', e.target.value)}
                                     error={Boolean(errors.employee_esi_rate)}
+                                    helperText={errors.employee_esi_rate}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -525,6 +534,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                     value={changedUserData.additional_esi_rate || initialUserData.additional_esi_rate || 'na'}
                                     onChange={(e) => handleChange('additional_esi_rate', e.target.value)}
                                     error={Boolean(errors.additional_esi_rate)}
+                                    helperText={errors.additional_esi_rate}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -556,6 +566,8 @@ const SalaryInformationForm = ({user, setUser}) => {
                                 InputProps={{
                                     readOnly: true,
                                 }}
+                                error={Boolean(errors.total_esi_rate)}
+                                helperText={errors.total_esi_rate}
                             />
                         </Grid>
                     </Grid>
