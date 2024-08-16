@@ -17,10 +17,6 @@
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
     <title inertia>{{ config('app.name', 'DBEDC ERP') }}</title>
 
-    <script>
-        window.app_base_url = '<?php echo (config('app.url')) ?>';
-    </script>
-
 
 </head>
 

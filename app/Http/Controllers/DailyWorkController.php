@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\TaskImport;
 use App\Models\DailySummary;
+use App\Models\Jurisdiction;
 use App\Models\NCR;
 use App\Models\Objection;
 use App\Models\Report;
@@ -40,8 +41,8 @@ class DailyWorkController extends Controller
     public function index()
     {
         $reports = Report::all();
-        $reports_with_tasks = Report::with('tasks')->has('tasks')->get();
-        $incharges = User::role('se')->get();
+        $reports_with_daily_works = Report::with('daily_works')->has('daily_works')->get();
+        $inCharges = User::role('se')->get();
         $users = User::with('roles')->get();
 
         // Loop through each user and add a new field 'role' with the role name
@@ -50,12 +51,14 @@ class DailyWorkController extends Controller
             return $user;
         });
 
-        return Inertia::render('Project/TasksList', [
+        return Inertia::render('Project/DailyWorks', [
+            'dailyWorks' => DailyWork::with('reports')->get(),
+            'Jurisdictions' => Jurisdiction::all(),
             'users' => $users,
-            'allincharges' => $incharges,
+            'allInCharges' => $inCharges,
             'title' => 'Tasks',
             'reports' => $reports,
-            'reports_with_tasks' => $reports_with_tasks
+            'reports_with_daily_works' => $reports_with_daily_works
         ]);
     }
 

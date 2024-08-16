@@ -26,15 +26,6 @@ body {
     background-color: transparent;
 }
 
-/*.toast-container {*/
-/*    white-space: nowrap;*/
-/*    max-width: none;*/
-/*    width: auto;*/
-/*}*/
-
-/*!* Styling for mobile devices *!*/
-/*@media (max-width: 600px) {*/
-/*    .toast-container {*/
-/*        width: 90%;  !* Adjust width for mobile devices *!*/
-/*    }*/
-/*}*/
+*::-webkit-scrollbar {
+                          display: none;
+                      }

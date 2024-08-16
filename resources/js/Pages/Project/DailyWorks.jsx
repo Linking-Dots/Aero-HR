@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
     Box,
     Button,
-    Card,
     CardHeader,
     CardContent,
     FormControl,
@@ -12,30 +11,22 @@ import {
     TextField,
     Typography,
     IconButton,
-    Table,
-    TableBody,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper, Collapse
 } from '@mui/material';
 import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
-import axios from 'axios';
 import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import TaskTable from '@/Components/TaskTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 
-const TasksList = () => {
-    const { auth, title, allincharges, reports } = usePage().props;
+const DailyWorks = ({ auth, title, allInCharges, reports, Jurisdictions, dailyWorks, reports_with_daily_works }) => {
     const [dateRange, setDateRange] = useState('');
     const [status, setStatus] = useState('');
     const [report, setReport] = useState('');
     const [taskReportOptions, setTaskReportOptions] = useState('');
     const [tasks, setTasks] = useState([]);
-    const [incharges, setIncharges] = useState([]);
-    const [incharge, setIncharge] = useState([]);
+    const [inCharges, setInCharges] = useState([]);
+    const [inCharge, setInCharge] = useState([]);
     const [juniors, setJuniors] = useState([]);
 
     const fetchTasks = async () => {
@@ -44,7 +35,7 @@ const TasksList = () => {
             const response = await fetch(endpoint);
             const data = await response.json();
             setTasks(data.tasks || []);
-            setIncharges(data.incharges || []);
+            setInCharges(data.incharges || []);
             setJuniors(data.juniors || []);
         } catch (error) {
             console.error('Error fetching tasks data:', error);
@@ -132,14 +123,14 @@ const TasksList = () => {
                                             <InputLabel>Select Incharge</InputLabel>
                                             <Select
                                                 name="incharge"
-                                                value={incharge}
-                                                onChange={(e) => setIncharge(e.target.value)}
+                                                value={inCharge}
+                                                onChange={(e) => setInCharge(e.target.value)}
                                             >
                                                 <MenuItem value="" disabled>Select Incharge</MenuItem>
                                                 <MenuItem value="all">All</MenuItem>
-                                                {allincharges.map(incharge => (
-                                                    <MenuItem key={incharge.user_name} value={incharge.user_name}>
-                                                        {incharge.first_name} {incharge.last_name}
+                                                {allInCharges.map(inCharge => (
+                                                    <MenuItem key={inCharge.user_name} value={inCharge.user_name}>
+                                                        {inCharge.first_name} {inCharge.last_name}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
@@ -174,7 +165,7 @@ const TasksList = () => {
                                 tasks={tasks}
                                 reports={reports}
                                 juniors={juniors}
-                                incharges={allincharges}
+                                incharges={allInCharges}
                             />
                         </CardContent>
                     </GlassCard>
@@ -185,4 +176,4 @@ const TasksList = () => {
     );
 };
 
-export default TasksList;
+export default DailyWorks;

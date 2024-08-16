@@ -507,6 +507,7 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
                         ></i>
                     </span>
                     <Select
+                        size="small"
                         value={row.status}
                         onChange={(e) => handleStatusChange(row.id, e.target.value)}
                         style={{ marginBottom: 0, border: 'none', outline: 'none', backgroundColor: 'transparent', textAlign: 'center' }}
@@ -528,6 +529,7 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
                 <div className="avatar-container">
                     <Avatar src={`/assets/images/users/${row.assigned ? row.assigned : 'user-dummy-img'}.jpg`} alt={row.assigned || 'Not assigned'} className="avatar rounded-circle avatar-xxs" />
                     <Select
+                        size="small"
                         value={row.assigned || ''}
                         onChange={(e) => handleAssignedChange(row.id, e.target.value)}
                         style={{ marginBottom: 0, border: 'none', outline: 'none', backgroundColor: 'transparent', textAlign: 'center' }}
@@ -616,6 +618,7 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
                 <div className="avatar-container">
                     <Avatar src={`/assets/images/users/${row.incharge ? row.incharge : 'user-dummy-img'}.jpg`} alt={row.incharge || 'Not assigned'} className="avatar rounded-circle avatar-xxs" />
                     <Select
+                        size="small"
                         value={row.incharge || ''}
                         onChange={(e) => handleInchargeChange(row.id, e.target.value)}
                         style={{ marginBottom: 0, border: 'none', outline: 'none', backgroundColor: 'transparent', textAlign: 'center' }}
@@ -635,6 +638,7 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
             center: true,
             cell: row => (
                 <TextField
+                    size="small"
                     type="datetime-local"
                     defaultValue={row.completion_time}
                     onChange={(e) => handleCompletionTimeChange(row.id, e.target.value)}
@@ -769,14 +773,21 @@ const TaskTable = ({theme, tasks, userIsAdmin, userIsSe, userIsQciAqci, ncrs, ob
     return (
         <Collapse in timeout={3000}>
             <CustomDataTable
+
                 columns={columns}
                 data={tasks}
                 pagination
+
                 fixedHeader
                 fixedHeaderScrollHeight="500px"
                 highlightOnHover
                 pointerOnHover
+                responsive
+                selectableRows="multiple"
+                dense
+
             />
+
         </Collapse>
 
     );

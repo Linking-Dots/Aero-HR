@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailySummaryController;
 use App\Http\Controllers\JurisdictionController;
 use App\Http\Controllers\ReportController;
@@ -83,6 +84,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/experience/update', [ExperienceController::class, 'update'])->name('experience.update');
     Route::delete('/experience/delete', [ExperienceController::class, 'delete'])->name('experience.delete');
 
+
+    Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+
 });
 
 
@@ -91,7 +95,7 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     // Routes accessible only to users with the 'admin' role
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');
     Route::post('/tasks-filtered', [TaskController::class, 'filterTasks'])->name('filterTasks');
-    Route::get('/tasks', [TaskController::class, 'tasks'])->name('tasks');
+
     Route::get('/settings', [TaskController::class, 'settings'])->name('settings');
     Route::post('/task/add', [TaskController::class, 'addTask'])->name('addTask');
     Route::get('/task/import', [TaskController::class, 'importTasks'])->name('importTasks');

@@ -50,7 +50,7 @@ class TaskController extends Controller
             return $user;
         });
 
-        return Inertia::render('Project/TasksList', [
+        return Inertia::render('Project/DailyWorks', [
             'users' => $users,
             'allincharges' => $incharges,
             'title' => 'Tasks',

@@ -13,16 +13,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
 
 import { Settings, AccountCircle, ExitToApp } from '@mui/icons-material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import WorkIcon from '@mui/icons-material/Work';
-import BlogIcon from '@mui/icons-material/Article';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import LeaveIcon from '@mui/icons-material/Logout';
-import HomeIcon from '@mui/icons-material/Home';
+
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -31,11 +22,12 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 
-import { Switch } from "@mui/material";
+import {Collapse, Switch, Tab, Tabs} from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
 import { usePage, Link } from '@inertiajs/react';
 import {useState} from "react";
+import {pages} from "@/Props/pages.jsx";
 
 // Styled Menu component
 const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
@@ -66,7 +58,7 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
 
 
 
-function Header({ darkMode, toggleDarkMode }) {
+function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
     const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -75,27 +67,6 @@ function Header({ darkMode, toggleDarkMode }) {
     const [openSubMenu, setOpenSubMenu] = React.useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const pages = [
-        { name: 'Dashboard', icon: <DashboardIcon />, route: 'dashboard' },
-        { name: 'Leaves', icon: <LeaveIcon />, route: 'leaves-employee' },
-        { name: 'Attendance', icon: <CalendarTodayIcon />, route: 'attendance-employee' },
-        { name: 'Employees', icon: <PeopleIcon />, subMenu: [
-                { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
-                { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
-                { name: 'Leaves', icon: <LeaveIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
-                { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
-                { name: 'Attendances', icon: <CalendarTodayIcon />, route: 'attendances' },
-                { name: 'Departments', icon: <HomeIcon />, route: 'departments' },
-                { name: 'Designations', icon: <WorkIcon />, route: 'designations' },
-                { name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' },
-            ]
-        },
-        { name: 'Projects', icon: <WorkIcon />, subMenu: [
-                { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
-                { name: 'Tasks', icon: <ListAltIcon />, route: 'tasks' }
-            ] },
-        { name: 'Blog', icon: <BlogIcon />, route: 'dashboard' }
-    ];
 
 
     const settings = [
@@ -142,11 +113,22 @@ function Header({ darkMode, toggleDarkMode }) {
                     backgroundColor: theme.glassCard.backgroundColor,
                     borderRadius: '12px',
                     border: theme.glassCard.border,
-                    flexGrow: 1
                 }} position="static">
                     <Container maxWidth="xl">
-                        <Toolbar disableGutters >
+                        <Box disableGutters sx={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center', // Center items vertically
+                            p: {md: 2},
+                        }}>
                             {/* Desktop Logo Area */}
+                            <Box sx={{
+                                display: {xs: 'none', md: 'flex'},
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                flexGrow: 1,
+                            }}>
                                 <Box
                                     component="img"
                                     alt="Logo"
@@ -175,6 +157,84 @@ function Header({ darkMode, toggleDarkMode }) {
                                 >
                                     DBEDC
                                 </Typography>
+                                {!sideBarOpen && <IconButton
+                                    sx={{ color: theme.palette.text.primary, display: { xs: 'none', md: 'flex' } }}
+                                    size="large"
+                                    onClick={toggleSideBar}
+                                >
+                                    <MenuIcon />
+                                </IconButton> }
+                                {/* Desktop Menu Area */}
+                                <Collapse in={!sideBarOpen} timeout="auto" unmountOnExit>
+                                    <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, flexWrap: 'wrap'}}>
+                                        {pages.map((page) => (
+                                            page.subMenu ? (
+                                                <div key={page.name}>
+                                                    <MenuItem
+                                                        sx={{ color: theme.palette.text.primary }}
+                                                        onClick={(event) => handleOpenSubMenu(page.name, event)}
+                                                    >
+                                                        {page.icon}
+                                                        <Typography sx={{ ml: 1 }} textAlign="center">
+                                                            {page.name}
+                                                        </Typography>
+                                                        {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                    </MenuItem>
+                                                    <StyledMenu
+                                                        anchorEl={anchorElSubMenu} // Correct anchor element for submenu
+                                                        open={Boolean(openSubMenu === page.name)}
+                                                        onClose={handleCloseSubMenu}
+                                                        anchorOrigin={{
+                                                            vertical: 'bottom',
+                                                            horizontal: 'left',
+                                                        }}
+                                                        transformOrigin={{
+                                                            vertical: 'top',
+                                                            horizontal: 'left',
+                                                        }}
+                                                        PaperProps={{
+                                                            sx: {
+                                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                                border: theme.glassCard.border,
+                                                            },
+                                                        }}
+                                                    >
+                                                        {page.subMenu.map((subPage) => (
+                                                            <MenuItem
+                                                                key={subPage.name}
+                                                                onClick={handleCloseSubMenu}
+                                                                sx={{ color: theme.palette.text.primary }}
+                                                            >
+                                                                <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    color: theme.palette.text.primary,
+                                                                    textDecoration: 'none'
+                                                                }}>
+                                                                    {subPage.icon}
+                                                                    <Typography sx={{ ml: 1 }} textAlign="center">{subPage.name}</Typography>
+                                                                </Link>
+                                                            </MenuItem>
+                                                        ))}
+                                                    </StyledMenu>
+                                                </div>
+                                            ) : (
+                                                <MenuItem key={page.name} onClick={handleCloseNavMenu} sx={{ color: theme.palette.text.primary }}>
+                                                    <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        color: theme.palette.text.primary,
+                                                        textDecoration: 'none'
+                                                    }}>
+                                                        {page.icon}
+                                                        <Typography sx={{ ml: 1 }} textAlign="center">{page.name}</Typography>
+                                                    </Link>
+                                                </MenuItem>
+                                            )
+                                        ))}
+                                    </Box>
+                                </Collapse>
+                            </Box>
 
                             {/* Mobile Menu Area */}
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -213,12 +273,15 @@ function Header({ darkMode, toggleDarkMode }) {
                                             <div key={page.name}>
                                                 <MenuItem
                                                     onClick={(event) => handleOpenSubMenu(page.name, event)}
-                                                    sx={{ color: theme.palette.text.primary }}
+                                                    sx={{ color: theme.palette.text.primary, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                                 >
-                                                    {page.icon}
-                                                    <Typography sx={{ ml: 1 }} textAlign="center">
-                                                        {page.name}
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        {page.icon}
+                                                        <Typography sx={{ ml: 1 }} textAlign="center">
+                                                            {page.name}
+                                                        </Typography>
+                                                    </Box>
+                                                    {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                                                 </MenuItem>
                                                 <StyledMenu
                                                     anchorEl={anchorElSubMenu} // Correct anchor element for submenu
@@ -289,139 +352,73 @@ function Header({ darkMode, toggleDarkMode }) {
                                 />
                             </Box>
 
-                            {/* Desktop Menu Area */}
-                            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, flexWrap: 'wrap'}}>
-                                {pages.map((page) => (
-                                    page.subMenu ? (
-                                        <div key={page.name}>
-                                            <MenuItem
-                                                sx={{ color: theme.palette.text.primary }}
-                                                onClick={(event) => handleOpenSubMenu(page.name, event)}
-                                            >
-                                                {page.icon}
-                                                <Typography sx={{ ml: 1 }} textAlign="center">
-                                                    {page.name}
-                                                </Typography>
-                                                {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                            </MenuItem>
-                                            <StyledMenu
-                                                anchorEl={anchorElSubMenu} // Correct anchor element for submenu
-                                                open={Boolean(openSubMenu === page.name)}
-                                                onClose={handleCloseSubMenu}
-                                                anchorOrigin={{
-                                                    vertical: 'bottom',
-                                                    horizontal: 'left',
-                                                }}
-                                                transformOrigin={{
-                                                    vertical: 'top',
-                                                    horizontal: 'left',
-                                                }}
-                                                PaperProps={{
-                                                    sx: {
-                                                        backgroundColor: theme.glassCard.backgroundColor,
-                                                        border: theme.glassCard.border,
-                                                    },
-                                                }}
-                                            >
-                                                {page.subMenu.map((subPage) => (
-                                                    <MenuItem
-                                                        key={subPage.name}
-                                                        onClick={handleCloseSubMenu}
-                                                        sx={{ color: theme.palette.text.primary }}
-                                                    >
-                                                        <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            color: theme.palette.text.primary,
-                                                            textDecoration: 'none'
-                                                        }}>
-                                                            {subPage.icon}
-                                                            <Typography sx={{ ml: 1 }} textAlign="center">{subPage.name}</Typography>
-                                                        </Link>
-                                                    </MenuItem>
-                                                ))}
-                                            </StyledMenu>
-                                        </div>
-                                    ) : (
-                                        <MenuItem key={page.name} onClick={handleCloseNavMenu} sx={{ color: theme.palette.text.primary }}>
-                                            <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                color: theme.palette.text.primary,
-                                                textDecoration: 'none'
-                                            }}>
-                                                {page.icon}
-                                                <Typography sx={{ ml: 1 }} textAlign="center">{page.name}</Typography>
-                                            </Link>
-                                        </MenuItem>
-                                    )
-                                ))}
-                            </Box>
 
-                            <Box sx={{ flexGrow: 0 }}>
-                                <Tooltip title="Open settings">
-                                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                        <Avatar alt={auth.user.first_name} src={`/assets/images/users/${auth.user.user_name}.jpg`} />
-                                    </IconButton>
-                                </Tooltip>
-                                <StyledMenu
-                                    id="menu-appbar"
-                                    anchorEl={anchorElUser}
-                                    open={Boolean(anchorElUser)}
-                                    onClose={handleCloseUserMenu}
-                                    anchorOrigin={{
-                                        vertical: 'bottom',
-                                        horizontal: 'right',
-                                    }}
-                                    transformOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right',
-                                    }}
-                                    PaperProps={{
-                                        sx: {
-                                            backgroundColor: theme.glassCard.backgroundColor,
-                                            border: theme.glassCard.border,
-                                        },
-                                    }}
-                                >
-                                    <MenuItem key={'Profile'} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
-                                        <Link
-                                            as={'a'}
-                                            href={route('profile', { user: auth.user.id })}
-                                            method="get"
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                color: theme.palette.text.primary,
-                                                textDecoration: 'none',
-                                            }}
-                                        >
-                                            <AccountCircle />
-                                            <Typography sx={{ ml: 1 }} textAlign="center">
-                                                Profile
-                                            </Typography>
-                                        </Link>
-                                    </MenuItem>
-                                    {settings.map((setting) => (
-                                        <MenuItem key={setting.name} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
-                                            <Link as={'a'} href={route(setting.route)} method={setting.method || undefined} style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                color: theme.palette.text.primary,
-                                                textDecoration: 'none'
-                                            }}>
-                                                {setting.icon}
-                                                <Typography sx={{ ml: 1 }} textAlign="center">{setting.name}</Typography>
+                            <Box disableGutters sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Tooltip title="Open settings">
+                                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                            <Avatar alt={auth.user.first_name} src={`/assets/images/users/${auth.user.user_name}.jpg`} />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <StyledMenu
+                                        id="menu-appbar"
+                                        anchorEl={anchorElUser}
+                                        open={Boolean(anchorElUser)}
+                                        onClose={handleCloseUserMenu}
+                                        anchorOrigin={{
+                                            vertical: 'bottom',
+                                            horizontal: 'right',
+                                        }}
+                                        transformOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right',
+                                        }}
+                                        PaperProps={{
+                                            sx: {
+                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                border: theme.glassCard.border,
+                                            },
+                                        }}
+                                    >
+                                        <MenuItem key={'Profile'} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
+                                            <Link
+                                                as={'a'}
+                                                href={route('profile', { user: auth.user.id })}
+                                                method="get"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    color: theme.palette.text.primary,
+                                                    textDecoration: 'none',
+                                                }}
+                                            >
+                                                <AccountCircle />
+                                                <Typography sx={{ ml: 1 }} textAlign="center">
+                                                    Profile
+                                                </Typography>
                                             </Link>
                                         </MenuItem>
-                                    ))}
-                                    <MenuItem onClick={toggleDarkMode} sx={{ color: theme.palette.text.primary }}>
-                                        {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
-                                        <Switch checked={darkMode} onChange={toggleDarkMode} color="default" />
-                                    </MenuItem>
-                                </StyledMenu>
+                                        {settings.map((setting) => (
+                                            <MenuItem key={setting.name} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
+                                                <Link as={'a'} href={route(setting.route)} method={setting.method || undefined} style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    color: theme.palette.text.primary,
+                                                    textDecoration: 'none'
+                                                }}>
+                                                    {setting.icon}
+                                                    <Typography sx={{ ml: 1 }} textAlign="center">{setting.name}</Typography>
+                                                </Link>
+                                            </MenuItem>
+                                        ))}
+                                        <MenuItem onClick={toggleDarkMode} sx={{ color: theme.palette.text.primary }}>
+                                            {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
+                                            <Switch checked={darkMode} onChange={toggleDarkMode} color="default" />
+                                        </MenuItem>
+                                    </StyledMenu>
+                                </Box>
                             </Box>
-                        </Toolbar>
+                        </Box>
                     </Container>
                 </AppBar>
             </Grow>

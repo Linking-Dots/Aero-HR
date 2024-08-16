@@ -21,7 +21,7 @@ class Report extends Model implements HasMedia
         'remarks'
     ];
 
-    public function tasks()
+    public function daily_works()
     {
         return $this->belongsToMany(DailyWork::class, 'daily_work_has_report', 'report_id', 'daily_work_id');
     }
