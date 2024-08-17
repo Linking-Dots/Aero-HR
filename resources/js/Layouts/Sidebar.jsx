@@ -52,6 +52,7 @@ const Sidebar = ({toggleSideBar}) => {
                 <IconButton
                     sx={{
                         position: 'absolute',
+                        zIndex: 1,
                         top: 8, // Adjust as needed
                         right: 8, // Adjust as needed
                         color: theme.palette.text.primary

@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
 
 });
 

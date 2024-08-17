@@ -10,7 +10,7 @@ import {
     Select,
     TextField,
     Typography,
-    IconButton,
+    IconButton, Grid,
 } from '@mui/material';
 import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
 import {Head, usePage} from "@inertiajs/react";
@@ -18,33 +18,26 @@ import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import TaskTable from '@/Components/TaskTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
-const DailyWorks = ({ auth, title, allInCharges, reports, Jurisdictions, dailyWorks, reports_with_daily_works }) => {
-    const [dateRange, setDateRange] = useState('');
-    const [status, setStatus] = useState('');
-    const [report, setReport] = useState('');
-    const [taskReportOptions, setTaskReportOptions] = useState('');
-    const [tasks, setTasks] = useState([]);
-    const [inCharges, setInCharges] = useState([]);
-    const [inCharge, setInCharge] = useState([]);
-    const [juniors, setJuniors] = useState([]);
+const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
 
-    const fetchTasks = async () => {
-        const endpoint = route('allTasks');
-        try {
-            const response = await fetch(endpoint);
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            setInCharges(data.incharges || []);
-            setJuniors(data.juniors || []);
-        } catch (error) {
-            console.error('Error fetching tasks data:', error);
-        }
+    const [filterData, setFilterData] = useState({
+        startDate: dayjs(),
+        endDate: dayjs(),
+        status: '',
+        inCharge: '',
+        report: '',
+    });
+
+    const handleFilterChange = (key, value) => {
+        setFilterData(prevState => ({
+            ...prevState,
+            [key]: value,
+        }));
     };
-
-    useEffect(() => {
-        fetchTasks();
-    }, []);
 
 
     return (
@@ -54,7 +47,7 @@ const DailyWorks = ({ auth, title, allInCharges, reports, Jurisdictions, dailyWo
                 <Grow in>
                     <GlassCard>
                         <CardHeader
-                            title={<Typography variant="h5" component="h2">{title}</Typography>}
+                            title={title}
                             action={
                                 <Box display="flex" gap={2}>
                                     {auth.permissions.includes('addTaskSE') && (
@@ -92,80 +85,95 @@ const DailyWorks = ({ auth, title, allInCharges, reports, Jurisdictions, dailyWo
                                 </Box>
                             }
                         />
-                        <CardContent sx={{ paddingBottom: 0, paddingTop: 0 }}>
+                        <CardContent>
                             <Box component="form" id="filterTaskForm">
-                                <Box display="flex" gap={3} flexWrap="wrap">
-                                    <TextField
-                                        label="Select date range"
-                                        name="dateRange"
-                                        type="text"
-                                        value={dateRange}
-                                        onChange={(e) => setDateRange(e.target.value)}
-                                        sx={{ flex: '1 1 20%' }}
-                                    />
-                                    <FormControl sx={{ flex: '1 1 15%' }}>
-                                        <InputLabel>Select Status</InputLabel>
-                                        <Select
-                                            name="status"
-                                            value={status}
-                                            onChange={(e) => setStatus(e.target.value)}
-                                        >
-                                            <MenuItem value="" disabled>Select Status</MenuItem>
-                                            <MenuItem value="all">All</MenuItem>
-                                            <MenuItem value="completed">Completed</MenuItem>
-                                            <MenuItem value="new">New</MenuItem>
-                                            <MenuItem value="resubmission">Resubmission</MenuItem>
-                                            <MenuItem value="emergency">Emergency</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                    {auth.roles.includes('admin') && (
-                                        <FormControl sx={{ flex: '1 1 15%' }}>
-                                            <InputLabel>Select Incharge</InputLabel>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <Box display="flex" alignItems="center">
+                                                <DatePicker
+                                                    label="Start date"
+                                                    value={filterData.startDate}
+                                                    onChange={(newValue) => handleFilterChange('startDate', newValue)}
+                                                    renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                                />
+                                                <Box sx={{ mx: 1 }}> to </Box>
+                                                <DatePicker
+                                                    label="End date"
+                                                    value={filterData.endDate}
+                                                    onChange={(newValue) => handleFilterChange('endDate', newValue)}
+                                                    renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                                />
+                                            </Box>
+                                        </LocalizationProvider>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                        <FormControl fullWidth>
+                                            <InputLabel id="status-label">Status</InputLabel>
                                             <Select
-                                                name="incharge"
-                                                value={inCharge}
-                                                onChange={(e) => setInCharge(e.target.value)}
+                                                labelId="status-label"
+                                                label="Status"
+                                                name="status"
+                                                value={filterData.status}
+                                                onChange={(e) => handleFilterChange('status', e.target.value)}
                                             >
-                                                <MenuItem value="" disabled>Select Incharge</MenuItem>
+                                                <MenuItem value="" disabled>Select Status</MenuItem>
                                                 <MenuItem value="all">All</MenuItem>
-                                                {allInCharges.map(inCharge => (
-                                                    <MenuItem key={inCharge.user_name} value={inCharge.user_name}>
-                                                        {inCharge.first_name} {inCharge.last_name}
-                                                    </MenuItem>
-                                                ))}
+                                                <MenuItem value="completed">Completed</MenuItem>
+                                                <MenuItem value="new">New</MenuItem>
+                                                <MenuItem value="resubmission">Resubmission</MenuItem>
+                                                <MenuItem value="emergency">Emergency</MenuItem>
                                             </Select>
                                         </FormControl>
+                                    </Grid>
+                                    {auth.roles.includes('admin') && (
+                                        <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                            <FormControl fullWidth>
+                                                <InputLabel id="incharge-label">Incharge</InputLabel>
+                                                <Select
+                                                    labelId="incharge-label"
+                                                    label="Incharge"
+                                                    name="incharge"
+                                                    value={filterData.inCharge}
+                                                    onChange={(e) => handleFilterChange('inCharge', e.target.value)}
+                                                >
+                                                    <MenuItem value="" disabled>Select Incharge</MenuItem>
+                                                    <MenuItem value="all">All</MenuItem>
+                                                    {dailyWorksData.allInCharges.map(inCharge => (
+                                                        <MenuItem key={inCharge.user_name} value={inCharge.user_name}>
+                                                            {inCharge.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
                                     )}
-                                    <FormControl sx={{ flex: '1 1 15%' }}>
-                                        <InputLabel>Select Report</InputLabel>
-                                        <Select
-                                            name="qc_report"
-                                            value={report}
-                                            onChange={(e) => setReport(e.target.value)}
-                                            // dangerouslySetInnerHTML={{ __html: taskReportOptions }}
-                                        >
-                                            <option value="" disabled selected>Select Report</option>
-                                        </Select>
-                                    </FormControl>
-                                    <Button
-                                        disabled
-                                        variant="contained"
-                                        color="primary"
-                                        startIcon={<Equalizer />}
-                                        sx={{ flex: '1 1 15%' }}
-                                        id="filterTasks"
-                                    >
-                                        Filter
-                                    </Button>
-                                </Box>
+                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Select Report</InputLabel>
+                                            <Select
+                                                name="qc_report"
+                                                value={filterData.report}
+                                                onChange={(e) => handleFilterChange('report', e.target.value)}
+                                            >
+                                                <MenuItem value="" disabled>Select Report</MenuItem>
+                                                {/* Add your report options here */}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                </Grid>
                             </Box>
                         </CardContent>
+
                         <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
                             <TaskTable
-                                tasks={tasks}
+                                dailyWorkData={dailyWorksData.dailyWorks}
                                 reports={reports}
-                                juniors={juniors}
-                                incharges={allInCharges}
+                                juniors={dailyWorksData.juniors}
+                                allInCharges={dailyWorksData.allInCharges}
+                                jurisdictions={jurisdictions}
+                                users={users}
+                                reports_with_daily_works={reports_with_daily_works}
                             />
                         </CardContent>
                     </GlassCard>

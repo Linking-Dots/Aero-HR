@@ -40,9 +40,27 @@ class DailyWorkController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $dailyWorksData = $user->hasRole('se')
+            ? [
+                'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->user_name)->get(),
+                'allInCharges' => [],
+                'juniors' => User::where('inCharges', $user->user_name)->get(),
+
+            ]
+            : ($user->hasRole('qci') || $user->hasRole('aqci')
+                ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->user_name)->get()]
+                : ($user->hasRole('admin') || $user->hasRole('manager')
+                    ? [
+                        'dailyWorks' => DailyWork::with('reports')->get(),
+                        'allInCharges' => User::role('se')->get(),
+                        'juniors' => [],
+                    ]
+                    : ['dailyWorks' => []]
+                )
+            );
         $reports = Report::all();
         $reports_with_daily_works = Report::with('daily_works')->has('daily_works')->get();
-        $inCharges = User::role('se')->get();
         $users = User::with('roles')->get();
 
         // Loop through each user and add a new field 'role' with the role name
@@ -52,15 +70,67 @@ class DailyWorkController extends Controller
         });
 
         return Inertia::render('Project/DailyWorks', [
-            'dailyWorks' => DailyWork::with('reports')->get(),
-            'Jurisdictions' => Jurisdiction::all(),
+            'dailyWorksData' => $dailyWorksData,
+            'jurisdictions' => Jurisdiction::all(),
             'users' => $users,
-            'allInCharges' => $inCharges,
             'title' => 'Tasks',
             'reports' => $reports,
             'reports_with_daily_works' => $reports_with_daily_works
         ]);
     }
+
+    public function update(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            // Find task by ID
+            $dailyWork = DailyWork::find($request->id);
+
+            // If task not found, return 404 error response
+            if (!$dailyWork) {
+                return response()->json(['error' => 'Daily work not found'], 404);
+            }
+
+            // Check which field needs to be updated and apply validation
+            if ($request->has('status')) {
+                $request->validate(['status' => 'required|string']);
+                $dailyWork->status = $request->status;
+                $message = 'Daily work status updated to ' . $dailyWork->status;
+            } elseif ($request->has('assigned')) {
+                $request->validate(['assigned' => 'required|exists:users,id']);
+                $dailyWork->assigned = $request->assigned;
+                $message = 'Daily work assigned to ' . User::find($request->assigned)->name;
+            } elseif ($request->has('incharge')) {
+                $request->validate(['incharge' => 'required|exists:users,id']);
+                $dailyWork->incharge = $request->incharge;
+                $message = 'Daily work incharge updated to ' . User::find($request->incharge)->name;
+            } elseif ($request->has('inspection_details')) {
+                $dailyWork->inspection_details = $request->inspection_details;
+                $message = 'Inspection details updated successfully';
+            } elseif ($request->has('rfi_submission_date')) {
+                $dailyWork->rfi_submission_date = $request->rfi_submission_date;
+                $message = 'RFI Submission date updated';
+            } elseif ($request->has('completion_time')) {
+                $dailyWork->completion_time = $request->completion_time;
+                $message = 'Completion date-time updated';
+            } else {
+                return response()->json(['error' => 'Invalid update request'], 400);
+            }
+
+            // Save the task with the updated field
+            $dailyWork->save();
+
+            // Return JSON response with success message
+            return response()->json(['message' => $message]);
+
+        } catch (ValidationException $e) {
+            // Validation failed, return error response
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            // Other exceptions occurred, return error response
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
 
     public function getLatestTimestamp()
     {
@@ -69,29 +139,6 @@ class DailyWorkController extends Controller
         return response()->json(['timestamp' => $latestTimestamp]);
     }
 
-    public function allTasks(Request $request)
-    {
-        $user = Auth::user();
-        $tasks = $user->hasRole('se')
-            ? [
-                'tasks' => DailyWork::with('reports')->where('incharge', $user->user_name)->get(),
-                'incharges' => [],
-                'juniors' => User::where('incharge', $user->user_name)->get(),
-
-            ]
-            : ($user->hasRole('qci') || $user->hasRole('aqci')
-                ? ['tasks' => DailyWork::with('reports')->where('assigned', $user->user_name)->get()]
-                : ($user->hasRole('admin') || $user->hasRole('manager')
-                    ? [
-                        'tasks' => DailyWork::with('reports')->get(),
-                        'incharges' => User::role('se')->get(),
-                        'juniors' => [],
-                    ]
-                    : ['tasks' => []]
-                )
-            );
-        return response()->json($tasks);
-    }
 
     public function addTask(Request $request)
     {

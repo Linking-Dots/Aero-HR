@@ -194,6 +194,7 @@ const BankInformationForm = ({ user, setUser, open, closeModal }) => {
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
+                                size="small"
                                 label="Bank Account No."
                                 fullWidth
                                 value={changedUserData.bank_account_no || initialUserData.bank_account_no || ''}

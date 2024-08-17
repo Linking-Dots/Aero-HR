@@ -62,7 +62,9 @@ function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
     const [anchorElNav, setAnchorElNav] = React.useState(null);
-    const [anchorElUser, setAnchorElUser] = React.useState(null);
+    const [anchorElUser, setAnchorElUser] = useState(null);
+
+
     const [anchorElSubMenu, setAnchorElSubMenu] = React.useState(null);
     const [openSubMenu, setOpenSubMenu] = React.useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -84,6 +86,8 @@ function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
     const handleOpenUserMenu = (event) => {
         setAnchorElUser(event.currentTarget);
     };
+
+
 
     const handleOpenSubMenu = (pageName, event) => {
         setAnchorElSubMenu(event.currentTarget); // Set the submenu anchor element
@@ -115,7 +119,7 @@ function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
                     border: theme.glassCard.border,
                 }} position="static">
                     <Container maxWidth="xl">
-                        <Box disableGutters sx={{
+                        <Box sx={{
                             display: 'flex',
                             flexDirection: 'row',
                             alignItems: 'center', // Center items vertically
@@ -353,7 +357,7 @@ function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
                             </Box>
 
 
-                            <Box disableGutters sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Tooltip title="Open settings">
                                         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>

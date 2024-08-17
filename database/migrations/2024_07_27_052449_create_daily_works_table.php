@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('qty_layer')->nullable();
             $table->string('planned_time')->nullable();
             $table->foreignId('incharge')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('assignee')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('assigned')->constrained('users')->cascadeOnDelete();
             $table->dateTime('completion_time')->nullable();
             $table->text('inspection_details')->nullable();
             $table->integer('resubmission_count')->nullable();
