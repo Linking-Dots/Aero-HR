@@ -58,7 +58,7 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 
 
-const TaskTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdictions, users, reports_with_daily_works  }) => {
+const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdictions, users, reports_with_daily_works  }) => {
     console.log(dailyWorkData)
     console.log(allInCharges)
     const { auth } = usePage().props;
@@ -237,7 +237,7 @@ const TaskTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdiction
             ),
         },
         {
-            name: 'Comments',
+            name: 'Results',
             selector: row => row.inspection_details,
             sortable: true,
             width: '200px',
@@ -365,11 +365,15 @@ const TaskTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdiction
             width: '250px',
             cell: row => (
                 <TextField
+                    fullWidth
                     size="small"
                     type="datetime-local"
-                    value={row.completion_time || ''}
-                    onChange={(e) => handleChange(row.id,'completion_time', e.target.value)}
+                    value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
+                    onChange={(e) => handleChange(row.id, 'completion_time', e.target.value)}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
+                    inputProps={{
+                        placeholder: 'YYYY-MM-DDTHH:MM'
+                    }}
                 />
             ),
         },
@@ -599,4 +603,4 @@ const TaskTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdiction
     );
 };
 
-export default TaskTable;
+export default DailyWorksTable;

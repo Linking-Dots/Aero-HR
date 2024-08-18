@@ -3,7 +3,7 @@ import { Box, Card, CardContent, CardHeader, Table, TableBody, TableCell, TableC
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
-const TimeSheet = (props) => {
+const TimeSheetTable = (props) => {
     const [attendances, setAttendances] = useState([]);
     const [error, setError] = useState('');
 
@@ -109,4 +109,4 @@ const TimeSheet = (props) => {
     );
 };
 
-export default TimeSheet;
+export default TimeSheetTable;

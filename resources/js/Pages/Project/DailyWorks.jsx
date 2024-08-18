@@ -16,7 +16,7 @@ import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
 import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
-import TaskTable from '@/Components/TaskTable.jsx';
+import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -166,7 +166,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                         </CardContent>
 
                         <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
-                            <TaskTable
+                            <DailyWorksTable
                                 dailyWorkData={dailyWorksData.dailyWorks}
                                 reports={reports}
                                 juniors={dailyWorksData.juniors}

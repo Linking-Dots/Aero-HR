@@ -9,7 +9,7 @@ import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import {Add} from "@mui/icons-material";
 import { toast } from 'react-toastify';
-import EmployeeTable from '@/Components/EmployeeTable.jsx';
+import EmployeeTable from '@/Tables/EmployeeTable.jsx';
 
 const EmployeesList = ({title, allUsers, departments, designations}) => {
     return (
