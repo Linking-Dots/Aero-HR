@@ -21,12 +21,57 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import minMax from 'dayjs/plugin/minMax';
+dayjs.extend(minMax);
+
 import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
+import { styled } from '@mui/system';
+
+
+
+
+const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
+    '& .MuiPaper-root': {
+        backgroundColor: theme.glassCard.backgroundColor,
+    },
+    '& .MuiInputBase-root': {
+        color: theme.palette.text.primary, // Example to change text color
+        borderColor: theme.palette.divider, // Example to change border color
+    },
+    '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+            borderColor: theme.palette.divider,
+        },
+        '&:hover fieldset': {
+            borderColor: theme.palette.primary.main, // Example to change border color on hover
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: theme.palette.primary.main, // Example to change border color when focused
+        },
+    },
+    '& .MuiSvgIcon-root': {
+        color: theme.palette.text.secondary, // Example to change icon color
+    },
+    '& .MuiPickersDay-root': {
+        color: theme.palette.text.primary, // Example to change the day text color
+        '&.Mui-selected': {
+            backgroundColor: theme.palette.primary.main, // Example to change the selected day background color
+            color: theme.palette.primary.contrastText, // Example to change the selected day text color
+        },
+        '&.MuiPickersDay-today': {
+            borderColor: theme.palette.primary.main, // Example to highlight today's date
+        },
+    },
+}));
+
+
 
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
 
     const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
+    const dates = dailyWorks.map(work => dayjs(work.date));
+
     console.log(dailyWorks)
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
@@ -52,10 +97,10 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
 
 
     const [filterData, setFilterData] = useState({
-        startDate: dayjs(),
-        endDate: dayjs(),
-        status: '',
-        inCharge: '',
+        startDate: dayjs.min(...dates),
+        endDate: dayjs.max(...dates),
+        status: 'all',
+        incharge: 'all',
         report: '',
     });
 
@@ -65,6 +110,21 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
             [key]: value,
         }));
     };
+
+    useEffect(() => {
+        const filteredWorks = dailyWorksData.dailyWorks.filter(work => {
+            const workDate = dayjs(work.date);
+
+            return (
+                workDate.isBetween(filterData.startDate, filterData.endDate, null, '[]') &&
+                (filterData.status === 'all' || !filterData.status || work.status === filterData.status) &&
+                (filterData.incharge === 'all' || !filterData.incharge || work.incharge === filterData.incharge) &&
+                (filterData.report ? work.report === filterData.report : true)
+            );
+        });
+
+        setDailyWorks(filteredWorks);
+    }, [filterData]);
 
 
 
@@ -140,14 +200,14 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                     <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                             <Box display="flex" alignItems="center">
-                                                <DatePicker
+                                                <StyledDatePicker
                                                     label="Start date"
                                                     value={filterData.startDate}
                                                     onChange={(newValue) => handleFilterChange('startDate', newValue)}
                                                     textField={(params) => <TextField {...params} fullWidth size="small" />}
                                                 />
                                                 <Box sx={{ mx: 1 }}> to </Box>
-                                                <DatePicker
+                                                <StyledDatePicker
                                                     label="End date"
                                                     value={filterData.endDate}
                                                     onChange={(newValue) => handleFilterChange('endDate', newValue)}
@@ -164,9 +224,9 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                                 label="Status"
                                                 name="status"
                                                 value={filterData.status}
+
                                                 onChange={(e) => handleFilterChange('status', e.target.value)}
                                             >
-                                                <MenuItem value="" disabled>Select Status</MenuItem>
                                                 <MenuItem value="all">All</MenuItem>
                                                 <MenuItem value="completed">Completed</MenuItem>
                                                 <MenuItem value="new">New</MenuItem>
@@ -183,13 +243,12 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                                     labelId="incharge-label"
                                                     label="Incharge"
                                                     name="incharge"
-                                                    value={filterData.inCharge}
-                                                    onChange={(e) => handleFilterChange('inCharge', e.target.value)}
+                                                    value={filterData.incharge}
+                                                    onChange={(e) => handleFilterChange('incharge', e.target.value)}
                                                 >
-                                                    <MenuItem value="" disabled>Select Incharge</MenuItem>
                                                     <MenuItem value="all">All</MenuItem>
                                                     {dailyWorksData.allInCharges.map(inCharge => (
-                                                        <MenuItem key={inCharge.user_name} value={inCharge.user_name}>
+                                                        <MenuItem key={inCharge.id} value={inCharge.id}>
                                                             {inCharge.name}
                                                         </MenuItem>
                                                     ))}

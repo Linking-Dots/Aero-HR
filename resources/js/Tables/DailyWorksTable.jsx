@@ -10,7 +10,7 @@ import {
     Button,
     DialogActions,
     DialogContentText,
-    DialogContent
+    DialogContent, InputAdornment
 } from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
@@ -18,6 +18,7 @@ import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
 import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
 import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
 import EmergencyIcon from '@mui/icons-material/Error';
+import SearchIcon from '@mui/icons-material/Search';
 import {toast} from "react-toastify";
 
 import EditIcon from '@mui/icons-material/Edit';
@@ -64,11 +65,10 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow }) => {
     const { auth } = usePage().props;
-
+    const [search, setSearch] = useState('');
+    const [filteredData, setFilteredData] = useState(dailyWorkData);
 
     const theme = useTheme();
-
-
 
     const userIsAdmin = auth.roles.includes('admin');
     const userIsSe = auth.roles.includes('se');
@@ -383,8 +383,8 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
         {
             name: 'Resubmission Count',
             selector: row => row.resubmission_count,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '160px',
             cell: row => (
                 <>
@@ -447,6 +447,18 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
             ),
         }
     ];
+
+    const handleSearch = (event) => {
+        const value = event.target.value.toLowerCase();
+        setSearch(value);
+
+        const filtered = dailyWorkData.filter(item =>
+            Object.values(item).some(val =>
+                String(val).toLowerCase().includes(value)
+            )
+        );
+        setFilteredData(filtered);
+    };
 
 
     const getStatusColor = (status) => {
@@ -558,18 +570,36 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
 
 
     return (
-        <CustomDataTable
-            columns={columns}
-            data={dailyWorkData}
-            defaultSortField="date"
-            defaultSortFieldId={1}
-            defaultSortAsc={false}
-            pagination
-            fixedHeaderScrollHeight="500px"
-            highlightOnHover
-            responsive
-            dense
-        />
+        <>
+            <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search..."
+                value={search}
+                onChange={handleSearch}
+                sx={{ mb: 2 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+            <CustomDataTable
+                columns={columns}
+                data={filteredData}
+                defaultSortField="date"
+                defaultSortFieldId={1}
+                defaultSortAsc={false}
+                pagination
+                fixedHeaderScrollHeight="500px"
+                highlightOnHover
+                responsive
+                dense
+            />
+        </>
+
     );
 };
 
