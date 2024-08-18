@@ -80,7 +80,7 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
             name: 'Date',
             selector: row => row.date,
             sortable: 'true',
-            center: 'true',
+            center: "true",
             width: '100px'
         },
         {
@@ -383,13 +383,15 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
         {
             name: 'Resubmission Count',
             selector: row => row.resubmission_count,
-            sortable: 'true',
-            center: 'true',
+            sortable: true,
+            center: true,
             width: '160px',
             cell: row => (
                 <>
                     {
-                        row.resubmission_count ? (row.resubmission_count + row.resubmission_count > 1 ? 'times' : 'time') : ''
+                        row.resubmission_count
+                            ? `${row.resubmission_count} ${row.resubmission_count > 1 ? 'times' : 'time'}`
+                            : ''
                     }
                 </>
             ),
@@ -402,10 +404,10 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
             width: '180px',
             cell: row => (
                 <TextField
+                    fullWidth
                     size="small"
                     type="date"
                     onChange={(e) => handleChange(row.id, 'rfi_submission_date', e.target.value)}
-                    fullWidth
                     value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
                     inputProps={{
@@ -479,6 +481,7 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
                 });
 
                 const data = await response.json();
+                console.log(data)
 
                 if (response.ok) {
                     setDailyWorks(prevTasks =>
@@ -486,7 +489,7 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
                             task.id === taskId ? { ...task, [key]: value } : task
                         )
                     );
-                    resolve([data.message]);
+                    resolve([data.messages]);
                 } else {
                     reject(data.error || `Failed to update task ${[key]}.`);
                     console.error(data);

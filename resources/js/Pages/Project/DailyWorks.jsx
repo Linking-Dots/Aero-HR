@@ -143,14 +143,14 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                                     label="Start date"
                                                     value={filterData.startDate}
                                                     onChange={(newValue) => handleFilterChange('startDate', newValue)}
-                                                    renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                                    textField={(params) => <TextField {...params} fullWidth size="small" />}
                                                 />
                                                 <Box sx={{ mx: 1 }}> to </Box>
                                                 <DatePicker
                                                     label="End date"
                                                     value={filterData.endDate}
                                                     onChange={(newValue) => handleFilterChange('endDate', newValue)}
-                                                    renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                                    textField={(params) => <TextField {...params} fullWidth size="small" />}
                                                 />
                                             </Box>
                                         </LocalizationProvider>
