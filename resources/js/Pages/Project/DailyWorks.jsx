@@ -10,7 +10,7 @@ import {
     Select,
     TextField,
     Typography,
-    IconButton, Grid,
+    IconButton, Grid, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
 import {Head, usePage} from "@inertiajs/react";
@@ -21,8 +21,35 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
+import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
 
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
+
+    const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
+    console.log(dailyWorks)
+    const [currentRow, setCurrentRow] = useState();
+    const [taskIdToDelete, setTaskIdToDelete] = useState(null);
+    const [openModalType, setOpenModalType] = useState(null);
+
+    const handleClickOpen = (taskId, modalType) => {
+        setTaskIdToDelete(taskId);
+        setOpenModalType(modalType);
+    };
+
+    const handleClose = () => {
+        setOpenModalType(null);
+        setTaskIdToDelete(null);
+    };
+    const openModal = (modalType) => {
+        setOpenModalType(modalType);
+    };
+
+    const closeModal = () => {
+        setOpenModalType(null);
+    };
+
+
 
     const [filterData, setFilterData] = useState({
         startDate: dayjs(),
@@ -40,9 +67,30 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
     };
 
 
+
+
+
     return (
         <App>
             <Head title={title}/>
+            {openModalType === 'editDailyWork' && (
+                <DailyWorkForm
+                    open={openModalType === 'editDailyWork'}
+                    currentRow={currentRow}
+                    setDailyWorks={setDailyWorks}
+                    closeModal={closeModal}
+                />
+            )}
+            {openModalType === 'deleteDailyWork' && (
+                <DeleteDailyWorkForm
+                    open={openModalType === 'deleteDailyWork'}
+                    setDailyWorks={setDailyWorks}
+                    handleClose={handleClose}
+                    taskIdToDelete={taskIdToDelete}
+                />
+            )}
+
+
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
@@ -167,8 +215,12 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
 
                         <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
                             <DailyWorksTable
-                                dailyWorkData={dailyWorksData.dailyWorks}
+                                setDailyWorks={setDailyWorks}
+                                dailyWorkData={dailyWorks}
                                 reports={reports}
+                                setCurrentRow={setCurrentRow}
+                                handleClickOpen={handleClickOpen}
+                                openModal={openModal}
                                 juniors={dailyWorksData.juniors}
                                 allInCharges={dailyWorksData.allInCharges}
                                 jurisdictions={jurisdictions}

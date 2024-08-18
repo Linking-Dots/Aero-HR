@@ -5,10 +5,10 @@ import {
     CircularProgress,
     DialogActions,
     DialogContent,
-    DialogTitle,
+    DialogTitle, FormControl, FormHelperText,
     Grid,
-    IconButton,
-    MenuItem,
+    IconButton, InputLabel,
+    MenuItem, Select,
     TextField,
     Typography,
 } from '@mui/material';
@@ -18,22 +18,22 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { toast } from 'react-toastify';
 import GlassDialog from '@/Components/GlassDialog.jsx';
+import {useTheme} from "@mui/material/styles";
 
-const DailyWorkForm = ({ open, closeModal, dailyWork }) => {
+const DailyWorkForm = ({ open, closeModal, currentRow, setDailyWorks}) => {
+    const theme = useTheme();
     const [dailyWorkData, setDailyWorkData] = useState({
-        id: dailyWork.id || '',
-        date: dailyWork.date || '',
-        number: dailyWork.number || '',
-        time: dailyWork.time || '',
-        type: dailyWork.type || 'Structure',
-        location: dailyWork.location || '',
-        description: dailyWork.description || '',
-        side: dailyWork.side || 'SR-R',
-        qty_layer: dailyWork.qty_layer || '',
-        completion_time: dailyWork.completion_time || '',
-        status: dailyWork.status || 'completed',
-        inspection_details: dailyWork.inspection_details || '',
+        id: currentRow.id || '',
+        date: currentRow.date || '',
+        number: currentRow.number || '',
+        planned_time: currentRow.planned_time || '',
+        type: currentRow.type || 'Structure',
+        location: currentRow.location || '',
+        description: currentRow.description || '',
+        side: currentRow.side || 'SR-R',
+        qty_layer: currentRow.qty_layer || '',
     });
+    console.log(dailyWorkData)
 
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
@@ -53,35 +53,109 @@ const DailyWorkForm = ({ open, closeModal, dailyWork }) => {
         }));
     };
 
-    const handleSubmit = async (event) => {
+    async function handleSubmit(event) {
         event.preventDefault();
         setProcessing(true);
+        const promise = new Promise(async (resolve, reject) => {
+            try {
 
-        try {
-            const response = await fetch('/path/to/your/api', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify(dailyWorkData),
-            });
+                const response = await fetch(route('dailyWorks.update'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        ruleSet: 'details',
+                        ...dailyWorkData
+                    }),
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (response.ok) {
+                if (response.ok) {
+                    setDailyWorks(prevWorks => prevWorks.map(work =>
+                        work.id === dailyWorkData.id ? { ...work, ...dailyWorkData } : work
+                    ));
+
+
+                    closeModal();
+                    resolve(data.message ? [data.message] : data.messages);
+                    setProcessing(false);
+                    closeModal();
+                    console.log(data.message ? [data.message] : data.messages);
+                } else {
+                    setProcessing(false);
+                    setErrors(data.errors);
+                    reject(data.errors);
+                    console.error(data.errors);
+                }
+            } catch (error) {
                 setProcessing(false);
                 closeModal();
-                toast.success('Task added successfully!');
-            } else {
-                setProcessing(false);
-                setErrors(data.errors);
-                toast.error('Failed to add task.');
+                console.log(error)
+                reject(['An unexpected error occurred.']);
             }
-        } catch (error) {
-            setProcessing(false);
-            toast.error('An unexpected error occurred.');
-        }
+        });
+
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{display: 'flex', alignItems: 'center'}}>
+                                <CircularProgress/>
+                                <span style={{marginLeft: '8px'}}>Updating daily work ...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary
+                    }
+                },
+                success: {
+                    render({data}) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary
+                    }
+                },
+                error: {
+                    render({data}) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary
+                    }
+                }
+            }
+        );
     };
 
     return (
@@ -127,31 +201,47 @@ const DailyWorkForm = ({ open, closeModal, dailyWork }) => {
                         <Grid item xs={12} md={6}>
                             <TextField
                                 label="Planned Time"
-                                type="time"
-                                name="time"
+                                name="planned_time"
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
-                                value={dailyWorkData.time}
+                                value={dailyWorkData.planned_time}
                                 onChange={handleChange}
-                                error={Boolean(errors.time)}
-                                helperText={errors.time}
+                                error={Boolean(errors.planned_time)}
+                                helperText={errors.planned_time}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                select
-                                label="Type"
-                                name="type"
-                                fullWidth
-                                value={dailyWorkData.type}
-                                onChange={handleChange}
-                                error={Boolean(errors.type)}
-                                helperText={errors.type}
-                            >
-                                <MenuItem value="Structure">Structure</MenuItem>
-                                <MenuItem value="Embankment">Embankment</MenuItem>
-                                <MenuItem value="Pavement">Pavement</MenuItem>
-                            </TextField>
+                            <FormControl fullWidth>
+                                <InputLabel id="type-label">Type</InputLabel>
+                                <Select
+                                    select
+                                    label="Type"
+                                    name="type"
+                                    fullWidth
+                                    value={dailyWorkData.type}
+                                    onChange={handleChange}
+                                    error={Boolean(errors.type)}
+                                    helperText={errors.type}
+                                    labelId="type-label"
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                backdropFilter: 'blur(16px) saturate(200%)',
+                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                border: theme.glassCard.border,
+                                                borderRadius: 2,
+                                                boxShadow:
+                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="Structure">Structure</MenuItem>
+                                    <MenuItem value="Embankment">Embankment</MenuItem>
+                                    <MenuItem value="Pavement">Pavement</MenuItem>
+                                </Select>
+                                <FormHelperText>{errors.type}</FormHelperText>
+                            </FormControl>
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
@@ -203,48 +293,6 @@ const DailyWorkForm = ({ open, closeModal, dailyWork }) => {
                                 helperText={errors.qty_layer}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Completion Date/Time"
-                                type="datetime-local"
-                                name="completion_time"
-                                fullWidth
-                                InputLabelProps={{ shrink: true }}
-                                value={dailyWorkData.completion_time}
-                                onChange={handleChange}
-                                error={Boolean(errors.completion_time)}
-                                helperText={errors.completion_time}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                select
-                                label="Status"
-                                name="status"
-                                fullWidth
-                                value={dailyWorkData.status}
-                                onChange={handleChange}
-                                error={Boolean(errors.status)}
-                                helperText={errors.status}
-                            >
-                                <MenuItem value="completed">Completed</MenuItem>
-                                <MenuItem value="resubmission">Resubmission</MenuItem>
-                                <MenuItem value="emergency">Emergency</MenuItem>
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Results"
-                                name="inspection_details"
-                                multiline
-                                rows={3}
-                                fullWidth
-                                value={dailyWorkData.inspection_details}
-                                onChange={handleChange}
-                                error={Boolean(errors.inspection_details)}
-                                helperText={errors.inspection_details}
-                            />
-                        </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions
@@ -255,21 +303,18 @@ const DailyWorkForm = ({ open, closeModal, dailyWork }) => {
                         padding: '16px',
                     }}
                 >
-                    <Button
-                        variant="outlined"
-                        color="light"
-                        onClick={closeModal}
-                    >
-                        Close
-                    </Button>
                     <LoadingButton
                         disabled={!dataChanged}
-                        variant="contained"
-                        color="success"
+                        sx={{
+                            borderRadius: '50px',
+                            padding: '6px 16px',
+                        }}
+                        variant="outlined"
+                        color="primary"
                         type="submit"
                         loading={processing}
                     >
-                        Add Task
+                        Submit
                     </LoadingButton>
                 </DialogActions>
             </form>

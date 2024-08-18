@@ -90,46 +90,105 @@ class DailyWorkController extends Controller
                 return response()->json(['error' => 'Daily work not found'], 404);
             }
 
-            // Check which field needs to be updated and apply validation
+            $messages = [];  // Initialize an empty array to hold success messages
+
+            // Check if the 'ruleSet' is 'details' and perform validation
+            if ($request->has('ruleSet') && $request->input('ruleSet') === 'details') {
+                $validatedData = $request->validate([
+                    'date' => 'required|date',
+                    'number' => 'required|string',
+                    'type' => 'required|string',
+                    'description' => 'nullable|string',
+                    'location' => 'required|string',
+                    'side' => 'nullable|string',
+                    'qty_layer' => 'nullable|string',
+                    'planned_time' => 'required|string',
+                ]);
+
+                // Update the daily work fields with the validated data
+                $dailyWork->date = $validatedData['date'];
+                $dailyWork->number = $validatedData['number'];
+                $dailyWork->type = $validatedData['type'];
+                $dailyWork->description = $validatedData['description'];
+                $dailyWork->location = $validatedData['location'];
+                $dailyWork->side = $validatedData['side'];
+                $dailyWork->qty_layer = $validatedData['qty_layer'];
+                $dailyWork->planned_time = $validatedData['planned_time'];
+
+                $messages[] = 'Daily work details updated successfully';
+            }
+
+            // Additional fields update checks
             if ($request->has('status')) {
                 $request->validate(['status' => 'required|string']);
                 $dailyWork->status = $request->status;
-                $message = 'Daily work status updated to ' . $dailyWork->status;
-            } elseif ($request->has('assigned')) {
+                $messages[] = 'Daily work status updated to ' . $dailyWork->status;
+            }
+            if ($request->has('assigned')) {
                 $request->validate(['assigned' => 'required|exists:users,id']);
                 $dailyWork->assigned = $request->assigned;
-                $message = 'Daily work assigned to ' . User::find($request->assigned)->name;
-            } elseif ($request->has('incharge')) {
+                $messages[] = 'Daily work assigned to ' . User::find($request->assigned)->name;
+            }
+            if ($request->has('incharge')) {
                 $request->validate(['incharge' => 'required|exists:users,id']);
                 $dailyWork->incharge = $request->incharge;
-                $message = 'Daily work incharge updated to ' . User::find($request->incharge)->name;
-            } elseif ($request->has('inspection_details')) {
+                $messages[] = 'Daily work incharge updated to ' . User::find($request->incharge)->name;
+            }
+            if ($request->has('inspection_details')) {
                 $dailyWork->inspection_details = $request->inspection_details;
-                $message = 'Inspection details updated successfully';
-            } elseif ($request->has('rfi_submission_date')) {
+                $messages[] = 'Inspection details updated successfully';
+            }
+            if ($request->has('rfi_submission_date')) {
                 $dailyWork->rfi_submission_date = $request->rfi_submission_date;
-                $message = 'RFI Submission date updated';
-            } elseif ($request->has('completion_time')) {
+                $messages[] = 'RFI Submission date updated';
+            }
+            if ($request->has('completion_time')) {
                 $dailyWork->completion_time = $request->completion_time;
-                $message = 'Completion date-time updated';
-            } else {
-                return response()->json(['error' => 'Invalid update request'], 400);
+                $messages[] = 'Completion date-time updated';
             }
 
-            // Save the task with the updated field
+            // Save the daily work with the updated fields
             $dailyWork->save();
 
-            // Return JSON response with success message
-            return response()->json(['message' => $message]);
+            // Return JSON response with the success messages
+            return response()->json(['messages' => $messages]);
 
         } catch (ValidationException $e) {
             // Validation failed, return error response
-            return response()->json(['error' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             // Other exceptions occurred, return error response
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function delete(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            // Validate the incoming request
+            $request->validate([
+                'id' => 'required|exists:daily_works,id',
+            ]);
+
+            // Find the daily work by ID
+            $dailyWork = DailyWork::find($request->id);
+
+            if (!$dailyWork) {
+                return response()->json(['error' => 'Daily work not found'], 404);
+            }
+
+            // Delete the daily work
+            $dailyWork->delete();
+
+            // Return a success response
+            return response()->json(['message' => 'Daily work deleted successfully'], 200);
+
+        } catch (\Exception $e) {
+            // Catch any exceptions and return an error response
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
 
 
     public function getLatestTimestamp()
@@ -240,6 +299,7 @@ class DailyWorkController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
 
 

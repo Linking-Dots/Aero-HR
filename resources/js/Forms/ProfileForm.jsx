@@ -248,7 +248,6 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 <InputLabel id="gender-label">Gender</InputLabel>
                                 <Select
                                     labelId="gender-label"
-                                    id={`gender-select-${user.id}`}
                                     value={updatedUser.gender || user.gender || 'na'}
                                     onChange={(e) => handleChange('gender', e.target.value)}
                                     error={Boolean(errors.gender)}

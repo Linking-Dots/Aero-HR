@@ -1,11 +1,16 @@
 import React, {useState} from 'react';
 import DataTable, { createTheme } from 'react-data-table-component';
 import {
+    DialogTitle,
     Select,
     MenuItem,
     TextField,
     Avatar,
-    CircularProgress, Box, IconButton
+    CircularProgress, Box, IconButton,
+    Button,
+    DialogActions,
+    DialogContentText,
+    DialogContent
 } from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
@@ -17,8 +22,7 @@ import {toast} from "react-toastify";
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ProfileForm from "@/Forms/ProfileForm.jsx";
-import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
+import GlassDialog from "@/Components/GlassDialog.jsx";
 
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
@@ -58,14 +62,13 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 
 
-const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisdictions, users, reports_with_daily_works  }) => {
-    console.log(dailyWorkData)
-    console.log(allInCharges)
+const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow }) => {
     const { auth } = usePage().props;
 
+
     const theme = useTheme();
-    const [dailyWorks, setDailyWorks] = useState(dailyWorkData);
-    const [openModalType, setOpenModalType] = useState(null);
+
+
 
     const userIsAdmin = auth.roles.includes('admin');
     const userIsSe = auth.roles.includes('se');
@@ -76,15 +79,15 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Date',
             selector: row => row.date,
-            sortable: true,
-            center: true,
-            grow: 0
+            sortable: 'true',
+            center: 'true',
+            width: '100px'
         },
         {
             name: 'RFI NO',
             selector: row => row.number,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '140px',
             cell: row => (
                 <>
@@ -102,8 +105,8 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Status',
             selector: row => row.status,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '220px',
             cell: row => (
                 <Select
@@ -149,8 +152,8 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         ...(userIsSe ? [{
             name: 'Assigned',
             selector: row => row.assigned,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '150px',
             cell: row => (
                 <Select
@@ -195,15 +198,15 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Type',
             selector: row => row.type,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '140px',
         },
         {
             name: 'Description',
             selector: row => row.description,
-            sortable: true,
-            left: true,
+            sortable: 'true',
+            left: 'true',
             width: '260px',
 
             cell: row => (
@@ -221,8 +224,8 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Location',
             selector: row => row.location,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '200px',
             cell: row => (
                 <Box sx={{
@@ -239,9 +242,9 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Results',
             selector: row => row.inspection_details,
-            sortable: true,
+            sortable: 'true',
             width: '200px',
-            center: true,
+            center: 'true',
             cell: row => {
                 const [isEditing, setIsEditing] = React.useState(false);
                 const [inputValue, setInputValue] = React.useState(row.inspection_details || '');
@@ -301,22 +304,22 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Road Type',
             selector: row => row.side,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '120px',
         },
         {
             name: 'Quantity/Layer No.',
             selector: row => row.qty_layer,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '150px',
         },
         ...(userIsAdmin ? [{
             name: 'In charge',
             selector: row => row.incharge,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             cell: row => (
                 <Select
                     fullWidth
@@ -360,8 +363,8 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Completion Time',
             selector: row => row.completion_time,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '250px',
             cell: row => (
                 <TextField
@@ -380,35 +383,40 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         {
             name: 'Resubmission Count',
             selector: row => row.resubmission_count,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '160px',
             cell: row => (
                 <>
-                    {row.resubmission_count} {row.resubmission_count > 1 ? 'times' : 'time'}
+                    {
+                        row.resubmission_count ? (row.resubmission_count + row.resubmission_count > 1 ? 'times' : 'time') : ''
+                    }
                 </>
             ),
         },
         ...(userIsAdmin ? [{
             name: 'RFI Submission Date',
             selector: row => row.rfi_submission_date,
-            sortable: true,
-            center: true,
+            sortable: 'true',
+            center: 'true',
             width: '180px',
             cell: row => (
                 <TextField
                     size="small"
                     type="date"
-                    defaultValue={row.rfi_submission_date}
-                    onChange={(e) => handleChange(row.id,'rfi_submission_date', e.target.value)}
+                    onChange={(e) => handleChange(row.id, 'rfi_submission_date', e.target.value)}
+                    fullWidth
+                    value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
-                    disabled={!userIsAdmin}
+                    inputProps={{
+                        placeholder: 'yyyy-MM-dd'
+                    }}
                 />
             ),
         }] : []),
         {
             name: 'Actions',
-            center: true,
+            center: 'true',
             width: '150px',
             cell: row => (
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -417,40 +425,22 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
                         variant="outlined"
                         color="success"
                         size="small"
-                        onClick={() => openModal('editDailyWork')}
+                        onClick={() => {
+                            setCurrentRow(row);
+                            openModal('editDailyWork');
+                        }}
                     >
                         <EditIcon />
                     </IconButton>
                     <IconButton
-                        sx={{m:1}}
+                        sx={{ m: 1 }}
                         variant="outlined"
                         color="error"
                         size="small"
-                        onClick={() => handleDelete(row.id)}
+                        onClick={() => handleClickOpen(row.id, 'deleteDailyWork')}
                     >
                         <DeleteIcon />
                     </IconButton>
-                    {/*{openModalType === 'editDailyWork' && (*/}
-                    {/*    <DailyWorkForm*/}
-                    {/*        user={user}*/}
-                    {/*        allUsers={allUsers}*/}
-                    {/*        departments={departments}*/}
-                    {/*        designations={designations}*/}
-                    {/*        open={openModalType === 'dailyWork'}*/}
-                    {/*        setUser={setUser}*/}
-                    {/*        closeModal={closeModal}*/}
-                    {/*        handleImageChange={handleImageChange}*/}
-                    {/*        selectedImage={selectedImage}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-                    {openModalType === 'editDailyWork' && (
-                        <DailyWorkForm
-                            open={openModalType === 'editDailyWork'}
-                            setDailyWorks={setDailyWorks}
-                            dailyWork={row}
-                            closeModal={closeModal}
-                        />
-                    )}
                 </Box>
             ),
         }
@@ -472,13 +462,6 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
         }
     };
 
-    const openModal = (modalType) => {
-        setOpenModalType(modalType);
-    };
-
-    const closeModal = () => {
-        setOpenModalType(null);
-    };
 
     const handleChange = (taskId, key, value) => {
         const promise = new Promise(async (resolve, reject) => {
@@ -571,35 +554,19 @@ const DailyWorksTable = ({ dailyWorkData, allInCharges, reports, juniors, jurisd
     };
 
 
-    const handleEdit = (taskId) => {
-        console.log('Edit task:', taskId);
-        // Handle edit task logic
-    };
-
-    const handleDelete = (taskId) => {
-        console.log('Delete task:', taskId);
-        // Handle delete task logic
-    };
-
     return (
-        <>
-
-            <CustomDataTable
-                columns={columns}
-                data={dailyWorks}
-                defaultSortField="date"
-                defaultSortFieldId={1}
-                defaultSortAsc={false}
-                pagination
-                fixedHeaderScrollHeight="500px"
-                highlightOnHover
-                responsive
-                dense
-
-            />
-        </>
-
-
+        <CustomDataTable
+            columns={columns}
+            data={dailyWorkData}
+            defaultSortField="date"
+            defaultSortFieldId={1}
+            defaultSortAsc={false}
+            pagination
+            fixedHeaderScrollHeight="500px"
+            highlightOnHover
+            responsive
+            dense
+        />
     );
 };
 
