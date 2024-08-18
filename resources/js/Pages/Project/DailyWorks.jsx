@@ -96,6 +96,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                     <GlassCard>
                         <CardHeader
                             title={title}
+                            sx={{padding: '24px'}}
                             action={
                                 <Box display="flex" gap={2}>
                                     {auth.permissions.includes('addTaskSE') && (

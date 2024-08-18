@@ -106,17 +106,25 @@ class DailyWorkController extends Controller
                 ]);
 
                 // Update the daily work fields with the validated data
-                $dailyWork->date = $validatedData['date'];
-                $dailyWork->number = $validatedData['number'];
-                $dailyWork->type = $validatedData['type'];
-                $dailyWork->description = $validatedData['description'];
-                $dailyWork->location = $validatedData['location'];
-                $dailyWork->side = $validatedData['side'];
-                $dailyWork->qty_layer = $validatedData['qty_layer'];
-                $dailyWork->planned_time = $validatedData['planned_time'];
+                $fields = [
+                    'date' => 'Date',
+                    'number' => 'Number',
+                    'type' => 'Type',
+                    'description' => 'Description',
+                    'location' => 'Location',
+                    'side' => 'Side',
+                    'qty_layer' => 'Quantity Layer',
+                    'planned_time' => 'Planned Time',
+                ];
 
-                $messages[] = 'Daily work details updated successfully';
+                foreach ($fields as $key => $label) {
+                    if (array_key_exists($key, $validatedData) && $dailyWork->$key !== $validatedData[$key]) {
+                        $dailyWork->$key = $validatedData[$key];
+                        $messages[] = "{$label} updated successfully to '{$validatedData[$key]}'";
+                    }
+                }
             }
+
 
             // Additional fields update checks
             if ($request->has('status')) {
