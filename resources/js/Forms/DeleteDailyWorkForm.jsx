@@ -6,7 +6,7 @@ import {useTheme} from "@mui/material/styles";
 
 
 
-const DeleteDailyWorkForm = ({ open, handleClose, taskIdToDelete, setDailyWorks }) => {
+const DeleteDailyWorkForm = ({ open, handleClose, taskIdToDelete, setDailyWorks, setFilteredData }) => {
     const theme = useTheme();
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
@@ -25,6 +25,7 @@ const DeleteDailyWorkForm = ({ open, handleClose, taskIdToDelete, setDailyWorks 
                 if (response.ok) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
                     setDailyWorks(prevWorks => prevWorks.filter(work => work.id !== taskIdToDelete));
+                    setFilteredData(prevFilteredData => prevFilteredData.filter(work => work.id !== taskIdToDelete));
                     resolve('Task deleted successfully');
                 } else {
                     reject(data.error || 'Failed to delete task');

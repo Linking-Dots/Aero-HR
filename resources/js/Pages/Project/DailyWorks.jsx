@@ -10,7 +10,7 @@ import {
     Select,
     TextField,
     Typography,
-    IconButton, Grid, DialogTitle, DialogContent, DialogContentText, DialogActions,
+    IconButton, Grid, DialogTitle, DialogContent, DialogContentText, DialogActions, InputAdornment,
 } from '@mui/material';
 import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
 import {Head, usePage} from "@inertiajs/react";
@@ -27,6 +27,7 @@ dayjs.extend(minMax);
 import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
 import { styled } from '@mui/system';
+import SearchIcon from "@mui/icons-material/Search";
 
 
 
@@ -70,12 +71,12 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
 
     const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
+    const [filteredData, setFilteredData] = useState(dailyWorksData.dailyWorks);
     const dates = dailyWorks.map(work => dayjs(work.date));
-
-    console.log(dailyWorks)
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
     const [openModalType, setOpenModalType] = useState(null);
+    const [search, setSearch] = useState('');
 
     const handleClickOpen = (taskId, modalType) => {
         setTaskIdToDelete(taskId);
@@ -111,8 +112,21 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
         }));
     };
 
+    const handleSearch = (event) => {
+        const value = event.target.value.toLowerCase();
+        setSearch(value);
+    };
+
     useEffect(() => {
-        const filteredWorks = dailyWorksData.dailyWorks.filter(work => {
+        // Apply search filter
+        const searchedData = dailyWorks.filter(item =>
+            Object.values(item).some(val =>
+                String(val).toLowerCase().includes(search)
+            )
+        );
+
+        // Apply additional filters
+        const filteredWorks = searchedData.filter(work => {
             const workDate = dayjs(work.date);
 
             return (
@@ -123,8 +137,8 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
             );
         });
 
-        setDailyWorks(filteredWorks);
-    }, [filterData]);
+        setFilteredData(filteredWorks);
+    }, [filterData, search, dailyWorks]);
 
 
 
@@ -139,6 +153,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                     currentRow={currentRow}
                     setDailyWorks={setDailyWorks}
                     closeModal={closeModal}
+
                 />
             )}
             {openModalType === 'deleteDailyWork' && (
@@ -147,6 +162,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                     setDailyWorks={setDailyWorks}
                     handleClose={handleClose}
                     taskIdToDelete={taskIdToDelete}
+                    setFilteredData={setFilteredData}
                 />
             )}
 
@@ -274,9 +290,25 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                         </CardContent>
 
                         <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                placeholder="Search..."
+                                value={search}
+                                onChange={handleSearch}
+                                sx={{ mb: 2 }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
                             <DailyWorksTable
                                 setDailyWorks={setDailyWorks}
-                                dailyWorkData={dailyWorks}
+                                filteredData={filteredData}
+                                setFilteredData={setFilteredData}
                                 reports={reports}
                                 setCurrentRow={setCurrentRow}
                                 handleClickOpen={handleClickOpen}

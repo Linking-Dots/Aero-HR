@@ -63,10 +63,10 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 
 
-const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow }) => {
+const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const [search, setSearch] = useState('');
-    const [filteredData, setFilteredData] = useState(dailyWorkData);
+
 
     const theme = useTheme();
 
@@ -448,17 +448,7 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
         }
     ];
 
-    const handleSearch = (event) => {
-        const value = event.target.value.toLowerCase();
-        setSearch(value);
 
-        const filtered = dailyWorkData.filter(item =>
-            Object.values(item).some(val =>
-                String(val).toLowerCase().includes(value)
-            )
-        );
-        setFilteredData(filtered);
-    };
 
 
     const getStatusColor = (status) => {
@@ -493,11 +483,15 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
                 });
 
                 const data = await response.json();
-                console.log(data)
 
                 if (response.ok) {
                     setDailyWorks(prevTasks =>
                         prevTasks.map(task =>
+                            task.id === taskId ? { ...task, [key]: value } : task
+                        )
+                    );
+                    setFilteredData(prevFilteredData =>
+                        prevFilteredData.map(task =>
                             task.id === taskId ? { ...task, [key]: value } : task
                         )
                     );
@@ -571,21 +565,6 @@ const DailyWorksTable = ({ handleClickOpen, dailyWorkData, allInCharges,setDaily
 
     return (
         <>
-            <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Search..."
-                value={search}
-                onChange={handleSearch}
-                sx={{ mb: 2 }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon />
-                        </InputAdornment>
-                    ),
-                }}
-            />
             <CustomDataTable
                 columns={columns}
                 data={filteredData}

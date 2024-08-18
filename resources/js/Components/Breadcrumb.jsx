@@ -31,15 +31,10 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => {
     };
 });
 
-function handleClick(event) {
-    event.preventDefault();
-    console.info('You clicked a breadcrumb.');
-}
 
 const Breadcrumb = ({ }) => {
     const {props} = usePage();
     const {title, auth} = props;
-    console.log(title);
     return (
         <Box sx={{
             display: 'flex',
