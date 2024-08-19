@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::post('/import-daily-works/', [DailyWorkController::class, 'import'])->name('dailyWorks.import');
     Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
     Route::delete('/delete-daily-work', [DailyWorkController::class, 'delete'])->name('dailyWorks.delete');
 
@@ -100,7 +101,7 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
 
     Route::get('/settings', [TaskController::class, 'settings'])->name('settings');
     Route::post('/task/add', [TaskController::class, 'addTask'])->name('addTask');
-    Route::get('/task/import', [TaskController::class, 'importTasks'])->name('importTasks');
+
     Route::get('/export-tasks', [TaskController::class, 'exportTasks'])->name('exportTasks');
     Route::post('/task/import', [TaskController::class, 'importCSV'])->name('importCSV');
     Route::post('/task/update-rfi-submission-date', [TaskController::class, 'updateRfiSubmissionDate'])->name('updateRfiSubmissionDate');

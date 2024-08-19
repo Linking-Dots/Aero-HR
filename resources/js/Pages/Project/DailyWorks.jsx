@@ -27,6 +27,7 @@ import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
 import { styled } from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
+import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 
 
 
@@ -164,6 +165,12 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                     setFilteredData={setFilteredData}
                 />
             )}
+            {openModalType === 'deleteDailyWork' && (
+                <DailyWorksUploadForm
+                    open={openModalType === 'importDailyWorks'}
+                    handleClose={handleClose}
+                />
+            )}
 
 
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -188,13 +195,14 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                         <>
                                             <Button
                                                 title="Import Tasks"
-                                                href={route('importTasks')}
                                                 variant="outlined"
                                                 color="warning"
                                                 startIcon={<Upload />}
+                                                onClick={() => openModal('importDailyWorks')} // Handle opening the modal
                                             >
                                                 Import
                                             </Button>
+
                                             <Button
                                                 id="exportToExcel"
                                                 title="Export Tasks"

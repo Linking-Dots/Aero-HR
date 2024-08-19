@@ -33,11 +33,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DailyWorkController extends Controller
 {
-    /**
-     * Display a listing of the tasks.
-     *
-     * @return
-     */
+
     public function index()
     {
         $user = Auth::user();
@@ -77,6 +73,139 @@ class DailyWorkController extends Controller
             'reports' => $reports,
             'reports_with_daily_works' => $reports_with_daily_works
         ]);
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file',
+            ]);
+
+            $path = $request->file('file')->store('temp'); // Store uploaded file temporarily
+
+            $importedTasks = Excel::toArray(new TaskImport, $path)[0]; // Import data using TaskImport
+
+            // Validate imported tasks with custom messages
+            $validator = Validator::make($importedTasks, [
+                '*.0' => 'required|date_format:Y-m-d',
+                '*.1' => 'required|string',
+                '*.2' => 'required|string|in:Embankment,Structure,Pavement',
+                '*.3' => 'required|string',
+                '*.4' => 'required|string|custom_location',
+            ], [
+                '*.0.required' => 'DailyWork number :taskNumber must have a valid date.',
+                '*.0.date_format' => 'DailyWork number :taskNumber must be a date in the format Y-m-d.',
+                '*.1.required' => 'DailyWork number :taskNumber must have a value for field 1.',
+                '*.2.required' => 'DailyWork number :taskNumber must have a value for field 2.',
+                '*.2.in' => 'DailyWork number :taskNumber must have a value for field 2 that is either Embankment, Structure, or Pavement.',
+                '*.3.required' => 'DailyWork number :taskNumber must have a value for field 3.',
+                '*.4.required' => 'DailyWork number :taskNumber must have a value for field 4.',
+                '*.4.custom_location' => 'DailyWork number :taskNumber has an invalid custom location: :value',
+            ]);
+
+            // Validate the data
+            $validator->validate();
+
+
+            $newSubmissionCount = 0;
+            $date = $importedTasks[0][0];
+
+            // Initialize summary variables
+            $inchargeSummary = [];
+
+            foreach ($importedTasks as $importedTask) {
+
+                $k = intval(substr($importedTask[4], 1)); // Extracting the numeric part after 'K'
+
+                $workLocation = WorkLocation::where('start_chainage', '<=', $k)
+                    ->where('end_chainage', '>=', $k)
+                    ->first();
+
+                $inchargeName = $workLocation->incharge;
+
+                // Initialize incharge summary if not exists
+                if (!isset($inchargeSummary[$inchargeName])) {
+                    $inchargeSummary[$inchargeName] = [
+                        'totalTasks' => 0,
+                        'totalResubmission' => 0,
+                        'embankmentTasks' => 0,
+                        'structureTasks' => 0,
+                        'pavementTasks' => 0,
+                    ];
+                }
+                $inchargeSummary[$inchargeName]['totalTasks']++;
+
+                $existingTask = Tasks::where('number', $importedTask[1])->first();
+
+                // Update incharge summary variables based on task type
+                switch ($importedTask[2]) {
+                    case 'Embankment':
+                        $inchargeSummary[$inchargeName]['embankmentTasks']++;
+                        break;
+                    case 'Structure':
+                        $inchargeSummary[$inchargeName]['structureTasks']++;
+                        break;
+                    case 'Pavement':
+                        $inchargeSummary[$inchargeName]['pavementTasks']++;
+                        break;
+                }
+
+                if ($existingTask) {
+                    $inchargeSummary[$inchargeName]['totalResubmission']++;
+                    // Handle duplicate tasks (handled in separate method)
+                    $this->handleDuplicateTask($existingTask, $importedTask, $inchargeName);
+                } else {
+                    // Create a new task for non-duplicates
+                    $createdTask = Tasks::create([
+                        'date' => $importedTask[0],
+                        'number' => $importedTask[1],
+                        'status' => 'new',
+                        'type' => $importedTask[2],
+                        'description' => $importedTask[3],
+                        'location' => $importedTask[4],
+                        'side' => $importedTask[5],
+                        'qty_layer' => $importedTask[6],
+                        'planned_time' => $importedTask[7],
+                        'incharge' => $inchargeName,
+                    ]);
+                }
+            }
+
+            // Store summary data in DailySummary model for each incharge
+            foreach ($inchargeSummary as $inchargeName => $summaryData) {
+                DailySummary::create([
+                    'date' => $date,
+                    'incharge' => $inchargeName,
+                    'totalTasks' => $summaryData['totalTasks'],
+                    'totalResubmission' => $summaryData['totalResubmission'],
+                    'embankmentTasks' => $summaryData['embankmentTasks'],
+                    'structureTasks' => $summaryData['structureTasks'],
+                    'pavementTasks' => $summaryData['pavementTasks'],
+                ]);
+            }
+
+
+            // Prepare notification data
+            $title = 'Daily DailyWork Updated';
+            $message = "Daily task updated for " . date('Y-m-d', strtotime($date)); // Use a formatted date
+            $buttonText = $request->button_text ?? 'View Tasks'; // Set default button text
+            $buttonURL = $request->button_url ?? 'https://qcd.dhakabypass.com/tasks'; // Set default button URL
+
+            // Send push notification
+            Notification::send(User::all(), new PushNotification($title, $message, $buttonText, $buttonURL));
+
+
+
+
+
+            // Redirect to tasks route with success message
+            return response()->json(['message' => 'Data imported successfully.'], 200);
+        } catch (ValidationException $exception) {
+
+            // Return error response with exception message
+            return response()->json(['error' => $exception->getMessage()], 500);
+        }
     }
 
     public function update(Request $request): \Illuminate\Http\JsonResponse
@@ -310,90 +439,6 @@ class DailyWorkController extends Controller
 
 
 
-
-    public function filterTasks(Request $request)
-    {
-        // Get the authenticated user
-        $user = Auth::user();
-
-        try {
-            // Query tasks based on date range, status, and incharge
-            $tasksQuery = Tasks::with('ncrs')
-                ->when($user->hasRole('se'), function ($query) use ($user) {
-                    $query->where('incharge', $user->user_name);
-                })
-                ->when($user->hasRole('qci') || $user->hasRole('aqci'), function ($query) use ($user) {
-                    $query->where('assigned', $user->user_name);
-                })
-                ->when($request->start && $request->end, function ($query) use ($request) {
-                    $query->whereBetween('date', [$request->start, $request->end]);
-                })
-                ->when($request->status && $request->status !== 'all', function ($query) use ($request) {
-                    $query->where('status', $request->status);
-                })
-                ->when($request->incharge && $request->incharge !== 'all', function ($query) use ($request) {
-                    $query->where('incharge', $request->incharge);
-                })
-                ->when($request->reports, function ($query) use ($request) {
-                    $query->where(function ($query) use ($request) {
-                        foreach ($request->reports as $report) {
-                            // Check if the report is NCR or objection
-                            if (str_starts_with($report, 'ncr_')) {
-                                // Extract NCR number after the dash
-                                $ncrNumber = substr($report, strpos($report, '_') + 1);
-                                // Filter tasks with NCRs having the extracted NCR number
-                                $query->orWhereHas('ncrs', function ($query) use ($ncrNumber) {
-                                    $query->where('ncr_no', $ncrNumber);
-                                });
-                            } elseif (str_starts_with($report, 'obj_')) {
-                                // Extract objection number after the dash
-                                $objectionNumber = substr($report, strpos($report, '_') + 1);
-                                // Filter tasks with objections having the extracted objection number
-                                $query->orWhere('obj_no', $objectionNumber);
-                            }
-                        }
-                    });
-                });
-
-            // Get the filtered tasks
-            $filteredTasks = $tasksQuery->get();
-
-            // Determine the return array based on user roles
-            $tasks = $user->hasRole('se')
-                ? [
-                    'tasks' => $filteredTasks,
-                    'juniors' => User::where('incharge', $user->user_name)->get(),
-                    'message' => 'Tasks filtered successfully',
-                ] : ($user->hasRole('qci') || $user->hasRole('aqci')
-                    ? [
-                        'tasks' => $filteredTasks,
-                        'message' => 'Tasks filtered successfully',
-                    ]
-                    : ($user->hasRole('admin') || $user->hasRole('manager')
-                        ? [
-                            'tasks' => $filteredTasks,
-                            'incharges' => User::role('se')->get(),
-                            'message' => 'Tasks filtered successfully',
-                        ]
-                        : [
-                            'tasks' => [],
-                            'message' => 'Tasks filtered successfully',
-                        ]
-                    )
-                );
-
-            // Return a response
-            return response()->json($tasks);
-        } catch (\Exception $e) {
-            // Handle any exceptions that occur during filtering
-            return response()->json([
-                'error' => 'An error occurred while filtering tasks: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-
-
     public function importTasks()
     {
         $title = 'Import Tasks';
@@ -401,152 +446,8 @@ class DailyWorkController extends Controller
         return view('task/import',compact('user','title'));
     }
 
-    /**
-     * Import tasks from an uploaded Excel/CSV file.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function importCSV(Request $request)
-    {
-        try {
-            $request->validate([
-                'file' => 'required|file',
-            ]);
-
-            $path = $request->file('file')->store('temp'); // Store uploaded file temporarily
-
-            $importedTasks = Excel::toArray(new TaskImport, $path)[0]; // Import data using TaskImport
-
-            // Validate imported tasks with custom messages
-            $validator = Validator::make($importedTasks, [
-                '*.0' => 'required|date_format:Y-m-d',
-                '*.1' => 'required|string',
-                '*.2' => 'required|string|in:Embankment,Structure,Pavement',
-                '*.3' => 'required|string',
-                '*.4' => 'required|string|custom_location',
-            ], [
-                '*.0.required' => 'DailyWork number :taskNumber must have a valid date.',
-                '*.0.date_format' => 'DailyWork number :taskNumber must be a date in the format Y-m-d.',
-                '*.1.required' => 'DailyWork number :taskNumber must have a value for field 1.',
-                '*.2.required' => 'DailyWork number :taskNumber must have a value for field 2.',
-                '*.2.in' => 'DailyWork number :taskNumber must have a value for field 2 that is either Embankment, Structure, or Pavement.',
-                '*.3.required' => 'DailyWork number :taskNumber must have a value for field 3.',
-                '*.4.required' => 'DailyWork number :taskNumber must have a value for field 4.',
-                '*.4.custom_location' => 'DailyWork number :taskNumber has an invalid custom location: :value',
-            ]);
-
-            // Validate the data
-            $validator->validate();
 
 
-            $newSubmissionCount = 0;
-            $date = $importedTasks[0][0];
-
-            // Initialize summary variables
-            $inchargeSummary = [];
-
-            foreach ($importedTasks as $importedTask) {
-
-                $k = intval(substr($importedTask[4], 1)); // Extracting the numeric part after 'K'
-
-                $workLocation = WorkLocation::where('start_chainage', '<=', $k)
-                    ->where('end_chainage', '>=', $k)
-                    ->first();
-
-                $inchargeName = $workLocation->incharge;
-
-                // Initialize incharge summary if not exists
-                if (!isset($inchargeSummary[$inchargeName])) {
-                    $inchargeSummary[$inchargeName] = [
-                        'totalTasks' => 0,
-                        'totalResubmission' => 0,
-                        'embankmentTasks' => 0,
-                        'structureTasks' => 0,
-                        'pavementTasks' => 0,
-                    ];
-                }
-                $inchargeSummary[$inchargeName]['totalTasks']++;
-
-                $existingTask = Tasks::where('number', $importedTask[1])->first();
-
-                // Update incharge summary variables based on task type
-                switch ($importedTask[2]) {
-                    case 'Embankment':
-                        $inchargeSummary[$inchargeName]['embankmentTasks']++;
-                        break;
-                    case 'Structure':
-                        $inchargeSummary[$inchargeName]['structureTasks']++;
-                        break;
-                    case 'Pavement':
-                        $inchargeSummary[$inchargeName]['pavementTasks']++;
-                        break;
-                }
-
-                if ($existingTask) {
-                    $inchargeSummary[$inchargeName]['totalResubmission']++;
-                    // Handle duplicate tasks (handled in separate method)
-                    $this->handleDuplicateTask($existingTask, $importedTask, $inchargeName);
-                } else {
-                    // Create a new task for non-duplicates
-                    $createdTask = Tasks::create([
-                        'date' => $importedTask[0],
-                        'number' => $importedTask[1],
-                        'status' => 'new',
-                        'type' => $importedTask[2],
-                        'description' => $importedTask[3],
-                        'location' => $importedTask[4],
-                        'side' => $importedTask[5],
-                        'qty_layer' => $importedTask[6],
-                        'planned_time' => $importedTask[7],
-                        'incharge' => $inchargeName,
-                    ]);
-                }
-            }
-
-            // Store summary data in DailySummary model for each incharge
-            foreach ($inchargeSummary as $inchargeName => $summaryData) {
-                DailySummary::create([
-                    'date' => $date,
-                    'incharge' => $inchargeName,
-                    'totalTasks' => $summaryData['totalTasks'],
-                    'totalResubmission' => $summaryData['totalResubmission'],
-                    'embankmentTasks' => $summaryData['embankmentTasks'],
-                    'structureTasks' => $summaryData['structureTasks'],
-                    'pavementTasks' => $summaryData['pavementTasks'],
-                ]);
-            }
-
-
-            // Prepare notification data
-            $title = 'Daily DailyWork Updated';
-            $message = "Daily task updated for " . date('Y-m-d', strtotime($date)); // Use a formatted date
-            $buttonText = $request->button_text ?? 'View Tasks'; // Set default button text
-            $buttonURL = $request->button_url ?? 'https://qcd.dhakabypass.com/tasks'; // Set default button URL
-
-            // Send push notification
-            Notification::send(User::all(), new PushNotification($title, $message, $buttonText, $buttonURL));
-
-
-
-
-
-            // Redirect to tasks route with success message
-            return response()->json(['message' => 'Data imported successfully.'], 200);
-        } catch (ValidationException $exception) {
-
-            // Return error response with exception message
-            return response()->json(['error' => $exception->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Handle duplicate tasks during import (replace and increment resubmission).
-     *
-     * @param Tasks $existingTask
-     * @param array $importedTask
-     * @return void
-     */
     private function handleDuplicateTask(Tasks $existingTask, array $importedTask, string $inchargeName): void
     {
         // Get resubmission count (handling potential null value)
