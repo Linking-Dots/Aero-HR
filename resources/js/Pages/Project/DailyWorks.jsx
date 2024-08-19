@@ -290,13 +290,14 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                         </CardContent>
 
                         <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
+
                             <TextField
+                                label="Search"
                                 fullWidth
                                 variant="outlined"
                                 placeholder="Search..."
                                 value={search}
                                 onChange={handleSearch}
-                                sx={{ mb: 2 }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">

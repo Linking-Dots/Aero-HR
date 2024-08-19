@@ -17,7 +17,7 @@ import {toast} from "react-toastify";
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { GlobalStyles } from '@mui/material';
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -355,7 +355,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             selector: row => row.planned_time,
             sortable: 'true',
             center: 'true',
-            width: '120px',
+            width: '130px',
         },
         {
             name: 'Completion Time',
@@ -562,6 +562,15 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
 
     return (
         <>
+            <GlobalStyles
+                styles={{
+                    '& .cgTKyH': {
+                        backgroundColor: 'transparent !important',
+                        color: theme.palette.text.primary
+
+                    },
+                }}
+            />
             <CustomDataTable
                 columns={columns}
                 data={filteredData}

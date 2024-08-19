@@ -100,15 +100,7 @@ const PunchStatusCard = () => {
                     console.log(error)
                     let errorMessage;
 
-                    if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
-                        errorMessage = 'Please connect to the network';
-                    } else if (error.code === error.PERMISSION_DENIED) {
-                        errorMessage = 'Geolocation permission denied. Please enable location permissions';
-                    } else {
-                        errorMessage = 'An unknown error occurred. Please try again';
-                    }
-
-                    reject([errorMessage]);
+                    reject([error.message]);
                 });
             } catch (error) {
                 console.error('Error setting attendance:', error);
