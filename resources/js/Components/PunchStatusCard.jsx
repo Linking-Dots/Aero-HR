@@ -97,6 +97,7 @@ const PunchStatusCard = () => {
                         reject(['Failed to set attendance. Please try again.']);
                     }
                 }, (error) => {
+                    console.log(error)
                     let errorMessage;
 
                     if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {

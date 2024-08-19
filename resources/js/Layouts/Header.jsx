@@ -27,7 +27,7 @@ import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
 import { usePage, Link } from '@inertiajs/react';
 import {useState} from "react";
-import {pages} from "@/Props/pages.jsx";
+import { getPages } from '@/Props/pages.jsx';
 
 // Styled Menu component
 const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
@@ -43,11 +43,7 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
         backgroundColor: theme.glassCard.backgroundColor,
         border: theme.glassCard.border,
         borderRadius: 10,
-        backgroundClip: 'border-box',
-        marginTop: theme.spacing(1),
-        minWidth: 180,
-        color:
-            theme.palette.mode === 'light' ? 'rgb(55, 65, 81)' : theme.palette.grey[300],
+
         boxShadow:
             'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
         '& .MuiMenu-list': {
@@ -61,6 +57,8 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
 function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
+    const userIsAdmin = auth.roles.includes('admin');
+    const pages = getPages(userIsAdmin);
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
 

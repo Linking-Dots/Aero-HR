@@ -58,9 +58,6 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
-    const [search, setSearch] = useState('');
-
-
     const theme = useTheme();
 
     const userIsAdmin = auth.roles.includes('admin');
@@ -354,6 +351,13 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             ),
         }] : []),
         {
+            name: 'Planned Time',
+            selector: row => row.planned_time,
+            sortable: 'true',
+            center: 'true',
+            width: '120px',
+        },
+        {
             name: 'Completion Time',
             selector: row => row.completion_time,
             sortable: 'true',
@@ -409,7 +413,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 />
             ),
         }] : []),
-        {
+        ...(userIsAdmin ? [{
             name: 'Actions',
             center: 'true',
             width: '150px',
@@ -438,7 +442,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                     </IconButton>
                 </Box>
             ),
-        }
+        }] : []),
     ];
 
 

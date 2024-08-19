@@ -1,43 +1,19 @@
 import React, { useState } from 'react';
-import {Drawer, List, ListItem, ListItemIcon, ListItemText, Collapse, Typography, Box, CardHeader} from '@mui/material';
+import {List, ListItem, ListItemIcon, ListItemText, Collapse, Box, CardHeader} from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import {Link} from "@inertiajs/react";
+import {Link, usePage} from "@inertiajs/react";
 import Menu from "@mui/material/Menu";
 import GlassCard from "@/Components/GlassCard.jsx";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
-import {pages} from "@/Props/pages.jsx";
-
-
-const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
-    <Menu
-        elevation={0}
-        anchorOrigin={anchorOrigin}
-        transformOrigin={transformOrigin}
-        {...props}
-    />
-))(({ theme }) => ({
-    '& .MuiPaper-root': {
-        backdropFilter: 'blur(16px) saturate(200%)',
-        backgroundColor: theme.glassCard.backgroundColor,
-        border: theme.glassCard.border,
-        borderRadius: 10,
-        backgroundClip: 'border-box',
-        marginTop: theme.spacing(1),
-        minWidth: 180,
-        color:
-            theme.palette.mode === 'light' ? 'rgb(55, 65, 81)' : theme.palette.grey[300],
-        boxShadow:
-            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-        '& .MuiMenu-list': {
-            padding: '4px 0',
-        },
-    },
-}));
+import { getPages } from '@/Props/pages.jsx';
 
 const Sidebar = ({toggleSideBar}) => {
     const theme = useTheme();
+    const { auth } = usePage().props;
+    const userIsAdmin = auth.roles.includes('admin');
+    const pages = getPages(userIsAdmin);
     const [openSubMenu, setOpenSubMenu] = useState(null);
 
     const handleOpenSubMenu = (pageName) => {
