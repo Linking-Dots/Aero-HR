@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {Box, Card, CardContent, Typography, Avatar, Button, CircularProgress, Collapse} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {Box, CardContent, Typography, CircularProgress, Collapse} from '@mui/material';
 import {usePage} from "@inertiajs/react";
-import { useTimer } from 'react-timer-hook';
 import {toast} from "react-toastify";
 import Grow from '@mui/material/Grow';
-import Fade from '@mui/material/Fade';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
 
@@ -12,8 +10,7 @@ import {useTheme} from "@mui/material/styles";
 
 const PunchStatusCard = () => {
     const theme = useTheme();
-    const [loading, setLoading] = useState(false);
-    const { auth, status } = usePage().props;
+    const { auth } = usePage().props;
     const [attendanceData, setAttendanceData] = useState('');
     const [punchInTime, setPunchInTime] = useState('');
     const [punchOutTime, setPunchOutTime] = useState('');
@@ -98,8 +95,6 @@ const PunchStatusCard = () => {
                     }
                 }, (error) => {
                     console.log(error)
-                    let errorMessage;
-
                     reject([error.message]);
                 });
             } catch (error) {

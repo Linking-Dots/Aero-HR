@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import DataTable from 'react-data-table-component';
 import {
     Select,
@@ -56,14 +56,12 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 
 
-const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, jurisdictions, users, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
 
     const userIsAdmin = auth.roles.includes('admin');
     const userIsSe = auth.roles.includes('se');
-    const userIsQciAqci = auth.roles.includes('qci') || auth.roles.includes('aqci');
-
 
     const columns = [
         {

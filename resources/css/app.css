@@ -4,12 +4,6 @@
     border-radius: 15px;
 }
 
-body {
-    background-image: url('/assets/images/pexels-iamtausifhossain9321-1226302.jpg');
-    background-position: center;
-}
-
-
 .auth-one-bg {
     border-bottom-left-radius: 30vh;
     border-bottom-right-radius: 30vh;

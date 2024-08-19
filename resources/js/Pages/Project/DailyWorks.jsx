@@ -9,11 +9,10 @@ import {
     MenuItem,
     Select,
     TextField,
-    Typography,
-    IconButton, Grid, DialogTitle, DialogContent, DialogContentText, DialogActions, InputAdornment,
+    IconButton, Grid, InputAdornment,
 } from '@mui/material';
-import { AddBox, Upload, Download, Equalizer } from '@mui/icons-material';
-import {Head, usePage} from "@inertiajs/react";
+import { AddBox, Upload, Download } from '@mui/icons-material';
+import {Head} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';

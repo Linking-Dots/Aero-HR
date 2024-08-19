@@ -25,6 +25,12 @@
 @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
 @inertiaHead
 @inertia
-
+<style>
+    body {
+        background-image: url('{{ url('assets/images/pexels-iamtausifhossain9321-1226302.jpg') }}');
+        background-position: center;
+        background-size: cover; /* Optional: to cover the whole background */
+    }
+</style>
 </html>
 
