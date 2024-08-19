@@ -1,16 +1,11 @@
 import React, {useState} from 'react';
-import DataTable, { createTheme } from 'react-data-table-component';
+import DataTable from 'react-data-table-component';
 import {
-    DialogTitle,
     Select,
     MenuItem,
     TextField,
     Avatar,
     CircularProgress, Box, IconButton,
-    Button,
-    DialogActions,
-    DialogContentText,
-    DialogContent, InputAdornment
 } from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
@@ -18,12 +13,10 @@ import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
 import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
 import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
 import EmergencyIcon from '@mui/icons-material/Error';
-import SearchIcon from '@mui/icons-material/Search';
 import {toast} from "react-toastify";
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import GlassDialog from "@/Components/GlassDialog.jsx";
 
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
