@@ -2,17 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\TaskImport;
+use App\Imports\DailyWorkImport;
 use App\Models\DailySummary;
 use App\Models\Jurisdiction;
-use App\Models\NCR;
-use App\Models\Objection;
 use App\Models\Report;
 use App\Models\DailyWork;
-use App\Models\Tasks;
 use App\Models\User;
-use App\Models\WorkLocation;
-use App\Notifications\PushNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -20,16 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-
-// Class for handling DailyWork import from Excel/CSV
-// Model representing the tasks table
-// Model representing the users table (assuming team authentication)
-// Exception for not found models
-// Represents the incoming HTTP request
-// Facade for team authentication
-// Facade for interacting with the database
-
-// Facade for working with Excel files
+use Illuminate\Support\Facades\Log;
 
 class DailyWorkController extends Controller
 {
@@ -75,19 +61,27 @@ class DailyWorkController extends Controller
         ]);
     }
 
+
+
+
     public function import(Request $request)
     {
         try {
             $request->validate([
-                'file' => 'required|file',
-            ]);
+                        'file' => 'required|file|mimes:xlsx,csv',
+                    ]);
 
             $path = $request->file('file')->store('temp'); // Store uploaded file temporarily
 
-            $importedTasks = Excel::toArray(new TaskImport, $path)[0]; // Import data using TaskImport
+            $importedDailyWorks = Excel::toArray(new DailyWorkImport, $path)[0];
+            $newlyCreatedDailyWorks = [];
+            $date = $importedDailyWorks[0][0];
+
+            // Initialize summary variables
+            $inChargeSummary = [];// Import data using TaskImport
 
             // Validate imported tasks with custom messages
-            $validator = Validator::make($importedTasks, [
+            $validator = Validator::make($importedDailyWorks, [
                 '*.0' => 'required|date_format:Y-m-d',
                 '*.1' => 'required|string',
                 '*.2' => 'required|string|in:Embankment,Structure,Pavement',
@@ -108,104 +102,129 @@ class DailyWorkController extends Controller
             $validator->validate();
 
 
-            $newSubmissionCount = 0;
-            $date = $importedTasks[0][0];
 
-            // Initialize summary variables
-            $inchargeSummary = [];
 
-            foreach ($importedTasks as $importedTask) {
+            foreach ($importedDailyWorks as $importedDailyWork) {
 
-                $k = intval(substr($importedTask[4], 1)); // Extracting the numeric part after 'K'
+                $k = intval(substr($importedDailyWork[4], 1)); // Extracting the numeric part after 'K'
 
-                $workLocation = WorkLocation::where('start_chainage', '<=', $k)
+                $jurisdiction = Jurisdiction::where('start_chainage', '<=', $k)
                     ->where('end_chainage', '>=', $k)
                     ->first();
 
-                $inchargeName = $workLocation->incharge;
+                $inCharge = $jurisdiction->incharge;
+                $inChargeName = User::find($inCharge)->user_name;
 
                 // Initialize incharge summary if not exists
-                if (!isset($inchargeSummary[$inchargeName])) {
-                    $inchargeSummary[$inchargeName] = [
-                        'totalTasks' => 0,
-                        'totalResubmission' => 0,
-                        'embankmentTasks' => 0,
-                        'structureTasks' => 0,
-                        'pavementTasks' => 0,
+                if (!isset($inChargeSummary[$inChargeName])) {
+                    $inChargeSummary[$inChargeName] = [
+                        'totalDailyWorks' => 0,
+                        'resubmissions' => 0,
+                        'embankment' => 0,
+                        'structure' => 0,
+                        'pavement' => 0,
                     ];
                 }
-                $inchargeSummary[$inchargeName]['totalTasks']++;
+                $inChargeSummary[$inChargeName]['totalDailyWorks']++;
 
-                $existingTask = Tasks::where('number', $importedTask[1])->first();
+                $existingDailyWork = DailyWork::where('number', $importedDailyWork[1])->first();
 
                 // Update incharge summary variables based on task type
-                switch ($importedTask[2]) {
+                switch ($importedDailyWork[2]) {
                     case 'Embankment':
-                        $inchargeSummary[$inchargeName]['embankmentTasks']++;
+                        $inChargeSummary[$inChargeName]['embankment']++;
                         break;
                     case 'Structure':
-                        $inchargeSummary[$inchargeName]['structureTasks']++;
+                        $inChargeSummary[$inChargeName]['structure']++;
                         break;
                     case 'Pavement':
-                        $inchargeSummary[$inchargeName]['pavementTasks']++;
+                        $inChargeSummary[$inChargeName]['pavement']++;
                         break;
                 }
 
-                if ($existingTask) {
-                    $inchargeSummary[$inchargeName]['totalResubmission']++;
-                    // Handle duplicate tasks (handled in separate method)
-                    $this->handleDuplicateTask($existingTask, $importedTask, $inchargeName);
+                if ($existingDailyWork) {
+                    $inChargeSummary[$inChargeName]['resubmissions']++;
+
+                     // Get resubmission count (handling potential null value)
+                    $resubmissionCount = $existingDailyWork->resubmission_count ?? 0;
+
+                    // Update imported task data with incremented resubmission
+                    $resubmissionCount = $resubmissionCount + 1;
+                    $resubmissionDate = ($existingDailyWork->resubmission_date ? $existingDailyWork->resubmission_date . "\n" : '') . $this->getOrdinalNumber($resubmissionCount) . " Submission date: " . $existingDailyWork->date;
+
+                    // Create a new task record with updated data
+                    $createdDailyWork = DailyWork::create([
+                        'date' => ($existingDailyWork->status === 'completed' ? $existingDailyWork->date : $importedDailyWork[0]),
+                        'number' => $importedDailyWork[1],
+                        'status' => ($existingDailyWork->status === 'completed' ? 'completed' : 'resubmission'),
+                        'type' => $importedDailyWork[2],
+                        'description' => $importedDailyWork[3],
+                        'location' => $importedDailyWork[4],
+                        'side' => $importedDailyWork[5],
+                        'qty_layer' => $importedDailyWork[6],
+                        'planned_time' => $importedDailyWork[7],
+                        'incharge' => $inCharge,
+                        'resubmission_count' => $resubmissionCount,
+                        'resubmission_date' => $resubmissionDate,
+                    ]);
+
+                    $newlyCreatedDailyWorks[] = $createdDailyWork;
+
+                    // Delete the existing task
+                    $existingDailyWork->delete();
                 } else {
                     // Create a new task for non-duplicates
-                    $createdTask = Tasks::create([
-                        'date' => $importedTask[0],
-                        'number' => $importedTask[1],
+                    $createdDailyWork = DailyWork::create([
+                        'date' => $importedDailyWork[0],
+                        'number' => $importedDailyWork[1],
                         'status' => 'new',
-                        'type' => $importedTask[2],
-                        'description' => $importedTask[3],
-                        'location' => $importedTask[4],
-                        'side' => $importedTask[5],
-                        'qty_layer' => $importedTask[6],
-                        'planned_time' => $importedTask[7],
-                        'incharge' => $inchargeName,
+                        'type' => $importedDailyWork[2],
+                        'description' => $importedDailyWork[3],
+                        'location' => $importedDailyWork[4],
+                        'side' => $importedDailyWork[5],
+                        'qty_layer' => $importedDailyWork[6],
+                        'planned_time' => $importedDailyWork[7],
+                        'incharge' => $inCharge,
                     ]);
+
+                    $newlyCreatedDailyWorks[] = $createdDailyWork;
                 }
             }
 
+            Log::info('Summary data:', $inChargeSummary);
+
             // Store summary data in DailySummary model for each incharge
-            foreach ($inchargeSummary as $inchargeName => $summaryData) {
-                DailySummary::create([
+            foreach ($inChargeSummary as $inChargeName => $summaryData) {
+                $user = User::where('user_name', $inChargeName)->first();
+
+                 DailySummary::create([
                     'date' => $date,
-                    'incharge' => $inchargeName,
-                    'totalTasks' => $summaryData['totalTasks'],
-                    'totalResubmission' => $summaryData['totalResubmission'],
-                    'embankmentTasks' => $summaryData['embankmentTasks'],
-                    'structureTasks' => $summaryData['structureTasks'],
-                    'pavementTasks' => $summaryData['pavementTasks'],
+                    'incharge' => $user->id,
+                    'totalDailyWorks' => $summaryData['totalDailyWorks'],
+                    'resubmissions' => $summaryData['resubmissions'],
+                    'embankment' => $summaryData['embankment'],
+                    'structure' => $summaryData['structure'],
+                    'pavement' => $summaryData['pavement'],
                 ]);
+
+
             }
-
-
-            // Prepare notification data
-            $title = 'Daily DailyWork Updated';
-            $message = "Daily task updated for " . date('Y-m-d', strtotime($date)); // Use a formatted date
-            $buttonText = $request->button_text ?? 'View Tasks'; // Set default button text
-            $buttonURL = $request->button_url ?? 'https://qcd.dhakabypass.com/tasks'; // Set default button URL
-
-            // Send push notification
-            Notification::send(User::all(), new PushNotification($title, $message, $buttonText, $buttonURL));
-
-
 
 
 
             // Redirect to tasks route with success message
-            return response()->json(['message' => 'Data imported successfully.'], 200);
-        } catch (ValidationException $exception) {
+            return response()->json([
+                        'message' => 'Daily work imported successfully.',
+                        'newDailyWorks' => $newlyCreatedDailyWorks,
+                    ], 200);
+        } catch (ValidationException $e) {
 
-            // Return error response with exception message
-            return response()->json(['error' => $exception->getMessage()], 500);
-        }
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (ErrorException $e) {
+                return response()->json(['message' => 'An error occurred while processing your request.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile()], 500);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile() ], 500);
+            }
     }
 
     public function update(Request $request): \Illuminate\Http\JsonResponse
@@ -448,33 +467,9 @@ class DailyWorkController extends Controller
 
 
 
-    private function handleDuplicateTask(Tasks $existingTask, array $importedTask, string $inchargeName): void
+    private function handleDuplicate(DailyWork $existingTask, array $importedTask, string $inchargeName): void
     {
-        // Get resubmission count (handling potential null value)
-        $resubmissionCount = $existingTask->resubmission_count ?? 0;
 
-        // Update imported task data with incremented resubmission
-        $resubmissionCount = $resubmissionCount + 1;
-        $resubmissionDate = ($existingTask->resubmission_date ? $existingTask->resubmission_date . "\n" : '') . $this->getOrdinalNumber($resubmissionCount) . " Submission date: " . $existingTask->date;
-
-        // Create a new task record with updated data
-        $createdTask = Tasks::create([
-            'date' => ($existingTask->status === 'completed' ? $existingTask->date : $importedTask[0]),
-            'number' => $importedTask[1],
-            'status' => ($existingTask->status === 'completed' ? 'completed' : 'resubmission'),
-            'type' => $importedTask[2],
-            'description' => $importedTask[3],
-            'location' => $importedTask[4],
-            'side' => $importedTask[5],
-            'qty_layer' => $importedTask[6],
-            'planned_time' => $importedTask[7],
-            'incharge' => $inchargeName,
-            'resubmission_count' => $resubmissionCount,
-            'resubmission_date' => $resubmissionDate,
-        ]);
-
-        // Delete the existing task
-        $existingTask->delete();
     }
 
     public function exportTasks()

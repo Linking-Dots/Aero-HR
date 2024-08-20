@@ -64,7 +64,6 @@ const PunchStatusCard = () => {
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
     const handlePunch = async (action) => {
-        setLoading(true);
 
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -160,9 +159,7 @@ const PunchStatusCard = () => {
                     }
                 }
             }
-        ).finally(() => {
-            setLoading(false);
-        });
+        );
     };
 
 

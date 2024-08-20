@@ -22,6 +22,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
+    console.log(users)
     const theme = useTheme();
     console.log(theme);
     const [anchorEls, setAnchorEls] = useState({});

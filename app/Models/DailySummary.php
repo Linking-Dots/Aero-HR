@@ -12,10 +12,10 @@ class DailySummary extends Model
     protected $fillable = [
         'date',
         'incharge',
-        'totalTasks',
-        'totalResubmission',
-        'embankmentTasks',
-        'structureTasks',
-        'pavementTasks'
+        'totalDailyWorks',
+        'resubmissions',
+        'embankment',
+        'structure',
+        'pavement'
     ];
 }

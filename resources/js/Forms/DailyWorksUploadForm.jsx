@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+    Box,
     CircularProgress,
     DialogActions,
     DialogContent,
@@ -13,23 +14,60 @@ import { useTheme } from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
-import { Upload } from '@mui/icons-material';
+import {Clear, Description, InsertDriveFile, PictureAsPdf, Upload} from '@mui/icons-material';
+import { CloudUpload } from '@mui/icons-material';
+import { useDropzone } from 'react-dropzone';
 
-const UploadModal = ({ open, closeModal }) => {
+
+
+const UploadModal = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();
 
-    const onFileChange = (e) => {
-        setFile(e.target.files[0]);
+    const onFileChange = (acceptedFiles) => {
+        setFile(acceptedFiles[0]);
+
     };
 
+    const clearFile = () => {
+        setFile(null);
+    };
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop: onFileChange,
+        noClick: !!file,
+        noKeyboard: !!file,
+    });
+
+    const getFileIcon = (file) => {
+        if (!file) return <CloudUpload fontSize="large" />;
+        const fileType = file.type;
+
+        if (fileType.startsWith('image/')) {
+            return <Image fontSize="large" />;
+        } else if (fileType === 'application/pdf') {
+            return <PictureAsPdf fontSize="large" />;
+        } else if (fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            return <Description fontSize="large" />; // Excel icon
+        } else {
+            return <InsertDriveFile fontSize="large" />;
+        }
+    };
+
+
+
     const handleSubmit = async (event) => {
+        console.log(file);
         event.preventDefault();
         setProcessing(true);
 
         const formData = new FormData();
         formData.append('file', file);
+
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value.name}`); // Assuming value is a File object
+        }
 
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -37,17 +75,30 @@ const UploadModal = ({ open, closeModal }) => {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    resolve('Data imported successfully.');
+                    console.log(data.newDailyWorks)
+                    setDailyWorks(prevWorks => [
+                        ...prevWorks,
+                        ...data.newDailyWorks, // Append the new tasks to the existing dailyWorks
+                    ]);
+
+                    // Update the filteredData state with the newly created tasks
+                    setFilteredData(prevFilteredData => [
+                        ...prevFilteredData,
+                        ...data.newDailyWorks, // Append the new tasks to the existing filteredData
+                    ]);
+
+                    resolve(data.message);
                     closeModal(); // Close the modal after successful upload
                 } else {
-                    reject(data.error || 'Failed to import data.');
+                    console.error(data.errors || data.error);
+                    reject('Failed to import data.');
                 }
             } catch (error) {
                 reject(`Error: ${error.message || 'An unexpected error occurred.'}`);
@@ -121,11 +172,60 @@ const UploadModal = ({ open, closeModal }) => {
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
-                            <input
-                                type="file"
-                                onChange={onFileChange}
-                                style={{ display: 'block', margin: '20px 0' }}
-                            />
+                            <Box
+                                {...getRootProps()}
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '2px dashed #ccc',
+                                    borderRadius: '8px',
+                                    padding: '20px',
+                                    cursor: file ? 'not-allowed' : 'pointer',
+                                    '&:hover': {
+                                        borderColor: file ? '#ccc' : '#aaa',
+                                    },
+                                }}
+                            >
+                                <input {...getInputProps()} />
+                                <IconButton
+                                    sx={{
+                                        borderRadius: '50%',
+                                        backgroundColor: '#f0f0f0',
+                                        '&:hover': {
+                                            backgroundColor: file ? '#f0f0f0' : '#e0e0e0',
+                                            cursor: file ? 'not-allowed' : 'pointer',
+                                        },
+                                    }}
+                                    disabled={!!file}
+                                >
+                                    {getFileIcon(file)}
+                                </IconButton>
+                                {file ? (
+                                    <>
+                                        <Typography variant="body1" sx={{ marginTop: '10px' }}>
+                                            {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                                        </Typography>
+                                        <IconButton
+                                            onClick={clearFile}
+                                            sx={{
+                                                marginTop: '10px',
+                                                backgroundColor: '#f0f0f0',
+                                                '&:hover': {
+                                                    backgroundColor: '#e0e0e0',
+                                                },
+                                            }}
+                                        >
+                                            <Clear />
+                                        </IconButton>
+                                    </>
+                                ) : (
+                                    <Typography variant="body1" sx={{ marginTop: '10px' }}>
+                                        Drag & drop files here, or click to select files
+                                    </Typography>
+                                )}
+                            </Box>
                         </Grid>
                     </Grid>
                 </DialogContent>

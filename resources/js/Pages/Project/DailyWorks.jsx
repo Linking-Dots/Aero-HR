@@ -70,8 +70,10 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
 
+
     const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
     const [filteredData, setFilteredData] = useState(dailyWorksData.dailyWorks);
+    console.log(dailyWorks)
     const dates = dailyWorks.map(work => dayjs(work.date));
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
@@ -159,16 +161,18 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
             {openModalType === 'deleteDailyWork' && (
                 <DeleteDailyWorkForm
                     open={openModalType === 'deleteDailyWork'}
-                    setDailyWorks={setDailyWorks}
                     handleClose={handleClose}
                     taskIdToDelete={taskIdToDelete}
+                    setDailyWorks={setDailyWorks}
                     setFilteredData={setFilteredData}
                 />
             )}
-            {openModalType === 'deleteDailyWork' && (
+            {openModalType === 'importDailyWorks' && (
                 <DailyWorksUploadForm
                     open={openModalType === 'importDailyWorks'}
-                    handleClose={handleClose}
+                    closeModal={closeModal}
+                    setDailyWorks={setDailyWorks}
+                    setFilteredData={setFilteredData}
                 />
             )}
 
