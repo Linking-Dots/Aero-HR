@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ThemeProvider,
     CssBaseline,
-    Box,
+    Box, useMediaQuery,
 } from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
@@ -36,6 +36,7 @@ function App({ children }) {
     };
 
     const theme = useTheme(darkMode);
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     return (
         <ThemeProvider theme={theme}>
@@ -90,7 +91,10 @@ function App({ children }) {
                     <Footer/>
                 </Box>
             </Box>
-            {/*{auth.user && <BottomNav  />}*/}
+            <>
+                {auth.user && isMobile && <BottomNav auth={auth}/>}
+            </>
+
         </ThemeProvider>
 
     );

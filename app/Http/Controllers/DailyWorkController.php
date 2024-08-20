@@ -8,6 +8,7 @@ use App\Models\Jurisdiction;
 use App\Models\Report;
 use App\Models\DailyWork;
 use App\Models\User;
+use ErrorException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Log;
 
 class DailyWorkController extends Controller
 {
@@ -55,7 +55,7 @@ class DailyWorkController extends Controller
             'dailyWorksData' => $dailyWorksData,
             'jurisdictions' => Jurisdiction::all(),
             'users' => $users,
-            'title' => 'Tasks',
+            'title' => 'Daily Works',
             'reports' => $reports,
             'reports_with_daily_works' => $reports_with_daily_works
         ]);
@@ -168,7 +168,6 @@ class DailyWorkController extends Controller
                         'resubmission_date' => $resubmissionDate,
                     ]);
 
-                    $newlyCreatedDailyWorks[] = $createdDailyWork;
 
                     // Delete the existing task
                     $existingDailyWork->delete();
@@ -187,11 +186,9 @@ class DailyWorkController extends Controller
                         'incharge' => $inCharge,
                     ]);
 
-                    $newlyCreatedDailyWorks[] = $createdDailyWork;
                 }
             }
 
-            Log::info('Summary data:', $inChargeSummary);
 
             // Store summary data in DailySummary model for each incharge
             foreach ($inChargeSummary as $inChargeName => $summaryData) {
@@ -215,16 +212,16 @@ class DailyWorkController extends Controller
             // Redirect to tasks route with success message
             return response()->json([
                         'message' => 'Daily work imported successfully.',
-                        'newDailyWorks' => $newlyCreatedDailyWorks,
+                        'updatedDailyWorks' => DailyWork::all(),
                     ], 200);
         } catch (ValidationException $e) {
 
             return response()->json(['errors' => $e->errors()], 422);
         } catch (ErrorException $e) {
-                return response()->json(['message' => 'An error occurred while processing your request.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile()], 500);
-            } catch (\Exception $e) {
-                return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile() ], 500);
-            }
+            return response()->json(['message' => 'An error occurred while processing your request.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile() ], 500);
+        }
     }
 
     public function update(Request $request): \Illuminate\Http\JsonResponse

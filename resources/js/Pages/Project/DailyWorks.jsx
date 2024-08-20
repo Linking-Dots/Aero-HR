@@ -9,7 +9,7 @@ import {
     MenuItem,
     Select,
     TextField,
-    IconButton, Grid, InputAdornment,
+    IconButton, Grid, InputAdornment, useMediaQuery, Typography,
 } from '@mui/material';
 import { AddBox, Upload, Download } from '@mui/icons-material';
 import {Head} from "@inertiajs/react";
@@ -25,9 +25,11 @@ dayjs.extend(minMax);
 
 import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
+import DailyWorksDownloadForm from "@/Forms/DailyWorksDownloadForm.jsx";
 import { styled } from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
 import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
+import {useTheme} from "@mui/material/styles";
 
 
 
@@ -69,16 +71,20 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 
 
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
+    const theme = useTheme();
 
+    console.log(users)
 
     const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
     const [filteredData, setFilteredData] = useState(dailyWorksData.dailyWorks);
-    console.log(dailyWorks)
     const dates = dailyWorks.map(work => dayjs(work.date));
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
     const [openModalType, setOpenModalType] = useState(null);
     const [search, setSearch] = useState('');
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+
 
     const handleClickOpen = (taskId, modalType) => {
         setTaskIdToDelete(taskId);
@@ -175,6 +181,14 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                     setFilteredData={setFilteredData}
                 />
             )}
+            {openModalType === 'exportDailyWorks' && (
+                <DailyWorksDownloadForm
+                    open={openModalType === 'exportDailyWorks'}
+                    closeModal={closeModal}
+                    filteredData={filteredData}
+                    users={users}
+                />
+            )}
 
 
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -185,37 +199,53 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                             sx={{padding: '24px'}}
                             action={
                                 <Box display="flex" gap={2}>
-                                    {auth.permissions.includes('addTaskSE') && (
-                                        <IconButton title="Add Task" color="primary" id="showAddModalBtn">
-                                            <AddBox />
-                                        </IconButton>
-                                    )}
-                                    {auth.permissions.includes('addTask') && (
+                                    {auth.permissions.includes('addTask'||'addTaskSE') && (
                                         <IconButton title="Add Task" color="primary" id="showAddModalBtn">
                                             <AddBox />
                                         </IconButton>
                                     )}
                                     {auth.roles.includes('admin') && (
                                         <>
-                                            <Button
-                                                title="Import Tasks"
-                                                variant="outlined"
-                                                color="warning"
-                                                startIcon={<Upload />}
-                                                onClick={() => openModal('importDailyWorks')} // Handle opening the modal
-                                            >
-                                                Import
-                                            </Button>
+                                            {isMobile ? (
+                                                <>
+                                                    <IconButton
+                                                        title="Import Daily Works"
+                                                        color="warning"
+                                                        onClick={() => openModal('importDailyWorks')} // Handle opening the modal
+                                                    >
+                                                        <Upload />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        title="Export Daily Works"
+                                                        color="success"
+                                                        onClick={() => openModal('exportDailyWorks')}
+                                                    >
+                                                        <Download />
+                                                    </IconButton>
+                                                </>
 
-                                            <Button
-                                                id="exportToExcel"
-                                                title="Export Tasks"
-                                                variant="outlined"
-                                                color="success"
-                                                startIcon={<Download />}
-                                            >
-                                                Export
-                                            </Button>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        title="Import Daily Works"
+                                                        variant="outlined"
+                                                        color="warning"
+                                                        startIcon={<Upload />}
+                                                        onClick={() => openModal('importDailyWorks')} // Handle opening the modal
+                                                    >
+                                                        Import
+                                                    </Button>
+                                                    <Button
+                                                        title="Export Daily Works"
+                                                        variant="outlined"
+                                                        color="success"
+                                                        startIcon={<Download />}
+                                                        onClick={() => openModal('exportDailyWorks')}
+                                                    >
+                                                        Export
+                                                    </Button>
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </Box>

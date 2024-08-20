@@ -33,6 +33,7 @@
         "@mui/x-date-pickers-pro": "^7.13.0",
         "date-fns": "^3.6.0",
         "dayjs": "^1.11.12",
+        "exceljs": "^4.4.0",
         "jszip": "^3.10.1",
         "leaflet": "^1.9.4",
         "leaflet-routing-machine": "^3.2.12",
@@ -48,6 +49,7 @@
         "react-pro-sidebar": "^1.1.0",
         "react-router-dom": "^6.25.1",
         "react-timer-hook": "^3.0.7",
-        "react-toastify": "^10.0.5"
+        "react-toastify": "^10.0.5",
+        "xlsx": "^0.18.5"
     }
 }

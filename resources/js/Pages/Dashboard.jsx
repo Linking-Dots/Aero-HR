@@ -15,14 +15,14 @@ export default function Dashboard() {
     return (
         <App>
             <Head title="Dashboard"/>
-            <>
+
                 <PunchStatusCard/>
                 <StatisticCard/>
                 <UserLocationsCard/>
                 <TimeSheetTable/>
                 <UpdatesCards/>
                 <LeaveCard/>
-            </>
+
         </App>
 );
 }

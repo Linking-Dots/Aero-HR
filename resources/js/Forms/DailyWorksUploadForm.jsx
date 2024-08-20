@@ -20,7 +20,7 @@ import { useDropzone } from 'react-dropzone';
 
 
 
-const UploadModal = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
+const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();
@@ -82,17 +82,11 @@ const UploadModal = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    console.log(data.newDailyWorks)
-                    setDailyWorks(prevWorks => [
-                        ...prevWorks,
-                        ...data.newDailyWorks, // Append the new tasks to the existing dailyWorks
-                    ]);
+                    console.log(data.updatedDailyWorks)
+                    setFilteredData(data.updatedDailyWorks);
 
                     // Update the filteredData state with the newly created tasks
-                    setFilteredData(prevFilteredData => [
-                        ...prevFilteredData,
-                        ...data.newDailyWorks, // Append the new tasks to the existing filteredData
-                    ]);
+                    setDailyWorks(data.updatedDailyWorks);
 
                     resolve(data.message);
                     closeModal(); // Close the modal after successful upload
@@ -158,7 +152,7 @@ const UploadModal = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
     return (
         <GlassDialog open={open} onClose={closeModal}>
             <DialogTitle style={{ cursor: 'move' }} id="draggable-dialog-title">
-                <Typography>Import Tasks</Typography>
+                <Typography>Import Daily Works</Typography>
                 <IconButton
                     variant="outlined"
                     color="primary"
@@ -257,4 +251,4 @@ const UploadModal = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
     );
 };
 
-export default UploadModal;
+export default DailyWorkUploadForm;
