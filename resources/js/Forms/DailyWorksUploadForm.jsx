@@ -82,12 +82,9 @@ const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks 
                 const data = await response.json();
 
                 if (response.ok) {
-                    console.log(data.updatedDailyWorks)
-                    setFilteredData(data.updatedDailyWorks);
-
+                    setFilteredData(data.updatedDailyWorks.dailyWorks);
                     // Update the filteredData state with the newly created tasks
-                    setDailyWorks(data.updatedDailyWorks);
-
+                    setDailyWorks(data.updatedDailyWorks.dailyWorks);
                     resolve(data.message);
                     closeModal(); // Close the modal after successful upload
                 } else {
@@ -223,6 +220,7 @@ const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks 
                         </Grid>
                     </Grid>
                 </DialogContent>
+
                 <DialogActions
                     sx={{
                         display: 'flex',

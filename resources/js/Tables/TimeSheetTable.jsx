@@ -8,10 +8,10 @@ const TimeSheetTable = (props) => {
     const [error, setError] = useState('');
 
     const getAllUserAttendanceForToday = async () => {
-        const endpoint = route('getAllUsersAttendanceForToday');
+
 
         try {
-            const response = await fetch(endpoint);
+            const response = await fetch(route('getAllUsersAttendanceForToday'));
             const data = await response.json();
 
             if (response.ok) {

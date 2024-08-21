@@ -1,0 +1,51 @@
+
+
+.user-icon {
+    border-radius: 15px;
+}
+
+.auth-one-bg {
+    border-bottom-left-radius: 30vh;
+    border-bottom-right-radius: 30vh;
+}
+
+.bg-overlay {
+    border-bottom-left-radius: 30vh;
+    border-bottom-right-radius: 30vh;
+}
+
+
+.dataTables-center {
+    text-align: center;
+    background-color: transparent;
+}
+
+
+/* For Webkit-based browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 12px; /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: transparent; /* Transparent background for the track */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(136, 136, 136, 0.7); /* Semi-transparent color */
+    border-radius: 10px; /* Round shape */
+    border: 3px solid transparent; /* Adds space around the thumb for a transparent effect */
+    background-clip: padding-box; /* Ensures the border color is transparent */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(85, 85, 85, 0.7); /* Darker color on hover */
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(136, 136, 136, 0.7) transparent;
+}
+
+
+

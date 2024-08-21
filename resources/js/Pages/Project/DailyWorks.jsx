@@ -70,11 +70,11 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 
 
 
-const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
+const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
     const theme = useTheme();
 
-    const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
-    const [filteredData, setFilteredData] = useState(dailyWorksData.dailyWorks);
+    const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
+    const [filteredData, setFilteredData] = useState(allData.dailyWorks);
     const dates = dailyWorks.map(work => dayjs(work.date));
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
@@ -302,7 +302,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                                     onChange={(e) => handleFilterChange('incharge', e.target.value)}
                                                 >
                                                     <MenuItem value="all">All</MenuItem>
-                                                    {dailyWorksData.allInCharges.map(inCharge => (
+                                                    {allData.allInCharges.map(inCharge => (
                                                         <MenuItem key={inCharge.id} value={inCharge.id}>
                                                             {inCharge.name}
                                                         </MenuItem>
@@ -353,8 +353,8 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                 setCurrentRow={setCurrentRow}
                                 handleClickOpen={handleClickOpen}
                                 openModal={openModal}
-                                juniors={dailyWorksData.juniors}
-                                allInCharges={dailyWorksData.allInCharges}
+                                juniors={allData.juniors}
+                                allInCharges={allData.allInCharges}
                                 jurisdictions={jurisdictions}
                                 users={users}
                                 reports_with_daily_works={reports_with_daily_works}

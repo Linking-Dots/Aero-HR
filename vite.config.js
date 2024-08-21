@@ -14,7 +14,12 @@ export default defineConfig({
                 plugins: ['@emotion/babel-plugin'],
             },
         }),
+
     ],
+    build: {
+        minify: false, // Disable minification
+        // You can add other build options here
+    },
     optimizeDeps: {
         include: [
             '@emotion/react',

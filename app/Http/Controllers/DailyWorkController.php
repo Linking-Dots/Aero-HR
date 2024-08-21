@@ -22,7 +22,7 @@ class DailyWorkController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $dailyWorksData = $user->hasRole('se')
+        $allData = $user->hasRole('se')
             ? [
                 'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
                 'allInCharges' => [],
@@ -51,7 +51,7 @@ class DailyWorkController extends Controller
         });
 
         return Inertia::render('Project/DailyWorks', [
-            'dailyWorksData' => $dailyWorksData,
+            'allData' => $allData,
             'jurisdictions' => Jurisdiction::all(),
             'users' => $users,
             'title' => 'Daily Works',
