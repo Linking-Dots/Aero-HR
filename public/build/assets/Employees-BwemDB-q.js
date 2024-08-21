@@ -1,4 +1,4 @@
-import { j as jsxs, a as jsx, Y, b as ae, F as Fragment } from "./app-BxPs6nv_.js";
+import { j as jsxs, a as jsx, Y, b as ae, F as Fragment } from "./app-BjPDCRlK.js";
 function Welcome({
   auth,
   laravelVersion,

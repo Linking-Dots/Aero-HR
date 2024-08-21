@@ -116,6 +116,7 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
             ...prevState,
             [key]: value,
         }));
+        console.log(filterData)
     };
 
     const handleSearch = (event) => {
@@ -144,6 +145,7 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
         });
 
         setFilteredData(filteredWorks);
+        console.log(filteredData)
     }, [filterData, search, dailyWorks]);
 
 
