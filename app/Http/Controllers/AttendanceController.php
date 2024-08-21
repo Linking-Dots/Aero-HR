@@ -37,7 +37,7 @@ class AttendanceController extends Controller
                 // Initialize user data array
                 $userData = [
                     'user_id' => $userId,
-                    'user_name' => User::find($userId)->first_name .' '. User::find($userId)->last_name,
+                    'name' => User::find($userId)->name,
                     'attendance' => [],
                     'symbol_counts' => [
                         "√" => 0, "§" => 0, "×" => 0, "◎" => 0, "■" => 0, "△" => 0, "□" => 0, "☆" => 0, "*" => 0, "○" => 0, "▼" => 0, "/" => 0, "#" => 0
@@ -194,7 +194,7 @@ class AttendanceController extends Controller
     {
         $today = Carbon::today();
 
-        $userLocations = Attendance::with('user:id,user_name,position,first_name')  // Include user data, specifically the first_name
+        $userLocations = Attendance::with('user:id,user_name,position,name')  // Include user data, specifically the first_name
         ->whereNotNull('punchin')
             ->whereDate('date', $today)
             ->get()
@@ -203,7 +203,7 @@ class AttendanceController extends Controller
                     'user_id' => $location->user_id,
                     'user_name' => $location->user->user_name,
                     'position' => $location->user->position,
-                    'first_name' => $location->user->first_name,
+                    'name' => $location->user->name,
                     'punchin_location' => $location->punchin_location,
                     'punchout_location' => $location->punchout_location,
                     'punchin_time' => $location->punchin,
@@ -222,7 +222,7 @@ class AttendanceController extends Controller
             // Get the currently authenticated user (replace with your authentication method)
             $currentUser = Auth::user();
 
-            $userAttendance = Attendance::with('user:id,first_name')  // Include user data, specifically the first_name
+            $userAttendance = Attendance::with('user:id,name')  // Include user data, specifically the first_name
             ->whereNotNull('punchin')
                 ->whereDate('date', $today)
                 ->where('user_id', $currentUser->id)  // Filter for current user
@@ -253,7 +253,7 @@ class AttendanceController extends Controller
 
         try {
             // Get attendance records for all users for today's date
-            $attendanceRecords = Attendance::with('user:id,user_name,first_name')  // Include user data with first_name and avatar
+            $attendanceRecords = Attendance::with('user:id,user_name,name')  // Include user data with first_name and avatar
             ->whereNotNull('punchin')
                 ->whereDate('date', $today)
                 ->get();  // Retrieve all matching records
@@ -268,7 +268,7 @@ class AttendanceController extends Controller
                 return [
                     'date' => Carbon::parse($record->date)->toIso8601String(),
                     'user_name' => $record->user->user_name,
-                    'first_name' => $record->user->first_name,
+                    'name' => $record->user->name,
                     'punchin_time' => $record->punchin,
                     'punchin_location' => $record->punchin_location,
                     'punchout_time' => $record->punchout,

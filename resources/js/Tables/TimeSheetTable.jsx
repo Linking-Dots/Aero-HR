@@ -55,7 +55,7 @@ const TimeSheetTable = (props) => {
                                             const {
                                                 date,
                                                 user_name,
-                                                first_name,
+                                                name,
                                                 punchin_time,
                                                 punchin_location,
                                                 punchout_time,
@@ -77,10 +77,10 @@ const TimeSheetTable = (props) => {
                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                             <Avatar
                                                                 src={`assets/images/users/${user_name}.jpg`}
-                                                                alt={first_name}
+                                                                alt={name}
                                                                 sx={{ width: 24, height: 24, marginRight: 2 }}
                                                             />
-                                                            <Typography>{first_name}</Typography>
+                                                            <Typography>{name}</Typography>
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell>{punchin_time ? new Date(`2024-06-04T${punchin_time}`).toLocaleTimeString('en-US', {
