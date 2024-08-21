@@ -8,21 +8,19 @@ import LeaveCard from "@/Components/LeaveCard.jsx";
 import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
 import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
 import App from "@/Layouts/App.jsx";
+import { Card, Fade } from '@mui/material';
 
-
-export default function Dashboard() {
+export default function Dashboard({auth}) {
 
     return (
         <App>
             <Head title="Dashboard"/>
-
-                <PunchStatusCard/>
-                <StatisticCard/>
-                <UserLocationsCard/>
-                <TimeSheetTable/>
-                <UpdatesCards/>
-                <LeaveCard/>
-
+            <PunchStatusCard/>
+            <StatisticCard/>
+            {auth.roles.includes('admin') && <UserLocationsCard/>}
+            {auth.roles.includes('admin') && <TimeSheetTable/>}
+            <UpdatesCards/>
+            <LeaveCard/>
         </App>
 );
 }

@@ -4,8 +4,10 @@ import HomeIcon from '@mui/icons-material/Home';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {Link, usePage} from "@inertiajs/react";
+import {useTheme} from "@mui/material/styles";
 
 const BottomNav = ({auth}) => {
+    const theme = useTheme();
 
     const { url } = usePage();
     const [value, setValue] = useState(0);
@@ -33,7 +35,7 @@ const BottomNav = ({auth}) => {
                 sx={{
                     display: { xs: 'flex', md: 'none' },
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: 'rgba(17, 25, 40, 0.3)',
+                    backgroundColor: theme.glassCard.backgroundColor,
                 }}
                 showLabels
                 value={value}

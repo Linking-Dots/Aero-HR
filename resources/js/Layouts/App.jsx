@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    Fade,
     ThemeProvider,
     CssBaseline,
     Box, useMediaQuery,
@@ -38,6 +39,8 @@ function App({ children }) {
     const theme = useTheme(darkMode);
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+
+
     return (
         <ThemeProvider theme={theme}>
             <ToastContainer
@@ -53,7 +56,9 @@ function App({ children }) {
                 theme="colored"
             />
             <CssBaseline />
+
             {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+
             {auth.user && <Breadcrumb />}
 
             <Box
@@ -75,22 +80,26 @@ function App({ children }) {
                     }}
                 >
                     <Sidebar toggleSideBar={toggleSideBar}/>
+
                 </Box>
 
 
                 {/* Main Content Area */}
                 <Box
                     sx={{
-                        flex: 1,
                         display: 'flex',
+                        flex: 1,
                         flexDirection: 'column',
                         overflowY: 'auto', // Ensure content can scroll if needed
                     }}
                 >
-                    {children}
-                    <Footer/>
+
+                {children}
+
                 </Box>
             </Box>
+            {!isMobile && <Footer/>}
+
             <>
                 {auth.user && isMobile && <BottomNav auth={auth}/>}
             </>

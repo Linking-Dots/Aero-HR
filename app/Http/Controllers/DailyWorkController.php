@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Imports\DailyWorkImport;
 use App\Models\DailySummary;
+use App\Models\DailyWork;
 use App\Models\Jurisdiction;
 use App\Models\Report;
-use App\Models\DailyWork;
 use App\Models\User;
 use ErrorException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -25,13 +24,13 @@ class DailyWorkController extends Controller
         $user = Auth::user();
         $dailyWorksData = $user->hasRole('se')
             ? [
-                'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->user_name)->get(),
+                'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
                 'allInCharges' => [],
-                'juniors' => User::where('inCharges', $user->user_name)->get(),
+                'juniors' => User::where('report_to', $user->id)->get(),
 
             ]
             : ($user->hasRole('qci') || $user->hasRole('aqci')
-                ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->user_name)->get()]
+                ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->id)->get()]
                 : ($user->hasRole('admin') || $user->hasRole('manager')
                     ? [
                         'dailyWorks' => DailyWork::with('reports')->get(),
@@ -208,11 +207,31 @@ class DailyWorkController extends Controller
             }
 
 
+            $user = Auth::user();
+            $updatedDailyWorks = $user->hasRole('se')
+                ? [
+                    'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
+                    'allInCharges' => [],
+                    'juniors' => User::where('report_to', $user->id)->get(),
+
+                ]
+                : ($user->hasRole('qci') || $user->hasRole('aqci')
+                    ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->id)->get()]
+                    : ($user->hasRole('admin') || $user->hasRole('manager')
+                        ? [
+                            'dailyWorks' => DailyWork::with('reports')->get(),
+                            'allInCharges' => User::role('se')->get(),
+                            'juniors' => [],
+                        ]
+                        : ['dailyWorks' => []]
+                    )
+                );
+
 
             // Redirect to tasks route with success message
             return response()->json([
                         'message' => 'Daily work imported successfully.',
-                        'updatedDailyWorks' => DailyWork::all(),
+                        'updatedDailyWorks' => $updatedDailyWorks,
                     ], 200);
         } catch (ValidationException $e) {
 

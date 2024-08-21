@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Imports\TaskImport;
 use App\Models\DailySummary;
+use App\Models\DailyWork;
 use App\Models\NCR;
 use App\Models\Objection;
 use App\Models\Report;
-use App\Models\DailyWork;
 use App\Models\Tasks;
 use App\Models\User;
 use App\Models\WorkLocation;

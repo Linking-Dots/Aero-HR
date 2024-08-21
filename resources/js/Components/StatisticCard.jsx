@@ -10,8 +10,8 @@ import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
 
-const StatisticCard = ({ title, value, icon, color, badgeColor, badgeText, props }) => (
-    <Grid item xs={12} sm={6} md={3}>
+const StatisticCard = ({ title, value, icon, color, props }) => (
+    <Grid item xs={6} sm={4} md={3}>
         <Grow in>
             <GlassCard>
                 <CardContent>

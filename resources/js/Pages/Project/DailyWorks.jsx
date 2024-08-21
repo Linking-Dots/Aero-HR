@@ -73,8 +73,6 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports, reports_with_daily_works }) => {
     const theme = useTheme();
 
-    console.log(users)
-
     const [dailyWorks, setDailyWorks] = useState(dailyWorksData.dailyWorks);
     const [filteredData, setFilteredData] = useState(dailyWorksData.dailyWorks);
     const dates = dailyWorks.map(work => dayjs(work.date));
@@ -273,7 +271,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                             </Box>
                                         </LocalizationProvider>
                                     </Grid>
-                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
                                         <FormControl fullWidth>
                                             <InputLabel id="status-label">Status</InputLabel>
                                             <Select
@@ -293,7 +291,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                         </FormControl>
                                     </Grid>
                                     {auth.roles.includes('admin') && (
-                                        <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                        <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
                                             <FormControl fullWidth>
                                                 <InputLabel id="incharge-label">Incharge</InputLabel>
                                                 <Select
@@ -313,7 +311,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                                             </FormControl>
                                         </Grid>
                                     )}
-                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
                                         <FormControl fullWidth>
                                             <InputLabel>Select Report</InputLabel>
                                             <Select
@@ -330,7 +328,7 @@ const DailyWorks = ({ auth, title, dailyWorksData, jurisdictions, users, reports
                             </Box>
                         </CardContent>
 
-                        <CardContent sx={{ paddingTop: auth.roles.includes('se') ? 0 : undefined }}>
+                        <CardContent >
 
                             <TextField
                                 label="Search"

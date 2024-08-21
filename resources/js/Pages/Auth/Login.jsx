@@ -22,7 +22,7 @@ import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
 import { useTheme } from '@mui/material/styles';
-
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
 const Login = () => {
     const theme = useTheme();
@@ -140,11 +140,6 @@ const Login = () => {
                                                 </LoadingButton>
                                             </Box>
                                         </form>
-                                        <Box mt={3} textAlign="center">
-                                            <Typography variant="body2">
-                                                Don't have an account? <Link href="/register">Register</Link>
-                                            </Typography>
-                                        </Box>
                                     </Box>
                                 </CardContent>
                             </GlassCard>
@@ -152,18 +147,23 @@ const Login = () => {
                     </Grid>
                 </Grid>
             </Box>
-            <footer>
+            <Box sx={{
+                left: 0,
+                right: 0,
+                bottom: 10,
+                position: 'fixed'
+            }}>
                 <Container>
                     <Grid container justifyContent="center">
                         <Grid item xs={12} textAlign="center">
-                            <Typography variant="body2" color="text.secondary">
-                                &copy; {new Date().getFullYear()} Emam Hosen. Crafted with <i
-                                className="mdi mdi-heart text-danger"></i>
+                            <Typography sx={{ bottom: 0, display: 'flex', justifyContent: 'center'}} color="text.secondary">
+                                &copy; {new Date().getFullYear()} Emam Hosen. Crafted with<FavoriteBorderIcon/>
                             </Typography>
+
                         </Grid>
                     </Grid>
                 </Container>
-            </footer>
+            </Box>
         </App>
 
     );

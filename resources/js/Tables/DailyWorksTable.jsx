@@ -33,7 +33,7 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
         },
         '& .rdt_TableBody': {
             overflowY: 'auto',
-            maxHeight: 'calc(500px - 56px)',
+            maxHeight: '52vh',
             '& .rdt_TableRow': {
                 minHeight: 'auto',
                 backgroundColor: 'transparent',
@@ -142,12 +142,11 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             selector: row => row.assigned,
             sortable: 'true',
             center: 'true',
-            width: '150px',
             cell: row => (
                 <Select
                     fullWidth
                     size="small"
-                    value={row.assigned || ''}
+                    value={row.assigned || 'na'}
                     onChange={(e) => handleChange(row.id,'assigned', e.target.value)}
                     MenuProps={{
                         PaperProps: {
@@ -161,7 +160,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                         },
                     }}
                 >
-                    <MenuItem value="" disabled>Please select</MenuItem>
+                    <MenuItem value="na" disabled>Please select</MenuItem>
                     {juniors.map(junior => (
                         <MenuItem key={junior.id} value={junior.id}>
                             <Box sx={{display: 'flex'}}>
@@ -312,7 +311,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 <Select
                     fullWidth
                     size="small"
-                    value={row.incharge || ''}
+                    value={row.incharge || 'na'}
                     onChange={(e) => handleChange(row.id,'incharge', e.target.value)}
                     MenuProps={{
                         PaperProps: {
@@ -326,7 +325,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                         },
                     }}
                 >
-                    <MenuItem value="" disabled>Please select</MenuItem>
+                    <MenuItem value="na" disabled>Please select</MenuItem>
                     {allInCharges.map(incharge => (
                         <MenuItem key={incharge.id} value={incharge.id}>
                             <Box sx={{display: 'flex'}}>
@@ -576,7 +575,6 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 defaultSortFieldId={1}
                 defaultSortAsc={false}
                 pagination
-                fixedHeaderScrollHeight="500px"
                 highlightOnHover
                 responsive
                 dense
