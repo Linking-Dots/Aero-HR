@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leave_settings', function (Blueprint $table) {
+        Schema::create('leave_types', function (Blueprint $table) {
             $table->id();
-            $table->string('leave_type');
+            $table->string('type');
             $table->integer('days');
             $table->boolean('carry_forward')->default(false);
             $table->boolean('earned_leave')->default(false);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

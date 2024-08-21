@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('leaves', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('users')->onDelete('cascade');
-            $table->string('leave_type');
+            $table->foreignId('user')->constrained('users')->onDelete('cascade');
+            $table->foreignId('leave_type')->constrained('leave_types')->onDelete('cascade');
             $table->date('from_date');
             $table->date('to_date');
             $table->integer('no_of_days');
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.
