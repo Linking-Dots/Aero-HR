@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import {List, ListItem, ListItemIcon, ListItemText, Collapse, Box, CardHeader} from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import React, {useState} from 'react';
+import {Box, CardHeader, Collapse, List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
+import {useTheme} from '@mui/material/styles';
+import {ExpandLess, ExpandMore} from '@mui/icons-material';
 import {Link, usePage} from "@inertiajs/react";
-import Menu from "@mui/material/Menu";
 import GlassCard from "@/Components/GlassCard.jsx";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
-import { getPages } from '@/Props/pages.jsx';
+import {getPages} from '@/Props/pages.jsx';
 
 const Sidebar = ({toggleSideBar}) => {
     const theme = useTheme();

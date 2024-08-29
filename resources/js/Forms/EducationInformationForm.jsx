@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
     Box,
     Button,
@@ -8,16 +8,16 @@ import {
     DialogContent,
     DialogTitle,
     Grid,
-    IconButton, ListItemText,
+    IconButton,
     TextField,
     Typography
 } from '@mui/material';
 import {Add, Clear as ClearIcon} from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+import {LoadingButton} from '@mui/lab';
 import GlassCard from '@/Components/GlassCard'; // Make sure this component is correctly imported
 import GlassDialog from '@/Components/GlassDialog.jsx'; // Make sure this component is correctly imported
-import { useTheme } from '@mui/material/styles';
-import { toast } from 'react-toastify';
+import {useTheme} from '@mui/material/styles';
+import {toast} from 'react-toastify';
 
 const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
     const [updatedUser, setUpdatedUser] = useState({

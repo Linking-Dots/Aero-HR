@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { Link, useForm } from '@inertiajs/react';
+import React, {useEffect} from 'react';
+import {Head, Link, useForm} from '@inertiajs/react';
 import {
     Box,
     Button,
     Card,
-    CardContent, Checkbox,
-    Container, FormControlLabel,
+    CardContent,
+    Container,
     Grid,
     IconButton,
     InputAdornment,
@@ -14,11 +14,9 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Head } from '@inertiajs/react';
 import App from "@/Layouts/App.jsx";
 import logo from "../../../../public/assets/images/logo.png";
 import Grow from "@mui/material/Grow";
-import LoadingButton from "@mui/lab/LoadingButton";
 
 export default function Register(props) {
     const { data, setData, post, processing, errors, reset } = useForm({

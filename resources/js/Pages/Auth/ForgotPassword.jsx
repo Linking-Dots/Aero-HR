@@ -1,18 +1,6 @@
-import React, { useState } from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
-import {
-    Container,
-    Grid,
-    Typography,
-    TextField,
-    Box,
-    Checkbox,
-    FormControlLabel,
-    Card,
-    CardContent,
-    IconButton,
-    InputAdornment
-} from '@mui/material';
+import React from 'react';
+import {Head, Link, useForm} from '@inertiajs/react';
+import {Box, Card, CardContent, Container, Grid, TextField, Typography} from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import logo from '../../../../public/assets/images/logo.png';
 import App from "@/Layouts/App.jsx";

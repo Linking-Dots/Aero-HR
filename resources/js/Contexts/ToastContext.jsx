@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useRef } from 'react';
-import { Toast } from 'primereact/toast';
+import React, {createContext, useContext, useRef, useState} from 'react';
+import {Toast} from 'primereact/toast';
 
 const ToastContext = createContext();
 

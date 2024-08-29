@@ -1,23 +1,24 @@
 import {
     Avatar,
-    FormControl, IconButton,
+    FormControl,
+    IconButton,
     InputLabel,
-    Menu, MenuItem, Select,
+    MenuItem,
+    Select,
     Table,
     TableBody,
-    TableCell, TableContainer,
+    TableCell,
+    TableContainer,
     TableHead,
     TableRow,
     Typography,
 } from "@mui/material";
-import { usePage, Link } from '@inertiajs/react';
+import {Link} from '@inertiajs/react';
 import {AccountCircle, Delete, Edit} from '@mui/icons-material';
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
 import CircularProgress from "@mui/material/CircularProgress";
-
 
 
 const EmployeeTable = ({allUsers, departments, designations}) => {

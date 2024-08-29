@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardContent, Typography, Avatar, Box, Grid, Badge } from '@mui/material';
-import { blue, green, red, yellow } from '@mui/material/colors';
+import {Avatar, Box, CardContent, Grid, Typography} from '@mui/material';
+import {blue, green, yellow} from '@mui/material/colors';
 import TaskIcon from '@mui/icons-material/Task';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TimerIcon from '@mui/icons-material/Timer';

@@ -1,5 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, CardHeader, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Avatar } from '@mui/material';
+import React, {useEffect, useState} from 'react';
+import {
+    Avatar,
+    Box,
+    CardContent,
+    CardHeader,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography
+} from '@mui/material';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 

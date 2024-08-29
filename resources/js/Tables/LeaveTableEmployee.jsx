@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
     Avatar,
-    FormControl,
     IconButton,
-    InputLabel,
     MenuItem,
-    Select,
     Table,
     TableBody,
     TableCell,
@@ -14,11 +11,10 @@ import {
     TableRow,
     Typography,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { AccountCircle, Delete, Edit } from '@mui/icons-material';
+import {useTheme} from '@mui/material/styles';
+import {Delete, Edit} from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { toast } from 'react-toastify';
-import { usePage, Link } from '@inertiajs/react';
+import {toast} from 'react-toastify';
 
 const LeaveTableEmployee = ({ allUsers, departments, designations }) => {
     const [users, setUsers] = useState(allUsers);

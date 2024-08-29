@@ -1,17 +1,17 @@
-import React, {useEffect, useState} from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import React, {useState} from 'react';
+import {Head, Link, useForm} from '@inertiajs/react';
 import {
-    Container,
-    Grid,
-    Typography,
-    TextField,
     Box,
-    Checkbox,
-    FormControlLabel,
-    Card,
     CardContent,
+    Checkbox,
+    Container,
+    FormControl,
+    FormControlLabel,
+    Grid,
     IconButton,
-    InputAdornment, InputLabel, FormControl
+    InputAdornment,
+    TextField,
+    Typography
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Visibility from '@mui/icons-material/Visibility';
@@ -21,7 +21,7 @@ import App from '@/Layouts/App.jsx'
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
-import { useTheme } from '@mui/material/styles';
+import {useTheme} from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
 const Login = () => {

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { styled, alpha } from '@mui/material/styles';
+import {useState} from 'react';
+import {styled} from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
@@ -12,7 +12,7 @@ import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
 
-import { Settings, AccountCircle, ExitToApp } from '@mui/icons-material';
+import {AccountCircle, ExitToApp, Settings} from '@mui/icons-material';
 
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
@@ -22,12 +22,11 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 
-import {Collapse, Switch, Tab, Tabs} from "@mui/material";
+import {Collapse, Switch} from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
-import { usePage, Link } from '@inertiajs/react';
-import {useState} from "react";
-import { getPages } from '@/Props/pages.jsx';
+import {Link, usePage} from '@inertiajs/react';
+import {getPages} from '@/Props/pages.jsx';
 
 // Styled Menu component
 const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (

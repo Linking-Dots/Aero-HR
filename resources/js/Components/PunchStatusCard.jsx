@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import {Box, CardContent, Typography, CircularProgress, Collapse} from '@mui/material';
+import React, {useEffect, useState} from 'react';
+import {Box, CardContent, CircularProgress, Collapse, Typography} from '@mui/material';
 import {usePage} from "@inertiajs/react";
 import {toast} from "react-toastify";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
-
 
 
 const PunchStatusCard = () => {

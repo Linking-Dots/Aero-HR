@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import React, {useState} from 'react';
+import {useForm} from '@inertiajs/react';
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);

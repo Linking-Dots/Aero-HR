@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import React, {useEffect, useState} from 'react';
+import {Head, useForm} from '@inertiajs/react';
 import {
-    Container,
-    Grid,
-    Typography,
-    TextField,
     Box,
     Card,
     CardContent,
+    Container,
+    Grid,
     IconButton,
-    InputAdornment
+    InputAdornment,
+    TextField,
+    Typography
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Visibility from '@mui/icons-material/Visibility';

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Card, CardContent, Typography, Box, Grid, Avatar, CardHeader, Divider } from '@mui/material';
+import {Avatar, Box, CardContent, CardHeader, Divider, Grid, Typography} from '@mui/material';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 

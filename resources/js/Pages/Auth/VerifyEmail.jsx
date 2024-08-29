@@ -1,10 +1,5 @@
-import React, { useState } from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
-import { TextField, InputAdornment, IconButton, Box, Grid, Typography, Card, CardContent, Checkbox, FormControlLabel } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import LoadingButton from '@mui/lab/LoadingButton';
-import logo from '../../../../public/assets/images/logo.png'; // Assuming you have a logo image in the specified path
+import React, {useState} from 'react';
+import {useForm} from '@inertiajs/react';
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);

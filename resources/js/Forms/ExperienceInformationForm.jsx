@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
     Box,
     Button,
@@ -13,11 +13,11 @@ import {
     Typography
 } from '@mui/material';
 import {Add, Clear as ClearIcon} from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+import {LoadingButton} from '@mui/lab';
 import GlassCard from '@/Components/GlassCard'; // Ensure this component is correctly imported
 import GlassDialog from '@/Components/GlassDialog.jsx'; // Ensure this component is correctly imported
-import { useTheme } from '@mui/material/styles';
-import { toast } from 'react-toastify';
+import {useTheme} from '@mui/material/styles';
+import {toast} from 'react-toastify';
 
 const ExperienceInformationForm = ({ user, open, closeModal, setUser }) => {
     const [updatedUser, setUpdatedUser] = useState({

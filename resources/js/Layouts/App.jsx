@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Fade,
-    ThemeProvider,
-    CssBaseline,
-    Box, useMediaQuery,
-} from '@mui/material';
+import React, {useEffect, useState} from 'react';
+import {Box, CssBaseline, ThemeProvider, useMediaQuery,} from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
-import BottomNavigation from "@/Layouts/BottomNav.jsx";
+import BottomNav from "@/Layouts/BottomNav.jsx";
 import {usePage} from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
-import { ToastContainer } from 'react-toastify';
+import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
-import BottomNav from "@/Layouts/BottomNav.jsx";
 import Footer from "@/Layouts/Footer.jsx";
+
 function App({ children }) {
     const { auth } = usePage().props;
     const [sideBarOpen, setSideBarOpen] = useState(false);

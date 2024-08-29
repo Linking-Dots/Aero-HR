@@ -1,6 +1,6 @@
-import React, { forwardRef } from 'react';
-import { Card, Fade } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import React, {forwardRef} from 'react';
+import {Card, Fade} from '@mui/material';
+import {useTheme} from '@mui/material/styles';
 
 const GlassCard = forwardRef(({ children, ...props }, ref) => {
     const theme = useTheme();

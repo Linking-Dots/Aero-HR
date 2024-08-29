@@ -1,27 +1,26 @@
 import {
     Avatar,
     Box,
-    Button, CardContent, CardHeader, CircularProgress,
-    Dialog,
+    CircularProgress,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControl, FormHelperText,
-    Grid, IconButton,
+    FormControl,
+    FormHelperText,
+    Grid,
+    IconButton,
     InputLabel,
-    MenuItem, Modal,
+    MenuItem,
     Select,
-    TextField, Typography
+    TextField,
+    Typography
 } from "@mui/material";
 import React, {useState} from "react";
-import GlassCard from "@/Components/GlassCard.jsx";
 import ClearIcon from '@mui/icons-material/Clear';
-import Grow from "@mui/material/Grow";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 import {PhotoCamera} from "@mui/icons-material";
 import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {useForm} from "@inertiajs/react";
 import {toast} from "react-toastify";
 
 const ProfileForm = ({user, allUsers, departments, designations,setUser, open, closeModal, handleImageChange, selectedImage }) => {

@@ -1,27 +1,25 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DailySummaryController;
+use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EducationController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\JurisdictionController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveSettingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\CheckRole;
 use App\Models\DailyWork;
-use App\Models\User;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\DailyWorkController;
-use App\Http\Controllers\DailySummaryController;
-use App\Http\Controllers\JurisdictionController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\TaskController;
-use App\Http\Middleware\CheckRole;
 
 
 Route::redirect('/', '/dashboard');

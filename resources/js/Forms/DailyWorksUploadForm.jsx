@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {
     Box,
     CircularProgress,
@@ -10,14 +10,12 @@ import {
     Typography
 } from "@mui/material";
 import ClearIcon from '@mui/icons-material/Clear';
-import { useTheme } from "@mui/material/styles";
+import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { toast } from "react-toastify";
+import {toast} from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
-import {Clear, Description, InsertDriveFile, PictureAsPdf, Upload} from '@mui/icons-material';
-import { CloudUpload } from '@mui/icons-material';
-import { useDropzone } from 'react-dropzone';
-
+import {Clear, CloudUpload, Description, InsertDriveFile, PictureAsPdf, Upload} from '@mui/icons-material';
+import {useDropzone} from 'react-dropzone';
 
 
 const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks }) => {

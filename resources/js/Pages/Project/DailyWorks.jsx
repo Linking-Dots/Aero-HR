@@ -1,37 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Box,
     Button,
-    CardHeader,
     CardContent,
+    CardHeader,
     FormControl,
+    Grid,
+    IconButton,
+    InputAdornment,
     InputLabel,
     MenuItem,
     Select,
     TextField,
-    IconButton, Grid, InputAdornment, useMediaQuery, Typography,
+    useMediaQuery,
 } from '@mui/material';
-import { AddBox, Upload, Download } from '@mui/icons-material';
+import {AddBox, Download, Upload} from '@mui/icons-material';
 import {Head} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import {DatePicker, LocalizationProvider} from '@mui/x-date-pickers';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import minMax from 'dayjs/plugin/minMax';
-dayjs.extend(minMax);
-
 import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
 import DailyWorksDownloadForm from "@/Forms/DailyWorksDownloadForm.jsx";
-import { styled } from '@mui/system';
+import {styled} from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
 import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 import {useTheme} from "@mui/material/styles";
 
-
+dayjs.extend(minMax);
 
 
 const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
@@ -277,6 +278,7 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
                                         <FormControl fullWidth>
                                             <InputLabel id="status-label">Status</InputLabel>
                                             <Select
+                                                variant="outlined"
                                                 labelId="status-label"
                                                 label="Status"
                                                 name="status"
@@ -297,6 +299,7 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
                                             <FormControl fullWidth>
                                                 <InputLabel id="incharge-label">Incharge</InputLabel>
                                                 <Select
+                                                    variant="outlined"
                                                     labelId="incharge-label"
                                                     label="Incharge"
                                                     name="incharge"
@@ -317,6 +320,7 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
                                         <FormControl fullWidth>
                                             <InputLabel>Select Report</InputLabel>
                                             <Select
+                                                variant="outlined"
                                                 name="qc_report"
                                                 value={filterData.report}
                                                 onChange={(e) => handleFilterChange('report', e.target.value)}

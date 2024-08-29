@@ -1,8 +1,8 @@
 import * as React from 'react';
+import {forwardRef} from 'react';
 import Dialog from '@mui/material/Dialog';
 import Grow from "@mui/material/Grow";
-import { forwardRef } from "react";
-import { useTheme } from "@mui/material/styles";
+import {useTheme} from "@mui/material/styles";
 import Draggable from "react-draggable";
 import {Paper} from "@mui/material";
 

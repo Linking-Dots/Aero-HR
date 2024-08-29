@@ -1,5 +1,5 @@
-import { createTheme } from '@mui/material/styles';
-import {useMemo, useState} from "react";
+import {createTheme} from '@mui/material/styles';
+import {useMemo} from "react";
 
 
 const useTheme = (darkMode) => {

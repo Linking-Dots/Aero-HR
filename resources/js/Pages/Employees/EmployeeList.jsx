@@ -1,14 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Head, usePage } from "@inertiajs/react";
-import {
-    Box, CardHeader, CardContent, Button
-} from '@mui/material';
+import React from 'react';
+import {Head} from "@inertiajs/react";
+import {Box, Button, CardContent, CardHeader} from '@mui/material';
 
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import {Add} from "@mui/icons-material";
-import { toast } from 'react-toastify';
 import EmployeeTable from '@/Tables/EmployeeTable.jsx';
 
 const EmployeesList = ({title, allUsers, departments, designations}) => {

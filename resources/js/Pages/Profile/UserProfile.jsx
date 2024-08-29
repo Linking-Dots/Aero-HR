@@ -5,10 +5,9 @@ import {
     Button,
     CardContent,
     CardHeader,
-    CircularProgress,
     Divider,
     Grid,
-    IconButton, LinearProgress,
+    IconButton,
     List,
     ListItem,
     ListItemText,
@@ -17,21 +16,17 @@ import {
     Typography
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import {Head, usePage, Link} from "@inertiajs/react";
+import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 import ProfileForm from '@/Forms/ProfileForm.jsx';
-import {useTheme} from "@mui/material/styles";
 import PersonalInformationForm from "@/Forms/PersonalInformationForm.jsx";
 import EmergencyContactForm from "@/Forms/EmergencyContactForm.jsx";
 import BankInformationForm from "@/Forms/BankInformationForm.jsx";
 import FamilyMemberForm from "@/Forms/FamilyMemberForm.jsx";
 import EducationInformationDialog from "@/Forms/EducationInformationForm.jsx";
 import ExperienceInformationForm from "@/Forms/ExperienceInformationForm.jsx";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import Tooltip from "@mui/material/Tooltip";
-import AvatarGroup from '@mui/material/AvatarGroup';
 import SalaryInformationForm from "@/Forms/SalaryInformationForm.jsx";
 import ProjectCard from "@/Components/ProjectCard.jsx";
 

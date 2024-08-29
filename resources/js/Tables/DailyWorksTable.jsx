@@ -1,12 +1,6 @@
 import React from 'react';
 import DataTable from 'react-data-table-component';
-import {
-    Select,
-    MenuItem,
-    TextField,
-    Avatar,
-    CircularProgress, Box, IconButton,
-} from '@mui/material';
+import {Avatar, Box, CircularProgress, GlobalStyles, IconButton, MenuItem, Select, TextField,} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
 import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
@@ -14,10 +8,8 @@ import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "
 import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
 import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
-
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { GlobalStyles } from '@mui/material';
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -98,6 +90,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             width: '220px',
             cell: row => (
                 <Select
+                    variant="outlined"
                     size="small"
                     fullWidth
                     value={row.status}
@@ -144,6 +137,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             center: 'true',
             cell: row => (
                 <Select
+                    variant="outlined"
                     fullWidth
                     size="small"
                     value={row.assigned || 'na'}
@@ -309,6 +303,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             center: 'true',
             cell: row => (
                 <Select
+                    variant="outlined"
                     fullWidth
                     size="small"
                     value={row.incharge || 'na'}

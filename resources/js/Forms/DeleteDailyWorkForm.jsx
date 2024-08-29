@@ -1,9 +1,8 @@
-import {Button, DialogActions, DialogContent, DialogContentText, DialogTitle, CircularProgress} from "@mui/material";
+import {Button, CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 import React from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
-
 
 
 const DeleteDailyWorkForm = ({ open, handleClose, taskIdToDelete, setDailyWorks, setFilteredData }) => {

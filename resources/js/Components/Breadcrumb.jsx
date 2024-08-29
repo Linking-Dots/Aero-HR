@@ -1,11 +1,10 @@
 import React from 'react';
-import { emphasize, styled } from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Chip from '@mui/material/Chip';
 import HomeIcon from '@mui/icons-material/Home';
-import { Link } from '@inertiajs/react';
-import { Box, Grid, Typography } from '@mui/material';
-import {usePage} from "@inertiajs/react";
+import {Link, usePage} from '@inertiajs/react';
+import {Box, Grid} from '@mui/material';
 import Grow from '@mui/material/Grow';
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
