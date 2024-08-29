@@ -1,6 +1,6 @@
 import * as React from 'react';
-import {useState} from 'react';
-import {styled} from '@mui/material/styles';
+import { useState, useCallback } from 'react';
+import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -11,22 +11,18 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
-
-import {AccountCircle, ExitToApp, Settings} from '@mui/icons-material';
-
+import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-
-
-import {Collapse, Switch} from "@mui/material";
+import { Collapse, Switch } from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
-import {Link, usePage} from '@inertiajs/react';
-import {getPages} from '@/Props/pages.jsx';
+import { Link, usePage } from '@inertiajs/react';
+import { getPages } from '@/Props/pages.jsx';
 
 // Styled Menu component
 const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
@@ -42,7 +38,6 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
         backgroundColor: theme.glassCard.backgroundColor,
         border: theme.glassCard.border,
         borderRadius: 10,
-
         boxShadow:
             'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
         '& .MuiMenu-list': {
@@ -51,60 +46,50 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
     },
 }));
 
-
-
-function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
+const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) => {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
     const userIsAdmin = auth.roles.includes('admin');
     const pages = getPages(userIsAdmin);
-    const [anchorElNav, setAnchorElNav] = React.useState(null);
+    const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
-
-
-    const [anchorElSubMenu, setAnchorElSubMenu] = React.useState(null);
-    const [openSubMenu, setOpenSubMenu] = React.useState(null);
+    const [anchorElSubMenu, setAnchorElSubMenu] = useState(null);
+    const [openSubMenu, setOpenSubMenu] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
-
-
 
     const settings = [
         { name: 'Settings', route: 'dashboard', icon: <Settings /> },
         { name: 'Logout', route: 'logout', method: 'post', icon: <ExitToApp /> }
     ];
 
-
-
-    const handleOpenNavMenu = (event) => {
+    const handleOpenNavMenu = useCallback((event) => {
         setAnchorElNav(event.currentTarget);
         setMenuOpen(true);
-    };
+    }, []);
 
-    const handleOpenUserMenu = (event) => {
+    const handleOpenUserMenu = useCallback((event) => {
         setAnchorElUser(event.currentTarget);
-    };
+    }, []);
 
-
-
-    const handleOpenSubMenu = (pageName, event) => {
+    const handleOpenSubMenu = useCallback((pageName, event) => {
         setAnchorElSubMenu(event.currentTarget); // Set the submenu anchor element
         setOpenSubMenu(prev => prev === pageName ? null : pageName);
         event.stopPropagation(); // Prevent event from propagating to parent
-    };
+    }, []);
 
-    const handleCloseNavMenu = () => {
+    const handleCloseNavMenu = useCallback(() => {
         setAnchorElNav(null);
         setMenuOpen(false);
-    };
+    }, []);
 
-    const handleCloseUserMenu = () => {
+    const handleCloseUserMenu = useCallback(() => {
         setAnchorElUser(null);
-    };
+    }, []);
 
-    const handleCloseSubMenu = () => {
+    const handleCloseSubMenu = useCallback(() => {
         setAnchorElSubMenu(null);
         setOpenSubMenu(null);
-    };
+    }, []);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -425,6 +410,6 @@ function Header({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) {
             </Grow>
         </Box>
     );
-}
+});
 
 export default Header;

@@ -246,7 +246,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                             }
                         />
                         <CardContent>
-                            <Box component="form" id="filterTaskForm">
+                            <Box>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>

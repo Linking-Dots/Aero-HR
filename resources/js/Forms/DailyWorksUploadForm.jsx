@@ -152,7 +152,7 @@ const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks 
                     variant="outlined"
                     color="primary"
                     onClick={closeModal}
-                    sx={{ position: 'absolute', top: 8, right: 16 }}
+                    sx={{ position: 'absolute', top: 8, right: 16, zIndex: 0}}
                 >
                     <ClearIcon />
                 </IconButton>
