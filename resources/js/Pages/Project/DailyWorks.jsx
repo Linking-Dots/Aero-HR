@@ -115,10 +115,11 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         }));
     }, []);
 
-    const handleSearch = useCallback(debounce((event) => {
+    const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setSearch(value);
-    }, 300), []);
+    };
+
 
     useEffect(() => {
         const searchedData = dailyWorks.filter(item =>
