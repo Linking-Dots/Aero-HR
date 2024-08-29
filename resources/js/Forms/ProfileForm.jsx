@@ -15,7 +15,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ClearIcon from '@mui/icons-material/Clear';
 import GlassDialog from "@/Components/GlassDialog.jsx";
 import {PhotoCamera} from "@mui/icons-material";
@@ -23,66 +23,170 @@ import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {toast} from "react-toastify";
 
-const ProfileForm = ({user, allUsers, departments, designations,setUser, open, closeModal, handleImageChange, selectedImage }) => {
+const ProfileForm = ({user, allUsers, departments, designations,setUser, open, closeModal }) => {
 
-    const [updatedUser, setUpdatedUser] = useState({
-        id: user.id
+    const [initialUserData, setInitialUserData] = useState({
+        name: user.name || '',
+        gender: user.gender || '',
+        birthday: user.birthday || '',
+        date_of_joining: user.date_of_joining || '',
+        address: user.address || '',
+        employee_id: user.employee_id || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        department: user.department || '',
+        designation: user.designation || '',
+        profile_image: user.profile_image || '',
+        report_to: user.report_to || '',
     });
+
+
+    const [changedUserData, setChangedUserData] = useState({
+        id: user.id,
+    });
+
+    const [dataChanged, setDataChanged] = useState(false);
+
+
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
     const [hover, setHover] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const theme = useTheme();
 
-    const handleChange = (key, value) => {
-        if (key === 'department' && user.department !== value) {
-            user.designation = null;
-            user.report_to = null;
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            // Create an object URL for preview
+            const objectURL = URL.createObjectURL(file);
+
+            // Log file type and URL
+            console.log('Selected file type:', file.type);
+            console.log('Selected file URL:', objectURL);
+
+            // Update state with the selected file's URL for preview
+            setSelectedImage(objectURL);
+
+            // You might want to store the file object itself for further processing
+            // For example, storing in state or form data
+            setSelectedFile(file);
         }
-        setUpdatedUser((prevUser) => ({ ...prevUser, [key]: value }));
     };
+
+    const handleChange = (key, value) => {
+        setInitialUserData((prevUser) => {
+            const updatedData = { ...prevUser, [key]: value };
+
+            // Remove the key if the value is an empty string
+            if (value === '') {
+                delete updatedData[key];
+            }
+
+            // Special case handling
+            if (key === 'department' && user.department !== value) {
+                user.designation = null;
+                user.report_to = null;
+            }
+
+            return updatedData;
+        });
+
+        setChangedUserData((prevUser) => {
+            const updatedData = { ...prevUser, [key]: value };
+
+            // Remove the key if the value is an empty string
+            if (value === '') {
+                delete updatedData[key];
+            }
+
+            // Special case handling
+            if (key === 'department' && user.department !== value) {
+                user.designation = null;
+                user.report_to = null;
+            }
+
+            return updatedData;
+        });
+    };
+
+    useEffect(() => {
+        console.log('Initial:', initialUserData)
+        console.log('Changed:', changedUserData)
+        // Function to filter out unchanged data from changedUserData
+        for (const key in changedUserData) {
+            // Skip comparison for 'id' or if the value matches the original data
+            if (key !== 'id' && changedUserData[key] === user[key]) {
+                delete changedUserData[key]; // Skip this iteration
+            }
+        }
+        const hasChanges = Object.keys(changedUserData).filter(key => key !== 'id').length > 0;
+
+        setDataChanged(hasChanges);
+
+    }, [initialUserData, changedUserData, user]);
 
     async function handleSubmit(event) {
         event.preventDefault();
-        console.log(updatedUser);
+        console.log(changedUserData);
         setProcessing(true);
+
         const promise = new Promise(async (resolve, reject) => {
             try {
+                const formData = new FormData();
+                formData.append('id', user.id);
+                formData.append('ruleSet', 'profile');
+
+                // Append updated user data to the form
+                for (const key in initialUserData) {
+                    if (initialUserData.hasOwnProperty(key)) {
+                        formData.append(key, initialUserData[key]);
+                    }
+                }
+
+                // Append the selected image if there is one
+                if (selectedImage) {
+                    // Get the file type
+                    const fileType = selectedImage.type;
+
+
+
+                    // Check if the file type is valid
+                    if (['image/jpeg','image/jpg', 'image/png'].includes(fileType)) {
+                        formData.append('profile_image', selectedImage);
+                    } else {
+                        console.error('Invalid file type. Only JPEG and PNG are allowed.');
+                        reject('Invalid file type');
+                        return;
+                    }
+                }
+
 
                 const response = await fetch(route('profile.update'), {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify({
-                        ruleSet: 'profile',
-                        ...updatedUser
-                    }),
+                    body: formData,
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    setUser(prevUser => ({
-                        ...prevUser,
-                        ...updatedUser
-                    }));
+                    setUser(data.user);
                     setProcessing(false);
                     closeModal();
                     resolve([...data.messages]);
-                    console.log(data.messages);
                 } else {
                     setProcessing(false);
                     setErrors(data.errors);
-                    reject(data.errors);
+                    reject(data.error || 'Failed to update profile information.');
                     console.error(data.errors);
                 }
             } catch (error) {
                 setProcessing(false);
-                closeModal();
                 console.log(error)
-                reject(['An unexpected error occurred.']);
+                reject(error.message || 'An unexpected error occurred.');
             }
         });
 
@@ -128,9 +232,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     render({data}) {
                         return (
                             <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
+                                {data}
                             </>
                         );
                     },
@@ -180,8 +282,8 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 onMouseLeave={() => setHover(false)}
                             >
                                 <Avatar
-                                    alt={updatedUser.name || user.name}
-                                    src={selectedImage || `assets/images/users/${updatedUser.user_name || user.user_name}.jpg`}
+                                    alt={changedUserData.name || user.name}
+                                    src={selectedImage || `assets/images/users/${changedUserData.user_name || initialUserData.user_name}.jpg`}
                                     sx={{width: 100, height: 100}}
                                 />
                                 {hover && (
@@ -236,7 +338,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                             <TextField
                                 label="Name"
                                 fullWidth
-                                value={updatedUser.name || user.name || ''}
+                                value={changedUserData.name || initialUserData.name || ''}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 error={Boolean(errors.name)}
                                 helperText={errors.name}
@@ -247,7 +349,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 <InputLabel id="gender-label">Gender</InputLabel>
                                 <Select
                                     labelId="gender-label"
-                                    value={updatedUser.gender || user.gender || 'na'}
+                                    value={changedUserData.gender || initialUserData.gender || 'na'}
                                     onChange={(e) => handleChange('gender', e.target.value)}
                                     error={Boolean(errors.gender)}
                                     label="Gender"
@@ -276,7 +378,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Birth Date"
                                 type="date"
                                 fullWidth
-                                value={updatedUser.birthday || user.birthday || ''}
+                                value={changedUserData.birthday || initialUserData.birthday || ''}
                                 onChange={(e) => handleChange('birthday', e.target.value)}
                                 InputLabelProps={{shrink: true}}
                                 error={Boolean(errors.birthday)}
@@ -288,7 +390,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Joining Date"
                                 type="date"
                                 fullWidth
-                                value={updatedUser.date_of_joining || user.date_of_joining || ''}
+                                value={changedUserData.date_of_joining || initialUserData.date_of_joining || ''}
                                 onChange={(e) => handleChange('date_of_joining', e.target.value)}
                                 InputLabelProps={{shrink: true}}
                                 error={Boolean(errors.date_of_joining)}
@@ -300,7 +402,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                             <TextField
                                 label="Address"
                                 fullWidth
-                                value={updatedUser.address || user.address}
+                                value={changedUserData.address || initialUserData.address}
                                 onChange={(e) => handleChange('address', e.target.value)}
                                 error={Boolean(errors.address)}
                                 helperText={errors.address}
@@ -310,7 +412,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                             <TextField
                                 label="Employee ID"
                                 fullWidth
-                                value={updatedUser.employee_id || user.employee_id || ''}
+                                value={changedUserData.employee_id || initialUserData.employee_id || ''}
                                 onChange={(e) => handleChange('employee_id', e.target.value)}
                                 error={Boolean(errors.employee_id)}
                                 helperText={errors.employee_id}
@@ -320,7 +422,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                             <TextField
                                 label="Phone Number"
                                 fullWidth
-                                value={updatedUser.phone || user.phone}
+                                value={changedUserData.phone || initialUserData.phone}
                                 onChange={(e) => handleChange('phone', e.target.value)}
                                 error={Boolean(errors.phone)}
                                 helperText={errors.phone}
@@ -330,7 +432,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                             <TextField
                                 label="Email Adress"
                                 fullWidth
-                                value={updatedUser.email || user.email}
+                                value={changedUserData.email || initialUserData.email}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 error={Boolean(errors.email)}
                                 helperText={errors.email}
@@ -344,7 +446,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                     onChange={(e) => handleChange('department', e.target.value)}
                                     error={Boolean(errors.department)}
                                     id={`department-select-${user.id}`}
-                                    value={updatedUser.department || user.department || 'na'}
+                                    value={changedUserData.department || initialUserData.department || 'na'}
                                     label="Department"
                                     MenuProps={{
                                         PaperProps: {
@@ -380,7 +482,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                     label="Designation"
                                     error={Boolean(errors.designation)}
                                     id={`designation-select-${user.id}`}
-                                    value={updatedUser.designation || user.designation || 'na'}
+                                    value={changedUserData.designation || initialUserData.designation || 'na'}
                                     disabled={!user.department}
                                     MenuProps={{
                                         PaperProps: {
@@ -399,7 +501,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                         Select Designation
                                     </MenuItem>
                                     {designations
-                                        .filter((designation) => designation.department_id === updatedUser.department || user.department)
+                                        .filter((designation) => designation.department_id === changedUserData.department || initialUserData.department)
                                         .map((desig) => (
                                             <MenuItem key={desig.id} value={desig.id}>
                                                 {desig.title}
@@ -414,7 +516,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 <InputLabel id="report_to">Reports To</InputLabel>
                                 <Select
                                     labelId="report_to"
-                                    value={updatedUser.report_to || user.report_to}
+                                    value={changedUserData.report_to || initialUserData.report_to}
                                     onChange={(e) => handleChange('report_to', e.target.value)}
                                     label="Reports To"
                                     error={Boolean(errors.report_to)}
@@ -434,7 +536,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 >
                                     <MenuItem value="na">--</MenuItem>
                                     {allUsers
-                                        .filter((person) => person.department === updatedUser.department || user.department)
+                                        .filter((person) => person.department === changedUserData.department || initialUserData.department)
                                         .map((pers) => (
                                             <MenuItem key={pers.id} value={pers.id}>
                                                 {pers.name}
@@ -455,6 +557,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     }}
                 >
                     <LoadingButton
+                        disabled={!dataChanged && !selectedImage}
                     sx={{
                         borderRadius: '50px',
                         padding: '6px 16px',

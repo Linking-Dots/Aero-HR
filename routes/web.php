@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
     Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
+    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
     Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
     Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');
@@ -154,7 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/punchin', [AttendanceController::class, 'punchIn'])->name('punchin');
     Route::post('/punchout', [AttendanceController::class, 'punchOut'])->name('punchout');
-    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
+
     Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
     Route::get('/attendance/attendances-today', [AttendanceController::class, 'getAllUsersAttendanceForToday'])->name('getAllUsersAttendanceForToday');
 });

@@ -83,6 +83,8 @@ class ProfileController extends Controller
                 'designation.required' => 'The designation field is required.',
                 'designation.exists' => 'The selected designation does not exist.',
                 'profile_image.string' => 'The profile image must be a string.',
+                'profile_image.image' => 'The profile image must be an image file.',
+                'profile_image.max' => 'The profile image may not be greater than 1MB.',
                 'report_to.required' => 'The report to field is required.',
                 'report_to.exists' => 'The selected report to user does not exist.',
 
@@ -155,7 +157,7 @@ class ProfileController extends Controller
                     'email' => 'required|string|email|unique:users,email,' . $request->id,
                     'department' => 'required|exists:departments,id',
                     'designation' => 'required|exists:designations,id',
-                    'profile_image' => 'nullable|string',
+                    'profile_image' => 'nullable|mimes:jpg,jpeg,png',
                     'report_to' => 'required|exists:users,id',
                 ];
             } elseif ($request->ruleSet == 'personal') {
@@ -221,6 +223,8 @@ class ProfileController extends Controller
             $messages = [];
 
 
+
+
             // Check if department changed
             if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
                 $user->designation = null;
@@ -259,7 +263,8 @@ class ProfileController extends Controller
                                 'password' => 'Password',
                                 'nid' => 'National ID',
                                 'name' => 'Full Name',
-                                'profile_image' => 'Profile Image',
+
+
                                 'date_of_joining' => 'Date of Joining',
                                 'birthday' => 'Birthday',
                                 'gender' => 'Gender',
@@ -339,6 +344,29 @@ class ProfileController extends Controller
                     }
                 }
             }
+
+            if ($request->hasFile('profile_image')) {
+                $newProfileImage = $request->file('profile_image');
+
+                // Check if the profile image is the same as the existing one
+                $existingMedia = $user->getFirstMedia('profile_image');
+
+                if ($existingMedia && $existingMedia->getPath() === $newProfileImage->getPath()) {
+                    // No need to update if the new profile image is the same as the existing one
+                    $messages[] = 'Profile image is already up-to-date.';
+                } else {
+                    // Remove old profile image if exists
+                    if ($user->hasMedia('profile_image')) {
+                        $user->clearMediaCollection('profile_image');
+                    }
+
+                    // Add new profile image
+                    $user->addMediaFromRequest('profile_image')
+                        ->toMediaCollection('profile_image');
+                    $messages[] = 'Profile image changed';
+                }
+            }
+
 
             // Save the user
             $user->save();

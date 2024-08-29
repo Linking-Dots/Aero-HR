@@ -79,7 +79,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     const [tabIndex, setTabIndex] = React.useState(0);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [openModalType, setOpenModalType] = useState(null);
-    const [selectedImage, setSelectedImage] = useState(null);
+
 
     console.log(user);
 
@@ -106,12 +106,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     const open = Boolean(anchorEl);
 
 
-    const handleImageChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setSelectedImage(URL.createObjectURL(file));
-        }
-    };
+
 
 
 
@@ -129,8 +124,6 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                     open={openModalType === 'profile'}
                     setUser={setUser}
                     closeModal={closeModal}
-                    handleImageChange={handleImageChange}
-                    selectedImage={selectedImage}
                 />
             )}
             {openModalType === 'personal' && (

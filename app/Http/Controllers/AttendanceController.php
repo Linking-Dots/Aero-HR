@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Designation;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -190,29 +191,45 @@ class AttendanceController extends Controller
         }
     }
 
+
     public function getUserLocationsForToday()
     {
-        $today = Carbon::today();
+        try {
+            $today = Carbon::today();
 
-        $userLocations = Attendance::with('user:id,user_name,position,name')  // Include user data, specifically the first_name
-        ->whereNotNull('punchin')
-            ->whereDate('date', $today)
-            ->get()
-            ->map(function ($location) {
-                return [
-                    'user_id' => $location->user_id,
-                    'user_name' => $location->user->user_name,
-                    'position' => $location->user->position,
-                    'name' => $location->user->name,
-                    'punchin_location' => $location->punchin_location,
-                    'punchout_location' => $location->punchout_location,
-                    'punchin_time' => $location->punchin,
-                    'punchout_time' => $location->punchout,
-                ];
-            });
+            $userLocations = Attendance::whereNotNull('punchin')
+                ->whereDate('date', $today)
+                ->get()
+                ->map(function ($location) {
+                    $user = User::find($location->user_id);
 
-        return response()->json($userLocations);
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'user_name' => $user->user_name,
+                        'designation' => Designation::find($user->designation)->title,
+                        'punchin_location' => $location->punchin_location,
+                        'punchout_location' => $location->punchout_location,
+                        'punchin_time' => $location->punchin,
+                        'punchout_time' => $location->punchout,
+                    ];
+                });
+
+            \Log::info($userLocations);
+            return response()->json($userLocations);
+
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error fetching user locations for today: ' . $e->getMessage());
+
+            // Return a standardized error response
+            return response()->json([
+                'error' => 'Unable to fetch user locations. Please try again later.'
+            ], 500);
+        }
     }
+
+
 
     public function getCurrentUserPunch()
     {
@@ -253,7 +270,7 @@ class AttendanceController extends Controller
 
         try {
             // Get attendance records for all users for today's date
-            $attendanceRecords = Attendance::with('user:id,user_name,name')  // Include user data with first_name and avatar
+            $attendanceRecords = Attendance::with('user:id')  // Include user data with first_name and avatar
             ->whereNotNull('punchin')
                 ->whereDate('date', $today)
                 ->get();  // Retrieve all matching records
@@ -267,8 +284,7 @@ class AttendanceController extends Controller
             $formattedRecords = $attendanceRecords->map(function ($record) {
                 return [
                     'date' => Carbon::parse($record->date)->toIso8601String(),
-                    'user_name' => $record->user->user_name,
-                    'name' => $record->user->name,
+                    'user' => $record->user,
                     'punchin_time' => $record->punchin,
                     'punchin_location' => $record->punchin_location,
                     'punchout_time' => $record->punchout,

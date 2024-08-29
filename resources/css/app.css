@@ -1,8 +1,13 @@
 
-
 .user-icon {
-    border-radius: 15px;
+    border-radius: 50%; /* Make the icon circular */
+    border: 2px solid #ffffff; /* White border */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow */
+    width: 30px; /* Ensures the icon remains the correct size */
+    height: 30px; /* Ensures the icon remains the correct size */
+    object-fit: cover; /* Maintain the aspect ratio of the image */
 }
+
 
 .auth-one-bg {
     border-bottom-left-radius: 30vh;
