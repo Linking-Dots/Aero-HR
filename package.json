@@ -1,7 +1,6 @@
 {
     "private": true,
     "type": "module",
-
     "scripts": {
         "dev": "vite",
         "build": "vite build"
@@ -38,6 +37,7 @@
         "jszip": "^3.10.1",
         "leaflet": "^1.9.4",
         "leaflet-routing-machine": "^3.2.12",
+        "lodash": "^4.17.21",
         "pdfmake": "^0.2.10",
         "react-bootstrap": "^2.10.4",
         "react-data-table-component": "^7.6.2",

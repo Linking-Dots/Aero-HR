@@ -1,4 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import debounce from 'lodash/debounce';
+
 import {
     Box,
     Button,
@@ -14,95 +16,89 @@ import {
     TextField,
     useMediaQuery,
 } from '@mui/material';
-import {AddBox, Download, Upload} from '@mui/icons-material';
-import {Head} from "@inertiajs/react";
+import { AddBox, Download, Upload } from '@mui/icons-material';
+import { Head } from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
-import {DatePicker, LocalizationProvider} from '@mui/x-date-pickers';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import minMax from 'dayjs/plugin/minMax';
 import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
 import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
 import DailyWorksDownloadForm from "@/Forms/DailyWorksDownloadForm.jsx";
-import {styled} from '@mui/system';
+import { styled } from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
 import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
-import {useTheme} from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 
 dayjs.extend(minMax);
-
 
 const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
     '& .MuiPaper-root': {
         backgroundColor: theme.glassCard.backgroundColor,
     },
     '& .MuiInputBase-root': {
-        color: theme.palette.text.primary, // Example to change text color
-        borderColor: theme.palette.divider, // Example to change border color
+        color: theme.palette.text.primary,
+        borderColor: theme.palette.divider,
     },
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: theme.palette.divider,
         },
         '&:hover fieldset': {
-            borderColor: theme.palette.primary.main, // Example to change border color on hover
+            borderColor: theme.palette.primary.main,
         },
         '&.Mui-focused fieldset': {
-            borderColor: theme.palette.primary.main, // Example to change border color when focused
+            borderColor: theme.palette.primary.main,
         },
     },
     '& .MuiSvgIcon-root': {
-        color: theme.palette.text.secondary, // Example to change icon color
+        color: theme.palette.text.secondary,
     },
     '& .MuiPickersDay-root': {
-        color: theme.palette.text.primary, // Example to change the day text color
+        color: theme.palette.text.primary,
         '&.Mui-selected': {
-            backgroundColor: theme.palette.primary.main, // Example to change the selected day background color
-            color: theme.palette.primary.contrastText, // Example to change the selected day text color
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
         },
         '&.MuiPickersDay-today': {
-            borderColor: theme.palette.primary.main, // Example to highlight today's date
+            borderColor: theme.palette.primary.main,
         },
     },
 }));
 
-
-
-const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
+const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
     const theme = useTheme();
 
     const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
     const [filteredData, setFilteredData] = useState(allData.dailyWorks);
-    const dates = dailyWorks.map(work => dayjs(work.date));
+    const dates = useMemo(() => dailyWorks.map(work => dayjs(work.date)), [dailyWorks]);
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
     const [openModalType, setOpenModalType] = useState(null);
     const [search, setSearch] = useState('');
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-
-
-    const handleClickOpen = (taskId, modalType) => {
+    const handleClickOpen = useCallback((taskId, modalType) => {
         setTaskIdToDelete(taskId);
         setOpenModalType(modalType);
-    };
+    }, []);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         setOpenModalType(null);
         setTaskIdToDelete(null);
-    };
-    const openModal = (modalType) => {
+    }, []);
+
+    const openModal = useCallback((modalType) => {
         setOpenModalType(modalType);
-    };
+    }, []);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setOpenModalType(null);
-    };
-
-
+    }, []);
 
     const [filterData, setFilterData] = useState({
         startDate: dayjs.min(...dates),
@@ -112,28 +108,25 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
         report: '',
     });
 
-    const handleFilterChange = (key, value) => {
+    const handleFilterChange = useCallback((key, value) => {
         setFilterData(prevState => ({
             ...prevState,
             [key]: value,
         }));
-        console.log(filterData)
-    };
+    }, []);
 
-    const handleSearch = (event) => {
+    const handleSearch = useCallback(debounce((event) => {
         const value = event.target.value.toLowerCase();
         setSearch(value);
-    };
+    }, 300), []);
 
     useEffect(() => {
-        // Apply search filter
         const searchedData = dailyWorks.filter(item =>
             Object.values(item).some(val =>
                 String(val).toLowerCase().includes(search)
             )
         );
 
-        // Apply additional filters
         const filteredWorks = searchedData.filter(work => {
             const workDate = dayjs(work.date);
 
@@ -146,7 +139,6 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
         });
 
         setFilteredData(filteredWorks);
-        console.log(filteredData)
     }, [filterData, search, dailyWorks]);
 
 
@@ -372,6 +364,6 @@ const DailyWorks = ({ auth, title, allData, jurisdictions, users, reports, repor
         </App>
 
     );
-};
+});
 
 export default DailyWorks;

@@ -46,8 +46,6 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-
-
 const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
