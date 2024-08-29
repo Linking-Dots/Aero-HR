@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import debounce from 'lodash/debounce';
-
 import {
     Box,
     Button,

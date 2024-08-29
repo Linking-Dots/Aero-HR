@@ -72,7 +72,7 @@ const PunchStatusCard = () => {
                     const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
 
                     const response = await fetch(route(endpoint), {
-                        method: 'POST',
+                        method: 'post',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
