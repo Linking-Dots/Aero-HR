@@ -157,7 +157,6 @@ class ProfileController extends Controller
                     'email' => 'required|string|email|unique:users,email,' . $request->id,
                     'department' => 'required|exists:departments,id',
                     'designation' => 'required|exists:designations,id',
-                    'profile_image' => 'nullable|mimes:jpg,jpeg,png',
                     'report_to' => 'required|exists:users,id',
                 ];
             } elseif ($request->ruleSet == 'personal') {
