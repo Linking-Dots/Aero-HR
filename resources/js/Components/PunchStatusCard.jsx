@@ -63,38 +63,45 @@ const PunchStatusCard = () => {
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
     const handlePunch = async (action) => {
-
         const promise = new Promise(async (resolve, reject) => {
             try {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
 
-                    const response = await fetch(route(endpoint), {
-                        method: 'post',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                        },
-                        body: JSON.stringify({
-                            user_id: auth.user.id,
-                            location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-                        }),
-                    });
+                        const response = await fetch(route(endpoint), {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            body: JSON.stringify({
+                                user_id: auth.user.id,
+                                location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                            }),
+                        });
 
-                    const data = await response.json();
+                        const data = await response.json();
 
-                    if (response.ok) {
-                        resolve([data.success ? data.message : '']);
-                        await fetchData();
-                    } else {
-                        reject(['Failed to set attendance. Please try again.']);
+                        if (response.ok) {
+                            resolve([data.success ? data.message : '']);
+                            await fetchData();
+                        } else {
+                            reject(['Failed to set attendance. Please try again.']);
+                        }
+                    },
+                    (error) => {
+                        // Handle location permission denied or other errors
+                        console.log('Location error:', error);
+                        if (error.code === error.PERMISSION_DENIED) {
+                            resolve(['Location permission denied. Please enable location services and try again.']);
+                        } else {
+                            resolve(['Unable to retrieve location. Please try again.']);
+                        }
                     }
-                }, (error) => {
-                    console.log(error)
-                    reject([error.message]);
-                });
+                );
             } catch (error) {
                 console.error('Error setting attendance:', error);
                 reject(['An unexpected error occurred.']);
@@ -160,6 +167,7 @@ const PunchStatusCard = () => {
             }
         );
     };
+
 
 
     useEffect(() => {
