@@ -39,7 +39,6 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
 
 const StatisticsWidgets = (props) => {
     const { auth, statistics } = usePage().props;
-    console.log(statistics)
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
             <Grid container spacing={2}>

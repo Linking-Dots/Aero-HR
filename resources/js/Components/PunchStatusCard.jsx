@@ -67,12 +67,8 @@ const PunchStatusCard = () => {
             try {
                 const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
 
-                if (permissionStatus.state === 'denied') {
-                    // If permission is denied, reject immediately with an error message
-                    reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
-                    return;
-                } else if (permissionStatus.state === 'prompt') {
-                    // If permission is in prompt state, ask for permission
+
+                if (permissionStatus.state === 'prompt') {
                     navigator.geolocation.getCurrentPosition(
                         async (position) => {
                             resolve(['Location permission granted']);
@@ -81,6 +77,12 @@ const PunchStatusCard = () => {
                             reject([error]);
                         }
                     );
+                    // If permission is denied, reject immediately with an error message
+                    reject(['Please allow location and try again.']);
+
+                } else if (permissionStatus.state === 'denied') {
+                    reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
+
                 } else {
                     navigator.geolocation.getCurrentPosition(
                         async (position) => {
