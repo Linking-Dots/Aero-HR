@@ -12,6 +12,7 @@ export default function Dashboard({auth}) {
 
     return (
         <App>
+
             <Head title="Dashboard"/>
             <PunchStatusCard/>
             <StatisticCard/>
