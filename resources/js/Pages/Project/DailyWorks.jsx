@@ -118,6 +118,15 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         setSearch(value);
     };
 
+    useEffect(() => {
+        // Update startDate and endDate when dates array changes
+        setFilterData(prevState => ({
+            ...prevState,
+            startDate: dayjs.min(...dates),
+            endDate: dayjs.max(...dates),
+        }));
+    }, [dates]);
+
 
     useEffect(() => {
         const searchedData = dailyWorks.filter(item =>
