@@ -23,13 +23,6 @@ export default defineConfig({
         ViteMinifyPlugin(), // Additional minification
     ],
     build: {
-        minify: 'terser', // Use terser for minification
-        terserOptions: {
-            compress: {
-                drop_console: true, // Remove console logs in production
-            },
-            mangle: true, // Mangle names
-        },
         rollupOptions: {
             output: {
                 manualChunks: {
