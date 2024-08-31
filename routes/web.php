@@ -29,9 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
         $tasks = $user->hasRole('se')
-            ? DailyWork::where('incharge', $user->user_name)->get()
+            ? DailyWork::where('incharge', $user->id)->get()
             : ($user->hasRole('qci') || $user->hasRole('aqci')
-                ? DailyWork::where('assigned', $user->user_name)->get()
+                ? DailyWork::where('assigned', $user->id)->get()
                 : DailyWork::all()
             );
 
