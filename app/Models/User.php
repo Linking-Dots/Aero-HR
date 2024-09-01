@@ -62,6 +62,9 @@ class User extends Authenticatable implements HasMedia
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'report_to' => 'integer',
+        'designation' => 'integer',
+        'department' => 'integer',
     ];
 
     public function ledProjects()
