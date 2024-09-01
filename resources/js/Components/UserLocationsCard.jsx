@@ -30,48 +30,117 @@ const RoutingMachine = ({ startLocation, endLocation }) => {
 const UserMarkers = ({ users }) => {
     const map = useMap();
 
+    const getAdjustedPosition = (position, index) => {
+        // Define a small offset
+        const offset = 0.0001 * index; // Adjust multiplier as needed
+        return {
+            lat: position.lat + offset,
+            lng: position.lng + offset,
+        };
+    };
+
+    const arePositionsClose = (pos1, pos2) => {
+        const threshold = 0.0001; // Adjust the threshold for "closeness"
+        return (
+            Math.abs(pos1.lat - pos2.lat) < threshold &&
+            Math.abs(pos1.lng - pos2.lng) < threshold
+        );
+    };
+
     useEffect(() => {
         console.log(users);
         if (map && users) {
-            users.map(user => {
+            users.map((user, index) => {
                 const userIcon = L.icon({
                     iconUrl: "assets/images/users/" + user.user_name + ".jpg",
                     iconSize: [30, 30],
                     className: 'user-icon',
                 });
 
-                const punchinPosition = user.punchin_location ? {
-                    lat: parseFloat(user.punchin_location.split(',')[0]),
-                    lng: parseFloat(user.punchin_location.split(',')[1]),
-                } : null;
+                const punchinPosition = user.punchin_location
+                    ? {
+                        lat: parseFloat(user.punchin_location.split(',')[0]),
+                        lng: parseFloat(user.punchin_location.split(',')[1]),
+                    }
+                    : null;
 
-                const punchoutPosition = user.punchout_location ? {
-                    lat: parseFloat(user.punchout_location.split(',')[0]),
-                    lng: parseFloat(user.punchout_location.split(',')[1]),
-                } : null;
+                const punchoutPosition = user.punchout_location
+                    ? {
+                        lat: parseFloat(user.punchout_location.split(',')[0]),
+                        lng: parseFloat(user.punchout_location.split(',')[1]),
+                    }
+                    : null;
 
                 if (punchinPosition) {
-                    L.marker(punchinPosition, { icon: userIcon })
+                    let adjustedPunchinPosition = punchinPosition;
+
+                    users.forEach((otherUser, otherIndex) => {
+                        if (
+                            otherIndex < index &&
+                            otherUser.punchin_location &&
+                            arePositionsClose(adjustedPunchinPosition, {
+                                lat: parseFloat(otherUser.punchin_location.split(',')[0]),
+                                lng: parseFloat(otherUser.punchin_location.split(',')[1]),
+                            })
+                        ) {
+                            adjustedPunchinPosition = getAdjustedPosition(punchinPosition, index);
+                        }
+                    });
+
+                    L.marker(adjustedPunchinPosition, { icon: userIcon })
                         .addTo(map)
-                        .bindPopup(`Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${user.punchin_time ? new Date(`2024-06-04T${user.punchin_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }) : "Not punched in yet"}<br>Clockout Time: ${user.punchout_time ? user.punchout_time : "Not punched out yet"}`);
+                        .bindPopup(
+                            `Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${
+                                user.punchin_time
+                                    ? new Date(`2024-06-04T${user.punchin_time}`).toLocaleTimeString('en-US', {
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    })
+                                    : 'Not punched in yet'
+                            }<br>Clockout Time: ${
+                                user.punchout_time ? user.punchout_time : 'Not punched out yet'
+                            }`
+                        );
                 }
 
                 if (punchoutPosition) {
-                    L.marker(punchoutPosition, { icon: userIcon })
+                    let adjustedPunchoutPosition = punchoutPosition;
+
+                    users.forEach((otherUser, otherIndex) => {
+                        if (
+                            otherIndex < index &&
+                            otherUser.punchout_location &&
+                            arePositionsClose(adjustedPunchoutPosition, {
+                                lat: parseFloat(otherUser.punchout_location.split(',')[0]),
+                                lng: parseFloat(otherUser.punchout_location.split(',')[1]),
+                            })
+                        ) {
+                            adjustedPunchoutPosition = getAdjustedPosition(punchoutPosition, index);
+                        }
+                    });
+
+                    L.marker(adjustedPunchoutPosition, { icon: userIcon })
                         .addTo(map)
-                        .bindPopup(`Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${user.punchin_time ? new Date(`2024-06-04T${user.punchin_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }) : "Not punched in yet"}<br>Clockout Time: ${user.punchout_time ? new Date(`2024-06-04T${user.punchout_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }) : "Not punched out yet"}`);
+                        .bindPopup(
+                            `Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${
+                                user.punchin_time
+                                    ? new Date(`2024-06-04T${user.punchin_time}`).toLocaleTimeString('en-US', {
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    })
+                                    : 'Not punched in yet'
+                            }<br>Clockout Time: ${
+                                user.punchout_time
+                                    ? new Date(`2024-06-04T${user.punchout_time}`).toLocaleTimeString('en-US', {
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    })
+                                    : 'Not punched out yet'
+                            }`
+                        );
                 }
 
                 return null; // Returning null since map expects a return value
@@ -81,6 +150,7 @@ const UserMarkers = ({ users }) => {
 
     return null;
 };
+
 
 
 const UserLocationsCard = () => {
