@@ -12,7 +12,7 @@ const appName =  'DBEDC ERP';
 
 createInertiaApp({
     progress: {
-        // Use the `CustomProgressBar` here if needed
+
         color: '#fff', // Custom progress color
     },
     title: (title) => `${title} - ${appName}`,

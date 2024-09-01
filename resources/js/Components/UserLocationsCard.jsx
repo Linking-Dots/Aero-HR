@@ -32,7 +32,7 @@ const UserMarkers = ({ users }) => {
 
     useEffect(() => {
         if (map && users) {
-            users.forEach(user => {
+            users.map(user => {
                 const userIcon = L.icon({
                     iconUrl: "assets/images/users/" + user.user_name + ".jpg",
                     iconSize: [30, 30],
@@ -72,12 +72,15 @@ const UserMarkers = ({ users }) => {
                             hour12: true
                         }) : "Not punched out yet"}`);
                 }
+
+                return null; // Returning null since map expects a return value
             });
         }
     }, [map, users]);
 
     return null;
 };
+
 
 const UserLocationsCard = () => {
     const [users, setUsers] = useState(null);
