@@ -31,6 +31,7 @@ const UserMarkers = ({ users }) => {
     const map = useMap();
 
     useEffect(() => {
+        console.log(users);
         if (map && users) {
             users.map(user => {
                 const userIcon = L.icon({
