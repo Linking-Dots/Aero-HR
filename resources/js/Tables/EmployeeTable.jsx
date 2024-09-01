@@ -23,7 +23,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
-    console.log(users)
+    console.log(users,departments, designations)
     const theme = useTheme();
     console.log(theme);
     const [anchorEls, setAnchorEls] = useState({});
@@ -241,8 +241,8 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     <TableRow>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee ID</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Join Date</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Department</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
