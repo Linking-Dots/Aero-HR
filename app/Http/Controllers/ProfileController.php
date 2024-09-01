@@ -145,6 +145,7 @@ class ProfileController extends Controller
                 'total_esi_rate.string' => 'The total ESI rate must be a string.',
             ];
 
+
             if ($request->ruleSet == 'profile') {
                 $rules += [
                     'name' => 'required|string',
@@ -156,8 +157,8 @@ class ProfileController extends Controller
                     'phone' => 'required|string|unique:users,phone,' . $request->id,
                     'email' => 'required|string|email|unique:users,email,' . $request->id,
                     'department' => 'required|exists:departments,id',
-                    'designation' => 'required|exists:designations,id',
-                    'report_to' => 'required|exists:users,id',
+                    'designation' => 'nullable',
+                    'report_to' => 'nullable',
                 ];
             } elseif ($request->ruleSet == 'personal') {
                 $rules += [
@@ -217,35 +218,33 @@ class ProfileController extends Controller
 
 
             // Find the user
-            $user = User::findOrFail($validated['id']);
+
 
             $messages = [];
 
-
-
-
-            // Check if department changed
             if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
                 $user->designation = null;
-                $messages[] = 'User designation set to null due to department change';
+                $user->report_to = null;
             }
 
+
+
             // Update user attributes only if they are present in the request
-            foreach ($validated as $key => $value) {
-                if ($key !== 'id' && $value !== null) {
+            foreach ($validated as $key => $value ) {
+                if ($key !== 'id' && $value !== null && ($user->{$key} !== $value)) {
                     switch ($key) {
                         case 'department':
-                            $messages[] = 'Department updated successfully to ' . Department::find($value)->name;
+                            $messages[] = 'Department updated to ' . Department::find($value)->name;
                             $user->department = $value;
                             break;
 
                         case 'designation':
-                            $messages[] = 'Designation updated successfully to ' . Designation::find($value)->title;
+                            $messages[] = 'Designation updated to ' . Designation::find($value)->title;
                             $user->designation = $value;
                             break;
 
                         case 'report_to':
-                            $messages[] = 'Report to updated successfully to ' . User::find($value)->name;
+                            $messages[] = 'Report to updated to ' . User::find($value)->name;
                             $user->report_to = $value;
                             break;
 
@@ -363,6 +362,12 @@ class ProfileController extends Controller
                     $user->addMediaFromRequest('profile_image')
                         ->toMediaCollection('profile_image');
                     $messages[] = 'Profile image changed';
+
+                    $newProfileImageUrl = $user->getFirstMediaUrl('profile_image');
+
+                    // Update the user's profile_image field with the new URL
+                    $user->profile_image = $newProfileImageUrl;
+                    $user->save();
                 }
             }
 

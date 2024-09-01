@@ -26,6 +26,7 @@ import {toast} from "react-toastify";
 const ProfileForm = ({user, allUsers, departments, designations,setUser, open, closeModal }) => {
 
     const [initialUserData, setInitialUserData] = useState({
+        id: user.id,
         name: user.name || '',
         gender: user.gender || '',
         birthday: user.birthday || '',
@@ -36,7 +37,6 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
         email: user.email || '',
         department: user.department || '',
         designation: user.designation || '',
-        profile_image: user.profile_image || '',
         report_to: user.report_to || '',
     });
 
@@ -52,6 +52,8 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
     const [processing, setProcessing] = useState(false);
     const [hover, setHover] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [allDesignations, setAllDesignations] = useState(designations);
+    const [allReportTo, setAllReportTo] = useState(allUsers);
 
     const theme = useTheme();
 
@@ -61,16 +63,112 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
             // Create an object URL for preview
             const objectURL = URL.createObjectURL(file);
 
-            // Log file type and URL
-            console.log('Selected file type:', file.type);
-            console.log('Selected file URL:', objectURL);
-
             // Update state with the selected file's URL for preview
             setSelectedImage(objectURL);
 
-            // You might want to store the file object itself for further processing
-            // For example, storing in state or form data
-            setSelectedFile(file);
+            const promise = new Promise(async (resolve, reject) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('id', user.id);
+
+                    // Append the selected image if there is one
+                    if (file) {
+                        // Get the file type
+                        const fileType = file.type;
+
+                        // Check if the file type is valid
+                        if (['image/jpeg', 'image/jpg', 'image/png'].includes(fileType)) {
+                            formData.append('profile_image', file);
+                        } else {
+                            console.error('Invalid file type. Only JPEG and PNG are allowed.');
+                            reject('Invalid file type');
+                            return;
+                        }
+                    }
+
+                    const response = await fetch(route('profile.update'), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: formData,
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        setUser(data.user);
+                        setProcessing(false);
+                        resolve([...data.messages]);
+                    } else {
+                        setProcessing(false);
+                        setErrors(data.errors);
+                        reject(data.error || 'Failed to update profile image.');
+                        console.error(data.errors);
+                    }
+                } catch (error) {
+                    setProcessing(false);
+                    console.log(error);
+                    reject(error.message || 'An unexpected error occurred.');
+                }
+            });
+
+            toast.promise(
+                promise,
+                {
+                    pending: {
+                        render() {
+                            return (
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <CircularProgress />
+                                    <span style={{ marginLeft: '8px' }}>Updating profile image...</span>
+                                </div>
+                            );
+                        },
+                        icon: false,
+                        style: {
+                            backdropFilter: 'blur(16px) saturate(200%)',
+                            backgroundColor: theme.glassCard.backgroundColor,
+                            border: theme.glassCard.border,
+                            color: theme.palette.text.primary
+                        }
+                    },
+                    success: {
+                        render({ data }) {
+                            return (
+                                <>
+                                    {data.map((message, index) => (
+                                        <div key={index}>{message}</div>
+                                    ))}
+                                </>
+                            );
+                        },
+                        icon: '🟢',
+                        style: {
+                            backdropFilter: 'blur(16px) saturate(200%)',
+                            backgroundColor: theme.glassCard.backgroundColor,
+                            border: theme.glassCard.border,
+                            color: theme.palette.text.primary
+                        }
+                    },
+                    error: {
+                        render({ data }) {
+                            return (
+                                <>
+                                    {data}
+                                </>
+                            );
+                        },
+                        icon: '🔴',
+                        style: {
+                            backdropFilter: 'blur(16px) saturate(200%)',
+                            backgroundColor: theme.glassCard.backgroundColor,
+                            border: theme.glassCard.border,
+                            color: theme.palette.text.primary
+                        }
+                    }
+                }
+            );
         }
     };
 
@@ -83,11 +181,6 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                 delete updatedData[key];
             }
 
-            // Special case handling
-            if (key === 'department' && user.department !== value) {
-                user.designation = null;
-                user.report_to = null;
-            }
 
             return updatedData;
         });
@@ -100,74 +193,73 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                 delete updatedData[key];
             }
 
-            // Special case handling
-            if (key === 'department' && user.department !== value) {
-                user.designation = null;
-                user.report_to = null;
-            }
 
             return updatedData;
         });
+
+
     };
 
     useEffect(() => {
-        console.log('Initial:', initialUserData)
-        console.log('Changed:', changedUserData)
+
+
+        // Special case handling
+        if (user.department !== initialUserData.department) {
+            // Reset designation and report_to if department changes
+            initialUserData.designation = null;
+            initialUserData.report_to = null;
+        }
+
+        // Update designations based on the current department or the initial department
+        setAllDesignations(
+            designations.filter((designation) =>
+                designation.department_id === (changedUserData.department || initialUserData.department)
+            )
+        );
+
+        setAllReportTo(
+            allUsers.filter((user) =>
+                user.department === (changedUserData.department || initialUserData.department)
+            )
+        );
+
         // Function to filter out unchanged data from changedUserData
-        for (const key in changedUserData) {
+        const updatedChangedUserData = { ...changedUserData };
+        for (const key in updatedChangedUserData) {
             // Skip comparison for 'id' or if the value matches the original data
-            if (key !== 'id' && changedUserData[key] === user[key]) {
-                delete changedUserData[key]; // Skip this iteration
+            if (key !== 'id' && updatedChangedUserData[key] === user[key]) {
+                delete updatedChangedUserData[key]; // Remove unchanged data
             }
         }
-        const hasChanges = Object.keys(changedUserData).filter(key => key !== 'id').length > 0;
+
+        // Determine if there are any changes excluding 'id'
+        const hasChanges = Object.keys(updatedChangedUserData).length > 1;
 
         setDataChanged(hasChanges);
 
-    }, [initialUserData, changedUserData, user]);
+        console.log('User: ', user);
+        console.log('initialUserData: ', initialUserData);
+        console.log('changedUserData: ', changedUserData);
+
+    }, [initialUserData, changedUserData]);
+
 
     async function handleSubmit(event) {
         event.preventDefault();
-        console.log(changedUserData);
         setProcessing(true);
-
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const formData = new FormData();
-                formData.append('id', user.id);
-                formData.append('ruleSet', 'profile');
-
-                // Append updated user data to the form
-                for (const key in initialUserData) {
-                    if (initialUserData.hasOwnProperty(key)) {
-                        formData.append(key, initialUserData[key]);
-                    }
-                }
-
-                // Append the selected image if there is one
-                if (selectedImage) {
-                    // Get the file type
-                    const fileType = selectedImage.type;
-
-
-
-                    // Check if the file type is valid
-                    if (['image/jpeg','image/jpg', 'image/png'].includes(fileType)) {
-                        formData.append('profile_image', selectedImage);
-                    } else {
-                        console.error('Invalid file type. Only JPEG and PNG are allowed.');
-                        reject('Invalid file type');
-                        return;
-                    }
-                }
-
 
                 const response = await fetch(route('profile.update'), {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: formData,
+                    body: JSON.stringify({
+                        ruleSet: 'profile',
+                        ...initialUserData
+                    }),
                 });
 
                 const data = await response.json();
@@ -198,7 +290,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         return (
                             <div style={{display: 'flex', alignItems: 'center'}}>
                                 <CircularProgress/>
-                                <span style={{marginLeft: '8px'}}>Updating profile ...</span>
+                                <span style={{marginLeft: '8px'}}>Updating profile information ...</span>
                             </div>
                         );
                     },
@@ -249,12 +341,6 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
     };
 
 
-
-
-
-
-
-
     return (
         <GlassDialog
             open={open}
@@ -282,8 +368,8 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                 onMouseLeave={() => setHover(false)}
                             >
                                 <Avatar
-                                    alt={changedUserData.name || user.name}
-                                    src={selectedImage || `assets/images/users/${changedUserData.user_name || initialUserData.user_name}.jpg`}
+                                    alt={changedUserData.name || initialUserData.name}
+                                    src={selectedImage || user.profile_image}
                                     sx={{width: 100, height: 100}}
                                 />
                                 {hover && (
@@ -500,8 +586,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                     <MenuItem value="na" disabled>
                                         Select Designation
                                     </MenuItem>
-                                    {designations
-                                        .filter((designation) => designation.department_id === changedUserData.department || initialUserData.department)
+                                    {allDesignations
                                         .map((desig) => (
                                             <MenuItem key={desig.id} value={desig.id}>
                                                 {desig.title}
@@ -535,8 +620,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                     }}
                                 >
                                     <MenuItem value="na">--</MenuItem>
-                                    {allUsers
-                                        .filter((person) => person.department === changedUserData.department || initialUserData.department)
+                                    {allReportTo
                                         .map((pers) => (
                                             <MenuItem key={pers.id} value={pers.id}>
                                                 {pers.name}
@@ -557,7 +641,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     }}
                 >
                     <LoadingButton
-                        disabled={!dataChanged && !selectedImage}
+                        disabled={!dataChanged}
                     sx={{
                         borderRadius: '50px',
                         padding: '6px 16px',

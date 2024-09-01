@@ -257,7 +257,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                             <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.employee_id || 'N/A'}</TableCell>
                             <TableCell sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                                 <Avatar
-                                    src={`assets/images/users/${user.user_name}.jpg`}
+                                    src={user.profile_image}
                                     alt={user.first_name}
                                 />
                                 <Typography sx={{ marginLeft: '10px' }}>

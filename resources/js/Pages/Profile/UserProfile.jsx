@@ -199,7 +199,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                         <Grid item>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                 <Avatar
-                                                    src={`assets/images/users/${user.user_name}.jpg`}
+                                                    src={user.profile_image}
                                                     alt={user.name}
                                                     sx={{ width: 100, height: 100, mr: 2 }}
                                                 />
