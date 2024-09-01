@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
@@ -215,12 +216,12 @@ class AttendanceController extends Controller
                     ];
                 });
 
-            \Log::info($userLocations);
+            Log::info($userLocations);
             return response()->json($userLocations);
 
         } catch (\Exception $e) {
             // Log the error for debugging
-            \Log::error('Error fetching user locations for today: ' . $e->getMessage());
+            Log::error('Error fetching user locations for today: ' . $e->getMessage());
 
             // Return a standardized error response
             return response()->json([
