@@ -16,4 +16,8 @@ class Department extends Model
     protected $fillable = [
         'name',
     ];
+
+    protected $casts = [
+        'id' => 'integer',
+    ];
 }

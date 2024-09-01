@@ -18,6 +18,12 @@ class Designation extends Model
         'department_id',
     ];
 
+    protected $casts = [
+        'id' => 'integer',
+        'department_id' => 'integer',
+
+    ];
+
     // Define the relationship with the Department model
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
