@@ -39,6 +39,7 @@
         "exceljs": "^4.4.0",
         "jszip": "^3.10.1",
         "leaflet": "^1.9.4",
+        "leaflet-fullscreen": "^1.0.2",
         "leaflet-routing-machine": "^3.2.12",
         "lodash": "^4.17.21",
         "pdfmake": "^0.2.10",

@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Box, CardContent, CardHeader, CircularProgress } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
+import 'leaflet-fullscreen/dist/Leaflet.fullscreen.js'; // Import fullscreen control
+import 'leaflet-fullscreen/dist/leaflet.fullscreen.css'; // Import fullscreen control CSS
 import { usePage } from "@inertiajs/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
@@ -52,7 +54,7 @@ const UserMarkers = ({ users }) => {
         if (map && users) {
             users.map((user, index) => {
                 const userIcon = L.icon({
-                    iconUrl: "assets/images/users/" + user.user_name + ".jpg",
+                    iconUrl: `${user.profile_image}`,
                     iconSize: [30, 30],
                     className: 'user-icon',
                 });
@@ -151,8 +153,6 @@ const UserMarkers = ({ users }) => {
     return null;
 };
 
-
-
 const UserLocationsCard = () => {
     const [users, setUsers] = useState(null);
 
@@ -163,7 +163,7 @@ const UserLocationsCard = () => {
             const response = await fetch(endpoint);
             const data = await response.json();
             setUsers(data);
-            console.log(users)
+            console.log(users);
         } catch (error) {
             console.error('Error fetching user locations:', error);
         }
@@ -185,7 +185,16 @@ const UserLocationsCard = () => {
                     <CardContent>
                         <Box sx={{ height: '70vh', borderRadius: '20px' }}>
                             {!users ? <CircularProgress /> : (
-                                <MapContainer center={projectLocation} zoom={12} style={{ height: '100%', width: '100%' }}>
+                                <MapContainer
+                                    center={projectLocation}
+                                    zoom={12}
+                                    style={{ height: '100%', width: '100%' }}
+                                    scrollWheelZoom={true} // Disable scrolling
+                                    doubleClickZoom={true} // Disable double-click zoom
+                                    dragging={false} // Allow dragging
+                                    fullscreenControl={true} // Enable fullscreen control
+                                    attributionControl={false}
+                                >
                                     <TileLayer
                                         url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
                                         maxZoom={19}

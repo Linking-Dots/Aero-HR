@@ -207,7 +207,7 @@ class AttendanceController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
-                        'user_name' => $user->user_name,
+                        'profile_image' => $user->profile_image,
                         'designation' => Designation::find($user->designation)->title,
                         'punchin_location' => $location->punchin_location,
                         'punchout_location' => $location->punchout_location,
