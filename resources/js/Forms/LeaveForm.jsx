@@ -22,7 +22,7 @@ import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 
-const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setAllLeaves }) => {
+const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData }) => {
     const [leaveType, setLeaveType] = useState('Casual');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
@@ -42,6 +42,7 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setAllLeaves }) 
         const leaveTypeData = leaveCounts.find(
             (leave) => leave.leave_type === leaveType
         );
+        console.log(leaveTypeData)
 
 
             setRemainingLeaves(leaveTypeData.remaining_days);
@@ -95,7 +96,7 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setAllLeaves }) 
                 const data = await response.json();
 
                 if (response.ok) {
-                    setAllLeaves(data.leaves);
+                    setLeavesData(data.leavesData);
                     // Resolve the promise with the success messages
                     resolve([data.message || 'Leave application submitted successfully']);
                     closeModal();

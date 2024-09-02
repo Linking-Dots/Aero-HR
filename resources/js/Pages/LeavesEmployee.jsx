@@ -7,9 +7,14 @@ import App from "@/Layouts/App.jsx";
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from "@/Forms/LeaveForm.jsx";
 import Grow from "@mui/material/Grow";
-const LeavesEmployee = ({ title, leavesData, allUsers }) => {
+const LeavesEmployee = ({ title, allUsers }) => {
     const [openModalType, setOpenModalType] = useState(null);
+    const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
     const [allLeaves, setAllLeaves] = useState(leavesData.allLeaves);
+
+    useEffect(() => {
+        setAllLeaves(leavesData.allLeaves);
+    }, [leavesData]);
 
     console.log(leavesData);
 
@@ -28,7 +33,7 @@ const LeavesEmployee = ({ title, leavesData, allUsers }) => {
             {openModalType === 'leave' && (
                 <LeaveForm
                     open={openModalType === 'leave'}
-                    setAllLeaves={setAllLeaves}
+                    setLeavesData={setLeavesData}
                     closeModal={closeModal}
                     leaveTypes={leavesData.leaveTypes}
                     leaveCounts={leavesData.leaveCounts}
