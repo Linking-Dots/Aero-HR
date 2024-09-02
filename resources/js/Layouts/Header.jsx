@@ -343,7 +343,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Tooltip title="Open settings">
                                         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                            <Avatar alt={auth.user.first_name} src={`/assets/images/users/${auth.user.user_name}.jpg`} />
+                                            <Avatar alt={auth.user.first_name} src={auth.user.profile_image} />
                                         </IconButton>
                                     </Tooltip>
                                     <StyledMenu

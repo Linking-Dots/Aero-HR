@@ -35,8 +35,6 @@ const EmployeesList = ({title, allUsers, departments, designations}) => {
 
                         </CardContent>
                     </GlassCard>
-
-
                 </Grow>
             </Box>
         </App>

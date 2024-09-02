@@ -9,6 +9,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
+import LocalMallIcon from '@mui/icons-material/LocalMall';
 
 // Function to create pages array
 export const getPages = (userIsAdmin) => [
@@ -19,7 +20,7 @@ export const getPages = (userIsAdmin) => [
         name: 'Employees', icon: <PeopleIcon />, subMenu: [
             { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
             { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
-            { name: 'Leaves', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
+            { name: 'Leaves', icon: <LocalMallIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
             { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
             { name: 'Attendances', icon: <CalendarTodayIcon />, route: 'attendances' },
             { name: 'Departments', icon: <HomeIcon />, route: 'departments' },

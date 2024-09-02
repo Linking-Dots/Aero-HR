@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::get('/leaves-employee', [LeaveController::class, 'index'])->name('leaves-employee');
+    Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
     Route::get('/attendance-employee', [AttendanceController::class, 'index'])->name('attendance-employee');
 
     //Employees Routes:
