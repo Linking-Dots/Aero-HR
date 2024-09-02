@@ -51,7 +51,7 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
 
 
     useEffect(() => {
-        // Function to calculate the number of days between two dates
+        // Function to calculate the number of days between two dates, inclusive of both start and end date
         const calculateDaysBetweenDates = (start, end) => {
             if (!start || !end) return '';
 
@@ -61,7 +61,7 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
             if (startDate > endDate) return '';
 
             const timeDifference = endDate.getTime() - startDate.getTime();
-            const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
+            const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24)) + 1;
 
             return daysDifference;
         };
@@ -70,7 +70,6 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
         setDaysCount(calculateDaysBetweenDates(fromDate, toDate));
     }, [fromDate, toDate]);
 
-    const theme = useTheme();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
