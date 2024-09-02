@@ -23,9 +23,9 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
-    console.log(users,departments, designations)
+
     const theme = useTheme();
-    console.log(theme);
+
     const [anchorEls, setAnchorEls] = useState({});
 
     async function handleChange(key, id, event) {
@@ -33,16 +33,16 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
             try {
                 const newValue = event.target.value;
 
-                const response = await fetch(route('profile.update'), {
+                const routeName = key === 'department' ? 'user.updateDepartment' : 'user.updateDesignation';
+
+                const response = await fetch(route(routeName, {id: id}), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                     },
                     body: JSON.stringify({
-                        id: id,
                         [key]: newValue,
-                        // Add other fields here as needed, only if they have changed
                     }),
                 });
 
@@ -64,14 +64,13 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                             return user;
                         })
                     );
-                    resolve([...data.messages]);
-                    console.log(data.messages);
+                    resolve(data.messages);
                 } else {
-                    reject(data.messages);
-                    console.error(data.messages);
+                    reject(data.messages || 'Failed to update profile information.');
+                    console.error(data.errors);
                 }
             } catch (error) {
-                console.log(error)
+                console.log(error);
                 reject(['An unexpected error occurred.']);
             }
         });
@@ -135,6 +134,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
             }
         );
     }
+
 
     const handleDelete = async (userId) => {
         const promise = new Promise(async (resolve, reject) => {
@@ -235,7 +235,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
 
 
     return (
-        <TableContainer style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
             <Table aria-label="employee table">
                 <TableHead>
                     <TableRow>

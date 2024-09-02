@@ -1,1 +1,0 @@
-import{h as r,i as t}from"./vendor-D4CIImeA.js";import{r as a}from"./App-C9v5R792.js";var e={},i=t;Object.defineProperty(e,"__esModule",{value:!0});var u=e.default=void 0,o=i(a()),l=r();u=e.default=(0,o.default)((0,l.jsx)("path",{d:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z"}),"CheckCircle");export{u as d};
