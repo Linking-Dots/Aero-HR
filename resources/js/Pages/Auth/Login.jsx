@@ -44,20 +44,27 @@ const Login = () => {
     return (
         <App>
             <Head title="Login"/>
-            <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                p: 2
+            }}>
                 <Grid container spacing={2} justifyContent="center">
-                    <Grid item xs={12} textAlign="center">
-                        <Link style={{alignItems: 'center', display: 'inline-flex'}} href={route('dashboard')} className="mt-3 d-inline-block auth-logo">
-                            <img src={logo} alt="Logo" height="100"/>
-                        </Link>
-                        <Typography variant="h6" className="mt-3" color="text.secondary">Daily Task
-                            Management</Typography>
-                    </Grid>
                     <Grid item xs={12} md={8} lg={6} xl={5}>
                         <Grow in>
                             <GlassCard>
+
                                 <CardContent>
                                     <Box textAlign="center">
+                                        <Link style={{
+                                            alignItems: 'center',
+                                            display: 'inline-flex',
+
+                                        }} href={route('dashboard')} className="mt-3 d-inline-block auth-logo">
+                                            <img src={logo} alt="Logo" height="100"/>
+                                        </Link>
                                         <Typography variant="h5" color="primary">Welcome Back!</Typography>
                                         <Typography variant="body2" color="text.secondary">Sign in to
                                             continue</Typography>
