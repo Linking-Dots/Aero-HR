@@ -20,8 +20,8 @@ export const getPages = (userIsAdmin) => [
         name: 'Employees', icon: <PeopleIcon />, subMenu: [
             { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
             { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
-            { name: 'Leaves', icon: <LocalMallIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
-            { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
+            { name: 'Leaves', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
+            { name: 'Leave Types', icon: <SettingsIcon />, route: 'leave-settings' },
             { name: 'Attendances', icon: <CalendarTodayIcon />, route: 'attendances' },
             { name: 'Departments', icon: <HomeIcon />, route: 'departments' },
             { name: 'Designations', icon: <WorkIcon />, route: 'designations' },
