@@ -84,32 +84,12 @@ const PunchStatusCard = () => {
                     reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
 
                 } else {
+                    let latitude, longitude;
+
                     navigator.geolocation.getCurrentPosition(
                         async (position) => {
-                            const latitude = position.coords.latitude;
-                            const longitude = position.coords.longitude;
-                            const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
-
-                            const response = await fetch(route(endpoint), {
-                                method: 'post',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                                },
-                                body: JSON.stringify({
-                                    user_id: auth.user.id,
-                                    location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-                                }),
-                            });
-
-                            const data = await response.json();
-
-                            if (response.ok) {
-                                resolve([data.success ? data.message : '']);
-                                await fetchData();
-                            } else {
-                                reject(['Failed to set attendance. Please try again.']);
-                            }
+                            latitude = position.coords.latitude;
+                            longitude = position.coords.longitude;
                         },
                         (error) => {
                             // Handle location permission denied or other errors
@@ -121,6 +101,33 @@ const PunchStatusCard = () => {
                             }
                         }
                     );
+
+                    if (latitude && longitude) {
+
+                        const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
+
+                        const response = await fetch(route(endpoint), {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            body: JSON.stringify({
+                                user_id: auth.user.id,
+                                location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                            }),
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            resolve([data.success ? data.message : '']);
+                            await fetchData();
+                        } else {
+                            reject(['Failed to set attendance. Please try again.']);
+                        }
+
+                    }
 
                 }
 
