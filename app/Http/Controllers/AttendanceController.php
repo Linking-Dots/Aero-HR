@@ -285,7 +285,7 @@ class AttendanceController extends Controller
             $formattedRecords = $attendanceRecords->map(function ($record) {
                 return [
                     'date' => Carbon::parse($record->date)->toIso8601String(),
-                    'user' => $record->user,
+                    'user' => User::find($record->user_id),
                     'punchin_time' => $record->punchin,
                     'punchin_location' => $record->punchin_location,
                     'punchout_time' => $record->punchout,
