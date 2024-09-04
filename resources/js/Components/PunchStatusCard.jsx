@@ -67,70 +67,28 @@ const PunchStatusCard = () => {
             try {
                 const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
 
-
+                // Handle permission prompt state
                 if (permissionStatus.state === 'prompt') {
                     navigator.geolocation.getCurrentPosition(
                         async (position) => {
-                            resolve(['Location permission granted']);
+                            await processPunch(action, position.coords.latitude, position.coords.longitude, resolve, reject);
                         },
                         (error) => {
-                            reject([error]);
+                            handleLocationError(error, reject);
                         }
                     );
-                    // If permission is denied, reject immediately with an error message
-                    reject(['Please allow location and try again.']);
-
                 } else if (permissionStatus.state === 'denied') {
                     reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
-
                 } else {
-                    let latitude, longitude;
-
                     navigator.geolocation.getCurrentPosition(
                         async (position) => {
-                            latitude = position.coords.latitude;
-                            longitude = position.coords.longitude;
+                            await processPunch(action, position.coords.latitude, position.coords.longitude, resolve, reject);
                         },
                         (error) => {
-                            // Handle location permission denied or other errors
-                            console.log('Location error:', error);
-                            if (error.code === error.PERMISSION_DENIED) {
-                                resolve(['Location permission denied. Please enable location services and try again.']);
-                            } else {
-                                resolve(['Unable to retrieve location. Please try again.']);
-                            }
+                            handleLocationError(error, reject);
                         }
                     );
-
-                    if (latitude && longitude) {
-
-                        const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
-
-                        const response = await fetch(route(endpoint), {
-                            method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                            },
-                            body: JSON.stringify({
-                                user_id: auth.user.id,
-                                location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-                            }),
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            resolve([data.success ? data.message : '']);
-                            await fetchData();
-                        } else {
-                            reject(['Failed to set attendance. Please try again.']);
-                        }
-
-                    }
-
                 }
-
             } catch (error) {
                 console.error('Error setting attendance:', error);
                 reject(['An unexpected error occurred.']);
@@ -196,6 +154,47 @@ const PunchStatusCard = () => {
             }
         );
     };
+
+    const processPunch = async (action, latitude, longitude, resolve, reject) => {
+        try {
+            const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
+            const response = await fetch(route(endpoint), {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    user_id: auth.user.id,
+                    location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resolve([data.success ? data.message : '']);
+                await fetchData();
+            } else {
+                reject(['Failed to set attendance. Please try again.']);
+            }
+        } catch (error) {
+            console.error('Error processing punch:', error);
+            reject(['An unexpected error occurred.']);
+        }
+    };
+
+    const handleLocationError = (error, reject) => {
+        console.log('Location error:', error);
+        if (error.code === error.PERMISSION_DENIED) {
+            reject(['Location permission denied. Please enable location services and try again.']);
+        } else {
+            reject(['Unable to retrieve location. Please try again.']);
+        }
+    };
+
+
+
 
 
 
