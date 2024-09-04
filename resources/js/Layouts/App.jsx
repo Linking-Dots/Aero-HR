@@ -9,8 +9,10 @@ import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
 import Footer from "@/Layouts/Footer.jsx";
-
+import { Inertia } from '@inertiajs/inertia'
+import Loader from '@/Components/Loader.jsx'
 function App({ children }) {
+    const [loading, setLoading] = useState();
     const { auth } = usePage().props;
     const [sideBarOpen, setSideBarOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
@@ -36,6 +38,15 @@ function App({ children }) {
 
 
 
+    Inertia.on('start', () => {
+        setLoading(true);
+    })
+
+    Inertia.on('finish', (event) => {
+        setLoading(false);
+    })
+
+
     return (
         <ThemeProvider theme={theme}>
             <ToastContainer
@@ -51,6 +62,7 @@ function App({ children }) {
                 theme="colored"
             />
             <CssBaseline />
+            {loading && <Loader />}
 
             {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
 
