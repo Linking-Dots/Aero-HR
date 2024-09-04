@@ -29,7 +29,25 @@ const RoutingMachine = ({ startLocation, endLocation }) => {
     return null;
 };
 
-const UserMarkers = ({ users }) => {
+const UserMarkers = () => {
+    const [users, setUsers] = useState(null);
+
+    const initMap = async () => {
+        const endpoint = route('getUserLocationsForToday');
+
+        try {
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            setUsers(data);
+        } catch (error) {
+            console.error('Error fetching user locations:', error);
+        }
+    };
+
+    useEffect(() => {
+        initMap();
+    }, []);
+
     const map = useMap();
 
     const getAdjustedPosition = (position, index) => {
@@ -50,7 +68,6 @@ const UserMarkers = ({ users }) => {
     };
 
     useEffect(() => {
-        console.log(users);
         if (map && users) {
             users.map((user, index) => {
                 const userIcon = L.icon({
@@ -153,25 +170,7 @@ const UserMarkers = ({ users }) => {
     return null;
 };
 
-const UserLocationsCard = () => {
-    const [users, setUsers] = useState(null);
-
-    const initMap = async () => {
-        const endpoint = route('getUserLocationsForToday');
-
-        try {
-            const response = await fetch(endpoint);
-            const data = await response.json();
-            setUsers(data);
-            console.log(users);
-        } catch (error) {
-            console.error('Error fetching user locations:', error);
-        }
-    };
-
-    useEffect(() => {
-        initMap();
-    }, []);
+const UserLocationsCard = ({updateMap}) => {
 
     const projectLocation = { lat: 23.879132, lng: 90.502617 };
     const startLocation = { lat: 23.987057, lng: 90.361908 };
@@ -184,25 +183,23 @@ const UserLocationsCard = () => {
                     <CardHeader title="Users Locations" />
                     <CardContent>
                         <Box sx={{ height: '70vh', borderRadius: '20px' }}>
-                            {!users ? <CircularProgress /> : (
-                                <MapContainer
-                                    center={projectLocation}
-                                    zoom={12}
-                                    style={{ height: '100%', width: '100%' }}
-                                    scrollWheelZoom={true} // Disable scrolling
-                                    doubleClickZoom={true} // Disable double-click zoom
-                                    dragging={false} // Allow dragging
-                                    fullscreenControl={true} // Enable fullscreen control
-                                    attributionControl={false}
-                                >
-                                    <TileLayer
-                                        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                                        maxZoom={19}
-                                    />
-                                    <RoutingMachine startLocation={startLocation} endLocation={endLocation} />
-                                    <UserMarkers users={users} />
-                                </MapContainer>
-                            )}
+                            <MapContainer
+                                center={projectLocation}
+                                zoom={12}
+                                style={{ height: '100%', width: '100%' }}
+                                scrollWheelZoom={true} // Disable scrolling
+                                doubleClickZoom={true} // Disable double-click zoom
+                                dragging={false} // Allow dragging
+                                fullscreenControl={true} // Enable fullscreen control
+                                attributionControl={false}
+                            >
+                                <TileLayer
+                                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                    maxZoom={19}
+                                />
+                                <RoutingMachine startLocation={startLocation} endLocation={endLocation} />
+                                <UserMarkers key={updateMap}/>
+                            </MapContainer>
                         </Box>
                     </CardContent>
                 </GlassCard>
@@ -212,3 +209,4 @@ const UserLocationsCard = () => {
 };
 
 export default UserLocationsCard;
+

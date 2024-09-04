@@ -7,7 +7,10 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
 
 
-const PunchStatusCard = () => {
+const PunchStatusCard = ({handlePunchSuccess }) => {
+    const [position, setPosition] = useState(null);
+    const [punched, setPunched] = useState(null);
+
     const theme = useTheme();
     const { auth } = usePage().props;
     const [attendanceData, setAttendanceData] = useState('');
@@ -62,35 +65,138 @@ const PunchStatusCard = () => {
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
-    const handlePunch = async (action) => {
+
+    const getCurrentPosition = async () => {
+        const promise = new Promise(async (resolve, reject) => {
+            const permissionStatus = await navigator.permissions.query({name: 'geolocation'});
+
+            if (permissionStatus.state === 'denied') {
+                reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
+            } else if (permissionStatus.state === 'prompt') {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        setPosition({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        });
+                        resolve([`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`]);
+                    },
+                    (error) => handleLocationError(error, reject)
+                );
+            } else  {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        setPosition({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        });
+                        resolve([`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`]);
+                    },
+                    (error) => handleLocationError(error, reject)
+                );
+            }
+
+        });
+
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Getting current position...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                },
+                error: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                }
+            }
+        );
+
+    };
+
+    const handleLocationError = (error, reject) => {
+        console.log('Location error:', error);
+        if (error.code === error.PERMISSION_DENIED) {
+            reject(['Location permission denied. Please enable location services and try again.']);
+        } else {
+            reject(['Unable to retrieve location. Please try again.']);
+        }
+    };
+
+
+    const processPunch = async (action, latitude, longitude) => {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+                const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
+                const response = await fetch(route(endpoint), {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        user_id: auth.user.id,
+                        location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                    }),
+                });
 
-                // Handle permission prompt state
-                if (permissionStatus.state === 'prompt') {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            await processPunch(action, position.coords.latitude, position.coords.longitude, resolve, reject);
-                        },
-                        (error) => {
-                            handleLocationError(error, reject);
-                        }
-                    );
-                } else if (permissionStatus.state === 'denied') {
-                    reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
+                const data = await response.json();
+
+                if (response.ok) {
+                    await fetchData();
+                    handlePunchSuccess();
+                    resolve([data.success ? data.message : '']);
+
                 } else {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            await processPunch(action, position.coords.latitude, position.coords.longitude, resolve, reject);
-                        },
-                        (error) => {
-                            handleLocationError(error, reject);
-                        }
-                    );
+                    reject(['Failed to set attendance. Please try again.']);
                 }
             } catch (error) {
-                console.error('Error setting attendance:', error);
+                console.error('Error processing punch:', error);
                 reject(['An unexpected error occurred.']);
             }
         });
@@ -155,51 +261,14 @@ const PunchStatusCard = () => {
         );
     };
 
-    const processPunch = async (action, latitude, longitude, resolve, reject) => {
-        try {
-            const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
-            const response = await fetch(route(endpoint), {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify({
-                    user_id: auth.user.id,
-                    location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                resolve([data.success ? data.message : '']);
-                await fetchData();
-            } else {
-                reject(['Failed to set attendance. Please try again.']);
-            }
-        } catch (error) {
-            console.error('Error processing punch:', error);
-            reject(['An unexpected error occurred.']);
-        }
-    };
-
-    const handleLocationError = (error, reject) => {
-        console.log('Location error:', error);
-        if (error.code === error.PERMISSION_DENIED) {
-            reject(['Location permission denied. Please enable location services and try again.']);
-        } else {
-            reject(['Unable to retrieve location. Please try again.']);
-        }
-    };
-
-
-
-
 
 
     useEffect(() => {
         fetchData();
+    }, []);
+
+    useEffect(() => {
+        getCurrentPosition(); // Update position when component loads
     }, []);
 
     useEffect(() => {
@@ -212,6 +281,12 @@ const PunchStatusCard = () => {
         }, 1000);
         return () => clearInterval(interval);
     }, [elapsedTime,attendanceData, punchInTime, punchOutTime]);
+
+    useEffect(() => {
+        if (punched && position) {
+            processPunch(punched, position.latitude, position.longitude);
+        }
+    }, [punched, position]);
 
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -252,9 +327,9 @@ const PunchStatusCard = () => {
                                     className="card-animate"
                                     onClick={() => {
                                         if (!punchInTime) {
-                                            handlePunch('punchin');
+                                            setPunched('punchin');
                                         } else if (punchInTime && !punchOutTime) {
-                                            handlePunch('punchout');
+                                            setPunched('punchout');
                                         }
                                     }}
                                     sx={{

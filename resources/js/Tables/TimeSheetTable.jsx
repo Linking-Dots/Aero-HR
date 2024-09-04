@@ -15,7 +15,7 @@ import {
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
-const TimeSheetTable = (props) => {
+const TimeSheetTable = ({updateTimeSheet}) => {
     const [attendances, setAttendances] = useState([]);
     const [error, setError] = useState('');
 
@@ -43,7 +43,6 @@ const TimeSheetTable = (props) => {
         getAllUserAttendanceForToday();
     }, []);
 
-    console.log(attendances);
 
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
