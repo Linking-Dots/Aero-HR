@@ -262,9 +262,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        getCurrentPosition(); // Update position when component loads
-    }, []);
+    // useEffect(() => {
+    //     getCurrentPosition(); // Update position when component loads
+    // }, []);
 
     useEffect(() => {
         setElapsedTime(calculateElapsedTime());
@@ -278,10 +278,10 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     }, [elapsedTime,attendanceData, punchInTime, punchOutTime]);
 
     useEffect(() => {
-        if (punched && position) {
+        if (punched) {
             processPunch(punched, position.latitude, position.longitude);
         }
-    }, [punched, position]);
+    }, [punched]);
 
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
