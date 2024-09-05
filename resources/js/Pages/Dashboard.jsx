@@ -15,7 +15,7 @@ export default function Dashboard({auth}) {
 
     const handlePunchSuccess = () => {
         // Toggle the state to re-render UserLocationsCard
-        setUpdateMap(prev => !prev);
+        // setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
     };
 
@@ -25,7 +25,7 @@ export default function Dashboard({auth}) {
             <Head title="Dashboard"/>
             <PunchStatusCard handlePunchSuccess={handlePunchSuccess}/>
             <StatisticCard/>
-            {auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}
+            {/*{auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}*/}
             {auth.roles.includes('admin') && <TimeSheetTable key={updateTimeSheet}/>}
             <UpdatesCards/>
             <LeaveCard/>
