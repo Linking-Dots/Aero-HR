@@ -7,6 +7,7 @@ import LeaveCard from "@/Components/LeaveCard.jsx";
 import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
 import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
 import App from "@/Layouts/App.jsx";
+import {Grid} from "@mui/material";
 
 export default function Dashboard({auth}) {
 
@@ -23,8 +24,14 @@ export default function Dashboard({auth}) {
         <App>
 
             <Head title="Dashboard"/>
-            <PunchStatusCard handlePunchSuccess={handlePunchSuccess}/>
-            <StatisticCard/>
+            <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                    <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <StatisticCard />
+                </Grid>
+            </Grid>
             {/*{auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}*/}
             {auth.roles.includes('admin') && <TimeSheetTable key={updateTimeSheet}/>}
             <UpdatesCards/>

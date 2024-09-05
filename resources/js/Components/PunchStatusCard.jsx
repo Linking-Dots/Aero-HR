@@ -169,7 +169,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     // };
 
 
-    const processPunch = async (action, latitude, longitude) => {
+    const processPunch = async (action) => {
         const promise = new Promise(async (resolve, reject) => {
             const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
             const response = await fetch(route(endpoint), {
@@ -279,7 +279,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
     useEffect(() => {
         if (punched) {
-            processPunch(punched, position.latitude, position.longitude);
+            processPunch(punched);
         }
     }, [punched]);
 

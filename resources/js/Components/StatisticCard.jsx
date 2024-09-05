@@ -11,7 +11,6 @@ import GlassCard from "@/Components/GlassCard.jsx";
 
 
 const StatisticCard = ({ title, value, icon, color, props }) => (
-    <Grid item xs={6} sm={4} md={3}>
         <Grow in>
             <GlassCard>
                 <CardContent>
@@ -31,7 +30,6 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
                 </CardContent>
             </GlassCard>
         </Grow>
-    </Grid>
 );
 
 
@@ -40,44 +38,56 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
 const StatisticsWidgets = (props) => {
     const { auth, statistics } = usePage().props;
     return (
-        <Box sx={{ flexGrow: 1, p: 2 }}>
-            <Grid container spacing={2}>
-                <StatisticCard
-                    props={props}
-                    title="Total Tasks"
-                    value={statistics.total}
-                    icon={<TaskIcon />}
-                    color={blue[100]}
-                    badgeColor="success"
-                    badgeText="17.32% vs. previous month"
-                />
-                <StatisticCard
-                    props={props}
-                    title="Completed Tasks"
-                    value={statistics.completed}
-                    icon={<CheckCircleIcon />}
-                    color={green[100]}
-                    badgeColor="error"
-                    badgeText="2.52% vs. previous month"
-                />
-                <StatisticCard
-                    props={props}
-                    title="Pending Tasks"
-                    value={statistics.pending}
-                    icon={<TimerIcon />}
-                    color={yellow[100]}
-                    badgeColor="error"
-                    badgeText="0.87% vs. previous month"
-                />
-                <StatisticCard
-                    props={props}
-                    title="RFI Submission"
-                    value={statistics.rfi_submissions}
-                    icon={<AssignmentIcon />}
-                    color={blue[100]}
-                    badgeColor="success"
-                    badgeText="0.63% vs. previous month"
-                />
+        <Box sx={{ flexGrow: 1, p: 2, height: '100%' }}>
+            <Grid sx={{ height: '100%' }} container spacing={2} alignItems="stretch">
+                <Grid item xs={12} sm={6} md={6}>
+                    <StatisticCard
+                        props={props}
+                        title="Total Tasks"
+                        value={statistics.total}
+                        icon={<TaskIcon />}
+                        color={blue[100]}
+                        badgeColor="success"
+                        badgeText="17.32% vs. previous month"
+                        sx={{ height: '100%' }} // Ensure the card takes full height
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                    <StatisticCard
+                        props={props}
+                        title="Completed Tasks"
+                        value={statistics.completed}
+                        icon={<CheckCircleIcon />}
+                        color={green[100]}
+                        badgeColor="error"
+                        badgeText="2.52% vs. previous month"
+                        sx={{ height: '100%' }}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                    <StatisticCard
+                        props={props}
+                        title="Pending Tasks"
+                        value={statistics.pending}
+                        icon={<TimerIcon />}
+                        color={yellow[100]}
+                        badgeColor="error"
+                        badgeText="0.87% vs. previous month"
+                        sx={{ height: '100%' }}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                    <StatisticCard
+                        props={props}
+                        title="RFI Submission"
+                        value={statistics.rfi_submissions}
+                        icon={<AssignmentIcon />}
+                        color={blue[100]}
+                        badgeColor="success"
+                        badgeText="0.63% vs. previous month"
+                        sx={{ height: '100%' }}
+                    />
+                </Grid>
             </Grid>
         </Box>
     );
