@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\DailyWorkImport;
 use App\Models\DailySummary;
 use App\Models\DailyWork;
+use App\Models\DailyWorkSummary;
 use App\Models\Jurisdiction;
 use App\Models\Report;
 use App\Models\User;
@@ -194,7 +195,7 @@ class DailyWorkController extends Controller
             foreach ($inChargeSummary as $inChargeName => $summaryData) {
                 $user = User::where('user_name', $inChargeName)->first();
 
-                 DailySummary::create([
+                 DailyWorkSummary::create([
                     'date' => $date,
                     'incharge' => $user->id,
                     'totalDailyWorks' => $summaryData['totalDailyWorks'],
