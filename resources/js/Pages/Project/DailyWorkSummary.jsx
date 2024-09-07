@@ -77,6 +77,8 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
     const [openModalType, setOpenModalType] = useState(null);
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+    console.log(dailyWorkSummary, filteredData)
+
 
 
     const openModal = (modalType) => {
