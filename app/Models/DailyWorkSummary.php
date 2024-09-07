@@ -18,4 +18,13 @@ class DailyWorkSummary extends Model
         'structure',
         'pavement'
     ];
+
+    protected $casts = [
+        'id' => 'integer',
+        'totalDailyWorks' => 'integer',
+        'resubmissions' => 'integer',
+        'embankment' => 'integer',
+        'structure' => 'integer',
+        'pavement' => 'integer',
+    ];
 }
