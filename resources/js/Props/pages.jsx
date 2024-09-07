@@ -6,6 +6,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import ArticleIcon from '@mui/icons-material/Article';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import ListIcon from '@mui/icons-material/List';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
@@ -31,7 +32,8 @@ export const getPages = (userIsAdmin) => [
     {
         name: 'Projects', icon: <WorkIcon />, subMenu: [
             { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
-            { name: 'Daily Works', icon: <ListAltIcon />, route: 'dailyWorks' }
+            { name: 'Daily Works', icon: <ListAltIcon />, route: 'dailyWorks' },
+            { name: 'Daily Work Summary', icon: <ListIcon />, route: 'dailyWorkSummary' }
         ]
     },
     { name: 'Blog', icon: <ArticleIcon />, route: 'dashboard' }

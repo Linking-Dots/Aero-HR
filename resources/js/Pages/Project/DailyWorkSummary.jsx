@@ -66,86 +66,96 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
     },
 }));
 
-const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
+const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) => {
     const theme = useTheme();
 
-    const [dailyWorks, setDailyWorkSummary] = useState(allData.dailyWorks);
-    const [filteredData, setFilteredData] = useState(allData.dailyWorks);
-    const dates = useMemo(() => dailyWorks.map(work => dayjs(work.date)), [dailyWorks]);
-    const [currentRow, setCurrentRow] = useState();
-    const [taskIdToDelete, setTaskIdToDelete] = useState(null);
+
+
+    const [dailyWorkSummary, setDailyWorkSummary] = useState(summary);
+    const [filteredData, setFilteredData] = useState(summary);
+    const dates = dailyWorkSummary.map(work => dayjs(work.date));
     const [openModalType, setOpenModalType] = useState(null);
-    const [search, setSearch] = useState('');
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const handleClickOpen = useCallback((taskId, modalType) => {
-        setTaskIdToDelete(taskId);
+
+
+    const openModal = (modalType) => {
         setOpenModalType(modalType);
-    }, []);
+    };
 
-    const handleClose = useCallback(() => {
+    const closeModal = () => {
         setOpenModalType(null);
-        setTaskIdToDelete(null);
-    }, []);
-
-    const openModal = useCallback((modalType) => {
-        setOpenModalType(modalType);
-    }, []);
-
-    const closeModal = useCallback(() => {
-        setOpenModalType(null);
-    }, []);
+    };
 
     const [filterData, setFilterData] = useState({
         startDate: dayjs.min(...dates),
         endDate: dayjs.max(...dates),
         status: 'all',
         incharge: 'all',
-        report: '',
     });
 
-    const handleFilterChange = useCallback((key, value) => {
+
+
+    const handleFilterChange = (key, value) => {
+        // Handle user filter changes without being overwritten
         setFilterData(prevState => ({
             ...prevState,
             [key]: value,
         }));
-    }, []);
-
-    const handleSearch = (event) => {
-        const value = event.target.value.toLowerCase();
-        setSearch(value);
     };
 
-    useEffect(() => {
-        // Update startDate and endDate when dates array changes
-        setFilterData(prevState => ({
-            ...prevState,
-            startDate: dayjs.min(...dates),
-            endDate: dayjs.max(...dates),
-        }));
-    }, [dates]);
-
 
     useEffect(() => {
-        const searchedData = dailyWorks.filter(item =>
-            Object.values(item).some(val =>
-                String(val).toLowerCase().includes(search)
-            )
-        );
+        // Set initial startDate and endDate only if not manually changed
+        if (!filterData.startDate || !filterData.endDate) {
+            setFilterData(prevState => ({
+                ...prevState,
+                startDate: dayjs.min(...dates),
+                endDate: dayjs.max(...dates),
+            }));
+        }
+    }, [dates]); // Only run this when `dates` changes
 
-        const filteredWorks = searchedData.filter(work => {
+
+
+    useEffect(() => {
+
+        const filteredWorks = dailyWorkSummary.filter(work => {
             const workDate = dayjs(work.date);
 
             return (
                 workDate.isBetween(filterData.startDate, filterData.endDate, null, '[]') &&
-                (filterData.status === 'all' || !filterData.status || work.status === filterData.status) &&
-                (filterData.incharge === 'all' || !filterData.incharge || work.incharge === filterData.incharge) &&
-                (filterData.report ? work.report === filterData.report : true)
+                (filterData.incharge === 'all' || !filterData.incharge || work.incharge === filterData.incharge)
             );
         });
 
-        setFilteredData(filteredWorks);
-    }, [filterData, search, dailyWorks]);
+        const merged = filteredWorks.reduce((acc, work) => {
+            const date = dayjs(work.date).format('YYYY-MM-DD'); // Format date to ensure consistency
+
+            if (!acc[date]) {
+                // Initialize if the date is not yet in the accumulator
+                acc[date] = { ...work };
+            } else {
+                // Merge with existing data
+                acc[date].totalDailyWorks += work.totalDailyWorks;
+                acc[date].resubmissions += work.resubmissions;
+                acc[date].embankment += work.embankment;
+                acc[date].structure += work.structure;
+                acc[date].pavement += work.pavement;
+                acc[date].pending += work.pending;
+                acc[date].completed += work.completed;
+                acc[date].rfiSubmissions += work.rfiSubmissions;
+                acc[date].completionPercentage =
+                    (acc[date].totalDailyWorks > 0 ? (acc[date].completed / acc[date].totalDailyWorks) * 100 : 0);
+                acc[date].rfiSubmissionPercentage =
+                    (acc[date].totalDailyWorks > 0 ? (acc[date].rfiSubmissions / acc[date].totalDailyWorks) * 100 : 0);
+            }
+
+            return acc;
+        }, {});
+
+        setFilteredData(Object.values(merged));
+    }, [filterData, dailyWorkSummary]);
 
 
 
@@ -160,7 +170,6 @@ const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, user
                     open={openModalType === 'exportDailyWorkSummary'}
                     closeModal={closeModal}
                     filteredData={filteredData}
-                    users={users}
                 />
             )}
 
@@ -231,26 +240,6 @@ const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, user
                                             </Box>
                                         </LocalizationProvider>
                                     </Grid>
-                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="status-label">Status</InputLabel>
-                                            <Select
-                                                variant="outlined"
-                                                labelId="status-label"
-                                                label="Status"
-                                                name="status"
-                                                value={filterData.status}
-
-                                                onChange={(e) => handleFilterChange('status', e.target.value)}
-                                            >
-                                                <MenuItem value="all">All</MenuItem>
-                                                <MenuItem value="completed">Completed</MenuItem>
-                                                <MenuItem value="new">New</MenuItem>
-                                                <MenuItem value="resubmission">Resubmission</MenuItem>
-                                                <MenuItem value="emergency">Emergency</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
                                     {auth.roles.includes('admin') && (
                                         <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
                                             <FormControl fullWidth>
@@ -264,7 +253,7 @@ const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, user
                                                     onChange={(e) => handleFilterChange('incharge', e.target.value)}
                                                 >
                                                     <MenuItem value="all">All</MenuItem>
-                                                    {allData.allInCharges.map(inCharge => (
+                                                    {inCharges.map(inCharge => (
                                                         <MenuItem key={inCharge.id} value={inCharge.id}>
                                                             {inCharge.name}
                                                         </MenuItem>
@@ -273,54 +262,14 @@ const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, user
                                             </FormControl>
                                         </Grid>
                                     )}
-                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
-                                        <FormControl fullWidth>
-                                            <InputLabel>Select Report</InputLabel>
-                                            <Select
-                                                variant="outlined"
-                                                name="qc_report"
-                                                value={filterData.report}
-                                                onChange={(e) => handleFilterChange('report', e.target.value)}
-                                            >
-                                                <MenuItem value="" disabled>Select Report</MenuItem>
-                                                {/* Add your report options here */}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
                                 </Grid>
                             </Box>
                         </CardContent>
 
                         <CardContent >
-
-                            <TextField
-                                label="Search"
-                                fullWidth
-                                variant="outlined"
-                                placeholder="Search..."
-                                value={search}
-                                onChange={handleSearch}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
                             <DailyWorkSummaryTable
-                                setDailyWorkSummary={setDailyWorkSummary}
                                 filteredData={filteredData}
-                                setFilteredData={setFilteredData}
-                                reports={reports}
-                                setCurrentRow={setCurrentRow}
-                                handleClickOpen={handleClickOpen}
                                 openModal={openModal}
-                                juniors={allData.juniors}
-                                allInCharges={allData.allInCharges}
-                                jurisdictions={jurisdictions}
-                                users={users}
-                                reports_with_daily_works={reports_with_daily_works}
                             />
                         </CardContent>
                     </GlassCard>
@@ -329,6 +278,6 @@ const DailyWorkSummary = React.memo(({ auth, title, allData, jurisdictions, user
         </App>
 
     );
-});
+};
 
 export default DailyWorkSummary;

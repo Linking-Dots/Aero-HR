@@ -27,7 +27,6 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
             overflowY: 'auto',
             maxHeight: '52vh',
             '& .rdt_TableRow': {
-                minHeight: 'auto',
                 backgroundColor: 'transparent',
                 color: theme.palette.text.primary,
                 '& .rdt_TableCol': {
@@ -57,383 +56,98 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
         {
             name: 'Date',
             selector: row => row.date,
-            sortable: 'true',
-            center: "true",
-            width: '100px'
+            sortable: true,
+            center: true,
+            width: '100px',
         },
         {
-            name: 'RFI NO',
-            selector: row => row.number,
-            sortable: 'true',
-            center: 'true',
-            width: '140px',
-            cell: row => (
-                <>
-                    {row.number}
-                    {row.reports && row.reports.map(report => (
-                        <div key={report.ref_no}>
-                        <span>
-                            <i className="mdi mdi-circle-medium"></i> {report.ref_no}
-                        </span>
-                        </div>
-                    ))}
-                </>
-            ),
+            name: 'Total Daily Works',
+            selector: row => row.totalDailyWorks,
+            sortable: true,
+            center: true,
+            width: '160px',
         },
         {
-            name: 'Status',
-            selector: row => row.status,
-            sortable: 'true',
-            center: 'true',
-            width: '220px',
-            cell: row => (
-                <Select
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    value={row.status}
-                    onChange={(e) => handleChange(row.id, 'status', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
-                        },
-                    }}
-                >
-                    <MenuItem value="new">
-                        <Box sx={{display: 'flex'}}>
-                            <NewIcon style={{ marginRight: 8, color: getStatusColor('new') }} /> New
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="resubmission">
-                        <Box sx={{display: 'flex'}}>
-                            <ResubmissionIcon style={{ marginRight: 8, color: getStatusColor("resubmission") }} /> Resubmission
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="completed">
-                        <Box sx={{display: 'flex'}}>
-                            <CompletedIcon style={{ marginRight: 8, color: getStatusColor("completed") }} /> Completed
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="emergency">
-                        <Box sx={{display: 'flex'}}>
-                            <EmergencyIcon style={{ marginRight: 8, color: getStatusColor("emergency") }} /> Emergency
-                        </Box>
-                    </MenuItem>
-                </Select>
-            ),
-        },
-        ...(userIsSe ? [{
-            name: 'Assigned',
-            selector: row => row.assigned,
-            sortable: 'true',
-            center: 'true',
-            cell: row => (
-                <Select
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    value={row.assigned || 'na'}
-                    onChange={(e) => handleChange(row.id,'assigned', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
-                        },
-                    }}
-                >
-                    <MenuItem value="na" disabled>Please select</MenuItem>
-                    {juniors.map(junior => (
-                        <MenuItem key={junior.id} value={junior.id}>
-                            <Box sx={{display: 'flex'}}>
-                                <Avatar
-                                    src={`/assets/images/users/${junior.user_name || 'user-dummy-img'}.jpg`}
-                                    alt={junior.name || 'Not assigned'}
-                                    sx={{
-                                        borderRadius: '50%',
-                                        width: 23,
-                                        height: 23,
-                                        display: 'flex',
-                                        mr: 1,
-                                    }}
-                                />
-                                {junior.name}
-                            </Box>
-                        </MenuItem>
-                    ))}
-                </Select>
-            ),
-        }] : []),
-        {
-            name: 'Type',
-            selector: row => row.type,
-            sortable: 'true',
-            center: 'true',
-            width: '140px',
-        },
-        {
-            name: 'Description',
-            selector: row => row.description,
-            sortable: 'true',
-            left: 'true',
-            width: '260px',
-
-            cell: row => (
-                <Box sx={{
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                }}>
-                    {row.description}
-                </Box>
-            ),
-        },
-        {
-            name: 'Location',
-            selector: row => row.location,
-            sortable: 'true',
-            center: 'true',
-            width: '200px',
-            cell: row => (
-                <Box sx={{
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                }}>
-                    {row.location}
-                </Box>
-            ),
-        },
-        {
-            name: 'Results',
-            selector: row => row.inspection_details,
-            sortable: 'true',
-            width: '200px',
-            center: 'true',
-            cell: row => {
-                const [isEditing, setIsEditing] = React.useState(false);
-                const [inputValue, setInputValue] = React.useState(row.inspection_details || '');
-
-                const handleClick = () => {
-                    setIsEditing(true);
-                };
-
-                const handleInputChange = (event) => {
-                    setInputValue(event.target.value);
-                };
-
-                const handleBlur = () => {
-                    setIsEditing(false);
-                    handleChange(row.id,'inspection_details', inputValue);
-                };
-
-                return (
-                    <Box
-                        sx={{
-                            whiteSpace: 'normal',
-                            wordWrap: 'break-word',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '100%',
-                            cursor: 'pointer',
-                        }}
-                        onClick={!isEditing ? handleClick : undefined}
-                    >
-                        {!isEditing ? (
-                            <>
-                                {row.inspection_details || 'N/A'}
-                            </>
-                        ) : (
-                            <TextField
-                                fullWidth
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                onBlur={handleBlur}
-                                autoFocus
-                                variant="standard"
-                                InputProps={{
-                                    style: {
-                                        marginBottom: 0,
-                                        border: 'none',
-                                        outline: 'none',
-                                        backgroundColor: 'transparent',
-                                        textAlign: 'center',
-                                    },
-                                }}
-                            />
-                        )}
-                    </Box>
-                );
-            },
-        },
-        {
-            name: 'Road Type',
-            selector: row => row.side,
-            sortable: 'true',
-            center: 'true',
-            width: '120px',
-        },
-        {
-            name: 'Quantity/Layer No.',
-            selector: row => row.qty_layer,
-            sortable: 'true',
-            center: 'true',
-            width: '150px',
-        },
-        ...(userIsAdmin ? [{
-            name: 'In charge',
-            selector: row => row.incharge,
-            sortable: 'true',
-            center: 'true',
-            cell: row => (
-                <Select
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    value={row.incharge || 'na'}
-                    onChange={(e) => handleChange(row.id,'incharge', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
-                        },
-                    }}
-                >
-                    <MenuItem value="na" disabled>Please select</MenuItem>
-                    {allInCharges.map(incharge => (
-                        <MenuItem key={incharge.id} value={incharge.id}>
-                            <Box sx={{display: 'flex'}}>
-                                <Avatar
-                                    src={`/assets/images/users/${incharge.user_name || 'user-dummy-img'}.jpg`}
-                                    alt={incharge.name || 'Not assigned'}
-                                    sx={{
-                                        borderRadius: '50%',
-                                        width: 23,
-                                        height: 23,
-                                        display: 'flex',
-                                        mr: 1,
-                                    }}
-                                />
-                                {incharge.name}
-                            </Box>
-                        </MenuItem>
-                    ))}
-                </Select>
-            ),
-        }] : []),
-        {
-            name: 'Planned Time',
-            selector: row => row.planned_time,
-            sortable: 'true',
-            center: 'true',
+            name: 'Resubmissions',
+            selector: row => row.resubmissions,
+            sortable: true,
+            center: true,
             width: '130px',
         },
         {
-            name: 'Completion Time',
-            selector: row => row.completion_time,
-            sortable: 'true',
-            center: 'true',
-            width: '250px',
+            name: 'Embankment',
+            selector: row => row.embankment,
+            sortable: true,
+            center: true,
+            width: '130px',
+        },
+        {
+            name: 'Structure',
+            selector: row => row.structure,
+            sortable: true,
+            center: true,
+            width: '130px',
+        },
+        {
+            name: 'Pavement',
+            selector: row => row.pavement,
+            sortable: true,
+            center: true,
+            width: '130px',
+        },
+        {
+            name: 'Completed',
+            selector: row => row.completed,
+            sortable: true,
+            center: true,
+            width: '130px',
+        },
+        {
+            name: 'Pending',
+            selector: row => row.pending,
+            sortable: true,
+            center: true,
+            width: '130px',
+        },
+        {
+            name: 'Completion Percentage',
+            selector: row => row.completionPercentage,
+            sortable: true,
+            center: true,
+            width: '180px',
             cell: row => (
-                <TextField
-                    fullWidth
-                    size="small"
-                    type="datetime-local"
-                    value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
-                    onChange={(e) => handleChange(row.id, 'completion_time', e.target.value)}
-                    style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
-                    inputProps={{
-                        placeholder: 'YYYY-MM-DDTHH:MM'
-                    }}
-                />
+                <Box sx={{
+                    textAlign: 'center',
+                    color: row.completionPercentage >= 100 ? 'green' : 'red',
+                }}>
+                    {row.completionPercentage}%
+                </Box>
             ),
         },
         {
-            name: 'Resubmission Count',
-            selector: row => row.resubmission_count,
-            sortable: 'true',
-            center: 'true',
+            name: 'RFI Submissions',
+            selector: row => row.rfiSubmissions,
+            sortable: true,
+            center: true,
             width: '160px',
-            cell: row => (
-                <>
-                    {
-                        row.resubmission_count
-                            ? `${row.resubmission_count} ${row.resubmission_count > 1 ? 'times' : 'time'}`
-                            : ''
-                    }
-                </>
-            ),
         },
-        ...(userIsAdmin ? [{
-            name: 'RFI Submission Date',
-            selector: row => row.rfi_submission_date,
-            sortable: 'true',
-            center: 'true',
+        {
+            name: 'RFI Submission Percentage',
+            selector: row => row.rfiSubmissionPercentage,
+            sortable: true,
+            center: true,
             width: '180px',
             cell: row => (
-                <TextField
-                    fullWidth
-                    size="small"
-                    type="date"
-                    onChange={(e) => handleChange(row.id, 'rfi_submission_date', e.target.value)}
-                    value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
-                    style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
-                    inputProps={{
-                        placeholder: 'yyyy-MM-dd'
-                    }}
-                />
-            ),
-        }] : []),
-        ...(userIsAdmin ? [{
-            name: 'Actions',
-            center: 'true',
-            width: '150px',
-            cell: row => (
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <IconButton
-                        sx={{m:1}}
-                        variant="outlined"
-                        color="success"
-                        size="small"
-                        onClick={() => {
-                            setCurrentRow(row);
-                            openModal('editDailyWork');
-                        }}
-                    >
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton
-                        sx={{ m: 1 }}
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleClickOpen(row.id, 'deleteDailyWork')}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
+                <Box sx={{
+                    textAlign: 'center',
+                    color: row.rfiSubmissionPercentage >= 100 ? 'green' : 'red',
+                }}>
+                    {row.rfiSubmissionPercentage}%
                 </Box>
             ),
-        }] : []),
+        },
     ];
+
 
 
 
@@ -529,7 +243,6 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 pagination
                 highlightOnHover
                 responsive
-                dense
             />
         </>
 

@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\DailySummaryController;
+use App\Http\Controllers\DailyWorkSummaryController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
@@ -89,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('dailyWorkSummary');
     Route::post('/import-daily-works/', [DailyWorkController::class, 'import'])->name('dailyWorks.import');
     Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
     Route::delete('/delete-daily-work', [DailyWorkController::class, 'delete'])->name('dailyWorks.delete');
@@ -111,10 +112,10 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     Route::post('/task/import', [TaskController::class, 'importCSV'])->name('importCSV');
     Route::post('/task/update-rfi-submission-date', [TaskController::class, 'updateRfiSubmissionDate'])->name('updateRfiSubmissionDate');
     Route::post('/task/update-completion-date-time', [TaskController::class, 'updateCompletionDateTime'])->name('updateCompletionDateTime');
-    Route::get('/tasks/daily-summary', [DailySummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummary');
-    Route::get('/tasks/daily-summary-get', [DailySummaryController::class, 'dailySummary'])->name('dailySummary');
-    Route::post('/tasks/daily-summary-filtered', [DailySummaryController::class, 'filterSummary'])->name('filterSummary');
-    Route::get('/tasks/daily-summary-export', [DailySummaryController::class, 'exportDailySummary'])->name('exportDailySummary');
+    Route::get('/tasks/daily-summary', [DailyWorkSummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummary');
+    Route::get('/tasks/daily-summary-get', [DailyWorkSummaryController::class, 'dailySummary'])->name('dailySummary');
+    Route::post('/tasks/daily-summary-filtered', [DailyWorkSummaryController::class, 'filterSummary'])->name('filterSummary');
+    Route::get('/tasks/daily-summary-export', [DailyWorkSummaryController::class, 'exportDailySummary'])->name('exportDailySummary');
     Route::post('/task/incharge', [TaskController::class, 'assignIncharge'])->name('assignIncharge');
 
 
@@ -143,10 +144,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/task/update-status', [TaskController::class, 'updateTaskStatus'])->name('updateTaskStatus');
     Route::post('/task/assign', [TaskController::class, 'assignTask'])->name('assignTask');
     Route::post('/task/update-completion-date-time-se', [TaskController::class, 'updateCompletionDateTime'])->name('updateCompletionDateTimeSE');
-    Route::get('/tasks/daily-summary-se', [DailySummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummarySE');
-    Route::post('/tasks/daily-summary-filtered-se', [DailySummaryController::class, 'filterSummary'])->name('filterSummarySE');
+    Route::get('/tasks/daily-summary-se', [DailyWorkSummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummarySE');
+    Route::post('/tasks/daily-summary-filtered-se', [DailyWorkSummaryController::class, 'filterSummary'])->name('filterSummarySE');
     Route::get('/get-latest-timestamp', [TaskController::class, 'getLatestTimestamp'])->name('getLatestTimestamp');
-    Route::get('/tasks/daily-summary-json', [DailySummaryController::class, 'dailySummary'])->name('dailySummaryJSON');
+    Route::get('/tasks/daily-summary-json', [DailyWorkSummaryController::class, 'dailySummary'])->name('dailySummaryJSON');
 
 
 
