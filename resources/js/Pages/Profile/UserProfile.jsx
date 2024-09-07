@@ -81,8 +81,6 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
     const [openModalType, setOpenModalType] = useState(null);
 
 
-    console.log(user);
-
     const openModal = (modalType) => {
         setOpenModalType(modalType);
     };

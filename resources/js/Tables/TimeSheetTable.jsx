@@ -15,7 +15,7 @@ import {
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 
-const TimeSheetTable = ({updateTimeSheet}) => {
+const TimeSheetTable = () => {
     const [attendances, setAttendances] = useState([]);
     const [error, setError] = useState('');
 
@@ -60,17 +60,17 @@ const TimeSheetTable = ({updateTimeSheet}) => {
                                             <TableCell>Date</TableCell>
                                             <TableCell>Employee</TableCell>
                                             <TableCell>Clockin Time</TableCell>
-                                            <TableCell>Clockin Location</TableCell>
+                                            {/*<TableCell>Clockin Location</TableCell>*/}
                                             <TableCell>Clockout Time</TableCell>
-                                            <TableCell>Clockout Location</TableCell>
+                                            <TableCell>Production Time</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {attendances.map((attendance, index) => {
-                                            const punchinLat = attendance.punchin_location?.split(',')[0] || 'N/A';
-                                            const punchinLng = attendance.punchin_location?.split(',')[1] || 'N/A';
-                                            const punchoutLat = attendance.punchout_location?.split(',')[0] || 'N/A';
-                                            const punchoutLng = attendance.punchout_location?.split(',')[1] || 'N/A';
+                                            // const punchinLat = attendance.punchin_location?.split(',')[0] || 'N/A';
+                                            // const punchinLng = attendance.punchin_location?.split(',')[1] || 'N/A';
+                                            // const punchoutLat = attendance.punchout_location?.split(',')[0] || 'N/A';
+                                            // const punchoutLng = attendance.punchout_location?.split(',')[1] || 'N/A';
 
                                             return (
                                                 <TableRow key={index}>
@@ -86,7 +86,7 @@ const TimeSheetTable = ({updateTimeSheet}) => {
                                                                 alt={attendance.user.name}
                                                                 sx={{ width: 24, height: 24, marginRight: 2 }}
                                                             />
-                                                            <Typography>{name}</Typography>
+                                                            <Typography>{attendance.user.name}</Typography>
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
@@ -94,13 +94,24 @@ const TimeSheetTable = ({updateTimeSheet}) => {
                                                         minute: '2-digit',
                                                         hour12: true
                                                     }) : 'N/A'}</TableCell>
-                                                    <TableCell>{`Location: ${punchinLat}, ${punchinLng}`}</TableCell>
                                                     <TableCell>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
                                                         hour: 'numeric',
                                                         minute: '2-digit',
                                                         hour12: true
                                                     }) : 'N/A'}</TableCell>
-                                                    <TableCell>{`Location: ${punchoutLat}, ${punchoutLng}`}</TableCell>
+                                                    <TableCell>
+                                                        {attendance.punchin_time && attendance.punchout_time ? (
+                                                            (() => {
+                                                                const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
+                                                                const punchOut = new Date(`2024-06-04T${attendance.punchout_time}`);
+                                                                const diffMs = punchOut - punchIn;
+                                                                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                                                                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                                                                return `${diffHrs}h ${diffMins}m`;
+                                                            })()
+                                                        ) : 'N/A'}
+                                                    </TableCell>
                                                 </TableRow>
                                             );
                                         })}

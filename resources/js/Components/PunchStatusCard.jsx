@@ -7,6 +7,7 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
 
 
+
 const PunchStatusCard = ({handlePunchSuccess }) => {
     const [position, setPosition] = useState(null);
     const [punched, setPunched] = useState(null);
@@ -170,62 +171,18 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
 
     const processPunch = async (action) => {
-        const promise = new Promise(async (resolve, reject) => {
-            const endpoint = action === 'punchin' ? 'punchin' : 'punchout';
-            const response = await fetch(route(endpoint), {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify({
-                    user_id: auth.user.id,
-                    // location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-                }),
+        const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+
+        try {
+            const response = await axios.post(endpoint, {
+                user_id: auth.user.id,
+                // location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
+            if (response.status === 200) {
                 await fetchData();
                 handlePunchSuccess();
-                resolve([data.success ? data.message : '']);
-
-            } else {
-                reject(['Failed to set attendance. Please try again.']);
-            }
-        });
-
-        toast.promise(
-            promise,
-            {
-                pending: {
-                    render() {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <CircularProgress />
-                                <span style={{ marginLeft: '8px' }}>Punching{action === 'punchin' ? ' in' : ' out'}...</span>
-                            </div>
-                        );
-                    },
-                    icon: false,
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
-                },
-                success: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
-                            </>
-                        );
-                    },
+                toast.success(response.data.success ? response.data.message : 'Punch completed successfully', {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
@@ -233,17 +190,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
-                },
-                error: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
-                            </>
-                        );
-                    },
+                });
+            } else {
+                toast.error('Failed to set attendance. Please try again.', {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
@@ -251,10 +200,21 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
-                }
+                });
             }
-        );
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to set attendance. Please try again.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+        }
     };
+
 
 
 

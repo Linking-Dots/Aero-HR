@@ -101,6 +101,7 @@ const ExperienceInformationForm = ({ user, open, closeModal, setUser }) => {
                         }));
 
                         resolve(data.message || 'Experience record deleted successfully.');
+                        closeModal();
                     } else {
                         setErrors([...data.errors]);
                         reject(data.error || 'Failed to delete experience record.');

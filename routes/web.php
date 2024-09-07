@@ -70,6 +70,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');
     Route::get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
 
+    Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
+    Route::post('/punchOut', [AttendanceController::class, 'punchOut'])->name('punchOut');
+
 
     //Profile Routes:
     Route::get('/profile/{user}', [ProfileController::class, 'index'])->name('profile');
@@ -156,8 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');
     Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
 
-    Route::post('/punchin', [AttendanceController::class, 'punchIn'])->name('punchin');
-    Route::post('/punchout', [AttendanceController::class, 'punchOut'])->name('punchout');
+
 
     Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
     Route::get('/attendance/attendances-today', [AttendanceController::class, 'getAllUsersAttendanceForToday'])->name('getAllUsersAttendanceForToday');

@@ -4,6 +4,13 @@ import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {createInertiaApp} from '@inertiajs/react';
 import {resolvePageComponent} from 'laravel-vite-plugin/inertia-helpers';
+import axios from 'axios';
+
+// Add this once globally, typically in your main JavaScript file
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Optionally, add this to include the CSRF token automatically if using Laravel's XSRF-TOKEN cookie.
+axios.defaults.withCredentials = true;
 
 
 

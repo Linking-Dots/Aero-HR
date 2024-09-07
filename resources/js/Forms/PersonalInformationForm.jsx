@@ -94,106 +94,90 @@ const PersonalInformationForm = ({user,setUser, open, closeModal }) => {
 
     }, [initialUserData, changedUserData, user]);
 
-
-
-
-
-
-    async function handleSubmit(event) {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         setProcessing(true);
-        const promise = new Promise(async (resolve, reject) => {
-            try {
 
-                const response = await fetch(route('profile.update'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({
-                        ruleSet: 'personal',
-                        ...initialUserData
-                    }),
-                });
+        try {
+            const response = await axios.post(route('profile.update'), {
+                ruleSet: 'personal',
+                ...initialUserData,
+            });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    setUser(data.user);
-                    setProcessing(false);
-                    closeModal();
-                    resolve([...data.messages]);
-                } else {
-                    setProcessing(false);
-                    setErrors(data.errors);
-                    reject(data.error || 'Failed to update personal information.');
-                    console.error(data.errors);
-                }
-            } catch (error) {
-                setProcessing(false);
-                console.log(error)
-                reject(error.message || 'An unexpected error occurred.');
-            }
-        });
-
-        toast.promise(
-            promise,
-            {
-                pending: {
-                    render() {
-                        return (
-                            <div style={{display: 'flex', alignItems: 'center'}}>
-                                <CircularProgress/>
-                                <span style={{marginLeft: '8px'}}>Updating personal information ...</span>
-                            </div>
-                        );
-                    },
-                    icon: false,
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
-                },
-                success: {
-                    render({data}) {
-                        return (
-                            <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
-                            </>
-                        );
-                    },
+            if (response.status === 200) {
+                setUser(response.data.user);
+                toast.success(response.data.messages?.length > 0 ? response.data.messages.join(' ') : 'Personal information updated successfully', {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
+                        color: theme.palette.text.primary,
                     }
-                },
-                error: {
-                    render({data}) {
-                        return (
-                            <>
-                                {data}
-                            </>
-                        );
-                    },
+                });
+                closeModal();
+            }
+        } catch (error) {
+            setProcessing(false);
+
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                if (error.response.status === 422) {
+                    // Handle validation errors
+                    setErrors(error.response.data.errors || {});
+                    toast.error(error.response.data.error || 'Failed to update personal information.', {
+                        icon: '🔴',
+                        style: {
+                            backdropFilter: 'blur(16px) saturate(200%)',
+                            backgroundColor: theme.glassCard.backgroundColor,
+                            border: theme.glassCard.border,
+                            color: theme.palette.text.primary,
+                        }
+                    });
+                } else {
+                    // Handle other HTTP errors
+                    toast.error('An unexpected error occurred. Please try again later.', {
+                        icon: '🔴',
+                        style: {
+                            backdropFilter: 'blur(16px) saturate(200%)',
+                            backgroundColor: theme.glassCard.backgroundColor,
+                            border: theme.glassCard.border,
+                            color: theme.palette.text.primary,
+                        }
+                    });
+                }
+                console.error(error.response.data);
+            } else if (error.request) {
+                // The request was made but no response was received
+                toast.error('No response received from the server. Please check your internet connection.', {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
+                        color: theme.palette.text.primary,
                     }
-                }
+                });
+                console.error(error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                toast.error('An error occurred while setting up the request.', {
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                });
+                console.error('Error', error.message);
             }
-        );
+        } finally {
+            setProcessing(false);
+        }
     };
+
 
 
 

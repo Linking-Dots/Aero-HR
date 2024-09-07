@@ -30,13 +30,29 @@ const BottomNav = ({auth}) => {
 
 
     return (
-        <Paper sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, backgroundColor: 'transparent' }} elevation={3}>
+        // <Paper
+        //     sx={{
+        //         position: 'fixed',
+        //         bottom: 0,
+        //         left: 0,
+        //         right: 0,
+        //         backgroundColor: 'transparent',
+        //         zIndex: 1200, // Ensure it appears above other content
+        //     }}
+        //
+        // >
             <BottomNavigation
                 sx={{
+                    position: 'fixed',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1200, // Ensure it appears above other content
                     display: { xs: 'flex', md: 'none' },
                     backdropFilter: 'blur(16px) saturate(200%)',
                     backgroundColor: theme.glassCard.backgroundColor,
                 }}
+                elevation={3}
                 showLabels
                 value={value}
                 onChange={handleChange}
@@ -60,7 +76,8 @@ const BottomNav = ({auth}) => {
                     icon={<AccountCircleIcon />}
                 />
             </BottomNavigation>
-        </Paper>
+        // </Paper>
+
     );
 };
 
