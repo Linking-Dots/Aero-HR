@@ -16,13 +16,13 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData }) 
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
                     setLeavesData(response.data.leavesData);
-                    resolve('Task deleted successfully');
+                    resolve('Leave application deleted successfully');
                 } else {
 
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                reject(error.response.data.error || 'Failed to delete task');
+                reject(error.response.data.error || 'Failed to delete leave application');
             } finally {
                 handleClose();
             }
@@ -36,7 +36,7 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData }) 
                         return (
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <CircularProgress />
-                                <span style={{ marginLeft: '8px' }}>Deleting task...</span>
+                                <span style={{ marginLeft: '8px' }}>Deleting leave application...</span>
                             </div>
                         );
                     },
