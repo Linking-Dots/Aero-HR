@@ -171,6 +171,15 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
 
     const processPunch = async (action) => {
+        toast.loading(action === 'punchin' ? 'Punching in....' : 'Punching out....', {
+            icon: '🟢',
+            style: {
+                backdropFilter: 'blur(16px) saturate(200%)',
+                backgroundColor: theme.glassCard.backgroundColor,
+                border: theme.glassCard.border,
+                color: theme.palette.text.primary,
+            }
+        });
         const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
 
         try {
@@ -212,6 +221,8 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                     color: theme.palette.text.primary,
                 }
             });
+        } finally {
+            toast.dismiss();
         }
     };
 

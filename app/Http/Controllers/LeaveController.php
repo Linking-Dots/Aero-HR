@@ -81,13 +81,12 @@ class LeaveController extends Controller
             'leaveType' => 'required|exists:leave_types,type',
             'fromDate' => 'required|date',
             'toDate' => 'required|date|after_or_equal:fromDate',
-            'daysCount' => 'required|integer|min:1',
             'leaveReason' => 'required|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'error' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 

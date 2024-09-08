@@ -9,7 +9,7 @@ import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
 import App from "@/Layouts/App.jsx";
 import {Grid} from "@mui/material";
 
-export default function Dashboard({auth}) {
+export default function Dashboard({auth,users}) {
 
     const [updateMap, setUpdateMap] = useState(false);
     const [updateTimeSheet, setUpdateTimeSheet] = useState(false);
@@ -33,7 +33,7 @@ export default function Dashboard({auth}) {
                 </Grid>
             </Grid>
             {/*{auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}*/}
-            {auth.roles.includes('admin') && <TimeSheetTable key={updateTimeSheet}/>}
+            {auth.roles.includes('admin') && <TimeSheetTable users={users} key={updateTimeSheet}/>}
             <UpdatesCards/>
             <LeaveCard/>
         </App>

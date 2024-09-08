@@ -77,35 +77,47 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
 
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await fetch('/leave-add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({
-                        leaveType,
-                        fromDate,
-                        toDate,
-                        daysCount,
-                        leaveReason,
-                    }),
+                const response = await axios.post(route('leave-add'), {
+                    leaveType,
+                    fromDate,
+                    toDate,
+                    daysCount,
+                    leaveReason,
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    setLeavesData(data.leavesData);
-                    // Resolve the promise with the success messages
-                    resolve([data.message || 'Leave application submitted successfully']);
+                if (response.status === 200) {
+                    setLeavesData(response.data.leavesData);
+                    resolve([response.data.messages || 'Leave application submitted successfully']);
                     closeModal();
                 } else {
                     // Reject the promise with the error message
-                    reject(data.error || 'Failed to submit leave application');
+
                 }
             } catch (error) {
-                // Reject the promise with the error message
-                reject(error.message || 'An unexpected error occurred.');
+                setProcessing(false);
+
+                if (error.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    if (error.response.status === 422) {
+                        // Handle validation errors
+                        setErrors(error.response.data.errors || {});
+                        reject(error.response.data.error || 'Failed to submit leave application');
+                    } else {
+                        // Handle other HTTP errors
+                        reject('An unexpected error occurred. Please try again later.');
+                    }
+                    console.error(error.response.data);
+                    console.error(error.response || {});
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    reject('No response received from the server. Please check your internet connection.');
+                    console.error(error.request);
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    reject('An error occurred while setting up the request.');
+                    console.error('Error', error.message);
+                }
             } finally {
                 setProcessing(false);
             }

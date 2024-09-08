@@ -18,8 +18,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRole;
 use App\Models\DailyWork;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 
 Route::redirect('/', '/dashboard');
@@ -28,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', function () {
         $user = Auth::user();
+        $users = User::all();
         $tasks = $user->hasRole('se')
             ? DailyWork::where('incharge', $user->id)->get()
             : ($user->hasRole('qci') || $user->hasRole('aqci')
@@ -46,12 +50,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'pending' => $pending,
             'rfi_submissions' => $rfi_submissions
         ];
+
+        $today = now()->toDateString(); // Get today's date in 'Y-m-d' format
+
+        $todayLeaves = DB::table('leaves')
+            ->join('leave_types', 'leaves.leave_type', '=', 'leave_types.id')
+            ->select('leaves.*', 'leave_types.type as leave_type')
+            ->whereDate('leaves.from_date', '<=', $today)  // Check that today's date is after or on the start date
+            ->whereDate('leaves.to_date', '>=', $today)    // Check that today's date is before or on the end date
+            ->get();
+
+        Log::info($todayLeaves);
+
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,
+            'users' => $users,
+            'todayLeaves' => $todayLeaves, // Updated to pass today's leaves
             'statistics' => $statistics,
             'status' => session('status')
         ]);
+
     })->name('dashboard');
 
     Route::get('/leaves-employee', [LeaveController::class, 'index'])->name('leaves-employee');
