@@ -15,22 +15,18 @@ import {
     Grid,
     Badge,
     Chip,
-    Collapse
+    Collapse, TextField
 } from '@mui/material';
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked.js";
-
-const TimeSheetTable = ({users}) => {
+const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const { todayLeaves } = usePage().props;
     const [attendances, setAttendances] = useState([]);
+    const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
 
-    const absentUsers = users.filter(user =>
-        !attendances.some(attendance => attendance.user.id === user.id)
-    );
 
     const [visibleUsersCount, setVisibleUsersCount] = useState(2); // Default to 2 initially
     const cardRef = useRef(null); // Ref to the GlassCard
@@ -41,17 +37,17 @@ const TimeSheetTable = ({users}) => {
         if (cardRef.current && userItemRef.current) {
             const cardHeight = cardRef.current.clientHeight;
             const userItemHeight = userItemRef.current.clientHeight;
-
             const availableHeight = cardHeight - 150; // Subtract padding/margins from available height
             const calculatedVisibleUsers = Math.floor(availableHeight / userItemHeight);
-
             setVisibleUsersCount(calculatedVisibleUsers);
         }
     };
 
     // Call the function when component mounts or the window resizes
     useEffect(() => {
-        calculateVisibleUsers();
+        setTimeout(() => {
+            calculateVisibleUsers();
+        }, 500);
         window.addEventListener('resize', calculateVisibleUsers);
         return () => window.removeEventListener('resize', calculateVisibleUsers);
     }, []);
@@ -65,120 +61,153 @@ const TimeSheetTable = ({users}) => {
         return todayLeaves.find((leave) => leave.user_id === userId);
     };
 
-    const getAllUserAttendanceForToday = async () => {
-
+    const getAllUsersAttendanceForDate = async (selectedDate) => {
         try {
-            const response = await fetch(route('getAllUsersAttendanceForToday'));
-            const data = await response.json();
-
-            if (response.ok) {
-                setAttendances(data);
+            const response = await axios.get(route('getAllUsersAttendanceForDate'), {
+                params: { date: selectedDate }
+            });
+            if (response.status === 200) {
+                setAttendances(response.data);  // Set the attendance data
             } else {
-                setError(data.message || 'Error fetching attendance data');
+                setError(response.data.message || 'Error fetching attendance data');
             }
         } catch (error) {
             console.error('Error fetching attendance data:', error);
-            setError('An error occurred while retrieving attendance data.');
+            setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
         }
     };
 
     useEffect(() => {
-        getAllUserAttendanceForToday();
-    }, []);
+        getAllUsersAttendanceForDate(selectedDate);
+    }, [selectedDate]);
 
+    useEffect(() => {
+        setAbsentUsers(
+            users.filter(user =>
+                !attendances.some(attendance => attendance.user.id === user.id)
+            )
+        )
+    }, [attendances]);
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box  sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Grid container spacing={2}>
                 {/* Existing Attendance Table */}
-                <Grid item xs={12} md={8}>
-                    <Grow in>
-                        <GlassCard>
-                            <CardHeader title="Today's Timesheet" />
-                            <CardContent>
-                                {error ? (
-                                    <Typography color="error">{error}</Typography>
-                                ) : (
-                                    <TableContainer>
-                                        <Table>
-                                            <TableHead sx={{
-                                                fontWeight: 'bold',
-                                                fontStyle: 'italic'
-                                            }}>
-                                                <TableRow>
-                                                    <TableCell>Date</TableCell>
-                                                    <TableCell>Employee</TableCell>
-                                                    <TableCell>Clockin Time</TableCell>
-                                                    {/*<TableCell>Clockin Location</TableCell>*/}
-                                                    <TableCell>Clockout Time</TableCell>
-                                                    <TableCell>Production Time</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {attendances.map((attendance, index) => {
-                                                    // const punchinLat = attendance.punchin_location?.split(',')[0] || 'N/A';
-                                                    // const punchinLng = attendance.punchin_location?.split(',')[1] || 'N/A';
-                                                    // const punchoutLat = attendance.punchout_location?.split(',')[0] || 'N/A';
-                                                    // const punchoutLng = attendance.punchout_location?.split(',')[1] || 'N/A';
+                <Grid item xs={12} md={9}>
+                    <GlassCard>
+                        <CardHeader
+                            title={
+                            "Timesheet of " +
+                            selectedDate.toLocaleString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })
+                        }
+                            sx={{padding: '24px'}}
+                            action={
+                                <Box gap={2}>
+                                    <TextField
+                                        label="Select Date"
+                                        fullWidth
+                                        size="small"
+                                        type="date"
+                                        onChange={handleDateChange}
+                                        value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
+                                        style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
+                                        inputProps={{
+                                            placeholder: 'yyyy-MM-dd'
+                                        }}
+                                    />
 
-                                                    return (
-                                                        <TableRow key={index}>
-                                                            <TableCell>{new Date(attendance.date).toLocaleString('en-US', {
-                                                                month: 'long',
-                                                                day: 'numeric',
-                                                                year: 'numeric'
-                                                            })}</TableCell>
-                                                            <TableCell>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                    <Avatar
-                                                                        src={attendance.user.profile_image}
-                                                                        alt={attendance.user.name}
-                                                                        sx={{ width: 24, height: 24, marginRight: 2 }}
-                                                                    />
-                                                                    <Typography>{attendance.user.name}</Typography>
-                                                                </Box>
-                                                            </TableCell>
-                                                            <TableCell>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                                                                hour: 'numeric',
-                                                                minute: '2-digit',
-                                                                hour12: true
-                                                            }) : 'N/A'}</TableCell>
-                                                            <TableCell>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                                                                hour: 'numeric',
-                                                                minute: '2-digit',
-                                                                hour12: true
-                                                            }) : 'N/A'}</TableCell>
-                                                            <TableCell>
-                                                                {attendance.punchin_time && attendance.punchout_time ? (
-                                                                    (() => {
-                                                                        const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
-                                                                        const punchOut = new Date(`2024-06-04T${attendance.punchout_time}`);
-                                                                        const diffMs = punchOut - punchIn;
-                                                                        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                                                                        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                </Box>
+                            }
+                        />
+                        <CardContent>
+                            {error ? (
+                                <Typography color="error">{error}</Typography>
+                            ) : (
+                                <TableContainer>
+                                    <Table>
+                                        <TableHead sx={{
+                                            fontWeight: 'bold',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            <TableRow>
+                                                <TableCell>Date</TableCell>
+                                                <TableCell>Employee</TableCell>
+                                                <TableCell>Clockin Time</TableCell>
+                                                <TableCell>Clockout Time</TableCell>
+                                                <TableCell>Production Time</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {attendances.map((attendance, index) => {
+                                                return (
+                                                    <TableRow key={index}>
+                                                        <TableCell>{new Date(attendance.date).toLocaleString('en-US', {
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            year: 'numeric'
+                                                        })}</TableCell>
+                                                        <TableCell>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Avatar
+                                                                    src={attendance.user.profile_image}
+                                                                    alt={attendance.user.name}
+                                                                    sx={{ width: 24, height: 24, marginRight: 2 }}
+                                                                />
+                                                                <Typography>{attendance.user.name}</Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                        <TableCell>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
+                                                            hour: 'numeric',
+                                                            minute: '2-digit',
+                                                            hour12: true
+                                                        }) : 'N/A'}</TableCell>
+                                                        <TableCell>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
+                                                            hour: 'numeric',
+                                                            minute: '2-digit',
+                                                            hour12: true
+                                                        }) : 'N/A'}</TableCell>
+                                                        <TableCell>
+                                                            {attendance.punchin_time && attendance.punchout_time ? (
+                                                                (() => {
+                                                                    const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
+                                                                    const punchOut = new Date(`2024-06-04T${attendance.punchout_time}`);
+                                                                    const diffMs = punchOut - punchIn;
+                                                                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                                                                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-                                                                        return `${diffHrs}h ${diffMins}m`;
-                                                                    })()
-                                                                ) : 'N/A'}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    );
-                                                })}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                )}
-                            </CardContent>
-                        </GlassCard>
-                    </Grow>
+                                                                    return `${diffHrs}h ${diffMins}m`;
+                                                                })()
+                                                            ) : 'N/A'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+
+
+                                    </Table>
+                                </TableContainer>
+
+                            )}
+                        </CardContent>
+                    </GlassCard>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={3}>
                     <Grow in>
                         <GlassCard ref={cardRef}>
                             <CardHeader
                                 title={
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {"Today Absent"}
+                                        {"Absent on " +
+                                            selectedDate.toLocaleString('en-US', {
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
                                         <Chip sx={{ ml: 1 }} label={absentUsers.length} variant="outlined" color="error" size="small" />
                                     </Box>
                                 }
@@ -235,9 +264,6 @@ const TimeSheetTable = ({users}) => {
                     </Grow>
                 </Grid>
             </Grid>
-
-
-
         </Box>
     );
 };

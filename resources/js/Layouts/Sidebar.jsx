@@ -10,20 +10,25 @@ import {getPages} from '@/Props/pages.jsx';
 
 const Sidebar = ({toggleSideBar}) => {
     const theme = useTheme();
-    const { auth } = usePage().props;
+    const { auth, url } = usePage().props;
     const userIsAdmin = auth.roles.includes('admin');
     const pages = getPages(userIsAdmin);
     const [openSubMenu, setOpenSubMenu] = useState(null);
+    const [activePage, setActivePage] = useState(url);
 
     const handleOpenSubMenu = (pageName) => {
         setOpenSubMenu(prev => prev === pageName ? null : pageName);
     };
 
+    const handleClick = (pageName) => {
+        setActivePage(pageName);
+        handleOpenSubMenu(pageName);
+    };
+
     return (
-        <Box sx={{p: 2, height:  '100%',}}>
+        <Box sx={{ p: 2, height: '100%' }}>
             <GlassCard>
-                <CardHeader
-                />
+                <CardHeader />
                 <IconButton
                     sx={{
                         position: 'absolute',
@@ -41,43 +46,72 @@ const Sidebar = ({toggleSideBar}) => {
                     {pages.map((page) => (
                         page.subMenu ? (
                             <div key={page.name}>
-                                <ListItem button onClick={() => page.subMenu ? handleOpenSubMenu(page.name) : null}>
+                                <ListItem
+                                    button
+                                    onClick={() => handleClick(page.name)}
+                                    sx={{
+                                        backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                    }}
+                                >
                                     <ListItemIcon>{page.icon}</ListItemIcon>
-                                    <ListItemText primary={page.name}/>
-                                    {page.subMenu ? (openSubMenu === page.name ? <ExpandLess/> : <ExpandMore/>) : null}
+                                    <ListItemText primary={page.name} />
+                                    {page.subMenu ? (openSubMenu === page.name ? <ExpandLess /> : <ExpandMore />) : null}
                                 </ListItem>
                                 {page.subMenu && (
                                     <Collapse in={openSubMenu === page.name} timeout="auto" unmountOnExit>
                                         <List component="div" disablePadding>
                                             {page.subMenu.map((subPage) => (
-                                                <ListItem sx={{ml: 1}} button key={subPage.name}>
-                                                    <ListItemIcon>{subPage.icon}</ListItemIcon>
-                                                    <Link as={'a'} href={route(subPage.route)}
-                                                          method={subPage.method || undefined} style={{
+                                                <Link
+                                                    as={'a'}
+                                                    href={route(subPage.route)}
+                                                    method={subPage.method || undefined}
+                                                    key={subPage.name}
+                                                    style={{
                                                         alignItems: 'center',
                                                         color: theme.palette.text.primary,
                                                         textDecoration: 'none'
-                                                    }}>
-                                                        <ListItemText primary={subPage.name}/>
-                                                    </Link>
-                                                </ListItem>
+                                                    }}
+                                                >
+                                                    <ListItem
+                                                        onClick={() => setActivePage(subPage.name)}
+                                                        sx={{
+                                                            pl: 3,
+                                                            backgroundColor: activePage === subPage.name ? theme.palette.action.selected : 'transparent',
+                                                        }}
+                                                        button
+                                                    >
+                                                        <ListItemIcon>{subPage.icon}</ListItemIcon>
+                                                        <ListItemText primary={subPage.name} />
+                                                    </ListItem>
+                                                </Link>
                                             ))}
                                         </List>
                                     </Collapse>
                                 )}
                             </div>
                         ) : (
-                            <ListItem button key={page.name} >
-                                <ListItemIcon>{page.icon}</ListItemIcon>
-                                <Link as={'a'} href={route(page.route)}
-                                      method={page.method || undefined} style={{
+                            <Link
+                                as={'a'}
+                                href={route(page.route)}
+                                method={page.method || undefined}
+                                key={page.name}
+                                style={{
                                     alignItems: 'center',
                                     color: theme.palette.text.primary,
                                     textDecoration: 'none'
-                                }}>
-                                    <ListItemText primary={page.name}/>
-                                </Link>
-                            </ListItem>
+                                }}
+                            >
+                                <ListItem
+                                    button
+                                    onClick={() => setActivePage(page.name)}
+                                    sx={{
+                                        backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                    }}
+                                >
+                                    <ListItemIcon>{page.icon}</ListItemIcon>
+                                    <ListItemText primary={page.name} />
+                                </ListItem>
+                            </Link>
                         )
                     ))}
                 </List>

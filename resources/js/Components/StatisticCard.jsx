@@ -38,9 +38,9 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
 const StatisticsWidgets = (props) => {
     const { auth, statistics } = usePage().props;
     return (
-        <Box sx={{ flexGrow: 1, p: 2, height: '100%' }}>
-            <Grid sx={{ height: '100%' }} container spacing={2} alignItems="stretch">
-                <Grid item xs={12} sm={6} md={6}>
+        <Box sx={{ flexGrow: 1, pt: 2, pr: 2, pl: 2, height: '100%' }}>
+            <Grid sx={{ height: '100%' }} spacing={2} container alignItems="stretch">
+                <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
                         title="Total Tasks"
@@ -49,10 +49,10 @@ const StatisticsWidgets = (props) => {
                         color={blue[100]}
                         badgeColor="success"
                         badgeText="17.32% vs. previous month"
-                        sx={{ height: '100%' }} // Ensure the card takes full height
+                        sx={{ height: '100%'}} // Ensure the card takes full height
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
                         title="Completed Tasks"
@@ -64,7 +64,7 @@ const StatisticsWidgets = (props) => {
                         sx={{ height: '100%' }}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
                         title="Pending Tasks"
@@ -76,7 +76,7 @@ const StatisticsWidgets = (props) => {
                         sx={{ height: '100%' }}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
                         title="RFI Submission"

@@ -213,9 +213,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
 
 
-
-
-
     useEffect(() => {
         fetchData();
     }, []);

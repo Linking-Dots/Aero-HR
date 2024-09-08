@@ -13,6 +13,7 @@ export default function Dashboard({auth,users}) {
 
     const [updateMap, setUpdateMap] = useState(false);
     const [updateTimeSheet, setUpdateTimeSheet] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date()); // State to hold the selected date
 
     const handlePunchSuccess = () => {
         // Toggle the state to re-render UserLocationsCard
@@ -20,11 +21,19 @@ export default function Dashboard({auth,users}) {
         setUpdateTimeSheet(prev => !prev);
     };
 
+    // Handle date change from DatePicker
+    const handleDateChange = (event) => {
+        const newDate = event.target.value; // Date from the input field
+        setSelectedDate(new Date(newDate)); // Set it as a valid Date object
+        setUpdateTimeSheet(prev => !prev);  // Re-render components if necessary
+        setUpdateMap(prev => !prev);        // Re-render components if necessary
+    };
+
     return (
         <>
             <Head title="Dashboard"/>
             <Box>
-                <Grid container spacing={2}>
+                <Grid container >
                     <Grid item xs={12} md={6}>
                         <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
                     </Grid>
@@ -32,8 +41,8 @@ export default function Dashboard({auth,users}) {
                         <StatisticCard />
                     </Grid>
                 </Grid>
+                {auth.roles.includes('admin') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
                 {auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}
-                {auth.roles.includes('admin') && <TimeSheetTable users={users} key={updateTimeSheet}/>}
                 <UpdatesCards/>
                 <LeaveCard/>
             </Box>

@@ -212,13 +212,9 @@ class AttendanceController extends Controller
                     ];
                 });
 
-            Log::info($userLocations);
             return response()->json($userLocations);
 
         } catch (\Exception $e) {
-            // Log the error for debugging
-            Log::error('Error fetching user locations for today: ' . $e->getMessage());
-
             // Return a standardized error response
             return response()->json([
                 'error' => 'Unable to fetch user locations. Please try again later.'
@@ -261,27 +257,36 @@ class AttendanceController extends Controller
         }
     }
 
-    public function getAllUsersAttendanceForToday()
+    public function getAllUsersAttendanceForDate(Request $request)
     {
-        $today = Carbon::today();
+
+        // Get the date from the query parameter, defaulting to today's date if none is provided
+        $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
+        Log::info($selectedDate);
+
+
 
         try {
-            // Get attendance records for all users for today's date
-            $attendanceRecords = Attendance::with('user:id')  // Include user data with first_name and avatar
+            // Get attendance records for all users for the selected date
+            $attendanceRecords = Attendance::with('user')  // Include user data with first_name and avatar
             ->whereNotNull('punchin')
-                ->whereDate('date', $today)
+                ->whereDate('date', $selectedDate)
                 ->get();  // Retrieve all matching records
 
+            Log::info($attendanceRecords);
+
+
+
             if ($attendanceRecords->isEmpty()) {
-                // Handle the case where no punch-in data is found for any user on today's date
-                return response()->json(['message' => 'No attendance records found for today.'], 404);
+                // Handle the case where no punch-in data is found for any user on the selected date
+                return response()->json(['message' => 'No attendance records found for the selected date.'], 404);
             }
 
             // Transform the attendance records into a response-friendly format
             $formattedRecords = $attendanceRecords->map(function ($record) {
                 return [
                     'date' => Carbon::parse($record->date)->toIso8601String(),
-                    'user' => User::find($record->user_id),
+                    'user' => $record->user,
                     'punchin_time' => $record->punchin,
                     'punchin_location' => $record->punchin_location,
                     'punchout_time' => $record->punchout,
@@ -300,6 +305,7 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
+
 
 
 }
