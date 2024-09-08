@@ -22,30 +22,23 @@ import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 
-const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData }) => {
-    const [leaveType, setLeaveType] = useState('Casual');
-    const [fromDate, setFromDate] = useState('');
-    const [toDate, setToDate] = useState('');
-    const [daysCount, setDaysCount] = useState('');
+const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, currentLeave }) => {
+    const theme = useTheme();
+    const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || 'Casual');
+    const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
+    const [toDate, setToDate] = useState(currentLeave?.to_date || '');
+    const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');
     const [remainingLeaves, setRemainingLeaves] = useState(''); // Default remaining leaves
-    const [leaveReason, setLeaveReason] = useState('');
+    const [leaveReason, setLeaveReason] = useState(currentLeave?.reason ||'');
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
 
-
-
-
-
     useEffect(() => {
-        console.log(leaveType)
         // Find the leave type in leaveCounts
         const leaveTypeData = leaveCounts.find(
             (leave) => leave.leave_type === leaveType
         );
-        console.log(leaveTypeData)
-
-
-            setRemainingLeaves(leaveTypeData.remaining_days);
+        setRemainingLeaves(leaveTypeData.remaining_days);
     }, [leaveType]);
 
 
@@ -77,13 +70,19 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
 
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.post(route('leave-add'), {
+                const data = {
                     leaveType,
                     fromDate,
                     toDate,
                     daysCount,
                     leaveReason,
-                });
+                };
+
+                if (currentLeave) {
+                    data.id = currentLeave.id;
+                }
+
+                const response = await axios.post(route('leave-add'), data);
 
                 if (response.status === 200) {
                     setLeavesData(response.data.leavesData);
@@ -102,13 +101,12 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData })
                     if (error.response.status === 422) {
                         // Handle validation errors
                         setErrors(error.response.data.errors || {});
-                        reject(error.response.data.error || 'Failed to submit leave application');
+                        reject(error.response.statusText || 'Failed to submit leave application');
                     } else {
                         // Handle other HTTP errors
                         reject('An unexpected error occurred. Please try again later.');
                     }
-                    console.error(error.response.data);
-                    console.error(error.response || {});
+                    console.error(error.response);
                 } else if (error.request) {
                     // The request was made but no response was received
                     reject('No response received from the server. Please check your internet connection.');

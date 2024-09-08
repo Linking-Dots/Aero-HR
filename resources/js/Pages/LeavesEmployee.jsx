@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {Head, usePage} from '@inertiajs/react';
 import {Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar} from '@mui/material';
 import { Add } from '@mui/icons-material';
@@ -7,21 +7,34 @@ import App from "@/Layouts/App.jsx";
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from "@/Forms/LeaveForm.jsx";
 import Grow from "@mui/material/Grow";
+import DeleteLeaveForm from "@/Forms/DeleteLeaveForm.jsx";
+
 const LeavesEmployee = ({ title, allUsers }) => {
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
     const [allLeaves, setAllLeaves] = useState(leavesData.allLeaves);
+    const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
+
+    const [currentLeave, setCurrentLeave] = useState();
 
     useEffect(() => {
         setAllLeaves(leavesData.allLeaves);
     }, [leavesData]);
 
-    console.log(leavesData);
-
 
     const openModal = (modalType) => {
         setOpenModalType(modalType);
     };
+
+    const handleClickOpen = useCallback((leaveId, modalType) => {
+        setLeaveIdToDelete(leaveId);
+        setOpenModalType(modalType);
+    }, []);
+
+    const handleClose = useCallback(() => {
+        setOpenModalType(null);
+        setLeaveIdToDelete(null);
+    }, []);
 
     const closeModal = () => {
         setOpenModalType(null);
@@ -30,13 +43,31 @@ const LeavesEmployee = ({ title, allUsers }) => {
     return (
         <App>
             <Head title={title} />
-            {openModalType === 'leave' && (
+            {openModalType === 'add_leave' && (
                 <LeaveForm
-                    open={openModalType === 'leave'}
+                    open={openModalType === 'add_leave'}
                     setLeavesData={setLeavesData}
                     closeModal={closeModal}
                     leaveTypes={leavesData.leaveTypes}
                     leaveCounts={leavesData.leaveCounts}
+                />
+            )}
+            {openModalType === 'edit_leave' && (
+                <LeaveForm
+                    open={openModalType === 'edit_leave'}
+                    setLeavesData={setLeavesData}
+                    closeModal={closeModal}
+                    leaveTypes={leavesData.leaveTypes}
+                    leaveCounts={leavesData.leaveCounts}
+                    currentLeave={currentLeave}
+                />
+            )}
+            {openModalType === 'delete_leave' && (
+                <DeleteLeaveForm
+                    open={openModalType === 'delete_leave'}
+                    handleClose={handleClose}
+                    leaveIdToDelete={leaveIdToDelete}
+                    setLeavesData={setLeavesData}
                 />
             )}
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -52,7 +83,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                                         variant="outlined"
                                         color="success"
                                         startIcon={<Add />}
-                                        onClick={() => openModal('leave')}
+                                        onClick={() => openModal('add_leave')}
                                     >
                                         Add Leave
                                     </Button>
@@ -84,7 +115,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                             </Grid>
                         </CardContent>
                         <CardContent>
-                            <LeaveEmployeeTable allLeaves={allLeaves} allUsers={allUsers}/>
+                            <LeaveEmployeeTable handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} allLeaves={allLeaves} allUsers={allUsers}/>
                         </CardContent>
                     </GlassCard>
                 </Grow>

@@ -73,15 +73,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     })->name('dashboard');
 
+    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
+    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
     Route::get('/leaves-employee', [LeaveController::class, 'index'])->name('leaves-employee');
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
+    Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
     Route::get('/attendance-employee', [AttendanceController::class, 'index'])->name('attendance-employee');
 
     //Employees Routes:
     Route::get('/employees', [UserController::class, 'index'])->name('employees');
     Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays');
-    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
-    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
+
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
     Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');

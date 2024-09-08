@@ -18,8 +18,11 @@ import {
 import { AccountCircle, Edit, Delete } from '@mui/icons-material';
 import {useTheme} from "@mui/material/styles";
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import EditIcon from "@mui/icons-material/Edit.js";
+import DeleteIcon from "@mui/icons-material/Delete.js";
+import React from "react";
 
-const LeaveEmployeeTable = ({ allLeaves, allUsers }) => {
+const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLeave, openModal}) => {
     const theme = useTheme();
     return (
         <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
@@ -81,11 +84,26 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers }) => {
                                 ) : null}
                             </TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap' }} align="center">
-                                <IconButton href="#" onClick={() => {/* Handle edit */ }}>
-                                    <Edit />
+                                <IconButton
+                                    sx={{m:1}}
+                                    variant="outlined"
+                                    color="success"
+                                    size="small"
+                                    onClick={() => {
+                                        setCurrentLeave(leave);
+                                        openModal('edit_leave');
+                                    }}
+                                >
+                                    <EditIcon />
                                 </IconButton>
-                                <IconButton href="#" onClick={() => {/* Handle delete */ }}>
-                                    <Delete />
+                                <IconButton
+                                    sx={{ m: 1 }}
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
+                                    onClick={() => handleClickOpen(leave.id, 'delete_leave')}
+                                >
+                                    <DeleteIcon />
                                 </IconButton>
                             </TableCell>
                         </TableRow>
