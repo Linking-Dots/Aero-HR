@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
     Avatar,
     Box,
@@ -32,7 +32,29 @@ const TimeSheetTable = ({users}) => {
         !attendances.some(attendance => attendance.user.id === user.id)
     );
 
-    const [visibleUsersCount, setVisibleUsersCount] = useState(2);
+    const [visibleUsersCount, setVisibleUsersCount] = useState(2); // Default to 2 initially
+    const cardRef = useRef(null); // Ref to the GlassCard
+    const userItemRef = useRef(null); // Ref to measure the user item height
+
+    // Function to dynamically calculate visible users based on available space
+    const calculateVisibleUsers = () => {
+        if (cardRef.current && userItemRef.current) {
+            const cardHeight = cardRef.current.clientHeight;
+            const userItemHeight = userItemRef.current.clientHeight;
+
+            const availableHeight = cardHeight - 150; // Subtract padding/margins from available height
+            const calculatedVisibleUsers = Math.floor(availableHeight / userItemHeight);
+
+            setVisibleUsersCount(calculatedVisibleUsers);
+        }
+    };
+
+    // Call the function when component mounts or the window resizes
+    useEffect(() => {
+        calculateVisibleUsers();
+        window.addEventListener('resize', calculateVisibleUsers);
+        return () => window.removeEventListener('resize', calculateVisibleUsers);
+    }, []);
 
     // Handle the load more click
     const handleLoadMore = () => {
@@ -44,7 +66,6 @@ const TimeSheetTable = ({users}) => {
     };
 
     const getAllUserAttendanceForToday = async () => {
-
 
         try {
             const response = await fetch(route('getAllUsersAttendanceForToday'));
@@ -153,12 +174,12 @@ const TimeSheetTable = ({users}) => {
                 </Grid>
                 <Grid item xs={12} md={4}>
                     <Grow in>
-                        <GlassCard>
+                        <GlassCard ref={cardRef}>
                             <CardHeader
                                 title={
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         {"Today Absent"}
-                                        <Chip sx={{ml: 1}} label={absentUsers.length} variant="outlined" color="error" size="small" />
+                                        <Chip sx={{ ml: 1 }} label={absentUsers.length} variant="outlined" color="error" size="small" />
                                     </Box>
                                 }
                             />
@@ -168,7 +189,10 @@ const TimeSheetTable = ({users}) => {
                                         const userLeave = getUserLeave(user.id);
                                         return (
                                             <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
-                                                <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                                                <Box
+                                                    ref={userItemRef} // Use this ref to measure the height of each user item
+                                                    sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}
+                                                >
                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                         <Avatar src={user.profile_image} alt={user.name} />
                                                         <Box sx={{ ml: 2 }}>
@@ -188,7 +212,7 @@ const TimeSheetTable = ({users}) => {
                                                             }
                                                         </Grid>
                                                         {userLeave ? <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                            <Chip label={userLeave.status} variant="outlined" color={userLeave ? (userLeave.status === 'Pending' ? 'error' : 'success') : 'error'} size="small" />
+                                                            <Chip label={userLeave.status} variant="outlined" color={userLeave.status === 'Pending' ? 'error' : 'success'} size="small" />
                                                         </Grid> : ''}
 
                                                     </Grid>

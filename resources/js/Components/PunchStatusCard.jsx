@@ -71,7 +71,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         const permissionStatus = await navigator.permissions.query({name: 'geolocation'});
 
         if (permissionStatus.state === 'denied') {
-            toast.error('Location permission denied. Please enable location services in your browser settings and try again.', {
+            toast.error('Location permission denied. Please enable location services in your browser settings.', {
                 icon: '🔴',
                 style: {
                     backdropFilter: 'blur(16px) saturate(200%)',
@@ -132,61 +132,86 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
 
     const processPunch = async (action) => {
-        toast.loading(action === 'punchin' ? 'Punching in....' : 'Punching out....', {
-            icon: '🟢',
-            style: {
-                backdropFilter: 'blur(16px) saturate(200%)',
-                backgroundColor: theme.glassCard.backgroundColor,
-                border: theme.glassCard.border,
-                color: theme.palette.text.primary,
+        const promise = new Promise(async (resolve, reject) => {
+            const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+
+            try {
+                const response = await axios.post(endpoint, {
+                    user_id: auth.user.id,
+                    location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
+                });
+
+                if (response.status === 200) {
+                    await fetchData();
+                    handlePunchSuccess();
+                    resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
+                } else {
+                    reject(['Failed to set attendance. Please try again.']);
+                }
+            } catch (error) {
+                console.log(error);
+                reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
             }
         });
-        const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
-
-        try {
-            const response = await axios.post(endpoint, {
-                user_id: auth.user.id,
-                location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
-            });
-
-            if (response.status === 200) {
-                await fetchData();
-                handlePunchSuccess();
-                toast.success(response.data.success ? response.data.message : 'Punch completed successfully', {
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>{action === 'punchin' ? 'Punching in...' : 'Punching out...'}</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
-                    }
-                });
-            } else {
-                toast.error('Failed to set attendance. Please try again.', {
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data}
+                            </>
+                        );
+                    },
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
-                    }
-                });
+                    },
+                },
             }
-        } catch (error) {
-            console.log(error);
-            toast.error(error.response?.data?.message || 'Failed to set attendance. Please try again.', {
-                icon: '🔴',
-                style: {
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
-                    border: theme.glassCard.border,
-                    color: theme.palette.text.primary,
-                }
-            });
-        } finally {
-            toast.dismiss();
-        }
-    };
+        );
+    }
+
+
 
 
 
