@@ -10,7 +10,7 @@ import EmployeeTable from '@/Tables/EmployeeTable.jsx';
 
 const EmployeesList = ({title, allUsers, departments, designations}) => {
     return (
-        <App>
+        <>
             <Head title={title}/>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
@@ -37,9 +37,9 @@ const EmployeesList = ({title, allUsers, departments, designations}) => {
                     </GlassCard>
                 </Grow>
             </Box>
-        </App>
+        </>
 
     );
 };
-
+EmployeesList.layout = (page) => <App>{page}</App>;
 export default EmployeesList;

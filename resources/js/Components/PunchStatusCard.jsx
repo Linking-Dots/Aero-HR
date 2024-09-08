@@ -67,107 +67,68 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
-    // const getCurrentPosition = async () => {
-    //     const promise = new Promise(async (resolve, reject) => {
-    //         const permissionStatus = await navigator.permissions.query({name: 'geolocation'});
-    //
-    //         if (permissionStatus.state === 'denied') {
-    //             reject(['Location permission denied. Please enable location services in your browser settings and try again.']);
-    //         } else if (permissionStatus.state === 'prompt') {
-    //             navigator.geolocation.getCurrentPosition(
-    //                 (pos) => {
-    //                     setPosition({
-    //                         latitude: pos.coords.latitude,
-    //                         longitude: pos.coords.longitude
-    //                     });
-    //                     resolve([`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`]);
-    //                 },
-    //                 (error) => handleLocationError(error, reject)
-    //             );
-    //         } else  {
-    //             navigator.geolocation.getCurrentPosition(
-    //                 (pos) => {
-    //                     setPosition({
-    //                         latitude: pos.coords.latitude,
-    //                         longitude: pos.coords.longitude
-    //                     });
-    //                     resolve([`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`]);
-    //                 },
-    //                 (error) => handleLocationError(error, reject)
-    //             );
-    //         }
-    //
-    //     });
-    //
-    //     toast.promise(
-    //         promise,
-    //         {
-    //             pending: {
-    //                 render() {
-    //                     return (
-    //                         <div style={{ display: 'flex', alignItems: 'center' }}>
-    //                             <CircularProgress />
-    //                             <span style={{ marginLeft: '8px' }}>Getting current position...</span>
-    //                         </div>
-    //                     );
-    //                 },
-    //                 icon: false,
-    //                 style: {
-    //                     backdropFilter: 'blur(16px) saturate(200%)',
-    //                     backgroundColor: theme.glassCard.backgroundColor,
-    //                     border: theme.glassCard.border,
-    //                     color: theme.palette.text.primary,
-    //                 }
-    //             },
-    //             success: {
-    //                 render({ data }) {
-    //                     return (
-    //                         <>
-    //                             {data.map((message, index) => (
-    //                                 <div key={index}>{message}</div>
-    //                             ))}
-    //                         </>
-    //                     );
-    //                 },
-    //                 icon: '🟢',
-    //                 style: {
-    //                     backdropFilter: 'blur(16px) saturate(200%)',
-    //                     backgroundColor: theme.glassCard.backgroundColor,
-    //                     border: theme.glassCard.border,
-    //                     color: theme.palette.text.primary,
-    //                 }
-    //             },
-    //             error: {
-    //                 render({ data }) {
-    //                     return (
-    //                         <>
-    //                             {data.map((message, index) => (
-    //                                 <div key={index}>{message}</div>
-    //                             ))}
-    //                         </>
-    //                     );
-    //                 },
-    //                 icon: '🔴',
-    //                 style: {
-    //                     backdropFilter: 'blur(16px) saturate(200%)',
-    //                     backgroundColor: theme.glassCard.backgroundColor,
-    //                     border: theme.glassCard.border,
-    //                     color: theme.palette.text.primary,
-    //                 }
-    //             }
-    //         }
-    //     );
-    //
-    // };
+    const getCurrentPosition = async () => {
+        const permissionStatus = await navigator.permissions.query({name: 'geolocation'});
 
-    // const handleLocationError = (error, reject) => {
-    //     console.log('Location error:', error);
-    //     if (error.code === error.PERMISSION_DENIED) {
-    //         reject(['Location permission denied. Please enable location services and try again.']);
-    //     } else {
-    //         reject(['Unable to retrieve location. Please try again.']);
-    //     }
-    // };
+        if (permissionStatus.state === 'denied') {
+            toast.error('Location permission denied. Please enable location services in your browser settings and try again.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+        } else if (permissionStatus.state === 'prompt') {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude
+                    });
+                    console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+                },
+                (error) => handleLocationError(error)
+            );
+        } else  {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude
+                    });
+                    console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+                },
+                (error) => handleLocationError(error)
+            );
+        }
+    };
+
+    const handleLocationError = (error, reject) => {
+        console.log('Location error:', error);
+        if (error.code === error.PERMISSION_DENIED) {
+            toast.error('Location permission denied. Please enable location services in your browser settings and try again.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+        } else {
+            toast.error('Unable to retrieve location. Please try again.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+        }
+    };
 
 
     const processPunch = async (action) => {
@@ -185,7 +146,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         try {
             const response = await axios.post(endpoint, {
                 user_id: auth.user.id,
-                // location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
             });
 
             if (response.status === 200) {
@@ -212,6 +173,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                 });
             }
         } catch (error) {
+            console.log(error);
             toast.error(error.response?.data?.message || 'Failed to set attendance. Please try again.', {
                 icon: '🔴',
                 style: {
@@ -233,9 +195,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         fetchData();
     }, []);
 
-    // useEffect(() => {
-    //     getCurrentPosition(); // Update position when component loads
-    // }, []);
+    useEffect(() => {
+        getCurrentPosition(); // Update position when component loads
+    }, []);
 
     useEffect(() => {
         setElapsedTime(calculateElapsedTime());

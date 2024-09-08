@@ -76,20 +76,18 @@ function App({ children }) {
                 }}
             >
                 {/* Sidebar Area */}
-
                 <Box
                     sx={{
-                        display: { xs: 'none', md: 'flex' },
-                        height:  '100%',
+                        display: { xs: 'none', md: 'block' },
+                        height: '100vh', // Full height
                         width: sideBarOpen ? 260 : 0,
                         transition: 'width 0.3s ease-in-out',
                         flexDirection: 'column',
+                        overflow: 'hidden', // Avoid overflow on the sidebar
                     }}
                 >
-                    <Sidebar toggleSideBar={toggleSideBar}/>
-
+                    <Sidebar toggleSideBar={toggleSideBar} />
                 </Box>
-
 
                 {/* Main Content Area */}
                 <Box
@@ -97,17 +95,15 @@ function App({ children }) {
                         display: 'flex',
                         flex: 1,
                         flexDirection: 'column',
-                        overflowY: 'auto', // Ensure content can scroll if needed
+                        height: '100vh', // Full height for content area
+                        overflow: 'auto', // Enable vertical scrolling
                     }}
                 >
-
-                {children}
-
+                    {children}
                 </Box>
             </Box>
-            {!isMobile && <Footer/>}
-
             <>
+                {!isMobile && <Footer/>}
                 {auth.user && isMobile && <BottomNav auth={auth}/>}
             </>
 

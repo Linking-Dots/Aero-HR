@@ -154,7 +154,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
 
     return (
-        <App>
+        <>
             <Head title={title}/>
             {openModalType === 'editDailyWork' && (
                 <DailyWorkForm
@@ -369,9 +369,11 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     </GlassCard>
                 </Grow>
             </Box>
-        </App>
+        </>
 
     );
 });
+
+DailyWorks.layout = (page) => <App>{page}</App>;
 
 export default DailyWorks;

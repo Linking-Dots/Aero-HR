@@ -14,13 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
-    public function showAttendance()
-    {
-        $user = Auth::user();
-        $title = "Attendance List";
-        return view('payroll/attendance', compact( 'user','title'));
-    }
-
     public function allAttendance(Request $request)
     {
         try {
@@ -134,7 +127,7 @@ class AttendanceController extends Controller
             // Validate incoming request data
             $request->validate([
                 'user_id' => 'required|integer',
-//                'location' => 'required',
+                'location' => 'required',
             ]);
 
             // Attempt to create or update the attendance record
@@ -142,12 +135,12 @@ class AttendanceController extends Controller
                 ['user_id' => $request->user_id, 'date' => Carbon::today()],
                 [
                     'punchin' => Carbon::now(),
-//                    'punchin_location' => $request->location
+                    'punchin_location' => $request->location
                 ]
             );
 
             // Update punchin and punchin_location in case they were not set during creation
-//            $attendance->punchin_location = $request->location;
+            $attendance->punchin_location = $request->location;
             $attendance->save();
 
             // Return success response
@@ -168,7 +161,7 @@ class AttendanceController extends Controller
             // Validate incoming request data
             $request->validate([
                 'user_id' => 'required|integer', // Assuming user_id should be an integer
-//                'location' => 'required',
+                'location' => 'required',
             ]);
 
             // Find the attendance record for the user and date
@@ -178,7 +171,7 @@ class AttendanceController extends Controller
 
             // Update punchout and punchout_location fields
             $attendance->punchout = Carbon::now();
-//            $attendance->punchout_location = $request->location;
+            $attendance->punchout_location = $request->location;
             $attendance->save();
 
             // Return success response

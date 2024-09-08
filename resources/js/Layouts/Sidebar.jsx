@@ -39,31 +39,46 @@ const Sidebar = ({toggleSideBar}) => {
                 </IconButton>
                 <List>
                     {pages.map((page) => (
-                        <div key={page.name}>
-                            <ListItem button onClick={() => page.subMenu ? handleOpenSubMenu(page.name) : null}>
+                        page.subMenu ? (
+                            <div key={page.name}>
+                                <ListItem button onClick={() => page.subMenu ? handleOpenSubMenu(page.name) : null}>
+                                    <ListItemIcon>{page.icon}</ListItemIcon>
+                                    <ListItemText primary={page.name}/>
+                                    {page.subMenu ? (openSubMenu === page.name ? <ExpandLess/> : <ExpandMore/>) : null}
+                                </ListItem>
+                                {page.subMenu && (
+                                    <Collapse in={openSubMenu === page.name} timeout="auto" unmountOnExit>
+                                        <List component="div" disablePadding>
+                                            {page.subMenu.map((subPage) => (
+                                                <ListItem sx={{ml: 1}} button key={subPage.name}>
+                                                    <ListItemIcon>{subPage.icon}</ListItemIcon>
+                                                    <Link as={'a'} href={route(subPage.route)}
+                                                          method={subPage.method || undefined} style={{
+                                                        alignItems: 'center',
+                                                        color: theme.palette.text.primary,
+                                                        textDecoration: 'none'
+                                                    }}>
+                                                        <ListItemText primary={subPage.name}/>
+                                                    </Link>
+                                                </ListItem>
+                                            ))}
+                                        </List>
+                                    </Collapse>
+                                )}
+                            </div>
+                        ) : (
+                            <ListItem button key={page.name} >
                                 <ListItemIcon>{page.icon}</ListItemIcon>
-                                <ListItemText primary={page.name} />
-                                {page.subMenu ? (openSubMenu === page.name ? <ExpandLess /> : <ExpandMore />) : null}
+                                <Link as={'a'} href={route(page.route)}
+                                      method={page.method || undefined} style={{
+                                    alignItems: 'center',
+                                    color: theme.palette.text.primary,
+                                    textDecoration: 'none'
+                                }}>
+                                    <ListItemText primary={page.name}/>
+                                </Link>
                             </ListItem>
-                            {page.subMenu && (
-                                <Collapse in={openSubMenu === page.name} timeout="auto" unmountOnExit>
-                                    <List component="div" disablePadding>
-                                        {page.subMenu.map((subPage) => (
-                                            <ListItem button key={subPage.name} sx={{ pl: 4 }}>
-                                                <ListItemIcon>{subPage.icon}</ListItemIcon>
-                                                <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
-                                                    alignItems: 'center',
-                                                    color: theme.palette.text.primary,
-                                                    textDecoration: 'none'
-                                                }}>
-                                                    <ListItemText primary={subPage.name} />
-                                                </Link>
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                </Collapse>
-                            )}
-                        </div>
+                        )
                     ))}
                 </List>
             </GlassCard>

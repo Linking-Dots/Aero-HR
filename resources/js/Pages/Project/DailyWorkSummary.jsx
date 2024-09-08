@@ -164,7 +164,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
 
 
     return (
-        <App>
+        <>
             <Head title={title}/>
 
             {openModalType === 'exportDailyWorkSummary' && (
@@ -277,9 +277,9 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
                     </GlassCard>
                 </Grow>
             </Box>
-        </App>
+        </>
 
     );
 };
-
+DailyWorkSummary.layout = (page) => <App>{page}</App>;
 export default DailyWorkSummary;

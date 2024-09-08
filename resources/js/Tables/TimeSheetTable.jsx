@@ -40,7 +40,6 @@ const TimeSheetTable = ({users}) => {
     };
 
     const getUserLeave = (userId) => {
-        console.log(todayLeaves)
         return todayLeaves.find((leave) => leave.user_id === userId);
     };
 
@@ -171,7 +170,7 @@ const TimeSheetTable = ({users}) => {
                                             <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
                                                 <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Avatar src="/assets/img/user.jpg" alt="User Image" />
+                                                        <Avatar src={user.profile_image} alt={user.name} />
                                                         <Box sx={{ ml: 2 }}>
                                                             <Typography variant="body1">{user.name}</Typography>
                                                         </Box>

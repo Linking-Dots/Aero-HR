@@ -41,7 +41,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     };
 
     return (
-        <App>
+        <>
             <Head title={title} />
             {openModalType === 'add_leave' && (
                 <LeaveForm
@@ -120,8 +120,9 @@ const LeavesEmployee = ({ title, allUsers }) => {
                     </GlassCard>
                 </Grow>
             </Box>
-        </App>
+        </>
     );
 };
+LeavesEmployee.layout = (page) => <App>{page}</App>;
 
 export default LeavesEmployee;

@@ -110,7 +110,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 
 
     return (
-        <App>
+        <>
             <Head title={user.name}/>
             {/* Profile Modal */}
             {openModalType === 'profile' && (
@@ -828,10 +828,10 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 )}
 
             </Box>
-        </App>
+        </>
 
     );
 };
-
+UserProfile.layout = (page) => <App>{page}</App>;
 export default UserProfile;
 

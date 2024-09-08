@@ -7,7 +7,7 @@ import LeaveCard from "@/Components/LeaveCard.jsx";
 import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
 import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
 import App from "@/Layouts/App.jsx";
-import {Grid} from "@mui/material";
+import {Grid, Box} from "@mui/material";
 
 export default function Dashboard({auth,users}) {
 
@@ -16,26 +16,29 @@ export default function Dashboard({auth,users}) {
 
     const handlePunchSuccess = () => {
         // Toggle the state to re-render UserLocationsCard
-        // setUpdateMap(prev => !prev);
+        setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
     };
 
     return (
-        <App>
-
+        <>
             <Head title="Dashboard"/>
-            <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                    <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
+            <Box>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <StatisticCard />
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                    <StatisticCard />
-                </Grid>
-            </Grid>
-            {/*{auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}*/}
-            {auth.roles.includes('admin') && <TimeSheetTable users={users} key={updateTimeSheet}/>}
-            <UpdatesCards/>
-            <LeaveCard/>
-        </App>
-);
+                {auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}
+                {auth.roles.includes('admin') && <TimeSheetTable users={users} key={updateTimeSheet}/>}
+                <UpdatesCards/>
+                <LeaveCard/>
+            </Box>
+        </>
+    );
 }
+
+Dashboard.layout = (page) => <App>{page}</App>;
