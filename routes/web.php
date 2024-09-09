@@ -81,7 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
     Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
-    Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('add-leave-type');
+    Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('update-leave-type');
     Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');
 
     //Employees Routes:
