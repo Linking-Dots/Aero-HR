@@ -76,70 +76,36 @@ const UserMarkers = () => {
                     className: 'user-icon',
                 });
 
-                const punchinPosition = user.punchin_location
-                    ? {
-                        lat: parseFloat(user.punchin_location.split(',')[0]),
-                        lng: parseFloat(user.punchin_location.split(',')[1]),
-                    }
-                    : null;
-
-                const punchoutPosition = user.punchout_location
+                const position = user.punchout_location
                     ? {
                         lat: parseFloat(user.punchout_location.split(',')[0]),
                         lng: parseFloat(user.punchout_location.split(',')[1]),
                     }
-                    : null;
-
-                if (punchinPosition) {
-                    let adjustedPunchinPosition = punchinPosition;
-
-                    users.forEach((otherUser, otherIndex) => {
-                        if (
-                            otherIndex < index &&
-                            otherUser.punchin_location &&
-                            arePositionsClose(adjustedPunchinPosition, {
-                                lat: parseFloat(otherUser.punchin_location.split(',')[0]),
-                                lng: parseFloat(otherUser.punchin_location.split(',')[1]),
-                            })
-                        ) {
-                            adjustedPunchinPosition = getAdjustedPosition(punchinPosition, index);
+                    : user.punchin_location
+                        ? {
+                            lat: parseFloat(user.punchin_location.split(',')[0]),
+                            lng: parseFloat(user.punchin_location.split(',')[1]),
                         }
-                    });
+                        : null;
 
-                    L.marker(adjustedPunchinPosition, { icon: userIcon })
-                        .addTo(map)
-                        .bindPopup(
-                            `Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${
-                                user.punchin_time
-                                    ? new Date(`2024-06-04T${user.punchin_time}`).toLocaleTimeString('en-US', {
-                                        hour: 'numeric',
-                                        minute: '2-digit',
-                                        hour12: true,
-                                    })
-                                    : 'Not punched in yet'
-                            }<br>Clockout Time: ${
-                                user.punchout_time ? user.punchout_time : 'Not punched out yet'
-                            }`
-                        );
-                }
 
-                if (punchoutPosition) {
-                    let adjustedPunchoutPosition = punchoutPosition;
+                if (position) {
+                    let adjustedPosition = position;
 
                     users.forEach((otherUser, otherIndex) => {
                         if (
                             otherIndex < index &&
                             otherUser.punchout_location &&
-                            arePositionsClose(adjustedPunchoutPosition, {
+                            arePositionsClose(adjustedPosition, {
                                 lat: parseFloat(otherUser.punchout_location.split(',')[0]),
                                 lng: parseFloat(otherUser.punchout_location.split(',')[1]),
                             })
                         ) {
-                            adjustedPunchoutPosition = getAdjustedPosition(punchoutPosition, index);
+                            adjustedPosition = getAdjustedPosition(position, index);
                         }
                     });
 
-                    L.marker(adjustedPunchoutPosition, { icon: userIcon })
+                    L.marker(adjustedPosition, { icon: userIcon })
                         .addTo(map)
                         .bindPopup(
                             `Name: ${user.name}<br>Designation: ${user.designation}<br>Clockin Time: ${
@@ -161,7 +127,6 @@ const UserMarkers = () => {
                             }`
                         );
                 }
-
                 return null; // Returning null since map expects a return value
             });
         }
