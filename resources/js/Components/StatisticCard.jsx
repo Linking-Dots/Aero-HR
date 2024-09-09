@@ -8,7 +8,11 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import {usePage} from "@inertiajs/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
-
+import Lottie from 'react-lottie';
+import completed from '../../lotties/completed.json';
+import tasks from '../../lotties/tasks.json';
+import pending from '../../lotties/pending.json';
+import submission from '../../lotties/submission.json';
 
 const StatisticCard = ({ title, value, icon, color, props }) => (
         <Grow in>
@@ -26,6 +30,7 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
                         <Avatar sx={{ bgcolor: color, color: `${color}.contrastText`, width: 56, height: 56 }}>
                             {icon}
                         </Avatar>
+
                     </Box>
                 </CardContent>
             </GlassCard>
@@ -43,9 +48,22 @@ const StatisticsWidgets = (props) => {
                 <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
-                        title="Total Tasks"
+                        title="Total Daily Works"
                         value={statistics.total}
-                        icon={<TaskIcon />}
+                        icon={
+                            <Lottie
+                                options={{
+                                    loop: true,
+                                    autoplay: true,
+                                    animationData: tasks,
+                                    rendererSettings: {
+                                        preserveAspectRatio: "xMidYMid slice"
+                                    }
+                                }}
+                                height={40}
+                                width={40}
+                            />
+                        }
                         color={blue[100]}
                         badgeColor="success"
                         badgeText="17.32% vs. previous month"
@@ -55,9 +73,22 @@ const StatisticsWidgets = (props) => {
                 <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
-                        title="Completed Tasks"
+                        title="Completed Daily Works"
                         value={statistics.completed}
-                        icon={<CheckCircleIcon />}
+                        icon={
+                            <Lottie
+                                options={{
+                                    loop: true,
+                                    autoplay: true,
+                                    animationData: completed,
+                                    rendererSettings: {
+                                        preserveAspectRatio: "xMidYMid slice"
+                                    }
+                                }}
+                                height={40}
+                                width={40}
+                            />
+                        }
                         color={green[100]}
                         badgeColor="error"
                         badgeText="2.52% vs. previous month"
@@ -67,9 +98,22 @@ const StatisticsWidgets = (props) => {
                 <Grid item xs={6} sm={6} md={6}>
                     <StatisticCard
                         props={props}
-                        title="Pending Tasks"
+                        title="Pending Daily Works"
                         value={statistics.pending}
-                        icon={<TimerIcon />}
+                        icon={
+                            <Lottie
+                                options={{
+                                    loop: true,
+                                    autoplay: true,
+                                    animationData: pending,
+                                    rendererSettings: {
+                                        preserveAspectRatio: "xMidYMid slice"
+                                    }
+                                }}
+                                height={40}
+                                width={40}
+                            />
+                        }
                         color={yellow[100]}
                         badgeColor="error"
                         badgeText="0.87% vs. previous month"
@@ -81,7 +125,20 @@ const StatisticsWidgets = (props) => {
                         props={props}
                         title="RFI Submission"
                         value={statistics.rfi_submissions}
-                        icon={<AssignmentIcon />}
+                        icon={
+                            <Lottie
+                                options={{
+                                    loop: true,
+                                    autoplay: true,
+                                    animationData: submission,
+                                    rendererSettings: {
+                                        preserveAspectRatio: "xMidYMid slice"
+                                    }
+                                }}
+                                height={40}
+                                width={40}
+                            />
+                        }
                         color={blue[100]}
                         badgeColor="success"
                         badgeText="0.63% vs. previous month"
