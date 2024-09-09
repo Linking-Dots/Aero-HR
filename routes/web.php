@@ -54,8 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $today = now()->toDateString(); // Get today's date in 'Y-m-d' format
 
         $todayLeaves = DB::table('leaves')
-            ->join('leave_types', 'leaves.leave_type', '=', 'leave_types.id')
-            ->select('leaves.*', 'leave_types.type as leave_type')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
             ->whereDate('leaves.from_date', '<=', $today)  // Check that today's date is after or on the start date
             ->whereDate('leaves.to_date', '>=', $today)    // Check that today's date is before or on the end date
             ->get();
