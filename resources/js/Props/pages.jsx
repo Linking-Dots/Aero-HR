@@ -22,7 +22,7 @@ export const getPages = (userIsAdmin) => [
             { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
             { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
             { name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
-            { name: 'Leave Types', icon: <SettingsIcon />, route: 'leave-settings' },
+            { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
             { name: 'Attendances (Admin)', icon: <CalendarTodayIcon />, route: 'attendances' },
             { name: 'Departments', icon: <HomeIcon />, route: 'departments' },
             { name: 'Designations', icon: <WorkIcon />, route: 'designations' },

@@ -254,8 +254,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                         />
                         <CardContent>
                             <Box>
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={6} md={3} sx={{ paddingTop: '8px !important' }}>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6} md={3}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                             <Box display="flex" alignItems="center">
                                                 <StyledDatePicker
@@ -274,7 +274,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             </Box>
                                         </LocalizationProvider>
                                     </Grid>
-                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
+                                    <Grid item xs={6} sm={4} md={3}>
                                         <FormControl fullWidth>
                                             <InputLabel id="status-label">Status</InputLabel>
                                             <Select
@@ -295,7 +295,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                         </FormControl>
                                     </Grid>
                                     {auth.roles.includes('admin') && (
-                                        <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
+                                        <Grid item xs={6} sm={4} md={3}>
                                             <FormControl fullWidth>
                                                 <InputLabel id="incharge-label">Incharge</InputLabel>
                                                 <Select
@@ -316,7 +316,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             </FormControl>
                                         </Grid>
                                     )}
-                                    <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
+                                    <Grid item xs={6} sm={4} md={3}>
                                         <FormControl fullWidth>
                                             <InputLabel>Select Report</InputLabel>
                                             <Select

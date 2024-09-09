@@ -74,11 +74,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
-    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
     Route::get('/leaves-employee', [LeaveController::class, 'index'])->name('leaves-employee');
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
     Route::get('/attendance-employee', [AttendanceController::class, 'index'])->name('attendance-employee');
+
+    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
+    Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
+    Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('add-leave-type');
+    Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');
 
     //Employees Routes:
     Route::get('/employees', [UserController::class, 'index'])->name('employees');

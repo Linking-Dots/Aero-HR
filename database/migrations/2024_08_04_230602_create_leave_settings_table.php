@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leave_types', function (Blueprint $table) {
+        Schema::create('leave_settings', function (Blueprint $table) {
             $table->id();
             $table->string('type');
             $table->integer('days');
+            $table->string('eligibility')->nullable(); // Allow for complex criteria descriptions
             $table->boolean('carry_forward')->default(false);
             $table->boolean('earned_leave')->default(false);
+            $table->text('special_conditions')->nullable(); // Allow longer text for special conditions
             $table->timestamps();
         });
     }

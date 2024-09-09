@@ -4,7 +4,7 @@ import Dialog from '@mui/material/Dialog';
 import Grow from "@mui/material/Grow";
 import {useTheme} from "@mui/material/styles";
 import Draggable from "react-draggable";
-import {Paper} from "@mui/material";
+import {Paper, useMediaQuery} from "@mui/material";
 
 const PaperComponent = (props) => {
     return (
@@ -19,6 +19,7 @@ const PaperComponent = (props) => {
 
 const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) => {
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     return (
         <Dialog
@@ -28,7 +29,7 @@ const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) =
             onClose={closeModal}
             maxWidth="md"
             TransitionComponent={Grow}
-            PaperComponent={PaperComponent}
+            PaperComponent={!isMobile ? PaperComponent : undefined}
             aria-labelledby="draggable-dialog-title"
             PaperProps={{
                 sx: {

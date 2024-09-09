@@ -26,7 +26,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     const theme = useTheme();
     return (
         <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
-            <Table aria-label="leave employee table">
+            <Table>
                 <TableHead>
                     <TableRow>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Leave Type</TableCell>

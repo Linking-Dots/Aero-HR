@@ -93,7 +93,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         <CardContent>
                             <Grid container spacing={2}>
                                 {leavesData.leaveCounts.map((leave) => (
-                                    <Grid item xs={12} sm={6} md={3} key={leave.leave_type}>
+                                    <Grid item xs={6} sm={6} md={3} key={leave.leave_type}>
                                         <GlassCard>
                                             <CardContent>
                                                 <Box

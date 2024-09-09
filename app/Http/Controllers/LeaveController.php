@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Leave;
-use App\Models\LeaveType;
+use App\Models\LeaveSetting;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -18,13 +18,13 @@ class LeaveController extends Controller
     {
         // Fetch all leaves for the current user
         $allLeaves = DB::table('leaves')
-            ->join('leave_types', 'leaves.leave_type', '=', 'leave_types.id')
-            ->select('leaves.*', 'leave_types.type as leave_type')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
             ->where('leaves.user_id', auth()->id())
             ->get();
 
         // Fetch all leave types and their total days available
-        $leaveTypes = LeaveType::all();
+        $leaveTypes = LeaveSetting::all();
 
         // Group leaves by leave type and sum up the number of days for each type
         $leaveCounts = []; // Initialize an empty array to store the total days for each leave type
@@ -79,10 +79,9 @@ class LeaveController extends Controller
         // Validate incoming request
         $validator = Validator::make($request->all(), [
             'id' => 'nullable|exists:leaves,id',
-            'leaveType' => 'required|exists:leave_types,type',
+            'leaveType' => 'required|exists:leave_settings,type',
             'fromDate' => 'required|date',
             'toDate' => 'required|date|after_or_equal:fromDate',
-            'daysCount' => 'required|integer|min:1',
             'leaveReason' => 'required|string|max:255',
         ]);
 
@@ -95,7 +94,7 @@ class LeaveController extends Controller
         try {
             $data = [
                 'user_id' => auth()->id(),
-                'leave_type' => LeaveType::where('type', $request->input('leaveType'))->first()->id,
+                'leave_type' => LeaveSetting::where('type', $request->input('leaveType'))->first()->id,
                 'from_date' => $request->input('fromDate'),
                 'to_date' => $request->input('toDate'),
                 'no_of_days' => $request->input('daysCount'),
@@ -121,13 +120,13 @@ class LeaveController extends Controller
 
             // Fetch all leaves for the authenticated user
             $allLeaves = DB::table('leaves')
-                ->join('leave_types', 'leaves.leave_type', '=', 'leave_types.id')
-                ->select('leaves.*', 'leave_types.type as leave_type')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
                 ->where('leaves.user_id', auth()->id())
                 ->get();
 
             // Fetch all leave types and their total days available
-            $leaveTypes = LeaveType::all();
+            $leaveTypes = LeaveSetting::all();
 
             // Group leaves by leave type and sum up the number of days for each type
             $leaveCounts = [];
@@ -202,13 +201,13 @@ class LeaveController extends Controller
             $leave->delete();
 
             $allLeaves = DB::table('leaves')
-                ->join('leave_types', 'leaves.leave_type', '=', 'leave_types.id')
-                ->select('leaves.*', 'leave_types.type as leave_type')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
                 ->where('leaves.user_id', auth()->id())
                 ->get();
 
             // Fetch all leave types and their total days available
-            $leaveTypes = LeaveType::all();
+            $leaveTypes = LeaveSetting::all();
 
             // Group leaves by leave type and sum up the number of days for each type
             $leaveCounts = [];
