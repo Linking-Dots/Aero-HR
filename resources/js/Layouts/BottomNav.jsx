@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -6,11 +6,29 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {Link, usePage} from "@inertiajs/react";
 import {useTheme} from "@mui/material/styles";
 
-const BottomNav = ({auth}) => {
+const BottomNav = ({auth, contentRef, setBottomNavHeight}) => {
     const theme = useTheme();
 
     const { url } = usePage();
     const [value, setValue] = useState(0);
+    const bottomNavRef = useRef(null); // Ref to BottomNavigation
+
+
+
+    // Function to dynamically calculate bottom padding based on BottomNavigation height
+    const calculatePadding = () => {
+        if (bottomNavRef.current) {
+            const navHeight = bottomNavRef.current.clientHeight;
+            setBottomNavHeight(navHeight);
+        }
+    };
+
+    // Call the function when component mounts or the window resizes
+    useEffect(() => {
+        calculatePadding();
+        window.addEventListener('resize', calculatePadding);
+        return () => window.removeEventListener('resize', calculatePadding);
+    }, []);
 
     useEffect(() => {
         // Update the value based on the current URL
@@ -42,6 +60,7 @@ const BottomNav = ({auth}) => {
         //
         // >
             <BottomNavigation
+                ref={bottomNavRef}
                 sx={{
                     position: 'fixed',
                     bottom: 0,

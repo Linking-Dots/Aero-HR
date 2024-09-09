@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Box, CssBaseline, ThemeProvider, useMediaQuery,} from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
@@ -19,6 +19,8 @@ function App({ children }) {
         const savedDarkMode = localStorage.getItem('darkMode');
         return savedDarkMode === 'true';
     });
+    const contentRef = useRef(null);   // Ref to the main content container
+    const [bottomNavHeight, setBottomNavHeight] = useState(0); // State to store the bottom nav height
 
     // Update local storage whenever darkMode changes
     useEffect(() => {
@@ -63,11 +65,6 @@ function App({ children }) {
             />
             <CssBaseline />
             {loading && <Loader />}
-
-            {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-
-            {auth.user && <Breadcrumb />}
-
             <Box
                 sx={{
                     display: 'flex',
@@ -91,7 +88,9 @@ function App({ children }) {
 
                 {/* Main Content Area */}
                 <Box
+                    ref={contentRef}
                     sx={{
+                        pb: `${bottomNavHeight}px`,
                         display: 'flex',
                         flex: 1,
                         flexDirection: 'column',
@@ -99,12 +98,15 @@ function App({ children }) {
                         overflow: 'auto', // Enable vertical scrolling
                     }}
                 >
+                    {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                    {auth.user && <Breadcrumb />}
                     {children}
+                    {/*{!isMobile && <Footer/>}*/}
+                    {auth.user && isMobile && <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
                 </Box>
             </Box>
             <>
-                {!isMobile && <Footer/>}
-                {auth.user && isMobile && <BottomNav auth={auth}/>}
+
             </>
 
         </ThemeProvider>
