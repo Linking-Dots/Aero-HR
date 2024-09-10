@@ -182,6 +182,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                                         {(() => {
                                             // Find the user in allUsers array by matching leave.user_id
                                             const user = allUsers.find(u => String(u.id) === String(leave.user_id));
+                                            console.log(user);
                                             return user ? (
                                                 <>
                                                     <Avatar
@@ -220,7 +221,6 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                                         variant="outlined"
                                         color="primary"
                                         size="small"
-                                        margin={'0'}
                                         onClick={handleClick}
                                         startIcon={<RadioButtonCheckedIcon />}
                                         value={leave.status}
