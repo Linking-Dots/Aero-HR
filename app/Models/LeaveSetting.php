@@ -19,6 +19,7 @@ class LeaveSetting extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'type' => 'string',
         'days' => 'integer',
         'eligibility' => 'string',

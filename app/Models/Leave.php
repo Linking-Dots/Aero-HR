@@ -21,6 +21,7 @@ class Leave extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'leave_type' => 'string',
         'from_date' => 'date',
         'to_date' => 'date',
