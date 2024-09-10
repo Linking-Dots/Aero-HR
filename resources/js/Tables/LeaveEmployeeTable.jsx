@@ -167,7 +167,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>No of Days</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Reason</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Approved/Declined by</TableCell>
+                        {/*<TableCell sx={{ whiteSpace: 'nowrap' }}>Approved/Declined by</TableCell>*/}
                         <TableCell sx={{ whiteSpace: 'nowrap' }} align="center">
                             Actions
                         </TableCell>
@@ -250,16 +250,16 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                                     </Select>
                                 </FormControl>
                             </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {leave.approved_by ? (
-                                    <Typography sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                                        <Avatar src={allUsers.find(user => user.id === leave.approved_by).profile_image} alt={allUsers.find(user => user.id === leave.approved_by).name} />
-                                        <Typography sx={{ marginLeft: '10px', fontWeight: 'bold' }}>
-                                            {allUsers.find(user => user.id === leave.approved_by).name}
-                                        </Typography>
-                                    </Typography>
-                                ) : null}
-                            </TableCell>
+                            {/*<TableCell sx={{ whiteSpace: 'nowrap' }}>*/}
+                            {/*    {leave.approved_by ? (*/}
+                            {/*        <Typography sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>*/}
+                            {/*            <Avatar src={allUsers.find(user => user.id === leave.approved_by).profile_image} alt={allUsers.find(user => user.id === leave.approved_by).name} />*/}
+                            {/*            <Typography sx={{ marginLeft: '10px', fontWeight: 'bold' }}>*/}
+                            {/*                {allUsers.find(user => user.id === leave.approved_by).name}*/}
+                            {/*            </Typography>*/}
+                            {/*        </Typography>*/}
+                            {/*    ) : null}*/}
+                            {/*</TableCell>*/}
                             <TableCell sx={{ whiteSpace: 'nowrap' }} align="center">
                                 <IconButton
                                     sx={{m:1}}
