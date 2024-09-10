@@ -214,7 +214,6 @@ class LeaveController extends Controller
             $user = Auth::user();
 
 
-
             if (($user->hasRole('admin')) && ($request->input('route') === 'leaves')) {
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
@@ -305,6 +304,7 @@ class LeaveController extends Controller
             // Validate the incoming request
             $request->validate([
                 'id' => 'required|exists:leaves,id',
+                'route' => 'required',
             ]);
 
             // Find the daily work by ID

@@ -31,8 +31,6 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
     const theme = useTheme();
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
-    console.log("leave type: ", leaveType)
-    console.log("leave counts: ", leaveCounts)
     const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
     const [toDate, setToDate] = useState(currentLeave?.to_date || '');
     const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');

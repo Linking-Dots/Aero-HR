@@ -10,15 +10,12 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData }) 
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.delete(route('leave-delete', { id: leaveIdToDelete }));
-
+                const response = await axios.delete(route('leave-delete', { id: leaveIdToDelete, route: route().current() }));
 
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
                     setLeavesData(response.data.leavesData);
                     resolve('Leave application deleted successfully');
-                } else {
-
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
