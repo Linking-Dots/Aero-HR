@@ -323,7 +323,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                         <MenuItem key={incharge.id} value={incharge.id}>
                             <Box sx={{display: 'flex'}}>
                                 <Avatar
-                                    src={`/assets/images/users/${incharge.user_name || 'user-dummy-img'}.jpg`}
+                                    src={incharge.profile_image}
                                     alt={incharge.name || 'Not assigned'}
                                     sx={{
                                         borderRadius: '50%',
@@ -434,10 +434,6 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             ),
         }] : []),
     ];
-
-
-
-
     const getStatusColor = (status) => {
         switch (status) {
             case 'new':
@@ -452,8 +448,6 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 return '';
         }
     };
-
-
     const handleChange = async (taskId, key, value) => {
         try {
             const response = await axios.post(route('dailyWorks.update'), {

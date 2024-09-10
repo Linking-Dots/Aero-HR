@@ -9,7 +9,7 @@ import LeaveForm from "@/Forms/LeaveForm.jsx";
 import Grow from "@mui/material/Grow";
 import DeleteLeaveForm from "@/Forms/DeleteLeaveForm.jsx";
 
-const LeavesEmployee = ({ title, allUsers }) => {
+const LeavesAdmin = ({ title, allUsers }) => {
     const {auth} = usePage().props;
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
@@ -47,6 +47,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
             <Head title={title} />
             {openModalType === 'add_leave' && (
                 <LeaveForm
+                    allUsers={allUsers}
                     open={openModalType === 'add_leave'}
                     setLeavesData={setLeavesData}
                     closeModal={closeModal}
@@ -57,6 +58,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
             )}
             {openModalType === 'edit_leave' && (
                 <LeaveForm
+                    allUsers={allUsers}
                     open={openModalType === 'edit_leave'}
                     setLeavesData={setLeavesData}
                     closeModal={closeModal}
@@ -95,33 +97,31 @@ const LeavesEmployee = ({ title, allUsers }) => {
                             }
                         />
                         <CardContent>
-                            <Grid container spacing={2}>
-                                {leavesData.leaveTypes.map((leaveType) => (
-                                    <Grid item xs={6} sm={6} md={3} key={leaveType.type}>
-                                        <GlassCard>
-                                            <CardContent>
-                                                <Box
-                                                    display="flex"
-                                                    justifyContent="center"
-                                                    alignItems="center"
-                                                    height="100%"
-                                                    textAlign="center"
-                                                >
-                                                    <Box>
-                                                        <Typography variant="h6">{leaveType.type}</Typography>
-                                                        <Typography variant="h4">
-                                                            {leavesData.leaveCountsByUser[auth.user.id] ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.days_used : 0}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </CardContent>
-                                        </GlassCard>
-                                    </Grid>
-                                ))}
-                            </Grid>
+                            {/*<Grid container spacing={2}>*/}
+                            {/*    {leavesData.leaveCounts.map((leave) => (*/}
+                            {/*        <Grid item xs={6} sm={6} md={3} key={leave.leave_type}>*/}
+                            {/*            <GlassCard>*/}
+                            {/*                <CardContent>*/}
+                            {/*                    <Box*/}
+                            {/*                        display="flex"*/}
+                            {/*                        justifyContent="center"*/}
+                            {/*                        alignItems="center"*/}
+                            {/*                        height="100%"*/}
+                            {/*                        textAlign="center"*/}
+                            {/*                    >*/}
+                            {/*                        <Box>*/}
+                            {/*                            <Typography variant="h6">{leave.leave_type}</Typography>*/}
+                            {/*                            <Typography variant="h4">{leave.days_used}</Typography>*/}
+                            {/*                        </Box>*/}
+                            {/*                    </Box>*/}
+                            {/*                </CardContent>*/}
+                            {/*            </GlassCard>*/}
+                            {/*        </Grid>*/}
+                            {/*    ))}*/}
+                            {/*</Grid>*/}
                         </CardContent>
                         <CardContent>
-                            <LeaveEmployeeTable setLeavesData={setLeavesData} handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} allLeaves={allLeaves} allUsers={allUsers}/>
+                            <LeaveEmployeeTable handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} allLeaves={allLeaves} allUsers={allUsers} setLeavesData={setLeavesData}/>
                         </CardContent>
                     </GlassCard>
                 </Grow>
@@ -129,6 +129,6 @@ const LeavesEmployee = ({ title, allUsers }) => {
         </>
     );
 };
-LeavesEmployee.layout = (page) => <App>{page}</App>;
+LeavesAdmin.layout = (page) => <App>{page}</App>;
 
-export default LeavesEmployee;
+export default LeavesAdmin;

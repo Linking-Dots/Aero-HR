@@ -236,7 +236,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
 
     return (
         <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
-            <Table aria-label="employee table">
+            <Table aria-label="employee table" size="small">
                 <TableHead>
                     <TableRow>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee ID</TableCell>

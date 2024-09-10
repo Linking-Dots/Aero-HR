@@ -1,6 +1,8 @@
 
 import React, {useState, useEffect} from 'react';
 import {
+    Avatar,
+    Box,
     CircularProgress,
     Dialog,
     DialogActions,
@@ -21,10 +23,16 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
+import {router, usePage} from "@inertiajs/react";
+import { Inertia } from '@inertiajs/inertia';
 
-const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, currentLeave }) => {
+const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, currentLeave, allUsers }) => {
+    const {auth} = usePage().props;
     const theme = useTheme();
+    const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
+    console.log("leave type: ", leaveType)
+    console.log("leave counts: ", leaveCounts)
     const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
     const [toDate, setToDate] = useState(currentLeave?.to_date || '');
     const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');
@@ -32,14 +40,21 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
     const [leaveReason, setLeaveReason] = useState(currentLeave?.reason ||'');
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
+    const [daysUsed, setDaysUsed] = useState('');
+
 
     useEffect(() => {
-        // Find the leave type in leaveCounts
-        const leaveTypeData = leaveCounts.find(
-            (leave) => leave.leave_type === leaveType
-        );
-        setRemainingLeaves(leaveTypeData.remaining_days);
-    }, [leaveType]);
+        // Find the days used for the selected leave type
+        const daysUsed = leaveCounts?.find((found) => found.leave_type === leaveType)?.days_used || 0;
+        setDaysUsed(daysUsed);
+
+        // Calculate remaining leaves for the selected leave type
+        const selectedLeaveType = leaveTypes?.find((leave) => leave.type === leaveType);
+        if (selectedLeaveType) {
+            setRemainingLeaves(selectedLeaveType.days - daysUsed);
+        }
+    }, [leaveType, leaveCounts, leaveTypes]);
+
 
 
 
@@ -71,6 +86,8 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const data = {
+                    route: route().current(),
+                    user_id,
                     leaveType,
                     fromDate,
                     toDate,
@@ -86,11 +103,8 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
 
                 if (response.status === 200) {
                     setLeavesData(response.data.leavesData);
-                    resolve([response.data.messages || 'Leave application submitted successfully']);
+                    resolve([response.data.message || 'Leave application submitted successfully']);
                     closeModal();
-                } else {
-                    // Reject the promise with the error message
-
                 }
             } catch (error) {
                 setProcessing(false);
@@ -204,6 +218,17 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
                                     onChange={(e) => setLeaveType(e.target.value)}
                                     label="Leave Type"
                                     error={Boolean(errors.leaveType)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                backdropFilter: 'blur(16px) saturate(200%)',
+                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                border: theme.glassCard.border,
+                                                borderRadius: 2,
+                                                boxShadow: theme.glassCard.boxShadow,
+                                            },
+                                        },
+                                    }}
                                 >
                                     <MenuItem value="" disabled>Select Leave Type</MenuItem>
                                     {leaveTypes.map((type) => (
@@ -261,6 +286,54 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
                                 helperText={errors.remainingLeaves}
                             />
                         </Grid>
+                        {auth.roles.includes('admin') && route().current() === 'leaves' &&
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="leave-employee-label">Employee</InputLabel>
+                                    <Select
+                                        variant="outlined"
+                                        fullWidth
+                                        labelId="leave-employee-label"
+                                        value={user_id || "na"}
+                                        error={Boolean(errors.user_id)}
+                                        onChange={(e) => setUserId(e.target.value)}
+                                        label="Employee"
+                                        MenuProps={{
+                                            PaperProps: {
+                                                sx: {
+                                                    backdropFilter: 'blur(16px) saturate(200%)',
+                                                    backgroundColor: theme.glassCard.backgroundColor,
+                                                    border: theme.glassCard.border,
+                                                    borderRadius: 2,
+                                                    boxShadow: theme.glassCard.boxShadow,
+                                                },
+                                            },
+                                        }}
+                                    >
+                                        <MenuItem value="na" disabled>Please select</MenuItem>
+                                        {allUsers.map(user => (
+                                            <MenuItem key={user.id} value={user.id}>
+                                                <Box sx={{display: 'flex'}}>
+                                                    <Avatar
+                                                        src={user.profile_image}
+                                                        alt={user.name || 'Not assigned'}
+                                                        sx={{
+                                                            borderRadius: '50%',
+                                                            width: 23,
+                                                            height: 23,
+                                                            display: 'flex',
+                                                            mr: 1,
+                                                        }}
+                                                    />
+                                                    {user.name}
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    <FormHelperText>{errors.user_id}</FormHelperText>
+                                </FormControl>
+                            </Grid>
+                        }
                         <Grid item xs={12}>
                             <TextField
                                 label="Leave Reason"

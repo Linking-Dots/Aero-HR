@@ -73,27 +73,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     })->name('dashboard');
 
-    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
-    Route::get('/leaves-employee', [LeaveController::class, 'index'])->name('leaves-employee');
+    Route::get('/leaves-employee', [LeaveController::class, 'index1'])->name('leaves-employee');
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
+
     Route::get('/attendance-employee', [AttendanceController::class, 'index'])->name('attendance-employee');
 
-    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
-    Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
-    Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('update-leave-type');
-    Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');
+
+    Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('dailyWorkSummary');
+    Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
+
 
     //Employees Routes:
-    Route::get('/employees', [UserController::class, 'index'])->name('employees');
+
     Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays');
 
-    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
-    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
-    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
-    Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
-    Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');
-    Route::get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
+
 
     Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
     Route::post('/punchOut', [AttendanceController::class, 'punchOut'])->name('punchOut');
@@ -113,18 +109,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/experience/delete', [ExperienceController::class, 'delete'])->name('experience.delete');
 
 
-    Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
-    Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('dailyWorkSummary');
-    Route::post('/import-daily-works/', [DailyWorkController::class, 'import'])->name('dailyWorks.import');
-    Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
-    Route::delete('/delete-daily-work', [DailyWorkController::class, 'delete'])->name('dailyWorks.delete');
 
-    Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
-    Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
 });
 
 
 Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(function () {
+
+    Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
+    Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
+    Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('update-leave-type');
+    Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');
+    Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
+
+    Route::get('/employees', [UserController::class, 'index'])->name('employees');
+    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
+    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
+    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
+    Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
+    Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');
+    Route::get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
+
+
+    Route::post('/import-daily-works/', [DailyWorkController::class, 'import'])->name('dailyWorks.import');
+    Route::delete('/delete-daily-work', [DailyWorkController::class, 'delete'])->name('dailyWorks.delete');
+
+    Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
+    Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
+
+
+
+
+
+
+
+
 
     // Routes accessible only to users with the 'admin' role
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');

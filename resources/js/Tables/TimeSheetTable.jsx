@@ -129,49 +129,49 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 <Typography color="error">{error}</Typography>
                             ) : (
                                 <TableContainer>
-                                    <Table>
+                                    <Table size="small">
                                         <TableHead sx={{
                                             fontWeight: 'bold',
                                             fontStyle: 'italic'
                                         }}>
                                             <TableRow>
-                                                <TableCell>Date</TableCell>
-                                                <TableCell>Employee</TableCell>
-                                                <TableCell>Clockin Time</TableCell>
-                                                <TableCell>Clockout Time</TableCell>
-                                                <TableCell>Production Time</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Date</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Clockin Time</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Clockout Time</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Production Time</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
                                             {attendances.map((attendance, index) => {
                                                 return (
                                                     <TableRow key={index}>
-                                                        <TableCell>{new Date(attendance.date).toLocaleString('en-US', {
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(attendance.date).toLocaleString('en-US', {
                                                             month: 'long',
                                                             day: 'numeric',
                                                             year: 'numeric'
                                                         })}</TableCell>
-                                                        <TableCell>
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Avatar
                                                                     src={attendance.user.profile_image}
                                                                     alt={attendance.user.name}
-                                                                    sx={{ width: 24, height: 24, marginRight: 2 }}
+                                                                    sx={{ marginRight: 2 }}
                                                                 />
-                                                                <Typography>{attendance.user.name}</Typography>
+                                                                {attendance.user.name}
                                                             </Box>
                                                         </TableCell>
-                                                        <TableCell>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
                                                             hour: 'numeric',
                                                             minute: '2-digit',
                                                             hour12: true
                                                         }) : 'N/A'}</TableCell>
-                                                        <TableCell>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
                                                             hour: 'numeric',
                                                             minute: '2-digit',
                                                             hour12: true
                                                         }) : 'N/A'}</TableCell>
-                                                        <TableCell>
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                                             {attendance.punchin_time && attendance.punchout_time ? (
                                                                 (() => {
                                                                     const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);

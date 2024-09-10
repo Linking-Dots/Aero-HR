@@ -15,6 +15,7 @@ class Leave extends Model
         'from_date',
         'to_date',
         'no_of_days',
+        'approved_by',
         'reason',
         'status',
     ];
@@ -26,6 +27,7 @@ class Leave extends Model
         'no_of_days' => 'integer',
         'reason' => 'string',
         'status' => 'string',
+        'approved_by' => 'integer',
     ];
 
     // Relationships (if any)

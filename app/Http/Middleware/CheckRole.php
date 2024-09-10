@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
@@ -15,12 +16,13 @@ class CheckRole
      */
     public function handle($request, Closure $next, $role)
     {
-//        dd($role);
-        if (! $request->user()->hasRole($role)) {
-            abort(401, 'This action is unauthorized.');
+        // Check if the authenticated user has the required role
+        if (!Auth::check() || !$request->user()->hasRole($role)) {
+            // If not authorized, return unauthorized response
+            abort(403, 'Unauthorized');
         }
 
+        // Proceed to the next request if authorized
         return $next($request);
-
     }
 }

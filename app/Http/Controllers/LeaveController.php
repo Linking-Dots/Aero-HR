@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Leave;
 use App\Models\LeaveSetting;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -14,55 +15,66 @@ use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
-    public function index(): \Inertia\Response
+    public function index1(): \Inertia\Response
     {
-        // Fetch all leaves for the current user
+        $user = Auth::user();
+        // Fetch all leaves and their leave types
         $allLeaves = DB::table('leaves')
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
             ->select('leaves.*', 'leave_settings.type as leave_type')
             ->where('leaves.user_id', auth()->id())
             ->get();
 
-        // Fetch all leave types and their total days available
+        // Fetch all leave types
         $leaveTypes = LeaveSetting::all();
 
-        // Group leaves by leave type and sum up the number of days for each type
-        $leaveCounts = []; // Initialize an empty array to store the total days for each leave type
+        // Initialize arrays to store leave counts by user and by leave type
+        $leaveCountsByUser = [];
+
+        // Process leaves to aggregate totals by user and leave type
         foreach ($allLeaves as $leave) {
+            $userId = $leave->user_id;
             $type = $leave->leave_type;
             $days = $leave->no_of_days;
 
-            // If the leave type is not in the array, initialize it
-            if (!isset($leaveCounts[$type])) {
-                $leaveCounts[$type] = 0;
+            // Initialize arrays if they don't exist
+            if (!isset($leaveCountsByUser[$userId])) {
+                $leaveCountsByUser[$userId] = [];
+            }
+            if (!isset($leaveCountsByUser[$userId][$type])) {
+                $leaveCountsByUser[$userId][$type] = 0;
             }
 
-            // Add the number of days to the total for this leave type
-            $leaveCounts[$type] += $days;
+            // Add the number of days to the total for this user and leave type
+            $leaveCountsByUser[$userId][$type] += $days;
         }
 
-        $leaveCountsWithRemaining = []; // Initialize an empty array to store the results
+        // Prepare leave counts with remaining days
+        $leaveCountsWithRemainingByUser = [];
 
-        foreach ($leaveTypes as $leaveType) {
-            $totalDaysAvailable = $leaveType->days; // Assuming 'days' is the field in leave_types table
-            $type = $leaveType->type; // Get the type of leave
-            $daysUsed = $leaveCounts[$type] ?? 0; // Get the days used, default to 0 if not set
-            $remainingDays = $totalDaysAvailable - $daysUsed;
+        foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
+            $leaveCountsWithRemaining = [];
+            foreach ($leaveTypes as $leaveType) {
+                $type = $leaveType->type;
+                $totalDaysAvailable = $leaveType->days;
+                $daysUsed = $userLeaveCounts[$type] ?? 0;
+                $remainingDays = $totalDaysAvailable - $daysUsed;
 
-            // Add the calculated data to the result array
-            $leaveCountsWithRemaining[] = [
-                'leave_type' => $type,
-                'total_days' => $totalDaysAvailable,
-                'days_used' => $daysUsed,
-                'remaining_days' => $remainingDays,
-            ];
+                $leaveCountsWithRemaining[] = [
+                    'leave_type' => $type,
+                    'total_days' => $totalDaysAvailable,
+                    'days_used' => $daysUsed,
+                    'remaining_days' => $remainingDays,
+                ];
+            }
+            $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
         }
 
-
+        // Prepare data for the view
         $leavesData = [
             'leaveTypes' => $leaveTypes,
             'allLeaves' => $allLeaves,
-            'leaveCounts' => $leaveCountsWithRemaining,
+            'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
         ];
 
 
@@ -73,16 +85,89 @@ class LeaveController extends Controller
         ]);
     }
 
+    public function index2(): \Inertia\Response
+    {
+        $user = Auth::user();
+        // Fetch all leaves and their leave types
+        $allLeaves = DB::table('leaves')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
+            ->when(!$user->hasRole('admin'), function ($query) {
+                // Restrict to the current user if not an admin
+                return $query->where('leaves.user_id', auth()->id());
+            })
+            ->get();
+
+        // Fetch all leave types
+        $leaveTypes = LeaveSetting::all();
+
+        // Initialize arrays to store leave counts by user and by leave type
+        $leaveCountsByUser = [];
+
+        // Process leaves to aggregate totals by user and leave type
+        foreach ($allLeaves as $leave) {
+            $userId = $leave->user_id;
+            $type = $leave->leave_type;
+            $days = $leave->no_of_days;
+
+            // Initialize arrays if they don't exist
+            if (!isset($leaveCountsByUser[$userId])) {
+                $leaveCountsByUser[$userId] = [];
+            }
+            if (!isset($leaveCountsByUser[$userId][$type])) {
+                $leaveCountsByUser[$userId][$type] = 0;
+            }
+
+            // Add the number of days to the total for this user and leave type
+            $leaveCountsByUser[$userId][$type] += $days;
+        }
+
+        // Prepare leave counts with remaining days
+        $leaveCountsWithRemainingByUser = [];
+
+        foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
+            $leaveCountsWithRemaining = [];
+            foreach ($leaveTypes as $leaveType) {
+                $type = $leaveType->type;
+                $totalDaysAvailable = $leaveType->days;
+                $daysUsed = $userLeaveCounts[$type] ?? 0;
+                $remainingDays = $totalDaysAvailable - $daysUsed;
+
+                $leaveCountsWithRemaining[] = [
+                    'leave_type' => $type,
+                    'total_days' => $totalDaysAvailable,
+                    'days_used' => $daysUsed,
+                    'remaining_days' => $remainingDays,
+                ];
+            }
+            $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
+        }
+
+        // Prepare data for the view
+        $leavesData = [
+            'leaveTypes' => $leaveTypes,
+            'allLeaves' => $allLeaves,
+            'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
+        ];
+
+        return Inertia::render('LeavesAdmin', [
+            'title' => 'Leaves',
+            'leavesData' => $leavesData,
+            'allUsers' => User::all()
+        ]);
+    }
 
     public function create(Request $request)
     {
         // Validate incoming request
         $validator = Validator::make($request->all(), [
             'id' => 'nullable|exists:leaves,id',
+            'user_id' => 'nullable|exists:users,id',
             'leaveType' => 'required|exists:leave_settings,type',
             'fromDate' => 'required|date',
             'toDate' => 'required|date|after_or_equal:fromDate',
             'leaveReason' => 'required|string|max:255',
+            'status' => 'nullable|in:New,Pending,Approved,Declined' // Include status validation
         ]);
 
         if ($validator->fails()) {
@@ -93,77 +178,111 @@ class LeaveController extends Controller
 
         try {
             $data = [
-                'user_id' => auth()->id(),
+                'user_id' => $request->input('user_id'),
                 'leave_type' => LeaveSetting::where('type', $request->input('leaveType'))->first()->id,
                 'from_date' => $request->input('fromDate'),
                 'to_date' => $request->input('toDate'),
                 'no_of_days' => $request->input('daysCount'),
                 'reason' => $request->input('leaveReason'),
-                'status' => 'New',
+                'status' => $request->input('status', 'New'), // Default to 'New' if not provided
             ];
 
             if ($request->has('id')) {
                 // Update existing leave record
                 $leave = Leave::find($request->input('id'));
+                $statusUpdated = null;
 
-                if (!$leave || $leave->user_id !== auth()->id()) {
-                    return response()->json([
-                        'error' => 'Unauthorized or leave record not found.'
-                    ], 403);
+                if ($request->has('status') && $leave->status !== $request->input('status')) {
+                    $statusUpdated = true;
+                    Log::info(Auth::user()->id);
+                    $leave->approved_by = Auth::user()->id;
+                    $leave->save();
+                    Log::info($leave);
                 }
 
                 $leave->update($data);
+
+                $message = $statusUpdated
+                    ? 'Leave application status updated to ' . $request->input('status')
+                    : 'Leave application updated successfully';
             } else {
                 // Create new leave record
                 Leave::create($data);
+                $message = 'Leave application submitted successfully';
             }
 
-            // Fetch all leaves for the authenticated user
-            $allLeaves = DB::table('leaves')
-                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-                ->select('leaves.*', 'leave_settings.type as leave_type')
-                ->where('leaves.user_id', auth()->id())
-                ->get();
+            $user = Auth::user();
 
-            // Fetch all leave types and their total days available
+
+
+            if (($user->hasRole('admin')) && ($request->input('route') === 'leaves')) {
+                $allLeaves = DB::table('leaves')
+                    ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                    ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->get();
+            } else {
+                $allLeaves = DB::table('leaves')
+                    ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                    ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->where('leaves.user_id', auth()->id())
+                    ->get();
+            }
+
+
+            // Fetch all leave types
             $leaveTypes = LeaveSetting::all();
 
-            // Group leaves by leave type and sum up the number of days for each type
-            $leaveCounts = [];
+            // Initialize arrays to store leave counts by user and by leave type
+            $leaveCountsByUser = [];
+
+            // Process leaves to aggregate totals by user and leave type
             foreach ($allLeaves as $leave) {
+                $userId = $leave->user_id;
                 $type = $leave->leave_type;
                 $days = $leave->no_of_days;
 
-                if (!isset($leaveCounts[$type])) {
-                    $leaveCounts[$type] = 0;
+                // Initialize arrays if they don't exist
+                if (!isset($leaveCountsByUser[$userId])) {
+                    $leaveCountsByUser[$userId] = [];
+                }
+                if (!isset($leaveCountsByUser[$userId][$type])) {
+                    $leaveCountsByUser[$userId][$type] = 0;
                 }
 
-                $leaveCounts[$type] += $days;
+                // Add the number of days to the total for this user and leave type
+                $leaveCountsByUser[$userId][$type] += $days;
             }
 
-            $leaveCountsWithRemaining = [];
-            foreach ($leaveTypes as $leaveType) {
-                $totalDaysAvailable = $leaveType->days;
-                $type = $leaveType->type;
-                $daysUsed = $leaveCounts[$type] ?? 0;
-                $remainingDays = $totalDaysAvailable - $daysUsed;
+            // Prepare leave counts with remaining days
+            $leaveCountsWithRemainingByUser = [];
 
-                $leaveCountsWithRemaining[] = [
-                    'leave_type' => $type,
-                    'total_days' => $totalDaysAvailable,
-                    'days_used' => $daysUsed,
-                    'remaining_days' => $remainingDays,
-                ];
+            foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
+                $leaveCountsWithRemaining = [];
+                foreach ($leaveTypes as $leaveType) {
+                    $type = $leaveType->type;
+                    $totalDaysAvailable = $leaveType->days;
+                    $daysUsed = $userLeaveCounts[$type] ?? 0;
+                    $remainingDays = $totalDaysAvailable - $daysUsed;
+
+                    $leaveCountsWithRemaining[] = [
+                        'leave_type' => $type,
+                        'total_days' => $totalDaysAvailable,
+                        'days_used' => $daysUsed,
+                        'remaining_days' => $remainingDays,
+                    ];
+                }
+                $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
             }
 
+            // Prepare data for the view
             $leavesData = [
                 'leaveTypes' => $leaveTypes,
                 'allLeaves' => $allLeaves,
-                'leaveCounts' => $leaveCountsWithRemaining,
+                'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
             ];
 
             return response()->json([
-                'message' => $request->has('id') ? 'Leave application updated successfully' : 'Leave application submitted successfully',
+                'message' => $message,
                 'leavesData' => $leavesData
             ]);
         } catch (\Exception $e) {
@@ -179,7 +298,6 @@ class LeaveController extends Controller
             ], 500);
         }
     }
-
 
     public function delete(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -200,47 +318,71 @@ class LeaveController extends Controller
             // Delete the daily work
             $leave->delete();
 
-            $allLeaves = DB::table('leaves')
-                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-                ->select('leaves.*', 'leave_settings.type as leave_type')
-                ->where('leaves.user_id', auth()->id())
-                ->get();
+            $user = Auth::user();
+            // Fetch all leaves and their leave types
+            if (($user->hasRole('admin')) && ($request->input('route') === 'leaves')) {
+                $allLeaves = DB::table('leaves')
+                    ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                    ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->get();
+            } else {
+                $allLeaves = DB::table('leaves')
+                    ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                    ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->where('leaves.user_id', auth()->id())
+                    ->get();
+            }
 
-            // Fetch all leave types and their total days available
+            // Fetch all leave types
             $leaveTypes = LeaveSetting::all();
 
-            // Group leaves by leave type and sum up the number of days for each type
-            $leaveCounts = [];
+            // Initialize arrays to store leave counts by user and by leave type
+            $leaveCountsByUser = [];
+
+            // Process leaves to aggregate totals by user and leave type
             foreach ($allLeaves as $leave) {
+                $userId = $leave->user_id;
                 $type = $leave->leave_type;
                 $days = $leave->no_of_days;
 
-                if (!isset($leaveCounts[$type])) {
-                    $leaveCounts[$type] = 0;
+                // Initialize arrays if they don't exist
+                if (!isset($leaveCountsByUser[$userId])) {
+                    $leaveCountsByUser[$userId] = [];
+                }
+                if (!isset($leaveCountsByUser[$userId][$type])) {
+                    $leaveCountsByUser[$userId][$type] = 0;
                 }
 
-                $leaveCounts[$type] += $days;
+                // Add the number of days to the total for this user and leave type
+                $leaveCountsByUser[$userId][$type] += $days;
             }
 
-            $leaveCountsWithRemaining = [];
-            foreach ($leaveTypes as $leaveType) {
-                $totalDaysAvailable = $leaveType->days;
-                $type = $leaveType->type;
-                $daysUsed = $leaveCounts[$type] ?? 0;
-                $remainingDays = $totalDaysAvailable - $daysUsed;
+            // Prepare leave counts with remaining days
+            $leaveCountsWithRemainingByUser = [];
 
-                $leaveCountsWithRemaining[] = [
-                    'leave_type' => $type,
-                    'total_days' => $totalDaysAvailable,
-                    'days_used' => $daysUsed,
-                    'remaining_days' => $remainingDays,
-                ];
+            foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
+                $leaveCountsWithRemaining = [];
+                foreach ($leaveTypes as $leaveType) {
+                    $type = $leaveType->type;
+                    $totalDaysAvailable = $leaveType->days;
+                    $daysUsed = $userLeaveCounts[$type] ?? 0;
+                    $remainingDays = $totalDaysAvailable - $daysUsed;
+
+                    $leaveCountsWithRemaining[] = [
+                        'leave_type' => $type,
+                        'total_days' => $totalDaysAvailable,
+                        'days_used' => $daysUsed,
+                        'remaining_days' => $remainingDays,
+                    ];
+                }
+                $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
             }
 
+            // Prepare data for the view
             $leavesData = [
                 'leaveTypes' => $leaveTypes,
                 'allLeaves' => $allLeaves,
-                'leaveCounts' => $leaveCountsWithRemaining,
+                'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
             ];
 
             // Return a success response
