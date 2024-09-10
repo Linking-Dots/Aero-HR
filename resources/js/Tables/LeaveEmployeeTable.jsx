@@ -181,7 +181,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         {(() => {
                                             // Find the user in allUsers array by matching leave.user_id
-                                            const user = allUsers.find(u => u.id === leave.user_id);
+                                            const user = allUsers.find(u => String(u.id) === String(leave.user_id));
                                             return user ? (
                                                 <>
                                                     <Avatar
