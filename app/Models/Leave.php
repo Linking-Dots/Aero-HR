@@ -19,6 +19,15 @@ class Leave extends Model
         'status',
     ];
 
+    protected $casts = [
+        'leave_type' => 'string',
+        'from_date' => 'date',
+        'to_date' => 'date',
+        'no_of_days' => 'integer',
+        'reason' => 'string',
+        'status' => 'string',
+    ];
+
     // Relationships (if any)
     public function employee(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

@@ -24,7 +24,7 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 
 const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, currentLeave }) => {
     const theme = useTheme();
-    const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || 'Casual');
+    const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
     const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
     const [toDate, setToDate] = useState(currentLeave?.to_date || '');
     const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');

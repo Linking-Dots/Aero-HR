@@ -23,6 +23,7 @@ import {usePage} from "@inertiajs/react";
 const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const { todayLeaves } = usePage().props;
+    console.log(todayLeaves);
     const [attendances, setAttendances] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
@@ -233,9 +234,9 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                                             {userLeave ?
                                                                 <>
                                                                     <Typography variant="h6" sx={{ mb: 0 }}>
-                                                                        {userLeave.from_date} to {userLeave.to_date}
+                                                                        {userLeave.from_date === userLeave.to_date ? userLeave.from_date : `${userLeave.from_date} to ${userLeave.to_date}`}
                                                                     </Typography>
-                                                                    <Typography variant="body2" color="textSecondary">Leave Date</Typography>
+                                                                    <Typography variant="body2" color="textSecondary">{"On " + userLeave.leave_type + " Leave"}</Typography>
                                                                 </> :
                                                                 <Typography color="error" variant="h6" sx={{ mb: 0 }}>Absent without Leave</Typography>
                                                             }
