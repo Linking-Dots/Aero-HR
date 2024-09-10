@@ -23,7 +23,7 @@ import {usePage} from "@inertiajs/react";
 const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const { todayLeaves } = usePage().props;
-    console.log(todayLeaves);
+
     const [attendances, setAttendances] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
@@ -59,8 +59,6 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     };
 
     const getUserLeave = (userId) => {
-        console.log("Checking userId:", userId);
-        console.log("todayLeaves:", todayLeaves);
         return todayLeaves.find((leave) => String(leave.user_id) === String(userId));
     };
 
