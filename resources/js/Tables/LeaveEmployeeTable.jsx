@@ -179,25 +179,13 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                             {auth.roles.includes('admin') && route().current() === 'leaves' && (
                                 <TableCell>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {(() => {
-                                            // Find the user in allUsers array by matching leave.user_id
-                                            const user = allUsers.find(u => String(u.id) === String(leave.user_id));
-                                            console.log(user);
-                                            return user ? (
-                                                <>
-                                                    <Avatar
-                                                        src={user.profile_image}
-                                                        alt={user.name}
-                                                    />
-                                                    <Typography sx={{ marginLeft: '10px', fontWeight: 'bold'  }}>
-                                                        {user.name}
-                                                    </Typography>
-                                                </>
-                                            ) : (
-                                                // If user is not found, show fallback content
-                                                <Typography>No User Found</Typography>
-                                            );
-                                        })()}
+                                        <Avatar
+                                            src={allUsers.find(u => String(u.id) === String(leave.user_id)).profile_image}
+                                            alt={allUsers.find(u => String(u.id) === String(leave.user_id)).name}
+                                        />
+                                        <Typography sx={{ marginLeft: '10px', fontWeight: 'bold'  }}>
+                                            {allUsers.find(u => String(u.id) === String(leave.user_id)).name}
+                                        </Typography>
                                     </Box>
                                 </TableCell>
                             )}
