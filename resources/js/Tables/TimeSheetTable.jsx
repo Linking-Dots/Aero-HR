@@ -59,7 +59,9 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     };
 
     const getUserLeave = (userId) => {
-        return todayLeaves.find((leave) => leave.user_id === userId);
+        console.log("Checking userId:", userId);
+        console.log("todayLeaves:", todayLeaves);
+        return todayLeaves.find((leave) => String(leave.user_id) === String(userId));
     };
 
     const getAllUsersAttendanceForDate = async (selectedDate) => {
@@ -217,7 +219,6 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 <Box>
                                     {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
                                         const userLeave = getUserLeave(user.id);
-                                        console.log(userLeave);
                                         return (
                                             <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
                                                 <Box
