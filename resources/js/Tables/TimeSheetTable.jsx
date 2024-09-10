@@ -217,6 +217,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 <Box>
                                     {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
                                         const userLeave = getUserLeave(user.id);
+                                        console.log(userLeave);
                                         return (
                                             <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
                                                 <Box
