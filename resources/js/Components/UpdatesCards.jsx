@@ -45,7 +45,6 @@ const UpdateSection = ({ props, title, items, users }) => {
                                             <AvatarGroup max={5} total={leaves.length}>
                                                 {leaves.map((leave, idx) => {
                                                     const user = users.find((user) => String(user.id) === String(leave.user_id));
-                                                    console.log(user);
                                                     return (
                                                         user && (
                                                             <Avatar
@@ -97,7 +96,7 @@ const UpdateSection = ({ props, title, items, users }) => {
                 {selectedLeave && (
                     <>
                         <Typography variant="body2">
-                            <strong>Name:</strong> {users.find((user) => user.id === selectedLeave.user_id)?.name}
+                            <strong>Name:</strong> {users.find((user) => String(user.id) === String(selectedLeave.user_id))?.name}
                         </Typography>
                         <Typography variant="body2">
                             <strong>Date:</strong> {selectedLeave.from_date !== selectedLeave.to_date ?
@@ -158,8 +157,12 @@ const UpdatesCards = (props) => {
     // Filter leaves for today, tomorrow, and within the next seven days
     const todayLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(today, 'day'));
     const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(tomorrow, 'day'));
+
     const nextSevenDaysLeaves = upcomingLeaves.filter(
-        (leave) => dayjs(leave.from_date).isAfter(today, 'day') && dayjs(leave.from_date).isBefore(sevenDaysFromNow, 'day')
+        (leave) =>
+            dayjs(leave.from_date).isAfter(today, 'day') &&
+            dayjs(leave.from_date).isBefore(sevenDaysFromNow, 'day') &&
+            !/week/i.test(leave.leave_type) // Regular expression to check if 'week' is in leave.type
     );
 
     // Get summary for each category
@@ -195,7 +198,7 @@ const UpdatesCards = (props) => {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                        <UpdateSection title="Next seven days" props={props} items={nextSevenDaysItems} users={users}/>
+                        <UpdateSection title="Next Seven Days" props={props} items={nextSevenDaysItems} users={users}/>
                     </Box>
                 </Grid>
             </Grid>
