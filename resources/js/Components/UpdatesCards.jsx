@@ -9,7 +9,7 @@ import {useTheme} from "@mui/material/styles";
 
 
 const UpdateSection = ({ props, title, items, users }) => {
-    console.log(items);
+
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedLeave, setSelectedLeave] = useState(null);
