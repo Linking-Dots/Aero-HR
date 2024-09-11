@@ -11,9 +11,13 @@ import Sidebar from "@/Layouts/Sidebar.jsx";
 import Footer from "@/Layouts/Footer.jsx";
 import { Inertia } from '@inertiajs/inertia'
 import Loader from '@/Components/Loader.jsx'
+import { getPages } from '@/Props/pages.jsx';
+import { getSettingsPages } from '@/Props/settings.jsx';
 function App({ children }) {
+
     const [loading, setLoading] = useState();
     const { auth } = usePage().props;
+    const userIsAdmin = auth.roles.includes('admin');
     const [sideBarOpen, setSideBarOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         const savedDarkMode = localStorage.getItem('darkMode');
@@ -21,8 +25,21 @@ function App({ children }) {
     });
     const contentRef = useRef(null);   // Ref to the main content container
     const [bottomNavHeight, setBottomNavHeight] = useState(0); // State to store the bottom nav height
+    const { url } = usePage(); // Get the current page object (url is the current route)
+    const [currentRoute, setCurrentRoute] = useState(url);
+    const [pages, setPages] = useState(() =>
+        url === '/employees' ? getSettingsPages() : getPages(userIsAdmin)
+    );
 
-    // Update local storage whenever darkMode changes
+    useEffect(() => {
+        setCurrentRoute(url); // Update currentRoute when url changes
+    }, [url]);
+
+    useEffect(() => {
+        setPages(currentRoute === '/employees' ? getSettingsPages() : getPages(userIsAdmin));
+    }, [currentRoute, userIsAdmin]);
+
+
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode);
     }, [darkMode]);
@@ -77,13 +94,13 @@ function App({ children }) {
                     sx={{
                         display: { xs: 'none', md: 'block' },
                         height: '100vh', // Full height
-                        width: sideBarOpen ? 260 : 0,
+                        width: sideBarOpen ? 280 : 0,
                         transition: 'width 0.3s ease-in-out',
                         flexDirection: 'column',
                         overflow: 'hidden', // Avoid overflow on the sidebar
                     }}
                 >
-                    <Sidebar toggleSideBar={toggleSideBar} />
+                    <Sidebar pages={pages} toggleSideBar={toggleSideBar} />
                 </Box>
 
                 {/* Main Content Area */}
@@ -98,7 +115,7 @@ function App({ children }) {
                         overflow: 'auto', // Enable vertical scrolling
                     }}
                 >
-                    {auth.user && <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                    {auth.user && <Header pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
                     {auth.user && <Breadcrumb />}
                     {children}
                     {/*{!isMobile && <Footer/>}*/}

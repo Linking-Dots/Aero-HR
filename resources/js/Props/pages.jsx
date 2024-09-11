@@ -11,7 +11,7 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
-
+import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 // Function to create pages array
 export const getPages = (userIsAdmin) => [
     { name: 'Dashboard', icon: <DashboardIcon />, route: 'dashboard' },
@@ -36,5 +36,7 @@ export const getPages = (userIsAdmin) => [
             { name: 'Daily Work Summary', icon: <ListIcon />, route: 'dailyWorkSummary' }
         ]
     },
-    { name: 'Blog', icon: <ArticleIcon />, route: 'dashboard' }
+    ...(userIsAdmin ? [{
+        name: 'Settings', icon: <Settings />, route: 'employees'
+    }] : []),
 ];

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useCallback } from 'react';
+import {useState, useCallback, useEffect} from 'react';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -18,11 +18,12 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { Collapse, Switch } from "@mui/material";
+import {Collapse, Grid, Switch} from "@mui/material";
 import logo from '../../../public/assets/images/logo.png';
 import useTheme from "@/theme.jsx";
 import { Link, usePage } from '@inertiajs/react';
-import { getPages } from '@/Props/pages.jsx';
+
+import {Inertia} from "@inertiajs/inertia";
 
 // Styled Menu component
 const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
@@ -46,11 +47,12 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
     },
 }));
 
-const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar }) => {
+const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, pages }) => {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
-    const userIsAdmin = auth.roles.includes('admin');
-    const pages = getPages(userIsAdmin);
+    const {  url } = usePage().props;
+    const [activePage, setActivePage] = useState(url);
+
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
     const [anchorElSubMenu, setAnchorElSubMenu] = useState(null);
@@ -89,6 +91,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
     const handleCloseSubMenu = useCallback(() => {
         setAnchorElSubMenu(null);
         setOpenSubMenu(null);
+        setAnchorElNav(null);
+        setMenuOpen(false);
     }, []);
 
     return (
@@ -153,86 +157,109 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                 {/* Desktop Menu Area */}
                                 <Collapse in={!sideBarOpen} timeout="auto" unmountOnExit>
                                     <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, flexWrap: 'wrap'}}>
-                                        {pages.map((page) => (
-                                            page.subMenu ? (
-                                                <div key={page.name}>
-                                                    <MenuItem
-                                                        sx={{ color: theme.palette.text.primary }}
-                                                        onClick={(event) => handleOpenSubMenu(page.name, event)}
-                                                    >
-                                                        {page.icon}
-                                                        <Typography sx={{ ml: 1 }} textAlign="center">
-                                                            {page.name}
-                                                        </Typography>
-                                                        {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                    </MenuItem>
-                                                    <StyledMenu
-                                                        anchorEl={anchorElSubMenu} // Correct anchor element for submenu
-                                                        open={Boolean(openSubMenu === page.name)}
-                                                        onClose={handleCloseSubMenu}
-                                                        anchorOrigin={{
-                                                            vertical: 'bottom',
-                                                            horizontal: 'left',
-                                                        }}
-                                                        transformOrigin={{
-                                                            vertical: 'top',
-                                                            horizontal: 'left',
-                                                        }}
-                                                        PaperProps={{
-                                                            sx: {
-                                                                backgroundColor: theme.glassCard.backgroundColor,
-                                                                border: theme.glassCard.border,
-                                                            },
-                                                        }}
-                                                    >
-                                                        {page.subMenu.map((subPage) => (
-                                                            <MenuItem
-                                                                key={subPage.name}
-                                                                onClick={handleCloseSubMenu}
-                                                                sx={{ color: theme.palette.text.primary }}
-                                                            >
-                                                                <Link as={'a'} href={route(subPage.route)} method={subPage.method || undefined} style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    color: theme.palette.text.primary,
-                                                                    textDecoration: 'none'
-                                                                }}>
-                                                                    {subPage.icon}
-                                                                    <Typography sx={{ ml: 1 }} textAlign="center">{subPage.name}</Typography>
-                                                                </Link>
-                                                            </MenuItem>
-                                                        ))}
-                                                    </StyledMenu>
-                                                </div>
-                                            ) : (
-                                                <MenuItem key={page.name} onClick={handleCloseNavMenu} sx={{ color: theme.palette.text.primary }}>
-                                                    <Link as={'a'} href={route(page.route)} method={page.method || undefined} style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        color: theme.palette.text.primary,
-                                                        textDecoration: 'none'
-                                                    }}>
-                                                        {page.icon}
-                                                        <Typography sx={{ ml: 1 }} textAlign="center">{page.name}</Typography>
-                                                    </Link>
-                                                </MenuItem>
-                                            )
-                                        ))}
+                                        <Grid container>
+                                            {pages.map((page) => (
+                                                page.subMenu ? (
+                                                    <Grid xs={12} sm={4} md={3} lg={2} item key={page.name} >
+                                                        <MenuItem
+                                                            sx={{
+                                                                color: theme.palette.text.primary,
+                                                                backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                                            }}
+                                                            onClick={(event) => handleOpenSubMenu(page.name, event)}
+                                                        >
+                                                            {page.icon}
+                                                            <Typography sx={{ml: 1}} textAlign="center">
+                                                                {page.name}
+                                                            </Typography>
+                                                            {openSubMenu === page.name ? <KeyboardArrowUpIcon/> :
+                                                                <KeyboardArrowDownIcon/>}
+                                                        </MenuItem>
+                                                        <StyledMenu
+                                                            key={pages}
+                                                            anchorEl={anchorElSubMenu} // Correct anchor element for submenu
+                                                            open={Boolean(openSubMenu === page.name)}
+                                                            onClose={handleCloseSubMenu}
+                                                            anchorOrigin={{
+                                                                vertical: 'bottom',
+                                                                horizontal: 'left',
+                                                            }}
+                                                            transformOrigin={{
+                                                                vertical: 'top',
+                                                                horizontal: 'left',
+                                                            }}
+                                                            PaperProps={{
+                                                                sx: {
+                                                                    backgroundColor: theme.glassCard.backgroundColor,
+                                                                    border: theme.glassCard.border,
+                                                                },
+                                                            }}
+                                                        >
+                                                            {page.subMenu.map((subPage) => (
+                                                                <MenuItem
+                                                                    key={subPage.name}
+                                                                    onClick={handleCloseSubMenu}
+                                                                    sx={{
+                                                                        color: theme.palette.text.primary,
+                                                                        backgroundColor: activePage === subPage.name ? theme.palette.action.selected : 'transparent',
+                                                                    }}
+                                                                >
+                                                                    <Link as={'a'} href={route(subPage.route)}
+                                                                          method={subPage.method || undefined}
+                                                                          style={{
+                                                                              display: 'flex',
+                                                                              alignItems: 'center',
+                                                                              color: theme.palette.text.primary,
+                                                                              textDecoration: 'none'
+                                                                          }}>
+                                                                        {subPage.icon}
+                                                                        <Typography sx={{ml: 1}}
+                                                                                    textAlign="center">{subPage.name}</Typography>
+                                                                    </Link>
+                                                                </MenuItem>
+                                                            ))}
+                                                        </StyledMenu>
+                                                    </Grid>
+                                                ) : (
+                                                    <Grid xs={12} sm={4} md={3} lg={2} item key={page.name}>
+                                                        <MenuItem
+                                                            onClick={handleCloseNavMenu}
+                                                            sx={{
+                                                                color: theme.palette.text.primary,
+                                                                backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                                            }}
+                                                        >
+                                                            <Link as={'a'} href={route(page.route)}
+                                                                  method={page.method || undefined} style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                color: theme.palette.text.primary,
+                                                                textDecoration: 'none'
+                                                            }}>
+                                                                {page.icon}
+                                                                <Typography sx={{ml: 1}}
+                                                                            textAlign="center">{page.name}</Typography>
+                                                            </Link>
+                                                        </MenuItem>
+                                                    </Grid>
+                                                )
+                                            ))}
+                                        </Grid>
                                     </Box>
                                 </Collapse>
                             </Box>
 
                             {/* Mobile Menu Area */}
-                            <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+                            <Box sx={{flexGrow: 1, display: {xs: 'flex', md: 'none'}}}>
                                 <IconButton
-                                    sx={{ color: theme.palette.text.primary }}
+                                    sx={{color: theme.palette.text.primary}}
                                     size="large"
                                     aria-label="account of current user"
                                     aria-controls="menu-appbar"
                                     aria-haspopup="true"
                                     onClick={handleOpenNavMenu}
                                 >
-                                    {menuOpen ? <CloseIcon /> : <MenuIcon />}
+                                    {menuOpen ? <CloseIcon/> : <MenuIcon/>}
                                 </IconButton>
                                 <StyledMenu
                                     id="menu-appbar"
@@ -259,12 +286,17 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                             <div key={page.name}>
                                                 <MenuItem
                                                     onClick={(event) => handleOpenSubMenu(page.name, event)}
-                                                    sx={{ color: theme.palette.text.primary, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                                    sx={{
+                                                        color: theme.palette.text.primary,
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}
                                                 >
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
                                                         {page.icon}
-                                                        <Typography sx={{ ml: 1 }} textAlign="center">
-                                                            {page.name}
+                                                        <Typography sx={{ml: 1}} textAlign="center">
+                                                        {page.name}
                                                         </Typography>
                                                     </Box>
                                                     {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}

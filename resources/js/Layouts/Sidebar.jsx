@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, CardHeader, Collapse, List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {ExpandLess, ExpandMore} from '@mui/icons-material';
@@ -7,14 +7,15 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import {getPages} from '@/Props/pages.jsx';
+import {getSettingsPages} from "@/Props/settings.jsx";
 
-const Sidebar = ({toggleSideBar}) => {
+const Sidebar = ({toggleSideBar, pages}) => {
     const theme = useTheme();
-    const { auth, url } = usePage().props;
-    const userIsAdmin = auth.roles.includes('admin');
-    const pages = getPages(userIsAdmin);
+    const {  url } = usePage().props;
     const [openSubMenu, setOpenSubMenu] = useState(null);
     const [activePage, setActivePage] = useState(url);
+
+
 
     const handleOpenSubMenu = (pageName) => {
         setOpenSubMenu(prev => prev === pageName ? null : pageName);
