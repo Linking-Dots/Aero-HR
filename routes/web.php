@@ -60,6 +60,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->whereDate('leaves.to_date', '>=', $today)    // Check that today's date is before or on the end date
             ->get();
 
+        $upcomingLeaves = DB::table('leaves')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
+            ->whereDate('leaves.from_date', '>=', now())
+            ->whereDate('leaves.from_date', '<=', now()->addDays(7)) // Within the next seven days
+            ->get();
+
         Log::info($todayLeaves);
 
         return Inertia::render('Dashboard', [
@@ -67,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'user' => $user,
             'users' => $users,
             'todayLeaves' => $todayLeaves, // Updated to pass today's leaves
+            'upcomingLeaves' => $upcomingLeaves, // Updated to pass today's leaves
             'statistics' => $statistics,
             'status' => session('status')
         ]);
