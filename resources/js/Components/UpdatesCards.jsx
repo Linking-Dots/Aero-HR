@@ -44,7 +44,8 @@ const UpdateSection = ({ props, title, items, users }) => {
                                         <Box sx={{ display: 'flex', gap: 1 }}>
                                             <AvatarGroup max={5} total={leaves.length}>
                                                 {leaves.map((leave, idx) => {
-                                                    const user = users.find((user) => user.id === leave.user_id);
+                                                    const user = users.find((user) => String(user.id) === String(leave.user_id));
+                                                    console.log(user);
                                                     return (
                                                         user && (
                                                             <Avatar
