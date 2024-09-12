@@ -47,11 +47,14 @@ const StyledMenu = styled(({ anchorOrigin, transformOrigin, ...props }) => (
     },
 }));
 
-const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, pages }) => {
+const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, url, pages }) => {
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
-    const {  url } = usePage().props;
-    const [activePage, setActivePage] = useState(url);
+    const [activePage, setActivePage] = useState();
+
+    useEffect(() => {
+        setActivePage(url);
+    }, [url]);
 
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
@@ -164,7 +167,11 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         <MenuItem
                                                             sx={{
                                                                 color: theme.palette.text.primary,
-                                                                backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                                                backgroundColor:
+                                                                // Check if any item in subMenu matches the activePage
+                                                                    page.subMenu.find(subPage => "/" + subPage.route === activePage)
+                                                                        ? theme.palette.action.selected
+                                                                        : 'transparent',
                                                             }}
                                                             onClick={(event) => handleOpenSubMenu(page.name, event)}
                                                         >
@@ -172,8 +179,11 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                             <Typography sx={{ml: 1}} textAlign="center">
                                                                 {page.name}
                                                             </Typography>
-                                                            {openSubMenu === page.name ? <KeyboardArrowUpIcon/> :
-                                                                <KeyboardArrowDownIcon/>}
+                                                            {openSubMenu === page.name ? (
+                                                                <KeyboardArrowUpIcon sx={{ ml: 'auto', textAlign: 'right' }} />
+                                                            ) : (
+                                                                <KeyboardArrowDownIcon sx={{ ml: 'auto', textAlign: 'right' }} />
+                                                            )}
                                                         </MenuItem>
                                                         <StyledMenu
                                                             key={pages}
@@ -201,7 +211,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                     onClick={handleCloseSubMenu}
                                                                     sx={{
                                                                         color: theme.palette.text.primary,
-                                                                        backgroundColor: activePage === subPage.name ? theme.palette.action.selected : 'transparent',
+                                                                        backgroundColor: activePage === "/"+subPage.route ? theme.palette.action.selected : 'transparent',
                                                                     }}
                                                                 >
                                                                     <Link as={'a'} href={route(subPage.route)}
@@ -226,7 +236,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                             onClick={handleCloseNavMenu}
                                                             sx={{
                                                                 color: theme.palette.text.primary,
-                                                                backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                                                backgroundColor: activePage === "/"+page.route ? theme.palette.action.selected : 'transparent',
                                                             }}
                                                         >
                                                             <Link as={'a'} href={route(page.route)}

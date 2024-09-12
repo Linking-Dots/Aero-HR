@@ -37,7 +37,7 @@ export const getSettingsPages = () => [
 
     { name: 'Back to Dashboard', icon: <DashboardIcon />, route: 'dashboard' },
     // { name: 'Settings', isTitle: true }, // Title separator
-    { name: 'Company Settings', icon: <BusinessIcon />, route: 'employees', active: true },
+    { name: 'Company Settings', icon: <BusinessIcon />, route: 'company-settings', active: true },
     { name: 'Localization', icon: <AccessTimeIcon />, route: 'employees' },
     { name: 'Theme Settings', icon: <PhotoIcon />, route: 'employees' },
     { name: 'Roles & Permissions', icon: <VpnKeyIcon />, route: 'employees' },

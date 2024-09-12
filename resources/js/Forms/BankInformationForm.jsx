@@ -84,6 +84,7 @@ const BankInformationForm = ({ user, setUser, open, closeModal }) => {
 
             if (response.status === 200) {
                 setUser(response.data.user);
+                setErrors({});
                 toast.success(response.data.messages?.length > 0 ? response.data.messages.join(' ') : 'Bank information updated successfully', {
                     icon: '🟢',
                     style: {

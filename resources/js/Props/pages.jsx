@@ -37,6 +37,6 @@ export const getPages = (userIsAdmin) => [
         ]
     },
     ...(userIsAdmin ? [{
-        name: 'Settings', icon: <Settings />, route: 'employees'
+        name: 'Settings', icon: <Settings />, route: 'company-settings'
     }] : []),
 ];

@@ -306,19 +306,6 @@ const LeaveSettings = ({title}) => {
                         <CardHeader
                             title="Leave Settings"
                             sx={{padding: '24px'}}
-                            // action={
-                            //     <Box display="flex" gap={2}>
-                            //         <Button
-                            //             title="Add Leave"
-                            //             variant="outlined"
-                            //             color="success"
-                            //             startIcon={<Add />}
-                            //             onClick={() => openModal('add_leave')}
-                            //         >
-                            //             Add Leave
-                            //         </Button>
-                            //     </Box>
-                            // }
                         />
                         <CardContent>
                             <Grid container spacing={1} alignItems="center">

@@ -21,7 +21,13 @@ const appName =  'DBEDC ERP';
 createInertiaApp({
     progress: false,
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
+    resolve: (name) => {
+        const pages = import.meta.glob('./Pages/**/*.jsx');
+        const settings = import.meta.glob('./Settings/**/*.jsx');
+
+        return resolvePageComponent(`./Pages/${name}.jsx`, pages)
+            .catch(() => resolvePageComponent(`./Settings/${name}.jsx`, settings));
+    },
     setup({ el, App, props }) {
         const root = createRoot(el);
 

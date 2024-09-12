@@ -9,9 +9,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import {getPages} from '@/Props/pages.jsx';
 import {getSettingsPages} from "@/Props/settings.jsx";
 
-const Sidebar = ({toggleSideBar, pages}) => {
+const Sidebar = ({toggleSideBar, pages, url}) => {
     const theme = useTheme();
-    const {  url } = usePage().props;
     const [openSubMenu, setOpenSubMenu] = useState(null);
     const [activePage, setActivePage] = useState(url);
 

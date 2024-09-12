@@ -27,16 +27,18 @@ function App({ children }) {
     const [bottomNavHeight, setBottomNavHeight] = useState(0); // State to store the bottom nav height
     const { url } = usePage(); // Get the current page object (url is the current route)
     const [currentRoute, setCurrentRoute] = useState(url);
+
     const [pages, setPages] = useState(() =>
-        url === '/employees' ? getSettingsPages() : getPages(userIsAdmin)
+        /setting/i.test(url) ? getSettingsPages() : getPages(userIsAdmin)
     );
 
     useEffect(() => {
         setCurrentRoute(url); // Update currentRoute when url changes
     }, [url]);
 
+
     useEffect(() => {
-        setPages(currentRoute === '/employees' ? getSettingsPages() : getPages(userIsAdmin));
+        setPages( /setting/i.test(currentRoute) ? getSettingsPages() : getPages(userIsAdmin));
     }, [currentRoute, userIsAdmin]);
 
 
@@ -100,7 +102,7 @@ function App({ children }) {
                         overflow: 'hidden', // Avoid overflow on the sidebar
                     }}
                 >
-                    <Sidebar pages={pages} toggleSideBar={toggleSideBar} />
+                    <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar} />
                 </Box>
 
                 {/* Main Content Area */}
@@ -115,7 +117,7 @@ function App({ children }) {
                         overflow: 'auto', // Enable vertical scrolling
                     }}
                 >
-                    {auth.user && <Header pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                    {auth.user && <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
                     {auth.user && <Breadcrumb />}
                     {children}
                     {/*{!isMobile && <Footer/>}*/}
