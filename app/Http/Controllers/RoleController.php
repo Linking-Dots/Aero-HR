@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-
+use Inertia\Inertia;
 class RoleController extends Controller
 {
 
@@ -15,7 +15,8 @@ class RoleController extends Controller
         $roles = Role::with('permissions')->get();
         $permissions = Permission::all();
 
-        return response()->json([
+        return Inertia::render('RolesSettings', [
+            'title' => 'Roles and Permissions',
             'roles' => $roles,
             'permissions' => $permissions
         ]);

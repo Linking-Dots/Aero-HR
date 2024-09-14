@@ -40,7 +40,7 @@ export const getSettingsPages = () => [
     { name: 'Company Settings', icon: <BusinessIcon />, route: 'company-settings', active: true },
     { name: 'Localization', icon: <AccessTimeIcon />, route: 'employees' },
     { name: 'Theme Settings', icon: <PhotoIcon />, route: 'employees' },
-    { name: 'Roles & Permissions', icon: <VpnKeyIcon />, route: 'employees' },
+    { name: 'Roles & Permissions', icon: <VpnKeyIcon />, route: 'roles-settings' },
     { name: 'Email Settings', icon: <AlternateEmailIcon />, route: 'employees' },
     { name: 'Performance Settings', icon: <BarChartIcon />, route: 'employees' },
     { name: 'Approval Settings', icon: <ThumbUpAltIcon />, route: 'employees' },

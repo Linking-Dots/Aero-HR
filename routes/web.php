@@ -95,7 +95,7 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
     Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('company-settings');
 
-    Route::get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions']);
+    Route::get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
     Route::post('/roles', [RoleController::class, 'storeRole']);
     Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
     Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
@@ -112,7 +112,6 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');
     Route::post('/tasks-filtered', [TaskController::class, 'filterTasks'])->name('filterTasks');
 
-    Route::get('/settings', [TaskController::class, 'settings'])->name('settings');
     Route::post('/task/add', [TaskController::class, 'addTask'])->name('addTask');
 
     Route::get('/export-tasks', [TaskController::class, 'exportTasks'])->name('exportTasks');
