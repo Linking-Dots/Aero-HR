@@ -16,6 +16,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Settings\LeaveSettingController;
 use App\Http\Controllers\Settings\CompanySettingController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
@@ -93,6 +94,11 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
 
     Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
     Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('company-settings');
+
+    Route::get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions']);
+    Route::post('/roles', [RoleController::class, 'storeRole']);
+    Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
+    Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
 
 
 
