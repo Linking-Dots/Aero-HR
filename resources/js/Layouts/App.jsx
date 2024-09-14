@@ -1,21 +1,20 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Box, CssBaseline, ThemeProvider, useMediaQuery,} from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { NextUIProvider } from '@nextui-org/react';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
 import BottomNav from "@/Layouts/BottomNav.jsx";
-import {usePage} from "@inertiajs/react";
-import useTheme from "@/theme.jsx";
-import {ToastContainer} from 'react-toastify';
+import { usePage } from "@inertiajs/react";
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
 import Footer from "@/Layouts/Footer.jsx";
-import { Inertia } from '@inertiajs/inertia'
-import Loader from '@/Components/Loader.jsx'
+import { Inertia } from '@inertiajs/inertia';
+import Loader from '@/Components/Loader.jsx';
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
-function App({ children }) {
 
-    const [loading, setLoading] = useState();
+function App({ children }) {
+    const [loading, setLoading] = useState(false);
     const { auth } = usePage().props;
     const userIsAdmin = auth.roles.includes('admin');
     const [sideBarOpen, setSideBarOpen] = useState(false);
@@ -23,7 +22,7 @@ function App({ children }) {
         const savedDarkMode = localStorage.getItem('darkMode');
         return savedDarkMode === 'true';
     });
-    const contentRef = useRef(null);   // Ref to the main content container
+    const contentRef = useRef(null); // Ref to the main content container
     const [bottomNavHeight, setBottomNavHeight] = useState(0); // State to store the bottom nav height
     const { url } = usePage(); // Get the current page object (url is the current route)
     const [currentRoute, setCurrentRoute] = useState(url);
@@ -36,11 +35,9 @@ function App({ children }) {
         setCurrentRoute(url); // Update currentRoute when url changes
     }, [url]);
 
-
     useEffect(() => {
-        setPages( /setting/i.test(currentRoute) ? getSettingsPages() : getPages(userIsAdmin));
+        setPages(/setting/i.test(currentRoute) ? getSettingsPages() : getPages(userIsAdmin));
     }, [currentRoute, userIsAdmin]);
-
 
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode);
@@ -48,28 +45,33 @@ function App({ children }) {
 
     const toggleDarkMode = () => {
         setDarkMode(!darkMode);
-        console.log(darkMode)
+        console.log(darkMode);
     };
+
     const toggleSideBar = () => {
         setSideBarOpen(!sideBarOpen);
     };
 
-    const theme = useTheme(darkMode);
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-
+    // const theme = createTheme({
+    //     type: darkMode ? 'dark' : 'light',
+    //     theme: {
+    //         colors: {
+    //             primary: '$blue600',
+    //             secondary: '$purple600',
+    //         },
+    //     },
+    // });
 
     Inertia.on('start', () => {
         setLoading(true);
-    })
+    });
 
-    Inertia.on('finish', (event) => {
+    Inertia.on('finish', () => {
         setLoading(false);
-    })
-
+    });
 
     return (
-        <ThemeProvider theme={theme}>
+        <NextUIProvider>
             <ToastContainer
                 position="top-center"
                 autoClose={5000}
@@ -82,19 +84,12 @@ function App({ children }) {
                 pauseOnHover
                 theme="colored"
             />
-            <CssBaseline />
             {loading && <Loader />}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    height: '100vh',
-                }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'row', height: '100vh' }}>
                 {/* Sidebar Area */}
-                <Box
-                    sx={{
-                        display: { xs: 'none', md: 'block' },
+                <div
+                    style={{
+                        display: window.innerWidth >= 960 ? 'block' : 'none',
                         height: '100vh', // Full height
                         width: sideBarOpen ? 280 : 0,
                         transition: 'width 0.3s ease-in-out',
@@ -102,14 +97,14 @@ function App({ children }) {
                         overflow: 'hidden', // Avoid overflow on the sidebar
                     }}
                 >
-                    <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar} />
-                </Box>
+                    {/*<Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar} />*/}
+                </div>
 
                 {/* Main Content Area */}
-                <Box
+                <div
                     ref={contentRef}
-                    sx={{
-                        pb: `${bottomNavHeight}px`,
+                    style={{
+                        paddingBottom: `${bottomNavHeight}px`,
                         display: 'flex',
                         flex: 1,
                         flexDirection: 'column',
@@ -117,19 +112,24 @@ function App({ children }) {
                         overflow: 'auto', // Enable vertical scrolling
                     }}
                 >
-                    {auth.user && <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                    {auth.user && <Breadcrumb />}
+                    {auth.user && (
+                        <Header
+                            url={url}
+                            pages={pages}
+                            darkMode={darkMode}
+                            toggleDarkMode={toggleDarkMode}
+                            sideBarOpen={sideBarOpen}
+                            toggleSideBar={toggleSideBar}
+                        />
+                    )}
+                    {/*{auth.user && <Breadcrumb />}*/}
                     {children}
-                    {/*{!isMobile && <Footer/>}*/}
-                    {auth.user && isMobile && <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
-                </Box>
-            </Box>
-            <>
-
-            </>
-
-        </ThemeProvider>
-
+                    {/*{auth.user && window.innerWidth < 960 && (*/}
+                    {/*    <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth} />*/}
+                    {/*)}*/}
+                </div>
+            </div>
+        </NextUIProvider>
     );
 }
 
