@@ -14,7 +14,6 @@
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
 
-    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
     <title inertia>{{ config('app.name', 'DBEDC ERP') }}</title>
 
 

@@ -245,7 +245,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                     <CardContent>
                         <Box className="mb-4" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="h5">
-                                Timesheet {new Date().toDateString()}
+                                Today's Punch Status
                             </Typography>
                         </Box>
                         <Box className="card-animate" sx={{
