@@ -41,10 +41,10 @@ export default function Dashboard({auth,users}) {
                         <StatisticCard />
                     </Grid>
                 </Grid>
-                {/*{auth.roles.includes('admin') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}*/}
-                {/*{auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}*/}
-                {/*<UpdatesCards/>*/}
-                {/*<LeaveCard/>*/}
+                {auth.roles.includes('admin') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
+                {auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}
+                <UpdatesCards/>
+                <LeaveCard/>
             </Box>
         </>
     );

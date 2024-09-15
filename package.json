@@ -50,6 +50,7 @@
         "leaflet-fullscreen": "^1.0.2",
         "leaflet-routing-machine": "^3.2.12",
         "lodash": "^4.17.21",
+        "next": "^14.2.11",
         "nprogress": "^0.2.0",
         "pdfmake": "^0.2.10",
         "react-bootstrap": "^2.10.4",
