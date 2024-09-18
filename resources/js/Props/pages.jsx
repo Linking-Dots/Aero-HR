@@ -14,11 +14,11 @@ import LocalMallIcon from '@mui/icons-material/LocalMall';
 import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 // Function to create pages array
 export const getPages = (userIsAdmin) => [
-    { name: 'Dashboard', icon: <DashboardIcon />, route: 'dashboard' },
-    { name: 'Leaves', icon: <LogoutIcon />, route: 'leaves-employee' },
-    { name: 'Attendances', icon: <CalendarTodayIcon />, route: 'attendance-employee' },
+    { name: 'Dashboard', icon: <DashboardIcon sx={{ ml: 2 }}/>, route: 'dashboard' },
+    { name: 'Leaves', icon: <LogoutIcon sx={{ ml: 2 }}/>, route: 'leaves-employee' },
+    { name: 'Attendances', icon: <CalendarTodayIcon sx={{ ml: 2 }}/>, route: 'attendance-employee' },
     ...(userIsAdmin ? [{
-        name: 'Employees', icon: <PeopleIcon />, subMenu: [
+        name: 'Employees', icon: <PeopleIcon sx={{ ml: 2 }}/>, subMenu: [
             { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
             { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
             { name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
@@ -30,13 +30,13 @@ export const getPages = (userIsAdmin) => [
         ]
     }] : []),
     {
-        name: 'Projects', icon: <WorkIcon />, subMenu: [
+        name: 'Projects', icon: <WorkIcon sx={{ ml: 2 }}/>, subMenu: [
             // { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
             { name: 'Daily Works', icon: <ListAltIcon />, route: 'dailyWorks' },
             { name: 'Daily Work Summary', icon: <ListIcon />, route: 'dailyWorkSummary' }
         ]
     },
     ...(userIsAdmin ? [{
-        name: 'Settings', icon: <Settings />, route: 'company-settings'
+        name: 'Settings', icon: <Settings sx={{ ml: 2 }}/>, route: 'company-settings'
     }] : []),
 ];

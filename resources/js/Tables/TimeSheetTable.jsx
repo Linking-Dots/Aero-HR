@@ -1,22 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
-    Avatar,
     Box,
     CardContent,
     CardHeader,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
     Typography,
     Button,
     Grid,
-    Badge,
     Chip,
     Collapse, TextField
 } from '@mui/material';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Avatar } from "@nextui-org/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
@@ -90,6 +83,63 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
         )
     }, [attendances]);
 
+    const renderCell = (attendance, columnKey) => {
+        switch (columnKey) {
+            case "date":
+                return new Date(attendance.date).toLocaleString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            case "employee":
+                return (
+                    <User
+                        avatarProps={{ radius: "lg", src: attendance.user?.profile_image }}
+                        description={attendance.user?.phone}
+                        name={attendance.user?.name}
+                    >
+                        {attendance.user?.email}
+                    </User>
+                );
+            case "clockin_time":
+                return attendance.punchin_time
+                    ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                    : 'N/A';
+            case "clockout_time":
+                return attendance.punchout_time
+                    ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                    : 'N/A';
+            case "production_time":
+                if (attendance.punchin_time && attendance.punchout_time) {
+                    const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
+                    const punchOut = new Date(`2024-06-04T${attendance.punchout_time}`);
+                    const diffMs = punchOut - punchIn;
+                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    return `${diffHrs}h ${diffMins}m`;
+                }
+                return 'N/A';
+            default:
+                return null;
+        }
+    };
+
+    const columns = [
+        { name: "Date", uid: "date" },
+        { name: "Employee", uid: "employee" },
+        { name: "Clockin Time", uid: "clockin_time" },
+        { name: "Clockout Time", uid: "clockout_time" },
+        { name: "Production Time", uid: "production_time" }
+    ];
+
     return (
         <Box  sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Grid container spacing={2}>
@@ -128,71 +178,33 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                             {error ? (
                                 <Typography color="error">{error}</Typography>
                             ) : (
-                                <TableContainer>
-                                    <Table size="small">
-                                        <TableHead sx={{
-                                            fontWeight: 'bold',
-                                            fontStyle: 'italic'
-                                        }}>
-                                            <TableRow>
-                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Date</TableCell>
-                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee</TableCell>
-                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Clockin Time</TableCell>
-                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Clockout Time</TableCell>
-                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>Production Time</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {attendances.map((attendance, index) => {
-                                                return (
-                                                    <TableRow key={index}>
-                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(attendance.date).toLocaleString('en-US', {
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                            year: 'numeric'
-                                                        })}</TableCell>
-                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                <Avatar
-                                                                    src={attendance.user.profile_image}
-                                                                    alt={attendance.user.name}
-                                                                    sx={{ marginRight: 2 }}
-                                                                />
-                                                                {attendance.user.name}
-                                                            </Box>
-                                                        </TableCell>
-                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{attendance.punchin_time ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                                                            hour: 'numeric',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        }) : 'N/A'}</TableCell>
-                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{attendance.punchout_time ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                                                            hour: 'numeric',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        }) : 'N/A'}</TableCell>
-                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                                            {attendance.punchin_time && attendance.punchout_time ? (
-                                                                (() => {
-                                                                    const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
-                                                                    const punchOut = new Date(`2024-06-04T${attendance.punchout_time}`);
-                                                                    const diffMs = punchOut - punchIn;
-                                                                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                                                                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-                                                                    return `${diffHrs}h ${diffMins}m`;
-                                                                })()
-                                                            ) : 'N/A'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
+                                <div style={{maxHeight: '400px', overflowY: 'auto'}}>
+                                    <Table
+                                        selectionMode="multiple"
+                                        selectionBehavior={'toggle'}
+                                        isCompact
+                                        removeWrapper
+                                        aria-label="Attendance Table"
+                                        isCompact
+                                    >
+                                        <TableHeader columns={columns}>
+                                            {(column) => (
+                                                <TableColumn key={column.uid} align="start">
+                                                    {column.name}
+                                                </TableColumn>
+                                            )}
+                                        </TableHeader>
+                                        <TableBody items={attendances}>
+                                            {(attendance) => (
+                                                <TableRow key={attendance.id}>
+                                                    {(columnKey) => (
+                                                        <TableCell>{renderCell(attendance, columnKey)}</TableCell>
+                                                    )}
+                                                </TableRow>
+                                            )}
                                         </TableBody>
-
-
                                     </Table>
-                                </TableContainer>
-
+                                </div>
                             )}
                         </CardContent>
                     </GlassCard>

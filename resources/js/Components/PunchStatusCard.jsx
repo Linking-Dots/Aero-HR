@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, CardContent, CircularProgress, Collapse, Typography} from '@mui/material';
+import {Box, CardContent, CircularProgress, Collapse, Grid, Typography} from '@mui/material';
 import {usePage} from "@inertiajs/react";
 import {toast} from "react-toastify";
 import Grow from '@mui/material/Grow';
@@ -18,6 +18,11 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const [punchInTime, setPunchInTime] = useState('');
     const [punchOutTime, setPunchOutTime] = useState('');
     const [elapsedTime, setElapsedTime] = useState(null);
+
+    const { todayLeaves } = usePage().props;
+
+
+    const isUserOnLeave = todayLeaves.find(leave => leave.user_id === auth.user.id);
 
 
     const fetchData = async () => {
@@ -239,107 +244,119 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     }, [punched]);
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box sx={{ display: 'flex', height: '100%', pb: 0, justifyContent: 'center', padding: '16px 16px 0px 16px'}}>
             <Grow in>
                 <GlassCard>
                     <CardContent>
-                        <Box className="mb-4" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box className="mb-4" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <Typography variant="h5">
                                 Today's Punch Status
                             </Typography>
                         </Box>
-                        <Box className="card-animate" sx={{
-                            my: 2,
-                            padding: '10px 15px',
-                            backdropFilter: 'blur(16px) saturate(200%)',
-                            border: '1px solid rgba(255, 255, 255, 0.125)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            position: 'relative',
-                            borderRadius: '20px',
-                            minWidth: '0px',
-                            wordWrap: 'break-word',
-                            boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
-                            backgroundClip: 'border-box',
-                        }}>
-                            <Typography variant="body2" id="punch-in">
-                                {punchInTime ? 'Punched In At' : 'Not Yet Punched In'}
-                            </Typography>
-                            <Collapse in={!!punchInTime} timeout={1000}>
-                                <Typography variant="h6" id="punch-in-time">
-                                    {punchInTime}
-                                </Typography>
-                            </Collapse>
-                        </Box>
-                        <Box  sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <Grow in timeout={1000}>
-                                <Box
-                                    className="card-animate"
-                                    onClick={() => {
-                                        if (!punchInTime) {
-                                            setPunched('punchin');
-                                        } else if (punchInTime && !punchOutTime) {
-                                            setPunched('punchout');
-                                        }
-                                    }}
-                                    sx={{
+                        {
+                            isUserOnLeave ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography color="error">{"You are on " + isUserOnLeave.leave_type + " leave today."}</Typography>
+                                </Box>
+                            ) : (
+                                <>
+                                    <Box className="card-animate" sx={{
+                                        my: 2,
+                                        padding: '10px 15px',
                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                        backgroundColor: !punchInTime ? 'rgba(0, 128, 0, 0.3)' :
-                                            punchInTime && !punchOutTime ? 'rgba(255, 0, 0, 0.3)' :
-                                                punchInTime && punchOutTime ? 'rgba(0, 0, 255, 0.3)' : '', // Color based on punch states
-                                        border: '5px solid rgba(255, 255, 255, 0.125)',
-                                        width: 100,
-                                        height: 100,
+                                        border: '1px solid rgba(255, 255, 255, 0.125)',
                                         display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        borderColor: 'inherit',
                                         flexDirection: 'column',
                                         position: 'relative',
+                                        borderRadius: '20px',
                                         minWidth: '0px',
                                         wordWrap: 'break-word',
-                                        cursor: punchInTime && punchOutTime ? 'not-allowed' : 'pointer',
-                                        borderRadius: '50%', // Make the box circular
-                                        pointerEvents: punchInTime && punchOutTime ? 'none' : 'auto',
-                                    }}
-                                >
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <Typography variant="body1">
-                                            {!punchInTime ? (
-                                                <span>Punch In</span>
-                                            ) : !punchOutTime ? (
-                                                <span>{elapsedTime} <br/>hrs</span>
-                                            ) : (
-                                                <span>{elapsedTime} <br/>hrs</span>
-                                            )}
+                                        boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+                                        backgroundClip: 'border-box',
+                                    }}>
+                                        <Typography variant="body2" id="punch-in">
+                                            {punchInTime ? 'Punched In At' : 'Not Yet Punched In'}
                                         </Typography>
+                                        <Collapse in={!!punchInTime} timeout={1000}>
+                                            <Typography variant="h6" id="punch-in-time">
+                                                {punchInTime}
+                                            </Typography>
+                                        </Collapse>
                                     </Box>
-                                </Box>
-                            </Grow>
-                        </Box>
-                        <Box className="card-animate" sx={{
-                            my: 2,
-                            padding: '10px 15px',
-                            backdropFilter: 'blur(16px) saturate(200%)',
-                            border: '1px solid rgba(255, 255, 255, 0.125)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            position: 'relative',
-                            borderRadius: '20px',
-                            minWidth: '0px',
-                            wordWrap: 'break-word',
-                            boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
-                            backgroundClip: 'border-box',
-                        }}>
-                            <Typography variant="body2" id="punch-out">
-                                {punchOutTime ? 'Punched Out At' : 'Not Yet Punched Out'}
-                            </Typography>
-                            <Collapse in={!!punchOutTime} timeout={1000}>
-                                <Typography variant="h6" id="punch-out-time">
-                                    {punchOutTime}
-                                </Typography>
-                            </Collapse>
-                        </Box>
+                                    <Box  sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Grow in timeout={1000}>
+                                            <Box
+                                                className="card-animate"
+                                                onClick={() => {
+                                                    if (!punchInTime) {
+                                                        setPunched('punchin');
+                                                    } else if (punchInTime && !punchOutTime) {
+                                                        setPunched('punchout');
+                                                    }
+                                                }}
+                                                sx={{
+                                                    backdropFilter: 'blur(16px) saturate(200%)',
+                                                    backgroundColor: !punchInTime ? 'rgba(0, 128, 0, 0.3)' :
+                                                        punchInTime && !punchOutTime ? 'rgba(255, 0, 0, 0.3)' :
+                                                            punchInTime && punchOutTime ? 'rgba(0, 0, 255, 0.3)' : '', // Color based on punch states
+                                                    border: '5px solid rgba(255, 255, 255, 0.125)',
+                                                    width: 100,
+                                                    height: 100,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    borderColor: 'inherit',
+                                                    flexDirection: 'column',
+                                                    position: 'relative',
+                                                    minWidth: '0px',
+                                                    wordWrap: 'break-word',
+                                                    cursor: punchInTime && punchOutTime ? 'not-allowed' : 'pointer',
+                                                    borderRadius: '50%', // Make the box circular
+                                                    pointerEvents: punchInTime && punchOutTime ? 'none' : 'auto',
+                                                }}
+                                            >
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <Typography variant="body1">
+                                                        {!punchInTime ? (
+                                                            <span>Punch In</span>
+                                                        ) : !punchOutTime ? (
+                                                            <span>{elapsedTime} <br/>hrs</span>
+                                                        ) : (
+                                                            <span>{elapsedTime} <br/>hrs</span>
+                                                        )}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Grow>
+                                    </Box>
+                                    <Box className="card-animate" sx={{
+                                        my: 2,
+                                        padding: '10px 15px',
+                                        backdropFilter: 'blur(16px) saturate(200%)',
+                                        border: '1px solid rgba(255, 255, 255, 0.125)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        position: 'relative',
+                                        borderRadius: '20px',
+                                        minWidth: '0px',
+                                        wordWrap: 'break-word',
+                                        boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+                                        backgroundClip: 'border-box',
+                                    }}>
+                                        <Typography variant="body2" id="punch-out">
+                                            {punchOutTime ? 'Punched Out At' : 'Not Yet Punched Out'}
+                                        </Typography>
+                                        <Collapse in={!!punchOutTime} timeout={1000}>
+                                            <Typography variant="h6" id="punch-out-time">
+                                                {punchOutTime}
+                                            </Typography>
+                                        </Collapse>
+                                    </Box>
+                                </>
+                            )
+                        }
+
+
                     </CardContent>
                 </GlassCard>
             </Grow>

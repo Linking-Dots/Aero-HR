@@ -1,16 +1,9 @@
 import {
-    TableContainer,
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
     Avatar,
     Typography,
     Link,
     FormControl,
     InputLabel,
-    Select,
     MenuItem,
     IconButton,
     Button, Box, CircularProgress, FormHelperText
@@ -25,6 +18,8 @@ import {usePage} from "@inertiajs/react";
 import Menu from "@mui/material/Menu";
 import { toast } from "react-toastify";
 import NewIcon from "@mui/icons-material/FiberNew.js";
+
+import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@nextui-org/react";
 const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLeave, openModal, setLeavesData}) => {
     const {auth} = usePage().props;
     const [anchorEl, setAnchorEl] = useState(null);
@@ -39,6 +34,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     };
 
     const handleMenuItemClick = async (leaveId, newStatus) => {
+        console.log(leaveId, newStatus)
         handleClose();
         await updateLeaveStatus(leaveId, 'status', newStatus);
     };
@@ -143,151 +139,125 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     const getMenuItemColor = (option) => {
         switch (option) {
             case 'New':
-                return theme.palette.primary.main; // Blue for 'New'
+                return "primary"; // Blue for 'New'
             case 'Pending':
-                return theme.palette.warning.main; // Yellow for 'Pending'
+                return "secondary"; // Yellow for 'Pending'
             case 'Approved':
-                return theme.palette.success.main; // Green for 'Approved'
+                return "success"; // Green for 'Approved'
             case 'Declined':
-                return theme.palette.error.main; // Red for 'Declined'
+                return "danger"; // Red for 'Declined'
             default:
-                return theme.palette.text.primary; // Default color
+                return "primary"; // Default color
         }
     };
 
+    const renderCell = (leave, columnKey) => {
+        const cellValue = leave[columnKey];
+
+        switch (columnKey) {
+            case "employee":
+                const user = allUsers.find(u => String(u.id) === String(leave.user_id));
+                return (
+                    <User
+                        avatarProps={{ radius: "lg", src: user?.profile_image }}
+                        description={user?.phone}
+                        name={user?.name}
+                    >
+                        {user?.email}
+                    </User>
+                );
+            case "leave_type":
+                return cellValue;
+            case "from_date":
+                return new Date(cellValue).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            case "to_date":
+                return new Date(cellValue).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            case "status":
+                return (
+                    <Select
+                        isDisabled={!auth.roles.includes('admin') && route().current() !== 'leaves'}
+                        aria-label="Leave Status"
+                        color={getMenuItemColor(leave.status)}
+                        placeholder="Select status"
+                        size="sm"
+                        selectedKeys={[leave.status]}
+                        onChange={(e) => handleMenuItemClick(leave, e.target.value)}
+                        css={{
+                            width: '110px',
+                        }}
+                    >
+                        {['New', 'Pending', 'Approved', 'Declined'].map(option => (
+                            <SelectItem key={option} value={leave.status}>
+                                {option}
+                            </SelectItem>
+                        ))}
+                    </Select>
+                );
+            case "actions":
+                return (
+                    <div className="relative flex items-center gap-2">
+                        <Tooltip content="Edit Leave">
+              <span
+                  className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                  onClick={() => {
+                      setCurrentLeave(leave);
+                      openModal('edit_leave');
+                  }}
+              >
+                <EditIcon />
+              </span>
+                        </Tooltip>
+                        <Tooltip content="Delete Leave" color="danger">
+              <span
+                  className="text-lg text-danger cursor-pointer active:opacity-50"
+                  onClick={() => handleClickOpen(leave.id, 'delete_leave')}
+              >
+                <DeleteIcon />
+              </span>
+                        </Tooltip>
+                    </div>
+                );
+            default:
+                return cellValue;
+        }
+    };
+
+    const columns = [
+        { name: "Employee", uid: "employee" },
+        { name: "Leave Type", uid: "leave_type" },
+        { name: "From Date", uid: "from_date" },
+        { name: "To Date", uid: "to_date" },
+        { name: "Status", uid: "status" },
+        { name: "Reason", uid: "reason" },
+        { name: "Actions", uid: "actions" }
+    ];
+
     return (
-        <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
-            <Table size="small">
-                <TableHead>
-                    <TableRow>
-                        {auth.roles.includes('admin') && route().current() === 'leaves' && <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee</TableCell>}
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Leave Type</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>From</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>To</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>No of Days</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Reason</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                        {/*<TableCell sx={{ whiteSpace: 'nowrap' }}>Approved/Declined by</TableCell>*/}
-                        <TableCell sx={{ whiteSpace: 'nowrap' }} align="center">
-                            Actions
-                        </TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {allLeaves.map((leave) => (
+        <div style={{maxHeight: '400px', overflowY: 'auto'}}>
+            <Table
+                selectionMode="multiple"
+                selectionBehavior={'toggle'}
+                isCompact
+                removeWrapper
+                aria-label="Leave Employee Table"
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "actions" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={allLeaves}>
+                    {(leave) => (
                         <TableRow key={leave.id}>
-                            {auth.roles.includes('admin') && route().current() === 'leaves' && (
-                                <TableCell>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Avatar
-                                            src={allUsers.find(u => String(u.id) === String(leave.user_id)).profile_image}
-                                            alt={allUsers.find(u => String(u.id) === String(leave.user_id)).name}
-                                        />
-                                        <Typography sx={{ marginLeft: '10px', fontWeight: 'bold'  }}>
-                                            {allUsers.find(u => String(u.id) === String(leave.user_id)).name}
-                                        </Typography>
-                                    </Box>
-                                </TableCell>
-                            )}
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{leave.leave_type}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(leave.from_date).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            })}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(leave.to_date).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            })}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{leave.no_of_days}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{leave.reason}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                <FormControl fullWidth>
-                                    <Select
-                                        disabled={!auth.roles.includes('admin') && route().current() !== 'leaves'}
-                                        variant="outlined"
-                                        color="primary"
-                                        size="small"
-                                        onClick={handleClick}
-                                        startIcon={<RadioButtonCheckedIcon />}
-                                        value={leave.status}
-                                        onChange={(e) => handleMenuItemClick(leave, e.target.value)}
-                                        sx={{
-                                            border: theme.glassCard.border,
-                                            borderRadius: '50px',
-                                        }}
-                                        MenuProps={{
-                                            PaperProps: {
-                                                sx: {
-                                                    backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: theme.glassCard.backgroundColor,
-                                                    border: theme.glassCard.border,
-                                                    borderRadius: 2,
-                                                    boxShadow: theme.glassCard.boxShadow,
-                                                },
-                                            },
-                                        }}
-                                    >
-                                        {['New', 'Pending', 'Approved', 'Declined'].map(option => (
-                                            <MenuItem
-                                                value={option}
-                                                key={option}
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    '&:hover': {
-                                                        backgroundColor: theme.palette.action.hover
-                                                    }
-                                                }}
-                                            >
-                                                <Box sx={{display: 'flex'}}>
-                                                    <RadioButtonCheckedIcon sx={{ marginRight: 1, color: getMenuItemColor(option) }} />
-                                                    {option}
-                                                </Box>
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </TableCell>
-                            {/*<TableCell sx={{ whiteSpace: 'nowrap' }}>*/}
-                            {/*    {leave.approved_by ? (*/}
-                            {/*        <Typography sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>*/}
-                            {/*            <Avatar src={allUsers.find(user => user.id === leave.approved_by).profile_image} alt={allUsers.find(user => user.id === leave.approved_by).name} />*/}
-                            {/*            <Typography sx={{ marginLeft: '10px', fontWeight: 'bold' }}>*/}
-                            {/*                {allUsers.find(user => user.id === leave.approved_by).name}*/}
-                            {/*            </Typography>*/}
-                            {/*        </Typography>*/}
-                            {/*    ) : null}*/}
-                            {/*</TableCell>*/}
-                            <TableCell sx={{ whiteSpace: 'nowrap' }} align="center">
-                                <IconButton
-                                    sx={{m:1}}
-                                    variant="outlined"
-                                    color="success"
-                                    size="small"
-                                    onClick={() => {
-                                        setCurrentLeave(leave);
-                                        openModal('edit_leave');
-                                    }}
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    sx={{ m: 1 }}
-                                    variant="outlined"
-                                    color="error"
-                                    size="small"
-                                    onClick={() => handleClickOpen(leave.id, 'delete_leave')}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </TableCell>
+                            {(columnKey) => <TableCell style={{whiteSpace: 'nowrap'}}>{renderCell(leave, columnKey)}</TableCell>}
                         </TableRow>
-                    ))}
+                    )}
                 </TableBody>
             </Table>
-        </TableContainer>
+        </div>
+
     );
 };
 

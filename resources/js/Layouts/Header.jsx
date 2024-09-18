@@ -18,9 +18,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import {Collapse, Grid, Slide, Switch, useScrollTrigger} from "@mui/material";
+import {Dropdown, DropdownTrigger, DropdownMenu, Button, DropdownItem, NavbarItem} from "@nextui-org/react";
 import logo from '../../../public/assets/images/logo.png';
 import { Link, usePage } from '@inertiajs/react';
 import GlassCard from "@/Components/GlassCard.jsx"
+import GlassDropdown from "@/Components/GlassDropdown.jsx"
 import useTheme from "@/theme.jsx";
 
 const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, url, pages }) => {
@@ -137,95 +139,66 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                             <Grid container>
                                                 {pages.map((page) => (
                                                     page.subMenu ? (
-                                                        <Grid xs={12} sm={4} md={3} lg={2} item key={page.name} >
-                                                            <MenuItem
-                                                                sx={{
-                                                                    color: theme.palette.text.primary,
-                                                                    backgroundColor:
-                                                                    // Check if any item in subMenu matches the activePage
-                                                                        page.subMenu.find(subPage => "/" + subPage.route === activePage)
-                                                                            ? theme.palette.action.selected
-                                                                            : 'transparent',
-                                                                }}
-                                                                onClick={(event) => handleOpenSubMenu(page.name, event)}
-                                                            >
-                                                                {page.icon}
-                                                                <Typography sx={{ml: 1}} textAlign="center">
-                                                                    {page.name}
-                                                                </Typography>
-                                                                {openSubMenu === page.name ? (
-                                                                    <KeyboardArrowUpIcon sx={{ ml: 'auto', textAlign: 'right' }} />
-                                                                ) : (
-                                                                    <KeyboardArrowDownIcon sx={{ ml: 'auto', textAlign: 'right' }} />
-                                                                )}
-                                                            </MenuItem>
-                                                            <Menu
-                                                                Paper={GlassCard}
-                                                                key={pages}
-                                                                anchorEl={anchorElSubMenu} // Correct anchor element for submenu
-                                                                open={Boolean(openSubMenu === page.name)}
-                                                                onClose={handleCloseSubMenu}
-                                                                anchorOrigin={{
-                                                                    vertical: 'bottom',
-                                                                    horizontal: 'left',
-                                                                }}
-                                                                transformOrigin={{
-                                                                    vertical: 'top',
-                                                                    horizontal: 'left',
-                                                                }}
-                                                                PaperProps={{
-                                                                    sx: {
-                                                                        backgroundColor: theme.glassCard.backgroundColor,
-                                                                        border: theme.glassCard.border,
-                                                                    },
-                                                                }}
-                                                            >
-                                                                {page.subMenu.map((subPage) => (
-                                                                    <MenuItem
-                                                                        key={subPage.name}
-                                                                        onClick={handleCloseSubMenu}
-                                                                        sx={{
+                                                        <Grid sx={{
+                                                            backgroundColor: page.subMenu.find(subPage => "/" + subPage.route === activePage) ? theme.palette.action.selected : 'transparent',
+                                                        }} xs={12} sm={4} md={3} lg={2} item key={page.name} >
+                                                            <GlassDropdown type='menu'>
+                                                                <DropdownTrigger>
+                                                                    <Button
+                                                                        css={{
                                                                             color: theme.palette.text.primary,
-                                                                            backgroundColor: activePage === "/"+subPage.route ? theme.palette.action.selected : 'transparent',
                                                                         }}
+                                                                        startContent={page.icon}
+                                                                        disableRipple
+                                                                        className="p-0 bg-transparent data-[hover=true]:bg-transparent"
+                                                                        endContent={<KeyboardArrowDownIcon />}
+                                                                        radius="full"
+                                                                        size="md"
+
                                                                     >
-                                                                        <Link as={'a'} href={route(subPage.route)}
-                                                                              method={subPage.method || undefined}
-                                                                              style={{
-                                                                                  display: 'flex',
-                                                                                  alignItems: 'center',
-                                                                                  color: theme.palette.text.primary,
-                                                                                  textDecoration: 'none'
-                                                                              }}>
-                                                                            {subPage.icon}
-                                                                            <Typography sx={{ml: 1}}
-                                                                                        textAlign="center">{subPage.name}</Typography>
-                                                                        </Link>
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Menu>
+                                                                        {page.name}
+                                                                    </Button>
+                                                                </DropdownTrigger>
+
+                                                                <DropdownMenu>
+                                                                    {page.subMenu.map((subPage) => (
+                                                                        <DropdownItem
+                                                                            as={Link}
+                                                                            href={route(subPage.route)}
+                                                                            method={subPage.method || undefined}
+                                                                            key={subPage.name}
+                                                                            // description="ACME scales apps to meet user demand, automagically, based on load."
+                                                                            startContent={subPage.icon}
+                                                                            style={{
+                                                                                color: theme.palette.text.primary,
+                                                                                backgroundColor: activePage === "/"+subPage.route ? theme.palette.action.selected : 'transparent',
+                                                                            }}
+                                                                        >
+                                                                            {subPage.name}
+                                                                        </DropdownItem>
+                                                                    ))}
+                                                                </DropdownMenu>
+                                                            </GlassDropdown>
                                                         </Grid>
                                                     ) : (
-                                                        <Grid xs={12} sm={4} md={3} lg={2} item key={page.name}>
-                                                            <MenuItem
-                                                                onClick={handleCloseNavMenu}
-                                                                sx={{
+                                                        <Grid sx={{
+                                                            backgroundColor: activePage === "/"+page.route ? theme.palette.action.selected : 'transparent',
+                                                        }} xs={12} sm={4} md={3} lg={2} item key={page.name}>
+                                                            <Button
+                                                                as={Link}
+                                                                href={route(page.route)}
+                                                                method={page.method || undefined}
+                                                                css={{
                                                                     color: theme.palette.text.primary,
-                                                                    backgroundColor: activePage === "/"+page.route ? theme.palette.action.selected : 'transparent',
                                                                 }}
+                                                                startContent={page.icon}
+                                                                disableRipple
+                                                                className="p-0 bg-transparent data-[hover=true]:bg-transparent"
+                                                                radius="full"
+                                                                size="md"
                                                             >
-                                                                <Link as={'a'} href={route(page.route)}
-                                                                      method={page.method || undefined} style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    color: theme.palette.text.primary,
-                                                                    textDecoration: 'none'
-                                                                }}>
-                                                                    {page.icon}
-                                                                    <Typography sx={{ml: 1}}
-                                                                                textAlign="center">{page.name}</Typography>
-                                                                </Link>
-                                                            </MenuItem>
+                                                                {page.name}
+                                                            </Button>
                                                         </Grid>
                                                     )
                                                 ))}
@@ -247,7 +220,6 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                         {menuOpen ? <CloseIcon/> : <MenuIcon/>}
                                     </IconButton>
                                     <Menu
-                                        component={GlassCard}
                                         id="menu-appbar"
                                         anchorEl={anchorElNav}
                                         open={Boolean(anchorElNav)}
@@ -262,8 +234,12 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                         }}
                                         PaperProps={{
                                             sx: {
+                                                backdropFilter: 'blur(16px) saturate(150%)',
                                                 backgroundColor: theme.glassCard.backgroundColor,
                                                 border: theme.glassCard.border,
+                                                boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+                                                backgroundClip: 'border-box',
+                                                borderRadius: '10px'
                                             },
                                         }}
                                     >
@@ -288,7 +264,6 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         {openSubMenu === page.name ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                                                     </MenuItem>
                                                     <Menu
-                                                        component={GlassCard}
                                                         anchorEl={anchorElSubMenu} // Correct anchor element for submenu
                                                         open={Boolean(openSubMenu === page.name)}
                                                         onClose={handleCloseSubMenu}
@@ -302,8 +277,12 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         }}
                                                         PaperProps={{
                                                             sx: {
+                                                                backdropFilter: 'blur(16px) saturate(150%)',
                                                                 backgroundColor: theme.glassCard.backgroundColor,
                                                                 border: theme.glassCard.border,
+                                                                boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+                                                                backgroundClip: 'border-box',
+                                                                borderRadius: '10px'
                                                             },
                                                         }}
                                                     >
@@ -358,70 +337,56 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                 </Box>
 
 
+                                {/* Profile Menu Area */}
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Tooltip title="Open settings">
-                                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                                <Avatar alt={auth.user.first_name} src={auth.user.profile_image} />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Menu
-                                            component={GlassCard}
-                                            id="menu-appbar"
-                                            anchorEl={anchorElUser}
-                                            open={Boolean(anchorElUser)}
-                                            onClose={handleCloseUserMenu}
-                                            anchorOrigin={{
-                                                vertical: 'bottom',
-                                                horizontal: 'right',
-                                            }}
-                                            transformOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right',
-                                            }}
-                                            PaperProps={{
-                                                sx: {
-                                                    backgroundColor: theme.glassCard.backgroundColor,
-                                                    border: theme.glassCard.border,
-                                                },
-                                            }}
+                                        <GlassDropdown
+                                            type='menu'
                                         >
-                                            <MenuItem key={'Profile'} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
-                                                <Link
-                                                    as={'a'}
+                                            <DropdownTrigger>
+                                                <Tooltip title="Open settings">
+                                                    <Avatar
+                                                        alt={auth.user.first_name}
+                                                        src={auth.user.profile_image} />
+                                                </Tooltip>
+                                            </DropdownTrigger>
+
+                                            <DropdownMenu>
+                                                <DropdownItem
+                                                    as={Link}
                                                     href={route('profile', { user: auth.user.id })}
                                                     method="get"
+                                                    key={'profile'}
+                                                    // description="ACME scales apps to meet user demand, automagically, based on load."
+                                                    startContent={<AccountCircle />}
                                                     style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
                                                         color: theme.palette.text.primary,
-                                                        textDecoration: 'none',
                                                     }}
                                                 >
-                                                    <AccountCircle />
-                                                    <Typography sx={{ ml: 1 }} textAlign="center">
-                                                        Profile
-                                                    </Typography>
-                                                </Link>
-                                            </MenuItem>
-                                            {settings.map((setting) => (
-                                                <MenuItem key={setting.name} onClick={handleCloseUserMenu} sx={{ color: theme.palette.text.primary }}>
-                                                    <Link as={'a'} href={route(setting.route)} method={setting.method || undefined} style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        color: theme.palette.text.primary,
-                                                        textDecoration: 'none'
-                                                    }}>
-                                                        {setting.icon}
-                                                        <Typography sx={{ ml: 1 }} textAlign="center">{setting.name}</Typography>
-                                                    </Link>
-                                                </MenuItem>
-                                            ))}
-                                            <MenuItem onClick={toggleDarkMode} sx={{ color: theme.palette.text.primary }}>
-                                                {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
-                                                <Switch checked={darkMode} onChange={toggleDarkMode} color="default" />
-                                            </MenuItem>
-                                        </Menu>
+                                                    Profile
+                                                </DropdownItem>
+                                                {settings.map((setting) => (
+                                                    <DropdownItem
+                                                        as={Link}
+                                                        href={route(setting.route)}
+                                                        method={setting.method || undefined}
+                                                        key={setting.name}
+                                                        // description="ACME scales apps to meet user demand, automagically, based on load."
+                                                        startContent={setting.icon}
+                                                        style={{
+                                                            color: theme.palette.text.primary,
+                                                        }}
+                                                    >
+                                                        {setting.name}
+                                                    </DropdownItem>
+                                                ))}
+                                                <DropdownItem
+                                                    style={{ color: theme.palette.text.primary }}>
+                                                    {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
+                                                    <Switch checked={darkMode} onChange={toggleDarkMode} color="default" />
+                                                </DropdownItem>
+                                            </DropdownMenu>
+                                        </GlassDropdown>
                                     </Box>
                                 </Box>
                             </Box>

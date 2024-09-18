@@ -112,7 +112,7 @@ function App({ children }) {
                 <Box
                     ref={contentRef}
                     sx={{
-                        pb: {bottomNavHeight}+"px",
+                        pb: `${bottomNavHeight}px`,
                         display: 'flex',
                         flex: 1,
                         flexDirection: 'column',
