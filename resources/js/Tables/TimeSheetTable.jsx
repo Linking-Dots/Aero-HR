@@ -185,7 +185,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                         isCompact
                                         removeWrapper
                                         aria-label="Attendance Table"
-                                        isCompact
+                                        isHeaderSticky
                                     >
                                         <TableHeader columns={columns}>
                                             {(column) => (

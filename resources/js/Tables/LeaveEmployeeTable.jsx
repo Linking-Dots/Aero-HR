@@ -238,6 +238,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                 selectionMode="multiple"
                 selectionBehavior={'toggle'}
                 isCompact
+                isHeaderSticky
                 removeWrapper
                 aria-label="Leave Employee Table"
             >
