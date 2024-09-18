@@ -1,17 +1,7 @@
 import {
-    Avatar,
     FormControl,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Select,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography,
+    IconButton, InputLabel, MenuItem,
+    Typography, Select
 } from "@mui/material";
 import {Link} from '@inertiajs/react';
 import {AccountCircle, Delete, Edit} from '@mui/icons-material';
@@ -19,7 +9,24 @@ import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
 import CircularProgress from "@mui/material/CircularProgress";
-
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import {
+    TableColumn,
+    TableHeader,
+    Tooltip,
+    User,
+    Table,
+    TableBody,
+    TableRow,
+    TableCell,
+    Chip,
+    getKeyValue, DropdownTrigger, Button, DropdownMenu, DropdownItem
+} from "@nextui-org/react";
+import {yellow} from "@mui/material/colors";
+import GlassCard from '@/Components/GlassCard.jsx'
+import GlassDropdown from "@/Components/GlassDropdown.jsx";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
@@ -28,14 +35,14 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
 
     const [anchorEls, setAnchorEls] = useState({});
 
-    async function handleChange(key, id, event) {
+    async function handleChange(key, user_id, value_id) {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const newValue = event.target.value;
+                const newValue = value_id;
 
                 const routeName = key === 'department' ? 'user.updateDepartment' : 'user.updateDesignation';
 
-                const response = await fetch(route(routeName, {id: id}), {
+                const response = await fetch(route(routeName, {id: user_id}), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -51,7 +58,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                 if (response.ok) {
                     setUsers((prevUsers) =>
                         prevUsers.map((user) => {
-                            if (user.id === id) {
+                            if (user.id === user_id) {
                                 const updatedUser = {...user};
 
                                 if (key === 'department' && user.department !== newValue) {
@@ -233,159 +240,185 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
         setAnchorEls((prev) => ({ ...prev, [id]: null }));
     };
 
+    const renderCell = (user, columnKey) => {
+        const cellValue = user[columnKey];
+
+
+        switch (columnKey) {
+            case "employee_id":
+                return cellValue;
+            case "name":
+                return (
+                <User
+                    avatarProps={{ radius: "lg", src: user?.profile_image }}
+                    name={user?.name}
+                >
+                    {user?.email}
+                </User>
+            );
+            case "phone":
+                return cellValue;
+            case "email":
+                return cellValue;
+            case "date_of_joining":
+                return cellValue;
+            case "department":
+                return (
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id="department">Department</InputLabel>
+                        <Select
+                            labelId="department"
+                            id={`department-select-${user.id}`}
+                            value={user.department || 'na'}
+                            onChange={(event) => handleChange('department', user.id, event)}
+                            label="Department"
+                            variant={'outlined'}
+                            MenuProps={{
+                                PaperProps: {
+                                    sx: {
+                                        backdropFilter: 'blur(16px) saturate(200%)',
+                                        backgroundColor: theme.glassCard.backgroundColor,
+                                        border: theme.glassCard.border,
+                                        borderRadius: 2,
+                                        boxShadow:
+                                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                    },
+                                },
+                            }}
+                         >
+                            <MenuItem value="na" disabled>
+                                Select Department
+                            </MenuItem>
+                            {departments.map((dept) => (
+                                <MenuItem key={dept.id} value={dept.id}>
+                                    {dept.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                );
+            case "designation":
+                return (
+                    <FormControl size="small" fullWidth sx={{ zIndex: 0}}>
+                        <InputLabel id="designation">Designation</InputLabel>
+                        <Select
+                            variant={'outlined'}
+                            labelId="designation"
+                            id={`designation-select-${user.id}`}
+                            value={user.designation || 'na'}
+                            onChange={(event) => handleChange('designation', user.id, event)}
+                            disabled={!user.department}
+                            label="Designation"
+                            MenuProps={{
+                                PaperProps: {
+                                    sx: {
+                                        backdropFilter: 'blur(16px) saturate(200%)',
+                                        backgroundColor: theme.glassCard.backgroundColor,
+                                        border: theme.glassCard.border,
+                                        borderRadius: 2,
+                                        boxShadow:
+                                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                    },
+                                },
+                            }}
+                        >
+                            <MenuItem value="na" disabled>
+                                Select Designation
+                            </MenuItem>
+                            {designations
+                                .filter((designation) => designation.department_id === user.department)
+                                .map((desig) => (
+                                    <MenuItem key={desig.id} value={desig.id}>
+                                        {desig.title}
+                                    </MenuItem>
+                                ))}
+                        </Select>
+                    </FormControl>
+
+                );
+            case "actions":
+                return (
+                    <div className="relative flex items-center gap-2">
+                        <Tooltip content="View Profile">
+                            <IconButton
+                                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                                component={Link}
+                                href={route('profile', { user: user.id })}
+                            >
+                                <AccountCircle />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip content="Edit Leave">
+                            <IconButton
+                                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                                component={Link}
+                                href={route('profile', { user: user.id })} // Assuming this is the intended route
+                                onClick={() => {
+                                    handleClose(user.id);
+                                }}
+                            >
+                                <Edit />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip content="Delete Leave" color="danger">
+                            <IconButton
+                                className="text-lg text-danger cursor-pointer active:opacity-50"
+                                component={Link}
+                                href={route('profile', { user: user.id })} // Or change the route if different action is required
+                                onClick={() => {
+                                    handleDelete(user.id);
+                                }}
+                            >
+                                <Delete /> {/* Changed to a different icon for clarity */}
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                );
+            default:
+                return "N/A";
+        }
+    };
+
+    const columns = [
+        { name: "Employee ID", uid: "employee_id" },
+        { name: "Name", uid: "name" },
+        { name: "Mobile", uid: "phone" },
+        { name: "Email", uid: "email" },
+        { name: "Join Date", uid: "date_of_joining" },
+        { name: "Department", uid: "department" },
+        { name: "Designation", uid: "designation" },
+        { name: "Action", uid: "actions" }
+    ];
 
     return (
-        <TableContainer style={{ maxHeight: '84vh', overflowY: 'auto' }}>
-            <Table aria-label="employee table" size="small">
-                <TableHead>
-                    <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Employee ID</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Join Date</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Department</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
-                            Action
-                        </TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {users.map((user) => (
+        <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
+            <Table
+                key={users}
+                selectionMode="multiple"
+                selectionBehavior={'toggle'}
+                fullWidth
+                isCompact
+                isHeaderSticky
+                removeWrapper
+                aria-label="Employees Table"
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "actions" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={users}>
+                    {(user) => (
                         <TableRow key={user.id}>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.employee_id || 'N/A'}</TableCell>
-                            <TableCell sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                                <Avatar
-                                    src={user.profile_image}
-                                    alt={user.first_name}
-                                />
-                                <Typography sx={{ marginLeft: '10px' }}>
-                                    <Link
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: theme.palette.text.primary,
-                                            fontWeight: 'bold' // Make text bold
-                                        }}
-                                        href={route('profile', { user: user.id })}
-                                    >
-                                        {user.name || 'N/A'}
-                                    </Link>
-                                    <br />
-                                    {
-                                        designations.find((designation) => designation.id === user.designation)?.title || 'N/A'
-                                    }
-
-                                </Typography>
-                            </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.phone || 'N/A'}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.email || 'N/A'}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.date_of_joining || 'N/A'}</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel id="department">Department</InputLabel>
-                                    <Select
-                                        labelId="department"
-                                        id={`department-select-${user.id}`}
-                                        value={user.department || 'na'}
-                                        onChange={(event) => handleChange('department', user.id, event)}
-                                        label="Department"
-                                        MenuProps={{
-                                            PaperProps: {
-                                                sx: {
-                                                    backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: theme.glassCard.backgroundColor,
-                                                    border: theme.glassCard.border,
-                                                    borderRadius: 2,
-                                                    boxShadow:
-                                                        'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                },
-                                            },
-                                        }}
-                                    >
-                                        <MenuItem value="na" disabled>
-                                            Select Department
-                                        </MenuItem>
-                                        {departments.map((dept) => (
-                                            <MenuItem key={dept.id} value={dept.id}>
-                                                {dept.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </TableCell>
-
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel id="designation">Designation</InputLabel>
-                                    <Select
-                                        labelId="designation"
-                                        id={`designation-select-${user.id}`}
-                                        value={user.designation || 'na'}
-                                        onChange={(event) => handleChange('designation', user.id, event)}
-                                        disabled={!user.department}
-                                        label="Designation"
-                                        MenuProps={{
-                                            PaperProps: {
-                                                sx: {
-                                                    backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: theme.glassCard.backgroundColor,
-                                                    border: theme.glassCard.border,
-                                                    borderRadius: 2,
-                                                    boxShadow:
-                                                        'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                },
-                                            },
-                                        }}
-                                    >
-                                        <MenuItem value="na" disabled>
-                                            Select Designation
-                                        </MenuItem>
-                                        {designations
-                                            .filter((designation) => designation.department_id === user.department)
-                                            .map((desig) => (
-                                                <MenuItem key={desig.id} value={desig.id}>
-                                                    {desig.title}
-                                                </MenuItem>
-                                            ))}
-                                    </Select>
-                                </FormControl>
-                            </TableCell>
-
-                            <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
-                                <IconButton
-                                    component={Link}
-                                    href={route('profile', { user: user.id })} // Assuming this is the intended route
-                                    onClick={() => {
-                                        handleClose(user.id);
-                                    }}
-                                >
-                                    <AccountCircle />
-                                </IconButton>
-                                <IconButton
-                                    component={Link}
-                                    href={route('profile', { user: user.id })} // Assuming this is the intended route
-                                    onClick={() => {
-                                        handleClose(user.id);
-                                    }}
-                                >
-                                    <Edit />
-                                </IconButton>
-                                <IconButton
-                                    component={Link}
-                                    href={route('profile', { user: user.id })} // Or change the route if different action is required
-                                    onClick={() => {
-                                        handleDelete(user.id);
-                                    }}
-                                >
-                                    <Delete /> {/* Changed to a different icon for clarity */}
-                                </IconButton>
-                            </TableCell>
+                            {(columnKey) => <TableCell
+                                style={{whiteSpace: 'nowrap'}}>{renderCell(user, columnKey)}</TableCell>}
                         </TableRow>
-                    ))}
+                    )}
                 </TableBody>
             </Table>
-        </TableContainer>
+        </div>
     );
 }
 

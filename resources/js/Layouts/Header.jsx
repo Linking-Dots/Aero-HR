@@ -141,7 +141,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                     page.subMenu ? (
                                                         <Grid sx={{
                                                             backgroundColor: page.subMenu.find(subPage => "/" + subPage.route === activePage) ? theme.palette.action.selected : 'transparent',
-                                                        }} xs={12} sm={4} md={3} lg={2} item key={page.name} >
+                                                        }} xs={12} sm={4} md={3} lg={3} item key={page.name} >
                                                             <GlassDropdown type='menu'>
                                                                 <DropdownTrigger>
                                                                     <Button
@@ -173,6 +173,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                                 color: theme.palette.text.primary,
                                                                                 backgroundColor: activePage === "/"+subPage.route ? theme.palette.action.selected : 'transparent',
                                                                             }}
+                                                                            variant={'faded'}
                                                                         >
                                                                             {subPage.name}
                                                                         </DropdownItem>
@@ -183,7 +184,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                     ) : (
                                                         <Grid sx={{
                                                             backgroundColor: activePage === "/"+page.route ? theme.palette.action.selected : 'transparent',
-                                                        }} xs={12} sm={4} md={3} lg={2} item key={page.name}>
+                                                        }} xs={12} sm={4} md={3} lg={3} item key={page.name}>
                                                             <Button
                                                                 as={Link}
                                                                 href={route(page.route)}

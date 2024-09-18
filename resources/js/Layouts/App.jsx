@@ -70,67 +70,74 @@ function App({ children }) {
 
 
     return (
+
         <ThemeProvider theme={theme}>
             <NextUIProvider>
-            <ToastContainer
-                position="top-center"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-            />
-            <CssBaseline />
-            {loading && <Loader />}
-            <Box
-                className={darkMode ? "dark" : "light"}
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    height: '100vh',
-                }}
-            >
-                {/* Sidebar Area */}
+                <body className={darkMode ? "dark" : "light"}>
+                <ToastContainer
+                    position="top-center"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="colored"
+                />
+                <CssBaseline/>
+                {loading && <Loader/>}
                 <Box
                     sx={{
-                        display: { xs: 'none', md: 'block' },
-                        height: '100vh', // Full height
-                        width: sideBarOpen ? 280 : 0,
-                        transition: 'width 0.3s ease-in-out',
-                        flexDirection: 'column',
-                        overflow: 'hidden', // Avoid overflow on the sidebar
-                    }}
-                >
-                    <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar} />
-                </Box>
-
-                {/* Main Content Area */}
-                <Box
-                    ref={contentRef}
-                    sx={{
-                        pb: `${bottomNavHeight}px`,
                         display: 'flex',
-                        flex: 1,
-                        flexDirection: 'column',
-                        height: '100vh', // Full height for content area
-                        overflow: 'auto', // Enable vertical scrolling
+                        flexDirection: 'row',
+                        height: '100vh',
                     }}
                 >
-                    {auth.user && <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                    {auth.user && <Breadcrumb />}
-                    {children}
-                    {/*{!isMobile && <Footer/>}*/}
-                    {auth.user && isMobile && <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
+                    {/* Sidebar Area */}
+                    <Box
+                        sx={{
+                            display: {xs: 'none', md: 'block'},
+                            height: '100vh', // Full height
+                            width: sideBarOpen ? 280 : 0,
+                            transition: 'width 0.3s ease-in-out',
+                            flexDirection: 'column',
+                            overflow: 'hidden', // Avoid overflow on the sidebar
+                        }}
+                    >
+                        <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar}/>
+                    </Box>
+
+                    {/* Main Content Area */}
+                    <Box
+                        ref={contentRef}
+                        sx={{
+                            pb: `${bottomNavHeight}px`,
+                            display: 'flex',
+                            flex: 1,
+                            flexDirection: 'column',
+                            height: '100vh', // Full height for content area
+                            overflow: 'auto', // Enable vertical scrolling
+                        }}
+                    >
+                        {auth.user &&
+                            <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
+                                    sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                        {auth.user && <Breadcrumb/>}
+                        {children}
+                        {/*{!isMobile && <Footer/>}*/}
+                        {auth.user && isMobile &&
+                            <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
+                    </Box>
                 </Box>
-            </Box>
+                </body>
             </NextUIProvider>
         </ThemeProvider>
 
-    );
+
+
+);
 }
 
 export default App;

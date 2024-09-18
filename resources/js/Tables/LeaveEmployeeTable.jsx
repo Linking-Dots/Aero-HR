@@ -233,7 +233,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     ];
 
     return (
-        <div style={{maxHeight: '400px', overflowY: 'auto'}}>
+        <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
             <Table
                 selectionMode="multiple"
                 selectionBehavior={'toggle'}

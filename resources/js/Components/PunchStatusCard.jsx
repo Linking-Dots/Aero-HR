@@ -244,7 +244,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     }, [punched]);
 
     return (
-        <Box sx={{ display: 'flex', height: '100%', pb: 0, justifyContent: 'center', padding: '16px 16px 0px 16px'}}>
+        <Box sx={{ display: 'flex', height: '100%', justifyContent: 'center', p: 2}}>
             <Grow in>
                 <GlassCard>
                     <CardContent>
