@@ -22,7 +22,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const { todayLeaves } = usePage().props;
 
 
-    const isUserOnLeave = todayLeaves.find(leave => leave.user_id === auth.user.id);
+    const isUserOnLeave = todayLeaves.find(leave => String(leave.user_id) === String(auth.user.id));
 
 
     const fetchData = async () => {
