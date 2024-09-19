@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {Head, usePage} from '@inertiajs/react';
-import {Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar} from '@mui/material';
+import {Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar, Divider} from '@mui/material';
 import { Add } from '@mui/icons-material';
 import GlassCard from '@/Components/GlassCard.jsx'; // Ensure this component is imported if you have custom styles
 import App from "@/Layouts/App.jsx";
@@ -13,6 +13,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
     const {auth} = usePage().props;
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
+
+    console.log(leavesData)
 
     const [allLeaves, setAllLeaves] = useState(leavesData.allLeaves);
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
@@ -102,16 +104,36 @@ const LeavesEmployee = ({ title, allUsers }) => {
                                             <CardContent>
                                                 <Box
                                                     display="flex"
+                                                    flexDirection="column"
                                                     justifyContent="center"
                                                     alignItems="center"
                                                     height="100%"
                                                     textAlign="center"
                                                 >
-                                                    <Box>
-                                                        <Typography variant="h6">{leaveType.type}</Typography>
-                                                        <Typography variant="h4">
-                                                            {leavesData.leaveCountsByUser[auth.user.id] ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.days_used : 0}
-                                                        </Typography>
+                                                    {/* Leave Type centered at the top */}
+                                                    <Typography variant="h6" sx={{ mb: 2 }}>{leaveType.type}</Typography> {/* Margin-bottom to separate from the next line */}
+
+                                                    {/* Used and Remaining values in a new row */}
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box>
+                                                            Used:
+                                                            <Typography variant="h4">
+                                                                {leavesData.leaveCountsByUser[auth.user.id]
+                                                                    ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.days_used
+                                                                    : 0}
+                                                            </Typography>
+                                                        </Box>
+
+                                                        <Divider orientation="vertical" flexItem sx={{ mx: 2 }} /> {/* Vertical divider with horizontal margin */}
+
+                                                        <Box>
+                                                            Remaining:
+                                                            <Typography variant="h4">
+                                                                {leavesData.leaveCountsByUser[auth.user.id]
+                                                                    ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.remaining_days
+                                                                    : 0}
+                                                            </Typography>
+                                                        </Box>
                                                     </Box>
                                                 </Box>
                                             </CardContent>
