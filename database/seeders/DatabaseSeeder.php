@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\Department;
 use App\Models\Designation;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -15,32 +17,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        User::factory()->create([
-//            'user_name' => 'emamhosen',
-//            'name' => 'Emam Hosen',
-//            'email' => 'emam@dhakabypass.com',
-//        ]);
-//
-//        User::factory(10)->create();
+        $roles = [
+            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
+            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
+            'HR', 'UI/UX Developer', 'SEO Analyst'
+        ];
 
+        // Create roles
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(['name' => $roleName]);
+        }
 
+        // Define modules and their permissions
+        $modules = [
+            'Employee', 'Holidays', 'Leaves', 'Events', 'Chat', 'Jobs'
+        ];
 
-        Department::create(['name' => 'Engineering Department']);
-        Department::create(['name' => 'Quality Control Department']);
-        Department::create(['name' => 'Admin Department']);
-        Department::create(['name' => 'Contract Department']);
-        Department::create(['name' => 'Design Department']);
-        Department::create(['name' => 'Finance Department']);
+        $permissions = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
 
-        Designation::create(['department_id' => 2, 'title' => 'Manager']);
-        Designation::create(['department_id' => 2, 'title' => 'Deputy Manager']);
-        Designation::create(['department_id' => 2, 'title' => 'Supervision Engineer']);
-        Designation::create(['department_id' => 2, 'title' => 'Quality Control Inspector']);
-        Designation::create(['department_id' => 2, 'title' => 'Asst. Quality Control Inspector']);
-        Designation::create(['department_id' => 2, 'title' => 'IT Executive']);
-        Designation::create(['department_id' => 2, 'title' => 'Office Engineer']);
-        Designation::create(['department_id' => 2, 'title' => 'Office Assistant']);
-        Designation::create(['department_id' => 2, 'title' => 'Driver']);
-        Designation::create(['department_id' => 2, 'title' => 'Lab Assistant']);
+        // Create permissions for each module
+        foreach ($modules as $module) {
+            foreach ($permissions as $permission) {
+                $permName = strtolower($permission) . ' ' . strtolower($module);
+                Permission::firstOrCreate(['name' => $permName]);
+            }
+        }
+
+        // Assign permissions to Administrator role as an example
+        $adminRole = Role::findByName('Administrator');
+        $adminRole->givePermissionTo(Permission::all());
+
     }
 }
