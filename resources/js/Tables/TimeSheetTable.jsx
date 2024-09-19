@@ -178,7 +178,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                             {error ? (
                                 <Typography color="error">{error}</Typography>
                             ) : (
-                                <div style={{ overflowY: 'auto'}}>
+                                <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
                                     <Table
                                         selectionMode="multiple"
                                         selectionBehavior={'toggle'}
