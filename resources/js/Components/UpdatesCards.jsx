@@ -155,7 +155,7 @@ const UpdatesCards = (props) => {
     };
 
     // Filter leaves for today, tomorrow, and within the next seven days
-    const todayLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(today, 'day') && leave.user_id !== auth.user.id);
+    const todayLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(today, 'day') && String(leave.user_id) !== String(auth.user.id));
     const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(tomorrow, 'day'));
 
     const nextSevenDaysLeaves = upcomingLeaves.filter(
