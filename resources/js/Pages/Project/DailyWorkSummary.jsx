@@ -189,7 +189,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
                                             <AddBox />
                                         </IconButton>
                                     )}
-                                    {auth.roles.includes('admin') && (
+                                    {auth.roles.includes('Administrator') && (
                                         <>
                                             {isMobile ? (
                                                 <>
@@ -242,7 +242,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
                                             </Box>
                                         </LocalizationProvider>
                                     </Grid>
-                                    {auth.roles.includes('admin') && (
+                                    {auth.roles.includes('Administrator') && (
                                         <Grid item xs={6} sm={4} md={3} sx={{ paddingTop: '8px !important' }}>
                                             <FormControl fullWidth>
                                                 <InputLabel id="incharge-label">Incharge</InputLabel>

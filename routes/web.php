@@ -68,7 +68,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(function () {
+Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->group(function () {
 
     Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
     Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
@@ -76,7 +76,7 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');
     Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
 
-    Route::get('/employees', [UserController::class, 'index'])->name('employees');
+    Route::get('/employees', [UserController::class, 'index1'])->name('employees');
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
     Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
@@ -90,6 +90,7 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
 
     Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
     Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
+    Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');
 
 
     Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
@@ -99,6 +100,8 @@ Route::middleware([CheckRole::class . ':admin','auth', 'verified'])->group(funct
     Route::post('/roles', [RoleController::class, 'storeRole']);
     Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
     Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
+
+    Route::get('/users', [UserController::class, 'index2'])->name('users');
 
 
 

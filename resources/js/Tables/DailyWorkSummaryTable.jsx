@@ -49,7 +49,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
     const { auth } = usePage().props;
     const theme = useTheme();
 
-    const userIsAdmin = auth.roles.includes('admin');
+    const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('se');
 
     const columns = [

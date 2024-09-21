@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
-import { Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Grid, List, ListItem, ListItemText, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Grid, List, ListItem, ListItemText, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import CompanySettings from "@/Pages/CompanySettings.jsx";
+import { Tabs, Tab, Card, CardBody, RadioGroup, Radio, Switch, cn } from "@nextui-org/react";
 
 const RolesSettings = ({title}) => {
     const [roles, setRoles] = useState(usePage().props.roles);
-    const [permissions, setPermissions] = useState(usePage().props.permissions);
+    // const [permissions, setPermissions] = useState(usePage().props.permissions);
     const [selectedRole, setSelectedRole] = useState({});
     const [openAddRole, setOpenAddRole] = useState(false);
     const [openEditRole, setOpenEditRole] = useState(false);
     const [openDeleteRole, setOpenDeleteRole] = useState(false);
     const [newRoleName, setNewRoleName] = useState('');
+    // State to store selected modules
+    const [selectedModules, setSelectedModules] = useState([]);
     const [selectedPermissions, setSelectedPermissions] = useState([]);
+
+    // List of permissions
+    const permissions = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
+
+    // List of modules
+    const modules = ['Employees', 'Holidays', 'Leaves', 'Attendances', 'Projects', 'Settings'];
 
     console.log(roles, permissions)
 
@@ -75,12 +84,28 @@ const RolesSettings = ({title}) => {
             .catch(error => console.error(error));
     };
 
-    const handlePermissionToggle = (permission) => {
-        if (selectedPermissions.includes(permission)) {
-            setSelectedPermissions(selectedPermissions.filter(p => p !== permission));
-        } else {
-            setSelectedPermissions([...selectedPermissions, permission]);
-        }
+
+
+    // Toggle function to add or remove a module from the state
+    const handleModuleToggle = (module) => {
+        setSelectedModules((prevSelectedModules) =>
+            prevSelectedModules.includes(module)
+                ? prevSelectedModules.filter((m) => m !== module) // Remove if already selected
+                : [...prevSelectedModules, module] // Add if not selected
+        );
+    };
+
+
+
+    // Function to handle the toggle of permissions for each module
+    const handlePermissionToggle = (module, permission) => {
+        const permissionKey = `${module} ${permission}`;
+
+        setSelectedPermissions((prevPermissions) =>
+            prevPermissions.includes(permissionKey)
+                ? prevPermissions.filter((p) => p !== permissionKey) // Remove if already selected
+                : [...prevPermissions, permissionKey] // Add if not selected
+        );
     };
 
     return (
@@ -92,66 +117,68 @@ const RolesSettings = ({title}) => {
                     <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAddRole} fullWidth>
                         Add Roles
                     </Button>
-                    <Box mt={2}>
-                        <List>
-                            {roles.map((role, index) => (
-                                <ListItem key={index} selected={index === 0} button>
-                                    <ListItemText primary={role} />
-                                    <Box>
-                                        <EditIcon onClick={() => handleOpenEditRole(role)} style={{ cursor: 'pointer', marginRight: '10px' }} />
-                                        <DeleteIcon onClick={() => handleOpenDeleteRole(role)} style={{ cursor: 'pointer' }} />
-                                    </Box>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
                 </Grid>
 
                 {/* Right Column: Module Access */}
                 <Grid item xs={12} sm={8} md={8} lg={9}>
-                    <Card>
-                        <Box p={2}>
-                            <h6>Module Access</h6>
-                            <List>
-                                {permissions.map((permission) => (
-                                    <ListItem key={permission.id}>
-                                        <ListItemText primary={permission.name} />
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={selectedPermissions.includes(permission.name)}
-                                                    onChange={() => handlePermissionToggle(permission.name)}
-                                                />
-                                            }
-                                        />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
+                    <Tabs aria-label="Roles" placement={'start'}>
+                        {roles.map((role) => (
+                            <Tab key={role.id} title={role.name}>
 
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Module Permission</TableCell>
-                                    {['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'].map((header, index) => (
-                                        <TableCell align="center" key={index}>{header}</TableCell>
-                                    ))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {roles.map((role) => (
-                                    <TableRow key={role.id}>
-                                        <TableCell>{role.name}</TableCell>
-                                        {['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'].map((permission, idx) => (
-                                            <TableCell align="center" key={idx}>
-                                                <Checkbox defaultChecked={role.permissions.some(p => p.name === permission)} />
-                                            </TableCell>
+                                <h6>Module Access</h6>
+                                <Table>
+                                    <TableBody>
+                                        {modules.map((module) => (
+                                            <TableRow key={module}>
+                                                <TableCell>{module}</TableCell>
+                                                <TableCell>
+                                                    <Switch
+                                                        checked={selectedModules.includes(module)}
+                                                        onChange={() => handleModuleToggle(module)}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+
+                                    </TableBody>
+                                </Table>
+
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Module Permission</TableCell>
+                                            {permissions.map((header, index) => (
+                                                <TableCell align="center" key={index}>{header}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {selectedModules && selectedModules.length > 0 ? (
+                                            selectedModules.map((module) => (
+                                                <TableRow key={module}>
+                                                    <TableCell>{module}</TableCell>
+                                                    {permissions.map((permission, idx) => (
+                                                        <TableCell align="center" key={idx}>
+                                                            <Checkbox
+                                                                checked={selectedPermissions.includes(`${module} ${permission}`)}
+                                                                onChange={() => handlePermissionToggle(module, permission)}
+                                                            />
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={permissions.length + 1} align="center">
+                                                    No module access
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </Tab>
+                        ))}
+                    </Tabs>
                 </Grid>
 
                 {/* Add Role Modal */}

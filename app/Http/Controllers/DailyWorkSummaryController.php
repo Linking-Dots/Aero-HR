@@ -23,7 +23,7 @@ class DailyWorkSummaryController extends Controller
         $tasksQuery = DailyWork::query();
         $summaryQuery = DailyWorkSummary::query();
         // Check if the user has the 'se' role
-        if ($user->hasRole('se')) {
+        if ($user->hasRole('Supervision Engineer')) {
             // If user has the 'se' role, get the daily summaries based on the incharge column
             $tasksQuery->where('incharge', $user->id);
             $summaryQuery->where('incharge', $user->id);
@@ -31,7 +31,7 @@ class DailyWorkSummaryController extends Controller
 
         $dailyTasks = $tasksQuery->get();
         $dailySummaries = $summaryQuery->get();
-        $inCharges = User::role('se')->get();
+        $inCharges = User::role('Supervision Engineer')->get();
 
         $mergedSummaries = [];
 
@@ -91,7 +91,7 @@ class DailyWorkSummaryController extends Controller
             $tasksQuery = Tasks::query();
             $summaryQuery = DailySummary::query();
             // Check if the user has the 'se' role
-            if ($user->hasRole('se')) {
+            if ($user->hasRole('Supervision Engineer')) {
                 // If user has the 'se' role, get the daily summaries based on the incharge column
                 $tasksQuery->where('incharge', $user->user_name);
                 $summaryQuery->where('incharge', $user->user_name);

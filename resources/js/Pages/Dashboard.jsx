@@ -34,15 +34,17 @@ export default function Dashboard({auth,users}) {
             <Head title="Dashboard"/>
             <Box>
                 <Grid container >
-                    <Grid item xs={12} md={6}>
-                        <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
-                    </Grid>
+                    {auth.roles.includes('Employee') &&
+                        <Grid item xs={12} md={6}>
+                            <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
+                        </Grid>
+                    }
                     <Grid item xs={12} md={6}>
                         <StatisticCard />
                     </Grid>
                 </Grid>
-                {auth.roles.includes('admin') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
-                {auth.roles.includes('admin') && <UserLocationsCard updateMap={updateMap}/>}
+                {auth.roles.includes('Administrator') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
+                {auth.roles.includes('Administrator') && <UserLocationsCard updateMap={updateMap}/>}
                 <UpdatesCards/>
                 <LeaveCard/>
             </Box>

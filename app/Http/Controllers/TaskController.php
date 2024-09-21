@@ -41,7 +41,7 @@ class TaskController extends Controller
     {
         $reports = Report::all();
         $reports_with_tasks = Report::with('tasks')->has('tasks')->get();
-        $incharges = User::role('se')->get();
+        $incharges = User::role('Supervision Engineer')->get();
         $users = User::with('roles')->get();
 
         // Loop through each user and add a new field 'role' with the role name
@@ -69,19 +69,19 @@ class TaskController extends Controller
     public function allTasks(Request $request)
     {
         $user = Auth::user();
-        $tasks = $user->hasRole('se')
+        $tasks = $user->hasRole('Supervision Engineer')
             ? [
                 'tasks' => DailyWork::with('reports')->where('incharge', $user->user_name)->get(),
                 'incharges' => [],
                 'juniors' => User::where('incharge', $user->user_name)->get(),
 
             ]
-            : ($user->hasRole('qci') || $user->hasRole('aqci')
+            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
                 ? ['tasks' => DailyWork::with('reports')->where('assigned', $user->user_name)->get()]
-                : ($user->hasRole('admin') || $user->hasRole('manager')
+                : ($user->hasRole('Administrator')
                     ? [
                         'tasks' => DailyWork::with('reports')->get(),
-                        'incharges' => User::role('se')->get(),
+                        'incharges' => User::role('Supervision Engineer')->get(),
                         'juniors' => [],
                     ]
                     : ['tasks' => []]
@@ -151,27 +151,27 @@ class TaskController extends Controller
             $task->location = $validatedData['location'];
             $task->side = $validatedData['side'];
             $task->qty_layer = $validatedData['qty_layer'];
-            $task->incharge = $user && $user->hasRole('admin') ? $inchargeName : ($user?->user_name);
+            $task->incharge = $user && $user->hasRole('Administrator') ? $inchargeName : ($user?->user_name);
             $task->completion_time = $validatedData['completion_time'];
             $task->inspection_details = $validatedData['inspection_details'];
 
             // Save the task to the database
             $task->save();
 
-            $tasks = $user->hasRole('se')
+            $tasks = $user->hasRole('Supervision Engineer')
                 ? [
                     'tasks' => Tasks::with('ncrs')->where('incharge', $user->user_name)->get(),
                     'juniors' => User::where('incharge', $user->user_name)->get(),
                     'message' => 'DailyWork added successfully',
-                ] : ($user->hasRole('qci') || $user->hasRole('aqci')
+                ] : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
                     ? [
                         'tasks' => Tasks::with('ncrs')->where('assigned', $user->user_name)->get(),
                         'message' => 'DailyWork added successfully'
                     ]
-                    : ($user->hasRole('admin') || $user->hasRole('manager')
+                    : ($user->hasRole('Administrator')
                         ? [
                             'tasks' => Tasks::with('ncrs')->get(),
-                            'incharges' => User::role('se')->get(),
+                            'incharges' => User::role('Supervision Engineer')->get(),
                             'message' => 'DailyWork added successfully'
                         ]
                         : ['tasks' => [],
@@ -201,10 +201,10 @@ class TaskController extends Controller
         try {
             // Query tasks based on date range, status, and incharge
             $tasksQuery = Task::with('ncrs')
-                ->when($user->hasRole('se'), function ($query) use ($user) {
+                ->when($user->hasRole('Supervision Engineer'), function ($query) use ($user) {
                     $query->where('incharge', $user->user_name);
                 })
-                ->when($user->hasRole('qci') || $user->hasRole('aqci'), function ($query) use ($user) {
+                ->when($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspecto'), function ($query) use ($user) {
                     $query->where('assigned', $user->user_name);
                 })
                 ->when($request->start && $request->end, function ($query) use ($request) {
@@ -241,20 +241,20 @@ class TaskController extends Controller
             $filteredTasks = $tasksQuery->get();
 
             // Determine the return array based on user roles
-            $tasks = $user->hasRole('se')
+            $tasks = $user->hasRole('Supervision Engineer')
                 ? [
                     'tasks' => $filteredTasks,
                     'juniors' => User::where('incharge', $user->user_name)->get(),
                     'message' => 'Tasks filtered successfully',
-                ] : ($user->hasRole('qci') || $user->hasRole('aqci')
+                ] : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspecto')
                     ? [
                         'tasks' => $filteredTasks,
                         'message' => 'Tasks filtered successfully',
                     ]
-                    : ($user->hasRole('admin') || $user->hasRole('manager')
+                    : ($user->hasRole('Administrator')
                         ? [
                             'tasks' => $filteredTasks,
-                            'incharges' => User::role('se')->get(),
+                            'incharges' => User::role('Supervision Engineer')->get(),
                             'message' => 'Tasks filtered successfully',
                         ]
                         : [

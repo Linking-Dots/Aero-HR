@@ -24,19 +24,19 @@ class DailyWorkController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $allData = $user->hasRole('se')
+        $allData = $user->hasRole('Supervision Engineer')
             ? [
                 'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
                 'allInCharges' => [],
                 'juniors' => User::where('report_to', $user->id)->get(),
 
             ]
-            : ($user->hasRole('qci') || $user->hasRole('aqci')
+            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
                 ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->id)->get()]
-                : ($user->hasRole('admin') || $user->hasRole('manager')
+                : ($user->hasRole('Administrator')
                     ? [
                         'dailyWorks' => DailyWork::with('reports')->get(),
-                        'allInCharges' => User::role('se')->get(),
+                        'allInCharges' => User::role('Supervision Engineer')->get(),
                         'juniors' => [],
                     ]
                     : ['dailyWorks' => []]
@@ -210,19 +210,19 @@ class DailyWorkController extends Controller
 
 
             $user = Auth::user();
-            $updatedDailyWorks = $user->hasRole('se')
+            $updatedDailyWorks = $user->hasRole('Supervision Engineer')
                 ? [
                     'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
                     'allInCharges' => [],
                     'juniors' => User::where('report_to', $user->id)->get(),
 
                 ]
-                : ($user->hasRole('qci') || $user->hasRole('aqci')
+                : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
                     ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->id)->get()]
-                    : ($user->hasRole('admin') || $user->hasRole('manager')
+                    : ($user->hasRole('Administrator')
                         ? [
                             'dailyWorks' => DailyWork::with('reports')->get(),
-                            'allInCharges' => User::role('se')->get(),
+                            'allInCharges' => User::role('Supervision Engineer')->get(),
                             'juniors' => [],
                         ]
                         : ['dailyWorks' => []]
@@ -441,27 +441,27 @@ class DailyWorkController extends Controller
             $task->location = $validatedData['location'];
             $task->side = $validatedData['side'];
             $task->qty_layer = $validatedData['qty_layer'];
-            $task->incharge = $user && $user->hasRole('admin') ? $inchargeName : ($user?->user_name);
+            $task->incharge = $user && $user->hasRole('Administrator') ? $inchargeName : ($user?->user_name);
             $task->completion_time = $validatedData['completion_time'];
             $task->inspection_details = $validatedData['inspection_details'];
 
             // Save the task to the database
             $task->save();
 
-            $tasks = $user->hasRole('se')
+            $tasks = $user->hasRole('Supervision Engineer')
                 ? [
                     'tasks' => Tasks::with('ncrs')->where('incharge', $user->user_name)->get(),
                     'juniors' => User::where('incharge', $user->user_name)->get(),
                     'message' => 'DailyWork added successfully',
-                ] : ($user->hasRole('qci') || $user->hasRole('aqci')
+                ] : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspecto')
                     ? [
                         'tasks' => Tasks::with('ncrs')->where('assigned', $user->user_name)->get(),
                         'message' => 'DailyWork added successfully'
                     ]
-                    : ($user->hasRole('admin') || $user->hasRole('manager')
+                    : ($user->hasRole('Administrator')
                         ? [
                             'tasks' => Tasks::with('ncrs')->get(),
-                            'incharges' => User::role('se')->get(),
+                            'incharges' => User::role('Supervision Engineer')->get(),
                             'message' => 'DailyWork added successfully'
                         ]
                         : ['tasks' => [],

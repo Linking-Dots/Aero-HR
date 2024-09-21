@@ -101,7 +101,7 @@ const columns = [
                 style={{overflowX: 'auto', whiteSpace: 'nowrap', maxWidth: '30ch', display: 'inline-block'}}
                 title={row.description}
             >
-                    {auth.roles.includes('se') || auth.roles.includes('qci' || 'aqci') ? row.description : row.description.substr(0, 30) + '...'}
+                    {auth.roles.includes('se') || auth.roles.includes('Quality Control Inspector' || 'Asst. Quality Control Inspecto') ? row.description : row.description.substr(0, 30) + '...'}
                 </span>
         ),
     },
@@ -166,7 +166,7 @@ const columns = [
         sortable: true,
         center: true,
     },
-    ...(auth.roles.includes('admin') ? [{
+    ...(auth.roles.includes('Administrator') ? [{
         name: 'Incharge',
         selector: row => row.incharge,
         sortable: true,
@@ -226,7 +226,7 @@ const columns = [
             ) : ''
         ),
     },
-    ...(auth.roles.includes('admin') ? [{
+    ...(auth.roles.includes('Administrator') ? [{
         name: 'RFI Submission Date',
         selector: row => row.rfi_submission_date,
         sortable: true,
@@ -237,7 +237,7 @@ const columns = [
                 defaultValue={row.rfi_submission_date}
                 onChange={(e) => handleRFISubmissionDateChange(row.id, e.target.value)}
                 style={{border: 'none', outline: 'none', backgroundColor: 'transparent'}}
-                disabled={!auth.roles.includes('admin')}
+                disabled={!auth.roles.includes('Administrator')}
             />
         ),
     }] : []),

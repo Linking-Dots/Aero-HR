@@ -92,7 +92,7 @@ class LeaveController extends Controller
         $allLeaves = DB::table('leaves')
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
             ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->when(!$user->hasRole('admin'), function ($query) {
+            ->when(!$user->hasRole('Administrator'), function ($query) {
                 // Restrict to the current user if not an admin
                 return $query->where('leaves.user_id', auth()->id());
             })
@@ -214,7 +214,7 @@ class LeaveController extends Controller
             $user = Auth::user();
 
 
-            if (($user->hasRole('admin')) && ($request->input('route') === 'leaves')) {
+            if (($user->hasRole('Administrator')) && ($request->input('route') === 'leaves')) {
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')
@@ -320,7 +320,7 @@ class LeaveController extends Controller
 
             $user = Auth::user();
             // Fetch all leaves and their leave types
-            if (($user->hasRole('admin')) && ($request->input('route') === 'leaves')) {
+            if (($user->hasRole('Administrator')) && ($request->input('route') === 'leaves')) {
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')

@@ -18,7 +18,8 @@ function App({ children }) {
 
     const [loading, setLoading] = useState();
     const { auth } = usePage().props;
-    const userIsAdmin = auth.roles.includes('admin');
+    const permissions = auth.permissions;
+
     const [sideBarOpen, setSideBarOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         const savedDarkMode = localStorage.getItem('darkMode');
@@ -30,7 +31,7 @@ function App({ children }) {
     const [currentRoute, setCurrentRoute] = useState(url);
 
     const [pages, setPages] = useState(() =>
-        /setting/i.test(url) ? getSettingsPages() : getPages(userIsAdmin)
+        /setting/i.test(url) ? getSettingsPages() : getPages(permissions)
     );
 
     useEffect(() => {
@@ -39,8 +40,8 @@ function App({ children }) {
 
 
     useEffect(() => {
-        setPages( /setting/i.test(currentRoute) ? getSettingsPages() : getPages(userIsAdmin));
-    }, [currentRoute, userIsAdmin]);
+        setPages( /setting/i.test(currentRoute) ? getSettingsPages() : getPages(permissions));
+    }, [currentRoute, permissions]);
 
 
     useEffect(() => {
@@ -73,7 +74,7 @@ function App({ children }) {
 
         <ThemeProvider theme={theme}>
             <NextUIProvider>
-                <body className={darkMode ? "dark" : "light"}>
+                <main className={darkMode ? "dark" : "light"}>
                 <ToastContainer
                     position="top-center"
                     autoClose={5000}
@@ -131,7 +132,7 @@ function App({ children }) {
                             <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
                     </Box>
                 </Box>
-                </body>
+                </main>
             </NextUIProvider>
         </ThemeProvider>
 

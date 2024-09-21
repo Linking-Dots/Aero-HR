@@ -284,7 +284,7 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
                                 helperText={errors.remainingLeaves}
                             />
                         </Grid>
-                        {auth.roles.includes('admin') && route().current() === 'leaves' &&
+                        {auth.roles.includes('Administrator') && route().current() === 'leaves' &&
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel id="leave-employee-label">Employee</InputLabel>

@@ -175,7 +175,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
             case "status":
                 return (
                     <Select
-                        isDisabled={!auth.roles.includes('admin') && route().current() !== 'leaves'}
+                        isDisabled={!auth.roles.includes('Administrator') && route().current() !== 'leaves'}
                         aria-label="Leave Status"
                         color={getMenuItemColor(leave.status)}
                         placeholder="Select status"

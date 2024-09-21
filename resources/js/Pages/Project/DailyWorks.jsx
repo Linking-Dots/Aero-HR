@@ -205,7 +205,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             <AddBox />
                                         </IconButton>
                                     )}
-                                    {auth.roles.includes('admin') && (
+                                    {auth.roles.includes('Administrator') && (
                                         <>
                                             {isMobile ? (
                                                 <>
@@ -294,7 +294,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             </Select>
                                         </FormControl>
                                     </Grid>
-                                    {auth.roles.includes('admin') && (
+                                    {auth.roles.includes('Administrator') && (
                                         <Grid item xs={6} sm={4} md={3}>
                                             <FormControl fullWidth>
                                                 <InputLabel id="incharge-label">Incharge</InputLabel>

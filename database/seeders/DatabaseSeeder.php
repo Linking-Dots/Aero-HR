@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -17,20 +18,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = [
-            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
-            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
-            'HR', 'UI/UX Developer', 'SEO Analyst'
-        ];
-
-        // Create roles
-        foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName]);
-        }
-
-        // Define modules and their permissions
+//        $roles = [
+//            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
+//            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
+//            'HR', 'UI/UX Developer', 'SEO Analyst'
+//        ];
+//
+//        // Create roles
+//        foreach ($roles as $roleName) {
+//            Role::firstOrCreate(['name' => $roleName]);
+//        }
+//
+//        // Define modules and their permissions
         $modules = [
-            'Employee', 'Holidays', 'Leaves', 'Events', 'Chat', 'Jobs'
+            'Settings', 'Attendances', 'Departments', 'Designations', 'Timesheet', 'Users'
         ];
 
         $permissions = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
@@ -46,6 +47,13 @@ class DatabaseSeeder extends Seeder
         // Assign permissions to Administrator role as an example
         $adminRole = Role::findByName('Administrator');
         $adminRole->givePermissionTo(Permission::all());
+
+//        $users = User::all();
+
+//// Assign the "Employee" role to all users
+//        $users->each(function ($user) {
+//            $user->assignRole('Employee');
+//        });
 
     }
 }

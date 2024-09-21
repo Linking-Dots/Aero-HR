@@ -11,24 +11,25 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
+import GroupIcon from '@mui/icons-material/Group';
 import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 // Function to create pages array
-export const getPages = (userIsAdmin) => [
+export const getPages = (permissions) => [
     { name: 'Dashboard', icon: <DashboardIcon sx={{ ml: 2 }}/>, route: 'dashboard' },
     { name: 'Leaves', icon: <LogoutIcon sx={{ ml: 2 }}/>, route: 'leaves-employee' },
     { name: 'Attendances', icon: <CalendarTodayIcon sx={{ ml: 2 }}/>, route: 'attendance-employee' },
-    ...(userIsAdmin ? [{
+    {
         name: 'Employees', icon: <PeopleIcon sx={{ ml: 2 }}/>, subMenu: [
-            { name: 'All Employees', icon: <PeopleIcon />, route: 'employees' },
-            { name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' },
-            { name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } },
-            { name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' },
-            { name: 'Attendances (Admin)', icon: <CalendarTodayIcon />, route: 'attendances' },
-            { name: 'Departments', icon: <HomeIcon />, route: 'departments' },
-            { name: 'Designations', icon: <WorkIcon />, route: 'designations' },
-            { name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' },
+            ...(permissions.includes('read employee') ? [{ name: 'All Employees', icon: <PeopleIcon />, route: 'employees' }] : []),
+            ...(permissions.includes('read holidays') ? [{ name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' }] : []),
+            ...(permissions.includes('read leaves') ? [{ name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } }] : []),
+            ...(permissions.includes('read leaves') ? [{ name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' }] : []),
+            ...(permissions.includes('read attendances') ? [{ name: 'Attendances (Admin)', icon: <CalendarTodayIcon />, route: 'attendances' }] : []),
+            ...(permissions.includes('read departments') ? [{ name: 'Departments', icon: <HomeIcon />, route: 'departments' }] : []),
+            ...(permissions.includes('read designations') ? [{ name: 'Designations', icon: <WorkIcon />, route: 'designations' }] : []),
+            ...(permissions.includes('read timesheet') ? [{ name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' }] : []),
         ]
-    }] : []),
+    },
     {
         name: 'Projects', icon: <WorkIcon sx={{ ml: 2 }}/>, subMenu: [
             // { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
@@ -36,7 +37,7 @@ export const getPages = (userIsAdmin) => [
             { name: 'Daily Work Summary', icon: <ListIcon />, route: 'dailyWorkSummary' }
         ]
     },
-    ...(userIsAdmin ? [{
-        name: 'Settings', icon: <Settings sx={{ ml: 2 }}/>, route: 'company-settings'
-    }] : []),
+    ...(permissions.includes('read users') ? [{name: 'Users', icon: <GroupIcon sx={{ ml: 2 }}/>, route: 'users'}] : []),
+    ...(permissions.includes('read settings') ? [{name: 'Settings', icon: <Settings sx={{ ml: 2 }}/>, route: 'company-settings'}] : []),
+
 ];
