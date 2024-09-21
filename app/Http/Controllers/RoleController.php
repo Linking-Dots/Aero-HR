@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Inertia\Inertia;
@@ -14,11 +15,13 @@ class RoleController extends Controller
     {
         $roles = Role::with('permissions')->get();
         $permissions = Permission::all();
+        $role_has_permissions = DB::table("role_has_permissions")->get();
 
         return Inertia::render('RolesSettings', [
             'title' => 'Roles and Permissions',
             'roles' => $roles,
-            'permissions' => $permissions
+            'permissions' => $permissions,
+            'role_has_permissions' => $role_has_permissions
         ]);
     }
 
@@ -52,6 +55,62 @@ class RoleController extends Controller
         $role->delete();
 
         return response()->json(['message' => 'Role deleted successfully']);
+    }
+
+
+    public function updateRoleModule(Request $request)
+    {
+        $request->validate([
+            'roleId' => 'required|exists:roles,id',
+            'module' => 'required|string',
+        ]);
+
+        // Check if any permissions exist for the role
+        $existingPermissions = DB::table('role_has_permissions')
+            ->where('role_id', $request->roleId)
+            ->pluck('permission_id')
+            ->toArray();
+
+        // Remove existing permissions for the role if any
+        if (!empty($existingPermissions)) {
+            DB::table('role_has_permissions')
+                ->where('role_id', $request->roleId)
+                ->delete();
+        } else {
+            // Find all permissions based on the provided module
+            $permissions = Permission::where('name', 'like', '%' . $request->module . '%')->get();
+
+            // If no permissions are found, create new permissions for the module
+            if ($permissions->isEmpty()) {
+                $actions = ['read', 'write', 'create', 'delete', 'import', 'export'];
+                foreach ($actions as $action) {
+                    $permissionName = $request->module . ' ' . $action;
+                    $newPermission = Permission::create(['name' => $permissionName]);
+
+                    // Insert the newly created permission for the role
+                    DB::table('role_has_permissions')->insert([
+                        'role_id' => $request->roleId,
+                        'permission_id' => $newPermission->id,
+                    ]);
+                }
+            } else {
+                // Insert each found permission for the role
+                foreach ($permissions as $permission) {
+                    DB::table('role_has_permissions')->insert([
+                        'role_id' => $request->roleId,
+                        'permission_id' => $permission->id,
+                    ]);
+                }
+            }
+        }
+
+
+
+        return response()->json([
+            'roles' => Role::with('permissions')->get(),
+            'permissions' => Permission::all(),
+            'role_has_permissions' => DB::table('role_has_permissions')->get(),
+        ]);
     }
 
 }

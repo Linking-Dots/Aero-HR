@@ -1,287 +1,283 @@
 import React, { useState, useEffect } from 'react';
-import { camelCase, capitalize } from 'lodash';
+import { camelCase, capitalize, toLower } from 'lodash';
 import {
     Box,
     Button,
     CardHeader,
     Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControlLabel,
     Grid,
     CardContent,
-    Grow,
-    Card
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import {Head, usePage} from "@inertiajs/react";
-import App from "@/Layouts/App.jsx";
-import CompanySettings from "@/Pages/CompanySettings.jsx";
-import { Tabs, Tab, CardBody, RadioGroup, Radio, Switch, Table,
+    Table,
     TableBody,
     TableCell,
-    TableHeader,
-    TableRow, } from "@nextui-org/react";
+    TableHead,
+    TableRow,
+    Typography,
+    ListItem,
+    List,
+    ListItemText,
+    ListItemButton,
+    CircularProgress
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { Head, usePage } from "@inertiajs/react";
+import App from "@/Layouts/App.jsx";
 import GlassCard from '@/Components/GlassCard.jsx'
-import {useTheme} from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
+import { Switch } from "@nextui-org/react";
+import { toast } from "react-toastify";
+import axios from 'axios';
 
-const RolesSettings = ({title}) => {
+const RolesSettings = ({ title }) => {
     const theme = useTheme();
-    const [allRoles, setAllRoles] = useState(usePage().props.roles);
-    const [allPermissions, setAllPermissions] = useState(usePage().props.permissions);
-    const [selectedRole, setSelectedRole] = useState({});
-    const [openAddRole, setOpenAddRole] = useState(false);
-    const [openEditRole, setOpenEditRole] = useState(false);
-    const [openDeleteRole, setOpenDeleteRole] = useState(false);
-    const [newRoleName, setNewRoleName] = useState('');
-    // State to store selected modules
-    const [selectedModules, setSelectedModules] = useState([]);
-    const [selectedPermissions, setSelectedPermissions] = useState([]);
-
-    // List of permissions
-    const permissions = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
-
-    // List of modules
-    const modules = ['Employees', 'Holidays', 'Leaves', 'Attendances', 'Projects', 'Settings'];
-
-    console.log(allRoles, allPermissions)
+    const { roles, permissions, role_has_permissions } = usePage().props;
+    const [allRoles, setAllRoles] = useState(roles);
+    const [allPermissions, setAllPermissions] = useState(permissions);
+    const [roleHasPermissions, setRoleHasPermissions] = useState(role_has_permissions);
 
     useEffect(() => {
-        // Extract module names from permission names and format them
-        const modules = allPermissions.map((permission) => {
-            const parts = permission.name.split(' '); // Split permission name by space
-            const moduleName = parts[1]; // Get the second word (module name)
+        console.log('setting roles, permission, roles_has_permissions')
+        setAllRoles(roles);
+        setAllPermissions(permissions);
+        setRoleHasPermissions(role_has_permissions);
+    }, []);
 
-            // Convert module name to camelCase or capitalize first character
-            return capitalize(moduleName); // Alternatively, use camelCase(moduleName) for camelCase
+    const [selectedRole, setSelectedRole] = useState(allRoles[0]);
+
+    const [selectedRolePermissions, setSelectedRolePermissions] = useState(
+        allPermissions.filter(permission => roleHasPermissions
+            .filter(role_has_permission => String(role_has_permission.role_id) === String(selectedRole.id))
+            .map(role_has_permission => role_has_permission.permission_id).includes(permission.id))
+    );
+    const [selectedRoleModules, setSelectedRoleModules] = useState(
+        [...new Set(selectedRolePermissions.map(permission => {
+        const parts = permission.name.split(' ');
+        return parts[1]; // Get the module name
+    }))]
+    );
+
+    const [toggledModules, setToggledModules] = useState(selectedRoleModules);
+    const perms = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
+    const modules = ['Employee', 'Holidays', 'Leaves', 'Events', 'Chat', 'Jobs', 'Settings', 'Attendances', 'Departments', 'Designations', 'Timesheet', 'Users'];
+
+
+    useEffect(() => {
+
+        const permission_ids = roleHasPermissions
+            .filter(role_has_permission => String(role_has_permission.role_id) === String(selectedRole.id))
+            .map(role_has_permission => role_has_permission.permission_id);
+
+        // Filter permissions for the current role
+        const rolePermissions = allPermissions.filter(permission => permission_ids.includes(permission.id));
+        const roleModules = [...new Set(rolePermissions.map(permission => {
+            const parts = permission.name.split(' ');
+            return parts[1]; // Get the module name
+        }))];
+
+        console.log('setting.....')
+        setSelectedRolePermissions(rolePermissions);
+        setSelectedRoleModules(roleModules);
+
+    }, [allRoles, allPermissions, roleHasPermissions]);
+
+
+    console.log(selectedRoleModules)
+
+    const handleRoleSelect = (role) => {
+        setSelectedRole(role);
+        // Load the current module access for the selected role
+        const permissionIds = roleHasPermissions
+            .filter(rp => String(rp.role_id) === String(role.id))
+            .map(rp => rp.permission_id);
+        const rolePermissions = allPermissions.filter(permission => permissionIds.includes(permission.id));
+        const roleModulesState = {};
+        rolePermissions.forEach(permission => {
+            const moduleName = permission.name.split(' ')[1];
+            roleModulesState[toLower(moduleName)] = true;
+        });
+        // setToggledModules(roleModulesState);
+    };
+
+
+
+    const handleModuleToggle = (module) => {
+        console.log(module)
+
+        // Make API request to update role permissions for the module
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                const response = await axios.post('/update-role-module', {
+                    roleId: selectedRole.id,
+                    module: module,
+                });
+
+                console.log(response.data)
+
+                if (response.status === 200) {
+                    setAllRoles(response.data.roles);
+                    setAllPermissions(response.data.permissions);
+                    setRoleHasPermissions(response.data.role_has_permissions);
+                    resolve(['Role module access updated']);
+                }
+            } catch (error) {
+                reject(error.response?.statusText || 'Failed to update module access');
+            }
         });
 
-        // Set the unique modules in the state
-        const uniqueModules = [...new Set(modules)]; // Remove duplicates
-        setSelectedModules(uniqueModules);
-    }, [allPermissions]);
-
-    console.log(selectedModules)
-
-    const handleOpenAddRole = () => setOpenAddRole(true);
-    const handleCloseAddRole = () => setOpenAddRole(false);
-
-    const handleOpenEditRole = (role) => {
-        setSelectedRole(role);
-        setSelectedPermissions(role.permissions.map(p => p.name));
-        setOpenEditRole(true);
-    };
-    const handleCloseEditRole = () => setOpenEditRole(false);
-
-    const handleOpenDeleteRole = (role) => {
-        setSelectedRole(role);
-        setOpenDeleteRole(true);
-    };
-    const handleCloseDeleteRole = () => setOpenDeleteRole(false);
-
-    // Create Role
-    const handleCreateRole = () => {
-        axios.post('/api/roles', {
-            name: newRoleName,
-            permissions: selectedPermissions
-        })
-            .then(response => {
-                setRoles([...roles, response.data.role]);
-                handleCloseAddRole();
-            })
-            .catch(error => console.error(error));
-    };
-
-    // Update Role
-    const handleUpdateRole = () => {
-        axios.put(`/api/roles/${selectedRole.id}`, {
-            name: selectedRole.name,
-            permissions: selectedPermissions
-        })
-            .then(response => {
-                const updatedRoles = roles.map(role =>
-                    role.id === selectedRole.id ? response.data.role : role
-                );
-                setRoles(updatedRoles);
-                handleCloseEditRole();
-            })
-            .catch(error => console.error(error));
-    };
-
-    // Delete Role
-    const handleDeleteRole = () => {
-        axios.delete(`/api/roles/${selectedRole.id}`)
-            .then(() => {
-                setRoles(roles.filter(role => role.id !== selectedRole.id));
-                handleCloseDeleteRole();
-            })
-            .catch(error => console.error(error));
-    };
-
-
-
-    // Toggle function to add or remove a module from the state
-    const handleModuleToggle = (module) => {
-        setSelectedModules((prevSelectedModules) =>
-            prevSelectedModules.includes(module)
-                ? prevSelectedModules.filter((m) => m !== module) // Remove if already selected
-                : [...prevSelectedModules, module] // Add if not selected
-        );
-    };
-
-
-
-    // Function to handle the toggle of permissions for each module
-    const handlePermissionToggle = (module, permission) => {
-        const permissionKey = `${module} ${permission}`;
-
-        setSelectedPermissions((prevPermissions) =>
-            prevPermissions.includes(permissionKey)
-                ? prevPermissions.filter((p) => p !== permissionKey) // Remove if already selected
-                : [...prevPermissions, permissionKey] // Add if not selected
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Updating role module...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return <>{data}</>;
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+            }
         );
     };
 
     return (
         <>
-            <Head title={title}/>
+            <Head title={title} />
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <Grow in>
-                    <Card>
-                        <CardHeader
-                            title={title}
-                            sx={{padding: '24px'}}
-                        />
-                        <CardContent>
-                            <Grid container spacing={2}>
-                                {/* Left Column: Roles */}
-                                <Grid item xs={12} sm={4} md={4} lg={3}>
-                                    <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAddRole} fullWidth>
-                                        Add Roles
-                                    </Button>
-                                </Grid>
+                <GlassCard>
+                    <CardHeader
+                        title={title}
+                        action={
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => {}}
+                            >
+                                Add Roles
+                            </Button>
+                        }
+                    />
+                    <CardContent>
+                        <Grid container spacing={2}>
+                            {/* Left Column: Role List */}
+                            <Grid item xs={3}>
+                                <List>
+                                    {allRoles.map(role => (
+                                        <ListItem key={role.id} disablePadding>
+                                            <ListItemButton
+                                                onClick={() => handleRoleSelect(role)}
+                                                selected={selectedRole && selectedRole.id === role.id}
+                                            >
+                                                <ListItemText primary={role.name} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            </Grid>
 
-                                {/* Right Column: Module Access */}
-                                <Grid item xs={12} sm={8} md={8} lg={9}>
-                                    <Tabs aria-label="Roles" placement={'start'}>
-                                        {allRoles.map((role) => (
-                                            <Tab key={role.id} title={role.name}>
-
-                                                <h6>Module Access</h6>
-                                                <Table>
-                                                    <TableBody>
-                                                        {modules.map((module) => (
-                                                            <TableRow key={module}>
-                                                                <TableCell>{module}</TableCell>
-                                                                <TableCell>
-                                                                    <Switch
-                                                                        checked={selectedModules.includes(module)}
-                                                                        onChange={() => handleModuleToggle(module)}
+                            {/* Right Column: Module Access */}
+                            <Grid item xs={9}>
+                                {selectedRole && (
+                                    <Box>
+                                        <Typography variant="h6">Module Access for {selectedRole.name}</Typography>
+                                        <Table size="small">
+                                            <TableBody>
+                                                {modules.map((module) => (
+                                                    <TableRow key={module}>
+                                                        <TableCell>{module}</TableCell>
+                                                        <TableCell align="right">
+                                                            <Checkbox
+                                                                checked={toggledModules.includes(toLower(module))}
+                                                                onChange={() => handleModuleToggle(toLower(module))}
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>Module Permission</TableCell>
+                                                    {perms.map((header, index) => (
+                                                        <TableCell align="center" key={index}>{header}</TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {toggledModules && toggledModules.length > 0 ? (
+                                                    toggledModules.map((module) => (
+                                                        <TableRow key={module}>
+                                                            <TableCell>{capitalize(module)}</TableCell>
+                                                            {perms.map((permission, idx) => (
+                                                                <TableCell align="center" key={idx}>
+                                                                    <Checkbox
+                                                                        checked={selectedRolePermissions.some(rolePermission =>
+                                                                            `${permission.toLowerCase()} ${module.toLowerCase()}` ===
+                                                                            `${rolePermission.name.toLowerCase()}`)}
+                                                                        onChange={() => handlePermissionToggle(module, permission)}
                                                                     />
                                                                 </TableCell>
-                                                            </TableRow>
-                                                        ))}
-
-                                                    </TableBody>
-                                                </Table>
-
-                                                {/*<Table>*/}
-                                                {/*    <TableHeader>*/}
-                                                {/*        <TableRow>*/}
-                                                {/*            <TableCell>Module Permission</TableCell>*/}
-                                                {/*            {permissions.map((header, index) => (*/}
-                                                {/*                <TableCell align="center" key={index}>{header}</TableCell>*/}
-                                                {/*            ))}*/}
-                                                {/*        </TableRow>*/}
-                                                {/*    </TableHeader>*/}
-                                                {/*    <TableBody>*/}
-                                                {/*        {selectedModules && selectedModules.length > 0 ? (*/}
-                                                {/*            selectedModules.map((module) => (*/}
-                                                {/*                <TableRow key={module}>*/}
-                                                {/*                    <TableCell>{module}</TableCell>*/}
-                                                {/*                    {permissions.map((permission, idx) => (*/}
-                                                {/*                        <TableCell align="center" key={idx}>*/}
-                                                {/*                            <Checkbox*/}
-                                                {/*                                checked={allPermissions.includes(`${module} ${permission}`)}*/}
-                                                {/*                                onChange={() => handlePermissionToggle(module, permission)}*/}
-                                                {/*                            />*/}
-                                                {/*                        </TableCell>*/}
-                                                {/*                    ))}*/}
-                                                {/*                </TableRow>*/}
-                                                {/*            ))*/}
-                                                {/*        ) : (*/}
-                                                {/*            <TableRow>*/}
-                                                {/*                <TableCell colSpan={permissions.length + 1} align="center">*/}
-                                                {/*                    No module access*/}
-                                                {/*                </TableCell>*/}
-                                                {/*            </TableRow>*/}
-                                                {/*        )}*/}
-                                                {/*    </TableBody>*/}
-                                                {/*</Table>*/}
-                                            </Tab>
-                                        ))}
-                                    </Tabs>
-                                </Grid>
-
-                                {/* Add Role Modal */}
-                                <Dialog open={openAddRole} onClose={handleCloseAddRole}>
-                                    <DialogTitle>Add Role</DialogTitle>
-                                    <DialogContent>
-                                        {/* Form to add new role */}
-                                        <input
-                                            type="text"
-                                            placeholder="Role Name"
-                                            value={newRoleName}
-                                            onChange={(e) => setNewRoleName(e.target.value)}
-                                        />
-                                    </DialogContent>
-                                    <DialogActions>
-                                        <Button onClick={handleCloseAddRole}>Cancel</Button>
-                                        <Button variant="contained" onClick={handleCreateRole}>Save</Button>
-                                    </DialogActions>
-                                </Dialog>
-
-                                {/* Edit Role Modal */}
-                                <Dialog open={openEditRole} onClose={handleCloseEditRole}>
-                                    <DialogTitle>Edit Role: {selectedRole.name}</DialogTitle>
-                                    <DialogContent>
-                                        <input
-                                            type="text"
-                                            placeholder="Role Name"
-                                            value={selectedRole.name}
-                                            onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
-                                        />
-                                    </DialogContent>
-                                    <DialogActions>
-                                        <Button onClick={handleCloseEditRole}>Cancel</Button>
-                                        <Button variant="contained" onClick={handleUpdateRole}>Save</Button>
-                                    </DialogActions>
-                                </Dialog>
-
-                                {/* Delete Role Modal */}
-                                <Dialog open={openDeleteRole} onClose={handleCloseDeleteRole}>
-                                    <DialogTitle>Delete Role: {selectedRole.name}?</DialogTitle>
-                                    <DialogContent>
-                                        Are you sure you want to delete this role?
-                                    </DialogContent>
-                                    <DialogActions>
-                                        <Button onClick={handleCloseDeleteRole}>Cancel</Button>
-                                        <Button variant="contained" color="error" onClick={handleDeleteRole}>Delete</Button>
-                                    </DialogActions>
-                                </Dialog>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={perms.length + 1} align="center">
+                                                            No module access
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </Box>
+                                )}
                             </Grid>
-                        </CardContent>
-                    </Card>
-                </Grow>
+                        </Grid>
+                    </CardContent>
+                </GlassCard>
             </Box>
-
         </>
-
     );
 };
-CompanySettings.layout = (page) => <App>{page}</App>;
+
+RolesSettings.layout = (page) => <App>{page}</App>;
 export default RolesSettings;
