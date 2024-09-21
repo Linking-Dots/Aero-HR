@@ -28,7 +28,7 @@ import {yellow} from "@mui/material/colors";
 import GlassCard from '@/Components/GlassCard.jsx'
 import GlassDropdown from "@/Components/GlassDropdown.jsx";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import {Checkbox} from '@mui/material';
+import {Checkbox, Switch} from '@mui/material';
 
 const UsersTable = ({allUsers, roles}) => {
     const [users, setUsers] = useState(allUsers);
@@ -43,46 +43,40 @@ const UsersTable = ({allUsers, roles}) => {
 
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const newValue = value;
-
-                const response = await fetch(route('user.updateRole', {id: user_id}), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({
-                        [key]: newValue,
-                    }),
+                const response = await axios.post(route('user.updateRole', { id: user_id }), {
+                    [key]: value,
                 });
 
-                const data = await response.json();
-                console.log(data)
-
-                if (response.ok) {
+                if (response.status === 200) {
                     setUsers((prevUsers) =>
                         prevUsers.map((user) => {
                             if (user.id === user_id) {
-                                const updatedUser = {...user};
-
-                                updatedUser[key] = newValue;
-                                return updatedUser;
+                                return { ...user, [key]: value };
                             }
                             return user;
                         })
                     );
-                    resolve(data.messages);
-                } else {
-                    reject(['Failed to update user role.']);
-                    console.error(data.errors);
+                    resolve([response.data.messages || 'Role updated successfully']);
                 }
             } catch (error) {
-                console.log(error);
-                reject(['An unexpected error occurred.']);
+
+                if (error.response) {
+                    if (error.response.status === 422) {
+                        // Handle validation errors
+                        reject(error.response.data.errors || ['Failed to update user role.']);
+                    } else {
+                        reject('An unexpected error occurred. Please try again later.');
+                    }
+                    console.error(error.response);
+                } else if (error.request) {
+                    reject('No response received from the server. Please check your internet connection.');
+                    console.error(error.request);
+                } else {
+                    reject('An error occurred while setting up the request.');
+                    console.error('Error', error.message);
+                }
             }
         });
-
-        console.log(users.find((user) => user.id === user_id))
 
         toast.promise(
             promise,
@@ -90,9 +84,9 @@ const UsersTable = ({allUsers, roles}) => {
                 pending: {
                     render() {
                         return (
-                            <div style={{display: 'flex', alignItems: 'center'}}>
-                                <CircularProgress/>
-                                <span style={{marginLeft: '8px'}}>Updating employee {key}...</span>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Updating employee {key}...</span>
                             </div>
                         );
                     },
@@ -101,11 +95,11 @@ const UsersTable = ({allUsers, roles}) => {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
+                        color: theme.palette.text.primary,
+                    },
                 },
                 success: {
-                    render({data}) {
+                    render({ data }) {
                         return (
                             <>
                                 {data.map((message, index) => (
@@ -119,8 +113,8 @@ const UsersTable = ({allUsers, roles}) => {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
+                        color: theme.palette.text.primary,
+                    },
                 },
                 error: {
                     render({ data }) {
@@ -135,12 +129,106 @@ const UsersTable = ({allUsers, roles}) => {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         backgroundColor: theme.glassCard.backgroundColor,
                         border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
-                }
+                        color: theme.palette.text.primary,
+                    },
+                },
             }
         );
     }
+
+    const handleStatusToggle = async (userId, value) => {
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                const response = await axios.put(route('user.toggleStatus', { id: userId }), {
+                    active: value,
+                });
+
+                if (response.status === 200) {
+                    setUsers((prevUsers) =>
+                        prevUsers.map((user) => {
+                            if (user.id === userId) {
+                                return { ...user, active: value };
+                            }
+                            return user;
+                        })
+                    );
+                    resolve([response.data.message || 'User status updated successfully']);
+                }
+            } catch (error) {
+                if (error.response) {
+                    if (error.response.status === 422) {
+                        reject(error.response.data.errors || ['Failed to update user status.']);
+                    } else {
+                        reject('An unexpected error occurred. Please try again later.');
+                    }
+                    console.error(error.response);
+                } else if (error.request) {
+                    reject('No response received from the server. Please check your internet connection.');
+                    console.error(error.request);
+                } else {
+                    reject('An error occurred while setting up the request.');
+                    console.error('Error', error.message);
+                }
+            }
+        });
+
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Updating user status...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data}
+                            </>
+                        );
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+            }
+        );
+    };
 
 
     const handleDelete = async (userId) => {
@@ -321,6 +409,12 @@ const UsersTable = ({allUsers, roles}) => {
                             >
                                 <Delete /> {/* Changed to a different icon for clarity */}
                             </IconButton>
+                        </Tooltip>
+                        <Tooltip content="Set Active Status" color="danger">
+                            <Switch
+                                checked={user.active === 1}
+                                onChange={() => handleStatusToggle(user.id, !user.active)}
+                            />
                         </Tooltip>
                     </div>
                 );

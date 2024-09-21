@@ -25,18 +25,15 @@ class UserController extends Controller
 
     public function index2(): \Inertia\Response
     {
-        $users = User::with('roles:name') // Load only the name from roles
+        $users = User::withTrashed() // Include soft-deleted users
+        ->with('roles:name')     // Load only the name from roles
         ->get()
             ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'profile_image' => $user->profile_image,
-                    'created_at' => $user->created_at,
-                    'roles' => $user->roles->pluck('name')->toArray(),  // Pluck role names directly
-                ];
+                // Convert the user object to an array and replace roles with plucked names
+                $userData = $user->toArray();
+                $userData['roles'] = $user->roles->pluck('name')->toArray(); // Replace roles with names
+
+                return $userData;
             });
         return Inertia::render('UsersList', [
             'title' => 'Users',
@@ -78,6 +75,30 @@ class UserController extends Controller
             return response()->json(['errors' => ['An unexpected error occurred. Please try again later.']], 500);
         }
     }
+
+
+    public function toggleStatus($id, Request $request)
+    {
+        $user = User::findOrFail($id);
+
+        // Toggle the active status based on the request
+        $user->active = $request->input('active');
+
+        // Handle soft delete or restore based on the new status
+        if ($user->active) {
+            $user->restore(); // Restore the user if they were soft deleted
+        } else {
+            $user->delete();  // Soft delete the user if marking inactive
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'User status updated successfully',
+            'active' => $user->active,
+        ]);
+    }
+
 
 
 }

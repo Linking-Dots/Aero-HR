@@ -262,7 +262,6 @@ class AttendanceController extends Controller
 
         // Get the date from the query parameter, defaulting to today's date if none is provided
         $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
-        Log::info($selectedDate);
 
 
 

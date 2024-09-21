@@ -16,6 +16,7 @@ import {usePage} from "@inertiajs/react";
 const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const { todayLeaves } = usePage().props;
+    console.log(todayLeaves)
 
     const [attendances, setAttendances] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);

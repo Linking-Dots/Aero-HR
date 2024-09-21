@@ -88,9 +88,13 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::post('/import-daily-works/', [DailyWorkController::class, 'import'])->name('dailyWorks.import');
     Route::delete('/delete-daily-work', [DailyWorkController::class, 'delete'])->name('dailyWorks.delete');
 
+
+    Route::get('/users', [UserController::class, 'index2'])->name('users');
     Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
     Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
     Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');
+    Route::put('/user/toggle-status/{id}', [UserController::class, 'toggleStatus'])->name('user.toggleStatus');
+
 
 
     Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
@@ -101,7 +105,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
     Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
 
-    Route::get('/users', [UserController::class, 'index2'])->name('users');
+
 
 
 

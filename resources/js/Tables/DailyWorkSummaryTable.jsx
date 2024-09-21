@@ -50,7 +50,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
     const theme = useTheme();
 
     const userIsAdmin = auth.roles.includes('Administrator');
-    const userIsSe = auth.roles.includes('se');
+    const userIsSe = auth.roles.includes('Supervision Engineer');
 
     const columns = [
         {

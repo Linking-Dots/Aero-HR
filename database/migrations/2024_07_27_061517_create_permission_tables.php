@@ -51,12 +51,6 @@ return new class extends Migration
             }
         });
 
-        // Create modules table
-        Schema::create('modules', function (Blueprint $table) {
-            $table->bigIncrements('id');  // module id
-            $table->string('name');       // module name
-            $table->timestamps();
-        });
 
         Schema::create($tableNames['model_has_permissions'], function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams) {
             $table->unsignedBigInteger($pivotPermission);
@@ -120,24 +114,6 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->primary([$pivotPermission, $pivotRole], 'role_has_permissions_permission_id_role_id_primary');
-        });
-
-        // Create role_has_modules table
-        Schema::create('role_has_modules', function (Blueprint $table) {
-            $table->unsignedBigInteger('role_id');
-            $table->unsignedBigInteger('module_id');
-
-            $table->foreign('role_id')
-                ->references('id') // role id
-                ->on('roles')
-                ->onDelete('cascade');
-
-            $table->foreign('module_id')
-                ->references('id') // module id
-                ->on('modules')
-                ->onDelete('cascade');
-
-            $table->primary(['role_id', 'module_id'], 'role_has_modules_role_id_module_id_primary');
         });
 
 

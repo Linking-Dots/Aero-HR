@@ -58,7 +58,7 @@ const columns = [
             </>
         ),
     },
-    ...(auth.roles.includes('se') ? [{
+    ...(auth.roles.includes('Supervision Engineer') ? [{
         name: 'Assigned',
         selector: row => row.assigned,
         sortable: true,
@@ -101,7 +101,7 @@ const columns = [
                 style={{overflowX: 'auto', whiteSpace: 'nowrap', maxWidth: '30ch', display: 'inline-block'}}
                 title={row.description}
             >
-                    {auth.roles.includes('se') || auth.roles.includes('Quality Control Inspector' || 'Asst. Quality Control Inspecto') ? row.description : row.description.substr(0, 30) + '...'}
+                    {auth.roles.includes('Supervision Engineer') || auth.roles.includes('Quality Control Inspector' || 'Asst. Quality Control Inspecto') ? row.description : row.description.substr(0, 30) + '...'}
                 </span>
         ),
     },

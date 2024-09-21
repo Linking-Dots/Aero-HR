@@ -14,8 +14,19 @@ class DashboardController extends Controller
 {
     public function index () {
         $user = Auth::user();
-        $users = User::all();
-        $tasks = $user->hasRole('se')
+        $users = User::with('roles:name') // Load only the name from roles
+        ->whereHas('roles', function ($query) {
+            $query->where('name', 'Employee'); // Filter for the Employee role
+        })
+            ->get()
+            ->map(function ($user) {
+                // Convert the user object to an array and replace roles with plucked names
+                $userData = $user->toArray();
+                $userData['roles'] = $user->roles->pluck('name')->toArray(); // Replace roles with names
+
+                return $userData;
+            });
+        $tasks = $user->hasRole('Supervision Engineer')
             ? DailyWork::where('incharge', $user->id)->get()
             : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspecto')
                 ? DailyWork::where('assigned', $user->id)->get()

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
@@ -13,7 +14,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable implements HasMedia
 {
-    use HasFactory, Notifiable, HasRoles, HasPushSubscriptions, InteractsWithMedia;
+    use HasFactory, Notifiable, HasRoles, HasPushSubscriptions, InteractsWithMedia, SoftDeletes;
 
 
 
@@ -85,6 +86,23 @@ class User extends Authenticatable implements HasMedia
     public function educations()
     {
         return $this->hasMany(Education::class);
+    }
+
+
+    public function setActiveStatus(bool $status)
+    {
+        if ($status) {
+            // Restore the user if it's soft deleted
+            if ($this->trashed()) {
+                $this->restore();
+            }
+            $this->active = true;
+        } else {
+            // Soft delete the user and mark as inactive
+            $this->active = false;
+            $this->delete();
+        }
+        $this->save();
     }
 
 }
