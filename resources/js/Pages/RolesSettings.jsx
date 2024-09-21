@@ -12,7 +12,8 @@ import {
     FormControlLabel,
     Grid,
     CardContent,
-    Grow
+    Grow,
+    Card
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -20,14 +21,16 @@ import AddIcon from '@mui/icons-material/Add';
 import {Head, usePage} from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import CompanySettings from "@/Pages/CompanySettings.jsx";
-import { Tabs, Tab, Card, CardBody, RadioGroup, Radio, Switch, Table,
+import { Tabs, Tab, CardBody, RadioGroup, Radio, Switch, Table,
     TableBody,
     TableCell,
     TableHeader,
     TableRow, } from "@nextui-org/react";
 import GlassCard from '@/Components/GlassCard.jsx'
+import {useTheme} from "@mui/material/styles";
 
 const RolesSettings = ({title}) => {
+    const theme = useTheme();
     const [allRoles, setAllRoles] = useState(usePage().props.roles);
     const [allPermissions, setAllPermissions] = useState(usePage().props.permissions);
     const [selectedRole, setSelectedRole] = useState({});
@@ -61,6 +64,8 @@ const RolesSettings = ({title}) => {
         const uniqueModules = [...new Set(modules)]; // Remove duplicates
         setSelectedModules(uniqueModules);
     }, [allPermissions]);
+
+    console.log(selectedModules)
 
     const handleOpenAddRole = () => setOpenAddRole(true);
     const handleCloseAddRole = () => setOpenAddRole(false);
@@ -146,7 +151,7 @@ const RolesSettings = ({title}) => {
             <Head title={title}/>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
-                    <GlassCard>
+                    <Card>
                         <CardHeader
                             title={title}
                             sx={{padding: '24px'}}
@@ -163,7 +168,7 @@ const RolesSettings = ({title}) => {
                                 {/* Right Column: Module Access */}
                                 <Grid item xs={12} sm={8} md={8} lg={9}>
                                     <Tabs aria-label="Roles" placement={'start'}>
-                                        {roles.map((role) => (
+                                        {allRoles.map((role) => (
                                             <Tab key={role.id} title={role.name}>
 
                                                 <h6>Module Access</h6>
@@ -184,39 +189,39 @@ const RolesSettings = ({title}) => {
                                                     </TableBody>
                                                 </Table>
 
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableCell>Module Permission</TableCell>
-                                                            {permissions.map((header, index) => (
-                                                                <TableCell align="center" key={index}>{header}</TableCell>
-                                                            ))}
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {selectedModules && selectedModules.length > 0 ? (
-                                                            selectedModules.map((module) => (
-                                                                <TableRow key={module}>
-                                                                    <TableCell>{module}</TableCell>
-                                                                    {permissions.map((permission, idx) => (
-                                                                        <TableCell align="center" key={idx}>
-                                                                            <Checkbox
-                                                                                checked={userPermissions.includes(`${module} ${permission}`)}
-                                                                                onChange={() => handlePermissionToggle(module, permission)}
-                                                                            />
-                                                                        </TableCell>
-                                                                    ))}
-                                                                </TableRow>
-                                                            ))
-                                                        ) : (
-                                                            <TableRow>
-                                                                <TableCell colSpan={permissions.length + 1} align="center">
-                                                                    No module access
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
+                                                {/*<Table>*/}
+                                                {/*    <TableHeader>*/}
+                                                {/*        <TableRow>*/}
+                                                {/*            <TableCell>Module Permission</TableCell>*/}
+                                                {/*            {permissions.map((header, index) => (*/}
+                                                {/*                <TableCell align="center" key={index}>{header}</TableCell>*/}
+                                                {/*            ))}*/}
+                                                {/*        </TableRow>*/}
+                                                {/*    </TableHeader>*/}
+                                                {/*    <TableBody>*/}
+                                                {/*        {selectedModules && selectedModules.length > 0 ? (*/}
+                                                {/*            selectedModules.map((module) => (*/}
+                                                {/*                <TableRow key={module}>*/}
+                                                {/*                    <TableCell>{module}</TableCell>*/}
+                                                {/*                    {permissions.map((permission, idx) => (*/}
+                                                {/*                        <TableCell align="center" key={idx}>*/}
+                                                {/*                            <Checkbox*/}
+                                                {/*                                checked={allPermissions.includes(`${module} ${permission}`)}*/}
+                                                {/*                                onChange={() => handlePermissionToggle(module, permission)}*/}
+                                                {/*                            />*/}
+                                                {/*                        </TableCell>*/}
+                                                {/*                    ))}*/}
+                                                {/*                </TableRow>*/}
+                                                {/*            ))*/}
+                                                {/*        ) : (*/}
+                                                {/*            <TableRow>*/}
+                                                {/*                <TableCell colSpan={permissions.length + 1} align="center">*/}
+                                                {/*                    No module access*/}
+                                                {/*                </TableCell>*/}
+                                                {/*            </TableRow>*/}
+                                                {/*        )}*/}
+                                                {/*    </TableBody>*/}
+                                                {/*</Table>*/}
                                             </Tab>
                                         ))}
                                     </Tabs>
@@ -270,7 +275,7 @@ const RolesSettings = ({title}) => {
                                 </Dialog>
                             </Grid>
                         </CardContent>
-                    </GlassCard>
+                    </Card>
                 </Grow>
             </Box>
 

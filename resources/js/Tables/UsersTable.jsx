@@ -412,7 +412,7 @@ const UsersTable = ({allUsers, roles}) => {
                         </Tooltip>
                         <Tooltip content="Set Active Status" color="danger">
                             <Switch
-                                checked={user.active === 1}
+                                checked={user.active}
                                 onChange={() => handleStatusToggle(user.id, !user.active)}
                             />
                         </Tooltip>
