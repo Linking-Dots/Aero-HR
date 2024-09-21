@@ -9,7 +9,7 @@
     <meta content="Emam Hosen" name="author" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="content-type" content="max-age=86400" />
-    <link rel="manifest" href="{{ asset('/manifest.json') }}">
+{{--    <link rel="manifest" href="{{ asset('/manifest.json') }}">--}}
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
 

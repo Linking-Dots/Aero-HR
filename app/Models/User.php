@@ -66,6 +66,7 @@ class User extends Authenticatable implements HasMedia
         'report_to' => 'integer',
         'designation' => 'integer',
         'department' => 'integer',
+        'active' => 'boolean',
     ];
 
     public function ledProjects()
