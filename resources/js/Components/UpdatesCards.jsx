@@ -135,7 +135,6 @@ const UpdateSection = ({ props, title, items, users }) => {
 
 const UpdatesCards = (props) => {
     const { upcomingLeaves, users, auth } = usePage().props;
-    console.log(auth.user.id)
     const today = dayjs(); // Today's date
     const tomorrow = today.add(1, 'day');
     const sevenDaysFromNow = tomorrow.add(7, 'day');

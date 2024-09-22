@@ -109,7 +109,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
                 const data = await response.json();
 
-                console.log(data)
 
                 if (response.ok) {
                     setData(data.data);

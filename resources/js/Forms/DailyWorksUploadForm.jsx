@@ -75,8 +75,6 @@ const DailyWorkUploadForm = ({ open, closeModal, setTotalRows, setData }) => {
 
                 const data = await response.json();
 
-                console.log(data)
-
                 if (response.ok) {
                     setData(data.data);
                     setTotalRows(data.total);
