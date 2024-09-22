@@ -234,6 +234,7 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     return (
         <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
             <Table
+                isStriped
                 selectionMode="multiple"
                 selectionBehavior={'toggle'}
                 isCompact

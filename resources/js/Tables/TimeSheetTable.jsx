@@ -180,6 +180,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                             ) : (
                                 <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
                                     <Table
+                                        isStriped
                                         selectionMode="multiple"
                                         selectionBehavior={'toggle'}
                                         isCompact

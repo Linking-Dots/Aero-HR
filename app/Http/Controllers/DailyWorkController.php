@@ -262,7 +262,7 @@ class DailyWorkController extends Controller
 
 
             $user = Auth::user();
-            $perPage = $request->get('perPage', 10); // Default to 10 items per page
+            $perPage = $request->get('perPage', 30); // Default to 10 items per page
             $page = $request->get('page', 1);
 
             // Base query depending on user's role
@@ -407,7 +407,7 @@ class DailyWorkController extends Controller
             $dailyWork->delete();
 
             $user = Auth::user();
-            $perPage = $request->get('perPage', 10); // Default to 10 items per page
+            $perPage = $request->get('perPage', 30); // Default to 10 items per page
             $page = $request->get('page', 1);
             $search = $request->get('search'); // Search query
             $statusFilter = $request->get('status'); // Filter by status

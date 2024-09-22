@@ -51,7 +51,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [openModalType, setOpenModalType] = useState(null);
     const [search, setSearch] = useState('');
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [perPage, setPerPage] = useState(10);
+    const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
 
     const fetchData = async (page, perPage, filterData) => {

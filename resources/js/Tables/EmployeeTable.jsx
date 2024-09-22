@@ -375,6 +375,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                 isCompact
                 isHeaderSticky
                 removeWrapper
+                isStriped
                 aria-label="Employees Table"
             >
                 <TableHeader columns={columns}>
