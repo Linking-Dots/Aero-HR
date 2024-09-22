@@ -26,10 +26,13 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import {router, usePage} from "@inertiajs/react";
 import { Inertia } from '@inertiajs/inertia';
 
-const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, currentLeave, allUsers }) => {
+const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, allUsers }) => {
     const {auth} = usePage().props;
     const theme = useTheme();
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
+    // Initialize state variables
+    const [leaveTypes, setLeaveTypes] = useState(leavesData.leaveTypes || []);
+    const [leaveCounts, setLeaveCounts] = useState([]);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
     const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
     const [toDate, setToDate] = useState(currentLeave?.to_date || '');
@@ -39,6 +42,16 @@ const LeaveForm = ({ open, closeModal, leaveTypes, leaveCounts, setLeavesData, c
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
     const [daysUsed, setDaysUsed] = useState('');
+
+
+
+    // Populate state when leavesData or auth changes
+    useEffect(() => {
+        if (leavesData) {
+            setLeaveTypes(leavesData.leaveTypes || []);
+            setLeaveCounts(leavesData.leaveCountsByUser[user_id] || []);
+        }
+    }, [leavesData, user_id]);
 
 
     useEffect(() => {

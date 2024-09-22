@@ -26,20 +26,18 @@ class DailyWorkController extends Controller
         $user = Auth::user();
         $allData = $user->hasRole('Supervision Engineer')
             ? [
-                'dailyWorks' => DailyWork::with('reports')->where('incharge', $user->id)->get(),
                 'allInCharges' => [],
                 'juniors' => User::where('report_to', $user->id)->get(),
 
             ]
             : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
-                ? ['dailyWorks' => DailyWork::with('reports')->where('assigned', $user->id)->get()]
+                ? []
                 : ($user->hasRole('Administrator')
                     ? [
-                        'dailyWorks' => DailyWork::with('reports')->get(),
                         'allInCharges' => User::role('Supervision Engineer')->get(),
                         'juniors' => [],
                     ]
-                    : ['dailyWorks' => []]
+                    : []
                 )
             );
         $reports = Report::all();
@@ -62,6 +60,30 @@ class DailyWorkController extends Controller
         ]);
     }
 
+
+    public function paginate(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->get('perPage', 10); // Default to 10 items per page
+        $page = $request->get('page', 1);
+
+        $query = $user->hasRole('Supervision Engineer')
+            ? DailyWork::with('reports')->where('incharge', $user->id)
+            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
+                ? DailyWork::with('reports')->where('assigned', $user->id)
+                : ($user->hasRole('Administrator')
+                    ? DailyWork::with('reports')
+                    : DailyWork::query()
+                )
+            );
+
+        // Order by 'date' in descending order
+        $paginatedDailyWorks = $query->orderBy('date', 'desc')->paginate($perPage, ['*'], 'page', $page);
+
+        Log::info($paginatedDailyWorks);
+
+        return response()->json($paginatedDailyWorks);
+    }
 
 
 
@@ -371,15 +393,6 @@ class DailyWorkController extends Controller
     }
 
 
-
-    public function getLatestTimestamp()
-    {
-        $latestTimestamp = DailyWork::max('updated_at'); // Assuming 'updated_at' is the timestamp field
-
-        return response()->json(['timestamp' => $latestTimestamp]);
-    }
-
-
     public function addTask(Request $request)
     {
         $user = Auth::user();
@@ -490,152 +503,12 @@ class DailyWorkController extends Controller
 
 
 
-    public function importTasks()
-    {
-        $title = 'Import Tasks';
-        $user = Auth::user();
-        return view('task/import',compact('user','title'));
-    }
-
-
-
-    private function handleDuplicate(DailyWork $existingTask, array $importedTask, string $inchargeName): void
-    {
-
-    }
-
-    public function exportTasks()
-    {
-//        $settings = [
-//            'title' => 'All Tasks',
-//        ];
-//        $team = Auth::team();
-//        return view('task/add',compact('team', 'settings'));
-    }
-
-
-
-
     /**
      * Update the status of a task via AJAX request.
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateTaskStatus(Request $request): \Illuminate\Http\JsonResponse
-    {
-        try {
-            // Find task by ID
-            $task = DailyWork::find($request->id);
-
-            // If task not found, return 404 error response
-            if (!$task) {
-                return response()->json(['error' => 'DailyWork not found'], 404);
-            }
-
-            // Validate status field
-            $request->validate([
-                'status' => 'required|string', // Add your validation rules here
-            ]);
-
-            // Update task status
-            $task->status = $request->status;
-            $task->save();
-
-            // Return JSON response with success message
-            return response()->json(['message' => 'DailyWork status updated to ']);
-        } catch (ValidationException $e) {
-            // Validation failed, return error response
-            return response()->json(['error' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            // Other exceptions occurred, return error response
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function assignTask(Request $request): \Illuminate\Http\JsonResponse
-    {
-        try {
-            // Find task by ID
-            $task = Tasks::find($request->task_id);
-
-            // If task not found, return 404 error response
-            if (!$task) {
-                return response()->json(['error' => 'DailyWork not found'], 404);
-            }
-
-            $user = User::where('user_name', $request->user_name)->first();
-
-            // Update task status
-            $task->assigned = $request->user_name;
-            $task->save();
-
-            // Return JSON response with success message
-            return response()->json(['message' => 'DailyWork assigned to '.$user->first_name]);
-        } catch (ValidationException $e) {
-            // Validation failed, return error response
-            return response()->json(['error' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            // Other exceptions occurred, return error response
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function assignIncharge(Request $request): \Illuminate\Http\JsonResponse
-    {
-        try {
-            // Find task by ID
-            $task = Tasks::find($request->task_id);
-
-            // If task not found, return 404 error response
-            if (!$task) {
-                return response()->json(['error' => 'DailyWork not found'], 404);
-            }
-
-            $user = User::where('user_name', $request->user_name)->first();
-
-            // Update task status
-            $task->incharge = $request->user_name;
-            $task->save();
-
-            // Return JSON response with success message
-            return response()->json(['message' => 'DailyWork incharge updated to '.$user->first_name]);
-        } catch (ValidationException $e) {
-            // Validation failed, return error response
-            return response()->json(['error' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            // Other exceptions occurred, return error response
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-
-    public function updateInspectionDetails(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $task = Tasks::findOrFail($request->id);
-        $task->inspection_details = $request->inspection_details;
-        $task->save();
-
-        return response()->json(['message' => 'Inspection details updated successfully']);
-    }
-
-    public function updateRfiSubmissionDate(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $task = Tasks::findOrFail($request->id);
-        $task->rfi_submission_date = $request->date;
-        $task->save();
-
-        return response()->json(['message' => 'RFI Submission date updated to ']);
-    }
-
-    public function updateCompletionDateTime(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $task = Tasks::findOrFail($request->id);
-        $task->completion_time = $request->dateTime;
-        $task->save();
-        return response()->json(['message' => 'Completion date-time updated to ']);
-    }
-
     public function getOrdinalNumber($number): string
     {
         $number = (int) $number; // Ensure integer type

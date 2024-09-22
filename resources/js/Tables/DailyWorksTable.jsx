@@ -1,8 +1,9 @@
-import React from 'react';
 import DataTable from 'react-data-table-component';
 import {Avatar, Box, CircularProgress, GlobalStyles, IconButton, MenuItem, Select, TextField,} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
 import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
 import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
@@ -46,9 +47,11 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ data, loading, handleClickOpen, allInCharges, setCurrentPage, setPerPage, totalRows, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
+
+
 
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
@@ -501,6 +504,19 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
         }
     };
 
+    // Fetch data with pagination
+
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handlePerPageChange = (newPerPage) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
+    };
+
+
 
 
     return (
@@ -516,11 +532,14 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
             />
             <CustomDataTable
                 columns={columns}
-                data={filteredData}
-                defaultSortField="date"
-                defaultSortFieldId={1}
-                defaultSortAsc={false}
+                data={data}
+                progressPending={loading}
                 pagination
+                paginationServer
+                paginationTotalRows={totalRows}
+                onChangePage={handlePageChange}
+                onChangeRowsPerPage={handlePerPageChange}
+                defaultSortField="date"
                 highlightOnHover
                 responsive
                 dense

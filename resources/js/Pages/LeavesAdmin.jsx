@@ -51,9 +51,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     open={openModalType === 'add_leave'}
                     setLeavesData={setLeavesData}
                     closeModal={closeModal}
-                    leaveTypes={leavesData.leaveTypes}
-                    leaveCounts={leavesData.leaveCountsByUser[auth.user.id] ?
-                        leavesData.leaveCountsByUser[auth.user.id] : []}
+                    leavesData={leavesData}
                 />
             )}
             {openModalType === 'edit_leave' && (

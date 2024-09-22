@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::get('/daily-works-paginate', [DailyWorkController::class, 'paginate'])->name('dailyWorks.paginate');
     Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('dailyWorkSummary');
     Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
 

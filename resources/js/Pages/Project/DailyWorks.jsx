@@ -31,6 +31,8 @@ import { styled } from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
 import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 import { useTheme } from "@mui/material/styles";
+import axios from "axios";
+import {toast} from "react-toastify";
 
 dayjs.extend(minMax);
 
@@ -71,14 +73,52 @@ const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
 const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
     const theme = useTheme();
 
-    const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
-    const [filteredData, setFilteredData] = useState(allData.dailyWorks);
-    const dates = useMemo(() => dailyWorks.map(work => dayjs(work.date)), [dailyWorks]);
+    // const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [totalRows, setTotalRows] = useState(0);
+    const [filteredData, setFilteredData] = useState([]);
+    const dates = useMemo(() => data.map(work => dayjs(work.date)), [data]);
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
     const [openModalType, setOpenModalType] = useState(null);
     const [search, setSearch] = useState('');
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const [perPage, setPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const fetchData = async (page, perPage) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(route('dailyWorks.paginate'), {
+                params: {
+                    page,
+                    perPage
+                }
+            });
+            console.log(response.data)
+            setData(response.data.data);
+            setTotalRows(response.data.total);
+            setLoading(false);
+        } catch (error) {
+            toast.error('Failed to fetch data.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData(currentPage, perPage);
+    }, [currentPage, perPage]);
+
+
 
     const handleClickOpen = useCallback((taskId, modalType) => {
         setTaskIdToDelete(taskId);
@@ -129,7 +169,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
 
     useEffect(() => {
-        const searchedData = dailyWorks.filter(item =>
+        const searchedData = data.filter(item =>
             Object.values(item).some(val =>
                 String(val).toLowerCase().includes(search)
             )
@@ -147,8 +187,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         });
 
         setFilteredData(filteredWorks);
-    }, [filterData, search, dailyWorks]);
-
+    }, [filterData, search, data]);
 
 
 
@@ -352,14 +391,19 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                 }}
                             />
                             <DailyWorksTable
-                                setDailyWorks={setDailyWorks}
+                                setData={setData}
                                 filteredData={filteredData}
                                 setFilteredData={setFilteredData}
                                 reports={reports}
                                 setCurrentRow={setCurrentRow}
+                                setCurrentPage={setCurrentPage}
+                                setPerPage={setPerPage}
                                 handleClickOpen={handleClickOpen}
                                 openModal={openModal}
                                 juniors={allData.juniors}
+                                totalRows={totalRows}
+                                loading={loading}
+                                data={data}
                                 allInCharges={allData.allInCharges}
                                 jurisdictions={jurisdictions}
                                 users={users}
