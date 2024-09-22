@@ -6,6 +6,7 @@ import UpdatesCards from "@/Components/UpdatesCards.jsx";
 import LeaveCard from "@/Components/LeaveCard.jsx";
 import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
 import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
+import NoticeBoard from '@/Components/NoticeBoard.jsx'
 import App from "@/Layouts/App.jsx";
 import {Grid, Box} from "@mui/material";
 
@@ -33,6 +34,7 @@ export default function Dashboard({auth,users}) {
         <>
             <Head title="Dashboard"/>
             <Box>
+                {/*<NoticeBoard/>*/}
                 <Grid container >
                     {auth.roles.includes('Employee') &&
                         <Grid item xs={12} md={6}>
