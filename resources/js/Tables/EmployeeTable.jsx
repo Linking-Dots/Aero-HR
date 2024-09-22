@@ -36,6 +36,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
     const [anchorEls, setAnchorEls] = useState({});
 
     async function handleChange(key, user_id, value_id) {
+        console.log(value_id)
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const newValue = value_id;
@@ -73,7 +74,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     );
                     resolve(data.messages);
                 } else {
-                    reject(data.messages || 'Failed to update profile information.');
+                    reject([data.messages || 'Failed to update profile information.']);
                     console.error(data.errors);
                 }
             } catch (error) {
@@ -270,7 +271,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                             labelId="department"
                             id={`department-select-${user.id}`}
                             value={user.department || 'na'}
-                            onChange={(event) => handleChange('department', user.id, event)}
+                            onChange={(event) => handleChange('department', user.id, event.target.value)}
                             label="Department"
                             variant={'outlined'}
                             MenuProps={{
@@ -306,7 +307,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                             labelId="designation"
                             id={`designation-select-${user.id}`}
                             value={user.designation || 'na'}
-                            onChange={(event) => handleChange('designation', user.id, event)}
+                            onChange={(event) => handleChange('designation', user.id, event.target.value)}
                             disabled={!user.department}
                             label="Designation"
                             MenuProps={{
@@ -363,8 +364,6 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                         <Tooltip content="Delete Leave" color="danger">
                             <IconButton
                                 className="text-lg text-danger cursor-pointer active:opacity-50"
-                                component={Link}
-                                href={route('profile', { user: user.id })} // Or change the route if different action is required
                                 onClick={() => {
                                     handleDelete(user.id);
                                 }}
