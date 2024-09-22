@@ -30,7 +30,6 @@ const EducationInformationDialog = ({ user, open, closeModal, setUser }) => {
     const theme = useTheme();
 
     const handleEducationChange = (index, field, value) => {
-        console.log(value)
         const updatedList = [...educationList];
         updatedList[index] = { ...updatedList[index], [field]: value };
         setEducationList(updatedList);

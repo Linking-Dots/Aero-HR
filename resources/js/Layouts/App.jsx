@@ -50,7 +50,6 @@ function App({ children }) {
 
     const toggleDarkMode = () => {
         setDarkMode(!darkMode);
-        console.log(darkMode)
     };
     const toggleSideBar = () => {
         setSideBarOpen(!sideBarOpen);

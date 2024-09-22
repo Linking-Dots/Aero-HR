@@ -66,7 +66,13 @@ class DailyWorkController extends Controller
         $user = Auth::user();
         $perPage = $request->get('perPage', 10); // Default to 10 items per page
         $page = $request->get('page', 1);
+        $search = $request->get('search'); // Search query
+        $statusFilter = $request->get('status'); // Filter by status
+        $inChargeFilter = $request->get('inCharge'); // Filter by inCharge
+        $startDate = $request->get('startDate'); // Filter by start date
+        $endDate = $request->get('endDate'); // Filter by end date
 
+        // Base query depending on user's role
         $query = $user->hasRole('Supervision Engineer')
             ? DailyWork::with('reports')->where('incharge', $user->id)
             : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
@@ -77,13 +83,37 @@ class DailyWorkController extends Controller
                 )
             );
 
+        // Apply search if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('date', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Apply status filter if provided
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        // Apply in-charge filter if provided
+        if ($inChargeFilter) {
+            $query->where('incharge', $inChargeFilter);
+        }
+
+        // Apply date range filter if provided
+        if ($startDate && $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+        }
+
         // Order by 'date' in descending order
         $paginatedDailyWorks = $query->orderBy('date', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
-        Log::info($paginatedDailyWorks);
-
+        // Return the paginated response as JSON
         return response()->json($paginatedDailyWorks);
     }
+
 
 
 

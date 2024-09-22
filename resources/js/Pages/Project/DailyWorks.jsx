@@ -33,6 +33,7 @@ import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
+import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
 
 dayjs.extend(minMax);
 
@@ -78,7 +79,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [loading, setLoading] = useState(false);
     const [totalRows, setTotalRows] = useState(0);
     const [filteredData, setFilteredData] = useState([]);
-    const dates = useMemo(() => data.map(work => dayjs(work.date)), [data]);
+
     const [currentRow, setCurrentRow] = useState();
     const [taskIdToDelete, setTaskIdToDelete] = useState(null);
     const [openModalType, setOpenModalType] = useState(null);
@@ -93,14 +94,19 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             const response = await axios.get(route('dailyWorks.paginate'), {
                 params: {
                     page,
-                    perPage
+                    perPage,
+                    search: search, // Assuming 'report' is the search field
+                    status: filterData.status !== 'all' ? filterData.status : '',
+                    inCharge: filterData.incharge !== 'all' ? filterData.incharge : '',
+                    startDate: filterData.startDate?.format('YYYY-MM-DD'), // Send startDate in proper format
+                    endDate: filterData.endDate?.format('YYYY-MM-DD'),
                 }
             });
-            console.log(response.data)
             setData(response.data.data);
             setTotalRows(response.data.total);
             setLoading(false);
         } catch (error) {
+            console.log(error)
             toast.error('Failed to fetch data.', {
                 icon: '🔴',
                 style: {
@@ -113,12 +119,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchData(currentPage, perPage);
-    }, [currentPage, perPage]);
-
-
 
     const handleClickOpen = useCallback((taskId, modalType) => {
         setTaskIdToDelete(taskId);
@@ -139,18 +139,28 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     }, []);
 
     const [filterData, setFilterData] = useState({
-        startDate: dayjs.min(...dates),
-        endDate: dayjs.max(...dates),
+        startDate: null,
+        endDate: null,
         status: 'all',
         incharge: 'all',
         report: '',
     });
 
     const handleFilterChange = useCallback((key, value) => {
-        setFilterData(prevState => ({
-            ...prevState,
-            [key]: value,
-        }));
+        if (key === 'dates') {
+            const [startDate, endDate] = value; // Destructure the new values
+            setFilterData(prevState => ({
+                ...prevState,
+                startDate, // Update startDate
+                endDate,   // Update endDate
+            }));
+        } else {
+            setFilterData(prevState => ({
+                ...prevState,
+                [key]: value,
+            }));
+        }
+
     }, []);
 
     const handleSearch = (event) => {
@@ -158,36 +168,12 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         setSearch(value);
     };
 
-    useEffect(() => {
-        // Update startDate and endDate when dates array changes
-        setFilterData(prevState => ({
-            ...prevState,
-            startDate: dayjs.min(...dates),
-            endDate: dayjs.max(...dates),
-        }));
-    }, [dates]);
 
 
     useEffect(() => {
-        const searchedData = data.filter(item =>
-            Object.values(item).some(val =>
-                String(val).toLowerCase().includes(search)
-            )
-        );
 
-        const filteredWorks = searchedData.filter(work => {
-            const workDate = dayjs(work.date);
-
-            return (
-                workDate.isBetween(filterData.startDate, filterData.endDate, null, '[]') &&
-                (filterData.status === 'all' || !filterData.status || work.status === filterData.status) &&
-                (filterData.incharge === 'all' || !filterData.incharge || work.incharge === filterData.incharge) &&
-                (filterData.report ? work.report === filterData.report : true)
-            );
-        });
-
-        setFilteredData(filteredWorks);
-    }, [filterData, search, data]);
+        fetchData(currentPage, perPage, filterData);
+    }, [currentPage, perPage, filterData, search]);
 
 
 
@@ -297,18 +283,17 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     <Grid item xs={12} sm={6} md={3}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                             <Box display="flex" alignItems="center">
-                                                <StyledDatePicker
-                                                    label="Start date"
-                                                    value={filterData.startDate}
-                                                    onChange={(newValue) => handleFilterChange('startDate', newValue)}
-                                                    textField={(params) => <TextField {...params} fullWidth size="small" />}
-                                                />
-                                                <Box sx={{ mx: 1 }}> to </Box>
-                                                <StyledDatePicker
-                                                    label="End date"
-                                                    value={filterData.endDate}
-                                                    onChange={(newValue) => handleFilterChange('endDate', newValue)}
-                                                    textField={(params) => <TextField {...params} fullWidth size="small" />}
+                                                <DateRangePicker
+                                                    value={[filterData.startDate, filterData.endDate]}
+                                                    onChange={(newValue) => handleFilterChange('dates', newValue)}
+                                                    localeText={{ start: 'Start date', end: 'End date' }}
+                                                    renderInput={(startProps, endProps) => (
+                                                        <>
+                                                            <TextField {...startProps} fullWidth size="small" />
+                                                            <Box sx={{ mx: 1 }}> to </Box>
+                                                            <TextField {...endProps} fullWidth size="small" />
+                                                        </>
+                                                    )}
                                                 />
                                             </Box>
                                         </LocalizationProvider>
@@ -322,8 +307,19 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                                 label="Status"
                                                 name="status"
                                                 value={filterData.status}
-
                                                 onChange={(e) => handleFilterChange('status', e.target.value)}
+                                                MenuProps={{
+                                                    PaperProps: {
+                                                        sx: {
+                                                            backdropFilter: 'blur(16px) saturate(200%)',
+                                                            backgroundColor: theme.glassCard.backgroundColor,
+                                                            border: theme.glassCard.border,
+                                                            borderRadius: 2,
+                                                            boxShadow:
+                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                                        },
+                                                    },
+                                                }}
                                             >
                                                 <MenuItem value="all">All</MenuItem>
                                                 <MenuItem value="completed">Completed</MenuItem>
@@ -344,6 +340,18 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                                     name="incharge"
                                                     value={filterData.incharge}
                                                     onChange={(e) => handleFilterChange('incharge', e.target.value)}
+                                                    MenuProps={{
+                                                        PaperProps: {
+                                                            sx: {
+                                                                backdropFilter: 'blur(16px) saturate(200%)',
+                                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                                border: theme.glassCard.border,
+                                                                borderRadius: 2,
+                                                                boxShadow:
+                                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                                            },
+                                                        },
+                                                    }}
                                                 >
                                                     <MenuItem value="all">All</MenuItem>
                                                     {allData.allInCharges.map(inCharge => (
@@ -357,12 +365,26 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     )}
                                     <Grid item xs={6} sm={4} md={3}>
                                         <FormControl fullWidth>
-                                            <InputLabel>Select Report</InputLabel>
+                                            <InputLabel id="report-label">Report</InputLabel>
                                             <Select
                                                 variant="outlined"
-                                                name="qc_report"
+                                                labelId="report-label"
+                                                label="Report"
+                                                name="report"
                                                 value={filterData.report}
                                                 onChange={(e) => handleFilterChange('report', e.target.value)}
+                                                MenuProps={{
+                                                    PaperProps: {
+                                                        sx: {
+                                                            backdropFilter: 'blur(16px) saturate(200%)',
+                                                            backgroundColor: theme.glassCard.backgroundColor,
+                                                            border: theme.glassCard.border,
+                                                            borderRadius: 2,
+                                                            boxShadow:
+                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                                                        },
+                                                    },
+                                                }}
                                             >
                                                 <MenuItem value="" disabled>Select Report</MenuItem>
                                                 {/* Add your report options here */}

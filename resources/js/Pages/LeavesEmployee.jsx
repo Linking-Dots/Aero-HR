@@ -14,8 +14,6 @@ const LeavesEmployee = ({ title, allUsers }) => {
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
 
-    console.log(leavesData)
-
     const [allLeaves, setAllLeaves] = useState(leavesData.allLeaves);
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
 

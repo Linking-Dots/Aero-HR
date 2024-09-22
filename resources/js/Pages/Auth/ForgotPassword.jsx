@@ -14,8 +14,6 @@ export default function ForgotPassword({status}) {
         otp: '',
         newPassword: ''
     });
-    console.log(status);
-    console.log(post);
 
 
     const handleChange = (field, value) => {

@@ -34,7 +34,6 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     };
 
     const handleMenuItemClick = async (leaveId, newStatus) => {
-        console.log(leaveId, newStatus)
         handleClose();
         await updateLeaveStatus(leaveId, 'status', newStatus);
     };

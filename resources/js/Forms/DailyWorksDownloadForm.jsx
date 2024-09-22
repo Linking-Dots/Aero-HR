@@ -24,7 +24,6 @@ import * as XLSX from 'xlsx';
 
 
 const DailyWorksDownloadForm = ({ open, closeModal,  filteredData, users }) => {
-    console.log(users)
 
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();

@@ -33,7 +33,6 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setDailyWorks}) => {
         side: currentRow.side || 'SR-R',
         qty_layer: currentRow.qty_layer || '',
     });
-    console.log(dailyWorkData)
 
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);

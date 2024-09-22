@@ -36,7 +36,6 @@ const RolesSettings = ({ title }) => {
     const [roleHasPermissions, setRoleHasPermissions] = useState(role_has_permissions);
 
     useEffect(() => {
-        console.log('setting roles, permission, roles_has_permissions')
         setAllRoles(roles);
         setAllPermissions(permissions);
         setRoleHasPermissions(role_has_permissions);
@@ -74,14 +73,12 @@ const RolesSettings = ({ title }) => {
             return parts[1]; // Get the module name
         }))];
 
-        console.log('setting.....')
         setSelectedRolePermissions(rolePermissions);
         setSelectedRoleModules(roleModules);
 
     }, [allRoles, allPermissions, roleHasPermissions]);
 
 
-    console.log(selectedRoleModules)
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -101,7 +98,7 @@ const RolesSettings = ({ title }) => {
 
 
     const handleModuleToggle = (module) => {
-        console.log(module)
+
 
         // Make API request to update role permissions for the module
         const promise = new Promise(async (resolve, reject) => {
@@ -111,7 +108,6 @@ const RolesSettings = ({ title }) => {
                     module: module,
                 });
 
-                console.log(response.data)
 
                 if (response.status === 200) {
                     setAllRoles(response.data.roles);

@@ -120,9 +120,6 @@ const SalaryInformationForm = ({user, setUser}) => {
 
         setDataChanged(hasChanges);
 
-        console.log(initialUserData);
-        console.log(changedUserData);
-
     }, [initialUserData, changedUserData, user]);
 
     const handleSubmit = async (event) => {

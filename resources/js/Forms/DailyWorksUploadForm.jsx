@@ -56,16 +56,12 @@ const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks 
 
 
     const handleSubmit = async (event) => {
-        console.log(file);
         event.preventDefault();
         setProcessing(true);
 
         const formData = new FormData();
         formData.append('file', file);
 
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value.name}`); // Assuming value is a File object
-        }
 
         const promise = new Promise(async (resolve, reject) => {
             try {

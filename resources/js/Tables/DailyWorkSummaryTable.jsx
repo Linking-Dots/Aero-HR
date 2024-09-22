@@ -174,7 +174,7 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
                 id: taskId,
                 [key]: value,
             });
-            console.log(response);
+
 
             if (response.status === 200) {
                 setDailyWorks(prevTasks =>
