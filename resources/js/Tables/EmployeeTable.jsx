@@ -58,7 +58,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                 if (response.ok) {
                     setUsers((prevUsers) =>
                         prevUsers.map((user) => {
-                            if (user.id === user_id) {
+                            if (String(user.id) === String(user_id)) {
                                 const updatedUser = {...user};
 
                                 if (key === 'department' && user.department !== newValue) {
@@ -394,8 +394,6 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
         <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
             <Table
                 key={users}
-                selectionMode="multiple"
-                selectionBehavior={'toggle'}
                 fullWidth
                 isCompact
                 isHeaderSticky

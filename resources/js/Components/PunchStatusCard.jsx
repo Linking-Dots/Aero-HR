@@ -9,7 +9,6 @@ import {useTheme} from "@mui/material/styles";
 
 
 const PunchStatusCard = ({handlePunchSuccess }) => {
-    toast.info("You are using " + navigator.userAgentData.platform)
     const [position, setPosition] = useState(null);
     const [punched, setPunched] = useState(null);
 
