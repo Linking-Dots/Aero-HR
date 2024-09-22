@@ -1,39 +1,14 @@
-import {
-    FormControl,
-    IconButton, InputLabel, MenuItem,
-    Typography, Select
-} from "@mui/material";
+import {Checkbox, FormControl, IconButton, InputLabel, MenuItem, Select, Switch} from "@mui/material";
 import {Link} from '@inertiajs/react';
-import {AccountCircle, Delete, Edit} from '@mui/icons-material';
+import {Delete, Edit} from '@mui/icons-material';
 import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
 import CircularProgress from "@mui/material/CircularProgress";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import {
-
-    TableColumn,
-    TableHeader,
-    Tooltip,
-    User,
-    Table,
-    TableBody,
-    TableRow,
-    TableCell,
-    Chip,
-    getKeyValue, DropdownTrigger, Button, DropdownMenu, DropdownItem
-} from "@nextui-org/react";
-import {yellow} from "@mui/material/colors";
-import GlassCard from '@/Components/GlassCard.jsx'
-import GlassDropdown from "@/Components/GlassDropdown.jsx";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import {Checkbox, Switch} from '@mui/material';
+import {Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip, User} from "@nextui-org/react";
 
 const UsersTable = ({allUsers, roles}) => {
     const [users, setUsers] = useState(allUsers);
-
-    console.info(users)
 
     const theme = useTheme();
 

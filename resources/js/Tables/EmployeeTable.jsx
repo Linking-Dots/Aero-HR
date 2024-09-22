@@ -1,32 +1,11 @@
-import {
-    FormControl,
-    IconButton, InputLabel, MenuItem,
-    Typography, Select
-} from "@mui/material";
+import {FormControl, IconButton, InputLabel, MenuItem, Select} from "@mui/material";
 import {Link} from '@inertiajs/react';
 import {AccountCircle, Delete, Edit} from '@mui/icons-material';
 import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
 import CircularProgress from "@mui/material/CircularProgress";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import {
-    TableColumn,
-    TableHeader,
-    Tooltip,
-    User,
-    Table,
-    TableBody,
-    TableRow,
-    TableCell,
-    Chip,
-    getKeyValue, DropdownTrigger, Button, DropdownMenu, DropdownItem
-} from "@nextui-org/react";
-import {yellow} from "@mui/material/colors";
-import GlassCard from '@/Components/GlassCard.jsx'
-import GlassDropdown from "@/Components/GlassDropdown.jsx";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import {Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip, User} from "@nextui-org/react";
 
 const EmployeeTable = ({allUsers, departments, designations}) => {
     const [users, setUsers] = useState(allUsers);
@@ -36,7 +15,6 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
     const [anchorEls, setAnchorEls] = useState({});
 
     async function handleChange(key, user_id, value_id) {
-        console.log(value_id)
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const newValue = value_id;
