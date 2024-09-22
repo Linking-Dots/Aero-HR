@@ -18,7 +18,7 @@ import {Clear, CloudUpload, Description, InsertDriveFile, PictureAsPdf, Upload} 
 import {useDropzone} from 'react-dropzone';
 
 
-const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks }) => {
+const DailyWorkUploadForm = ({ open, closeModal, setTotalRows, setData }) => {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();
@@ -75,11 +75,12 @@ const DailyWorkUploadForm = ({ open, closeModal, setFilteredData, setDailyWorks 
 
                 const data = await response.json();
 
+                console.log(data)
+
                 if (response.ok) {
-                    setFilteredData(data.updatedDailyWorks.dailyWorks);
-                    // Update the filteredData state with the newly created tasks
-                    setDailyWorks(data.updatedDailyWorks.dailyWorks);
-                    resolve(data.message);
+                    setData(data.data);
+                    setTotalRows(data.total);
+                    resolve('Daily works imported successfully.');
                     closeModal(); // Close the modal after successful upload
                 } else {
                     console.error(data.errors || data.error);

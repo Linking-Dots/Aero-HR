@@ -3,7 +3,7 @@ import {
     Box,
     Button,
     CardContent,
-    CardHeader,
+    CardHeader, CircularProgress,
     FormControl,
     Grid,
     IconButton,
@@ -34,42 +34,8 @@ import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-
 dayjs.extend(minMax);
 
-const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
-    '& .MuiPaper-root': {
-        backgroundColor: theme.glassCard.backgroundColor,
-    },
-    '& .MuiInputBase-root': {
-        color: theme.palette.text.primary,
-        borderColor: theme.palette.divider,
-    },
-    '& .MuiOutlinedInput-root': {
-        '& fieldset': {
-            borderColor: theme.palette.divider,
-        },
-        '&:hover fieldset': {
-            borderColor: theme.palette.primary.main,
-        },
-        '&.Mui-focused fieldset': {
-            borderColor: theme.palette.primary.main,
-        },
-    },
-    '& .MuiSvgIcon-root': {
-        color: theme.palette.text.secondary,
-    },
-    '& .MuiPickersDay-root': {
-        color: theme.palette.text.primary,
-        '&.Mui-selected': {
-            backgroundColor: theme.palette.primary.main,
-            color: theme.palette.primary.contrastText,
-        },
-        '&.MuiPickersDay-today': {
-            borderColor: theme.palette.primary.main,
-        },
-    },
-}));
 
 const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
     const theme = useTheme();
@@ -88,8 +54,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [perPage, setPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const fetchData = async (page, perPage) => {
-        setLoading(true);
+    const fetchData = async (page, perPage, filterData) => {
+
         try {
             const response = await axios.get(route('dailyWorks.paginate'), {
                 params: {
@@ -118,6 +84,94 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             });
             setLoading(false);
         }
+    };
+
+    const handleDelete = () => {
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                const response = await fetch(`/delete-daily-work`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        id: taskIdToDelete,
+                        page: currentPage,
+                        perPage,
+                        search: search, // Assuming 'report' is the search field
+                        status: filterData.status !== 'all' ? filterData.status : '',
+                        inCharge: filterData.incharge !== 'all' ? filterData.incharge : '',
+                        startDate: filterData.startDate?.format('YYYY-MM-DD'), // Send startDate in proper format
+                        endDate: filterData.endDate?.format('YYYY-MM-DD'),
+                    }),
+                });
+
+                const data = await response.json();
+
+                console.log(data)
+
+                if (response.ok) {
+                    setData(data.data);
+                    setTotalRows(data.total);
+                    resolve('Daily work deleted successfully');
+                } else {
+                    reject(data.error || 'Failed to delete task');
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                reject('An error occurred while deleting the task');
+            } finally {
+                handleClose();
+            }
+        });
+
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Deleting task...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return <>{data}</>;
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return <>{data}</>;
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+            }
+        );
     };
 
     const handleClickOpen = useCallback((taskId, modalType) => {
@@ -185,33 +239,31 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                 <DailyWorkForm
                     open={openModalType === 'editDailyWork'}
                     currentRow={currentRow}
-                    setDailyWorks={setDailyWorks}
+                    setData={setData}
                     closeModal={closeModal}
-
                 />
             )}
             {openModalType === 'deleteDailyWork' && (
                 <DeleteDailyWorkForm
                     open={openModalType === 'deleteDailyWork'}
                     handleClose={handleClose}
-                    taskIdToDelete={taskIdToDelete}
-                    setDailyWorks={setDailyWorks}
-                    setFilteredData={setFilteredData}
+                    handleDelete={handleDelete}
+                    setData={setData}
                 />
             )}
             {openModalType === 'importDailyWorks' && (
                 <DailyWorksUploadForm
                     open={openModalType === 'importDailyWorks'}
                     closeModal={closeModal}
-                    setDailyWorks={setDailyWorks}
-                    setFilteredData={setFilteredData}
+                    setData={setData}
+                    setTotalRows={setTotalRows}
                 />
             )}
             {openModalType === 'exportDailyWorks' && (
                 <DailyWorksDownloadForm
                     open={openModalType === 'exportDailyWorks'}
                     closeModal={closeModal}
-                    filteredData={filteredData}
+                    data={data}
                     users={users}
                 />
             )}

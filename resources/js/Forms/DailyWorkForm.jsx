@@ -20,7 +20,7 @@ import {toast} from 'react-toastify';
 import GlassDialog from '@/Components/GlassDialog.jsx';
 import {useTheme} from "@mui/material/styles";
 
-const DailyWorkForm = ({ open, closeModal, currentRow, setDailyWorks}) => {
+const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
     const theme = useTheme();
     const [dailyWorkData, setDailyWorkData] = useState({
         id: currentRow.id || '',
@@ -73,7 +73,7 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setDailyWorks}) => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    setDailyWorks(prevWorks => prevWorks.map(work =>
+                    setData(prevWorks => prevWorks.map(work =>
                         work.id === dailyWorkData.id ? { ...work, ...dailyWorkData } : work
                     ));
 

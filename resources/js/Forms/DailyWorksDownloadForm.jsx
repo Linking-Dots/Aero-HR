@@ -23,7 +23,7 @@ import {Download} from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 
 
-const DailyWorksDownloadForm = ({ open, closeModal,  filteredData, users }) => {
+const DailyWorksDownloadForm = ({ open, closeModal,  data, users }) => {
 
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();
@@ -63,7 +63,7 @@ const DailyWorksDownloadForm = ({ open, closeModal,  filteredData, users }) => {
         const promise = new Promise((resolve, reject) => {
             try {
                 // Filter the columns based on the user's selection
-                const exportData = filteredData.map(row => {
+                const exportData = data.map(row => {
                     const selectedRow = {};
 
                     selectedColumns.forEach(column => {

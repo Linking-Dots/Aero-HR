@@ -2,10 +2,13 @@ import React from 'react';
 import {Avatar, Box, CardContent, CardHeader, Divider, Grid, Grow, Popover, Typography, AvatarGroup} from '@mui/material';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
-import dayjs from 'dayjs';
 import { useState } from 'react';
 import {useTheme} from "@mui/material/styles";
+import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
 
+// Extend dayjs with the isBetween plugin
+dayjs.extend(isBetween);
 
 
 const UpdateSection = ({ props, title, items, users }) => {
@@ -132,43 +135,69 @@ const UpdateSection = ({ props, title, items, users }) => {
 
 const UpdatesCards = (props) => {
     const { upcomingLeaves, users, auth } = usePage().props;
+    console.log(auth.user.id)
     const today = dayjs(); // Today's date
     const tomorrow = today.add(1, 'day');
-    const sevenDaysFromNow = today.add(7, 'day');
+    const sevenDaysFromNow = tomorrow.add(7, 'day');
 
     // Helper function to group leaves by type and count
-    const getLeaveSummary = (leaves) => {
-        // Get today's date in 'YYYY-MM-DD' format
-        const today = dayjs().format('YYYY-MM-DD');
+    const getLeaveSummary = (day, leaves) => {
+        let leavesData = leaves;  // Initialize leavesData as the entire leaves array by default
 
-        // Count leaves by type
-        const leaveCountByType = leaves.reduce((summary, leave) => {
+        // Check if the user is on leave and generate the message accordingly
+        const userLeaveMessage = (type) => {
+            const isCurrentUserOnLeave = leaves.some(leave => String(leave.user_id) === String(auth.user.id) && leave.leave_type === type);
+            if (isCurrentUserOnLeave) {
+                leavesData = leaves.filter(leave => String(leave.user_id) !== String(auth.user.id));  // Exclude the current user
+                return `You ${day === 'today' ? 'are' : 'will be'} on ${type} leave.`;
+            }
+            return null;
+        };
+
+        // Generate user-specific messages first, which may alter `leavesData`
+        const userMessages = leaves.reduce((acc, leave) => {
+            const message = userLeaveMessage(leave.leave_type);
+            if (message && !acc.some(msg => msg.type === leave.leave_type)) {  // Prevent duplicate messages
+                acc.push({ text: message, type: leave.leave_type });
+            }
+            return acc;
+        }, []);
+
+        // Count leaves by type using `leavesData` (which excludes the current user if they are on leave)
+        const leaveCountByType = leavesData.reduce((summary, leave) => {
             summary[leave.leave_type] = (summary[leave.leave_type] || 0) + 1;
             return summary;
         }, {});
 
-        return Object.entries(leaveCountByType).map(([type, count]) => ({
-            text: `${count} person${count > 1 ? 's' : ''} ${leaves.some(leave => leave.from_date === today) ? 'is' : 'will be'} on ${type} leave`,
+        // General leave messages for all users
+        const messages = Object.entries(leaveCountByType).map(([type, count]) => ({
+            text: `${count} person${count > 1 ? 's' : ''} ${day === 'today' ? 'is' : 'will be'} on ${type} leave`,
             type: type,
-            leaves,
+            leaves: leavesData.filter(leave => leave.leave_type === type),
         }));
+
+        // Combine both user-specific and general messages
+        return [...userMessages, ...messages];
     };
 
+
     // Filter leaves for today, tomorrow, and within the next seven days
-    const todayLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(today, 'day') && String(leave.user_id) !== String(auth.user.id));
-    const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(leave.from_date).isSame(tomorrow, 'day'));
+    const todayLeaves = upcomingLeaves.filter((leave) =>
+        dayjs(today).isBetween(dayjs(leave.from_date), dayjs(leave.to_date), 'day', '[]')
+    );
+    const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(tomorrow).isBetween(dayjs(leave.from_date), dayjs(leave.to_date), 'day', '[]'));
 
     const nextSevenDaysLeaves = upcomingLeaves.filter(
         (leave) =>
-            dayjs(leave.from_date).isAfter(today, 'day') &&
-            dayjs(leave.from_date).isBefore(sevenDaysFromNow, 'day') &&
-            !/week/i.test(leave.leave_type) // Regular expression to check if 'week' is in leave.type
+            (dayjs(leave.from_date).isBetween(tomorrow, sevenDaysFromNow, 'day', '[]') ||
+                dayjs(leave.to_date).isBetween(tomorrow, sevenDaysFromNow, 'day', '[]')) &&
+            !/week/i.test(leave.leave_type) // Regular expression to check if 'week' is in leave.leave_type
     );
 
     // Get summary for each category
-    const todayItems = getLeaveSummary(todayLeaves);
-    const tomorrowItems = getLeaveSummary(tomorrowLeaves);
-    const nextSevenDaysItems = getLeaveSummary(nextSevenDaysLeaves);
+    const todayItems = getLeaveSummary('today',todayLeaves);
+    const tomorrowItems = getLeaveSummary('tomorrow',tomorrowLeaves);
+    const nextSevenDaysItems = getLeaveSummary('nextSevenDays',nextSevenDaysLeaves);
 
     // If no items, add default messages
     if (todayItems.length === 0) {

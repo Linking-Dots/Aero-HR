@@ -47,7 +47,7 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const DailyWorksTable = ({ data, loading, handleClickOpen, allInCharges, setCurrentPage, setPerPage, totalRows, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ data,setData, loading, handleClickOpen, allInCharges, setCurrentPage, setPerPage, totalRows, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
 
@@ -460,13 +460,8 @@ const DailyWorksTable = ({ data, loading, handleClickOpen, allInCharges, setCurr
 
 
             if (response.status === 200) {
-                setDailyWorks(prevTasks =>
+                setData(prevTasks =>
                     prevTasks.map(task =>
-                        task.id === taskId ? { ...task, [key]: value } : task
-                    )
-                );
-                setFilteredData(prevFilteredData =>
-                    prevFilteredData.map(task =>
                         task.id === taskId ? { ...task, [key]: value } : task
                     )
                 );
