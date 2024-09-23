@@ -44,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Employees Routes:
 
     Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays');
+    Route::post('/holiday-add', [HolidayController::class, 'create'])->name('holiday-add');
+    Route::delete('/holiday-delete', [HolidayController::class, 'delete'])->name('holiday-delete');
 
 
 

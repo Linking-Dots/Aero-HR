@@ -25,23 +25,19 @@ class UserController extends Controller
 
     public function index2(): \Inertia\Response
     {
-        $users = User::withTrashed() // Include soft-deleted users
-        ->with('roles:name')     // Load only the name from roles
-        ->get()
-            ->map(function ($user) {
-                // Convert the user object to an array and replace roles with plucked names
-                $userData = $user->toArray();
-                $userData['roles'] = $user->roles->pluck('name')->toArray(); // Replace roles with names
+        $users = User::withTrashed()
+            ->with('roles:name')
+            ->get()
+            ->map(fn($user) => array_merge($user->toArray(), [
+                'roles' => $user->roles->pluck('name')->toArray()
+            ]));
 
-                return $userData;
-            });
         return Inertia::render('UsersList', [
             'title' => 'Users',
             'allUsers' => $users,
             'roles' => Role::all(),
         ]);
     }
-
     public function updateUserRole(Request $request, $id)
     {
         try {

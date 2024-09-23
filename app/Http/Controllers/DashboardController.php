@@ -68,14 +68,18 @@ class DashboardController extends Controller
             ->orderBy('leaves.from_date', 'desc')
             ->get();
 
-        Log::info($todayLeaves);
+        $upcomingHoliday = DB::table('holidays')
+            ->whereDate('holidays.from_date', '>=', now())
+            ->first();
 
+        Log::info([$upcomingHoliday]);
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,
             'users' => $users,
             'todayLeaves' => $todayLeaves, // Updated to pass today's leaves
             'upcomingLeaves' => $upcomingLeaves, // Updated to pass today's leaves
+            'upcomingHoliday' => $upcomingHoliday, // Updated to pass today's leaves
             'statistics' => $statistics,
             'status' => session('status')
         ]);

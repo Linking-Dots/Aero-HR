@@ -11,12 +11,13 @@ class Holiday extends Model
 
     protected $fillable = [
         'title',
-        'holiday_date',
-        'day',
+        'from_date',
+        'to_date',
         'action',
     ];
 
     protected $dates = [
-        'holiday_date',
+        'from_date',
+        'to_date',
     ];
 }
