@@ -183,7 +183,11 @@ const UpdatesCards = (props) => {
     // Filter leaves for today, tomorrow, and within the next seven days
     const todayLeaves = upcomingLeaves.filter((leave) =>
         dayjs(today).isBetween(dayjs(leave.from_date), dayjs(leave.to_date), 'day', '[]')
+
     );
+
+    console.log(upcomingLeaves,todayLeaves)
+
     const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(tomorrow).isBetween(dayjs(leave.from_date), dayjs(leave.to_date), 'day', '[]'));
 
     const nextSevenDaysLeaves = upcomingLeaves.filter(

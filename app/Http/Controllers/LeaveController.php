@@ -23,6 +23,7 @@ class LeaveController extends Controller
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
             ->select('leaves.*', 'leave_settings.type as leave_type')
             ->where('leaves.user_id', auth()->id())
+            ->orderBy('leaves.from_date', 'desc')
             ->get();
 
         // Fetch all leave types
@@ -96,6 +97,7 @@ class LeaveController extends Controller
                 // Restrict to the current user if not an admin
                 return $query->where('leaves.user_id', auth()->id());
             })
+            ->orderBy('leaves.from_date', 'desc')
             ->get();
 
         // Fetch all leave types
@@ -218,12 +220,14 @@ class LeaveController extends Controller
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->orderBy('leaves.from_date', 'desc')
                     ->get();
             } else {
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')
                     ->where('leaves.user_id', auth()->id())
+                    ->orderBy('leaves.from_date', 'desc')
                     ->get();
             }
 
@@ -324,12 +328,14 @@ class LeaveController extends Controller
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->orderBy('leaves.from_date', 'desc')
                     ->get();
             } else {
                 $allLeaves = DB::table('leaves')
                     ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                     ->select('leaves.*', 'leave_settings.type as leave_type')
                     ->where('leaves.user_id', auth()->id())
+                    ->orderBy('leaves.from_date', 'desc')
                     ->get();
             }
 

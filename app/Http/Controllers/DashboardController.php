@@ -57,8 +57,15 @@ class DashboardController extends Controller
         $upcomingLeaves = DB::table('leaves')
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
             ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->whereDate('leaves.from_date', '>=', now())
-            ->whereDate('leaves.from_date', '<=', now()->addDays(7)) // Within the next seven days
+            ->where(function($query) {
+                $query->whereDate('leaves.from_date', '>=', now())
+                    ->orWhereDate('leaves.to_date', '>=', now());
+            })
+            ->where(function($query) {
+                $query->whereDate('leaves.from_date', '<=', now()->addDays(7))
+                    ->orWhereDate('leaves.to_date', '<=', now()->addDays(7));
+            })
+            ->orderBy('leaves.from_date', 'desc')
             ->get();
 
         Log::info($todayLeaves);
