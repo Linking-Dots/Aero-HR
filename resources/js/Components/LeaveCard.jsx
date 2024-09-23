@@ -6,11 +6,6 @@ import {usePage} from "@inertiajs/react";
 
 const LeaveCard = () => {
     const { upcomingHoliday } = usePage().props;
-    console.log(new Date(upcomingHoliday.from_date).toLocaleString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-    }))
     return (
         <Box sx={{p:2}}>
             <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
@@ -48,28 +43,38 @@ const LeaveCard = () => {
                         <GlassCard sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <CardHeader title="Upcoming Holiday"/>
                             <CardContent sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <Typography variant="h6" gutterBottom>
-                                    {
-                                        upcomingHoliday.from_date === upcomingHoliday.to_date ?
-                                            new Date(upcomingHoliday.from_date).toLocaleString('en-US', {
-                                                month: 'long',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            }) : new Date(upcomingHoliday.from_date).toLocaleString('en-US', {
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        }) +" to "+ new Date(upcomingHoliday.to_date).toLocaleString('en-US', {
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })
-                                    }
-                                </Typography>
-                                <Divider sx={{mb: 2}}/>
-                                <Typography variant="h5" gutterBottom>
-                                    {upcomingHoliday.title}
-                                </Typography>
+                                {upcomingHoliday ? (
+                                    <>
+                                        <Typography variant="h6" gutterBottom>
+                                            {
+                                                upcomingHoliday.from_date === upcomingHoliday.to_date ?
+                                                    new Date(upcomingHoliday.from_date).toLocaleString('en-US', {
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    }) : new Date(upcomingHoliday.from_date).toLocaleString('en-US', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                }) +" to "+ new Date(upcomingHoliday.to_date).toLocaleString('en-US', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                })
+                                            }
+                                        </Typography>
+                                        <Divider sx={{mb: 2}}/>
+                                        <Typography variant="h5" gutterBottom>
+                                            {upcomingHoliday.title}
+                                        </Typography>
+                                    </>
+
+                                ) : (
+                                    <Typography variant="h6" gutterBottom>
+                                        No upcoming holidays
+                                    </Typography>
+                                )}
+
                             </CardContent>
                         </GlassCard>
                     </Box>
