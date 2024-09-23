@@ -79,7 +79,7 @@ class UserController extends Controller
 
     public function toggleStatus($id, Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
 
         // Toggle the active status based on the request
         $user->active = $request->input('active');
