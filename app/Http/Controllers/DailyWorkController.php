@@ -65,7 +65,7 @@ class DailyWorkController extends Controller
     {
         $user = Auth::user();
         $perPage = $request->get('perPage', 10); // Default to 10 items per page
-        $page = $request->get('page', 1);
+        $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
         $search = $request->get('search'); // Search query
         $statusFilter = $request->get('status'); // Filter by status
         $inChargeFilter = $request->get('inCharge'); // Filter by inCharge
@@ -86,7 +86,8 @@ class DailyWorkController extends Controller
         // Apply search if provided
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
+                $q->where('number', 'LIKE', "%{$search}%")
+                    ->orWhere('location', 'LIKE', "%{$search}%")
                     ->orWhere('description', 'LIKE', "%{$search}%")
                     ->orWhere('date', 'LIKE', "%{$search}%");
             });

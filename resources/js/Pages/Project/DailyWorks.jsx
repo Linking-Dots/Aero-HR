@@ -44,6 +44,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalRows, setTotalRows] = useState(0);
+    const [lastPage, setLastPage] = useState(0);
     const [filteredData, setFilteredData] = useState([]);
 
     const [currentRow, setCurrentRow] = useState();
@@ -55,7 +56,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [currentPage, setCurrentPage] = useState(1);
 
     const fetchData = async (page, perPage, filterData) => {
-
         try {
             const response = await axios.get(route('dailyWorks.paginate'), {
                 params: {
@@ -68,8 +68,10 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     endDate: filterData.endDate?.format('YYYY-MM-DD'),
                 }
             });
+            console.log(response.data)
             setData(response.data.data);
             setTotalRows(response.data.total);
+            setLastPage(response.data.last_page);
             setLoading(false);
         } catch (error) {
             console.log(error)
@@ -224,7 +226,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
 
     useEffect(() => {
-
+        setLoading(true);
         fetchData(currentPage, perPage, filterData);
     }, [currentPage, perPage, filterData, search]);
 
@@ -469,14 +471,16 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                 setFilteredData={setFilteredData}
                                 reports={reports}
                                 setCurrentRow={setCurrentRow}
+                                currentPage={currentPage}
                                 setCurrentPage={setCurrentPage}
-                                setPerPage={setPerPage}
+                                setLoading={setLoading}
                                 handleClickOpen={handleClickOpen}
                                 openModal={openModal}
                                 juniors={allData.juniors}
                                 totalRows={totalRows}
+                                lastPage={lastPage}
                                 loading={loading}
-                                data={data}
+                                allData={data}
                                 allInCharges={allData.allInCharges}
                                 jurisdictions={jurisdictions}
                                 users={users}

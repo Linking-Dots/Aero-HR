@@ -1,5 +1,15 @@
 import DataTable from 'react-data-table-component';
-import {Avatar, Box, CircularProgress, GlobalStyles, IconButton, MenuItem, Select, TextField,} from '@mui/material';
+import {
+    Avatar,
+    Box, Button, CardContent, CardHeader, Chip,
+    CircularProgress, Collapse,
+    GlobalStyles,
+    Grid,
+    IconButton,
+    MenuItem,
+    Select,
+    TextField, Typography,
+} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
 import React, { useEffect, useState } from 'react';
@@ -11,6 +21,8 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import {Pagination} from "@nextui-org/react";
+import Loader from "@/Components/Loader.jsx";
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -47,11 +59,11 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const DailyWorksTable = ({ data,setData, loading, handleClickOpen, allInCharges, setCurrentPage, setPerPage, totalRows, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ allData, setData, currentPage, perPage, loading, handleClickOpen, allInCharges, setCurrentPage, setLoading, totalRows,lastPage, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
 
-
+    const pages = Math.ceil(totalRows / perPage);
 
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
@@ -437,6 +449,7 @@ const DailyWorksTable = ({ data,setData, loading, handleClickOpen, allInCharges,
             ),
         }] : []),
     ];
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'new':
@@ -506,16 +519,10 @@ const DailyWorksTable = ({ data,setData, loading, handleClickOpen, allInCharges,
         setCurrentPage(page);
     };
 
-    const handlePerPageChange = (newPerPage) => {
-        setPerPage(newPerPage);
-        setCurrentPage(1);
-    };
-
-
-
 
     return (
-        <>
+        <div>
+            {loading && <Loader/>}
             <GlobalStyles
                 styles={{
                     '& .cgTKyH': {
@@ -526,20 +533,34 @@ const DailyWorksTable = ({ data,setData, loading, handleClickOpen, allInCharges,
                 }}
             />
             <CustomDataTable
+                classNames={{
+                    base: "max-h-[520px] overflow-scroll",
+                    table: "min-h-[400px]",
+                }}
                 columns={columns}
-                data={data}
-                progressPending={loading}
-                pagination
-                paginationServer
-                paginationTotalRows={totalRows}
+                data={allData}
                 onChangePage={handlePageChange}
-                onChangeRowsPerPage={handlePerPageChange}
                 defaultSortField="date"
                 highlightOnHover
                 responsive
                 dense
             />
-        </>
+            {totalRows >= 30 && (
+                <div className="py-2 px-2 flex justify-center items-center">
+                    <Pagination
+                        initialPage={1}
+                        isCompact
+                        showControls
+                        showShadow
+                        color="secondary"
+                        page={currentPage}
+                        total={lastPage}
+                        onChange={handlePageChange}
+                    />
+                </div>
+            )}
+
+        </div>
 
     );
 };
