@@ -59,11 +59,9 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const DailyWorksTable = ({ allData, setData, currentPage, perPage, loading, handleClickOpen, allInCharges, setCurrentPage, setLoading, totalRows,lastPage, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInCharges, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
-
-    const pages = Math.ceil(totalRows / perPage);
 
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
@@ -512,12 +510,8 @@ const DailyWorksTable = ({ allData, setData, currentPage, perPage, loading, hand
         }
     };
 
-    // Fetch data with pagination
 
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-    };
 
 
     return (
@@ -534,31 +528,18 @@ const DailyWorksTable = ({ allData, setData, currentPage, perPage, loading, hand
             />
             <CustomDataTable
                 classNames={{
-                    base: "max-h-[520px] overflow-scroll",
-                    table: "min-h-[400px]",
+                    base: "max-h-[84vh] overflow-scroll",
+                    table: "min-h-[84vh]",
                 }}
                 columns={columns}
                 data={allData}
-                onChangePage={handlePageChange}
+                loading={loading}
+                loadingComponent={<CircularProgress />}
                 defaultSortField="date"
                 highlightOnHover
                 responsive
                 dense
             />
-            {totalRows >= 30 && (
-                <div className="py-2 px-2 flex justify-center items-center">
-                    <Pagination
-                        initialPage={1}
-                        isCompact
-                        showControls
-                        showShadow
-                        color="secondary"
-                        page={currentPage}
-                        total={lastPage}
-                        onChange={handlePageChange}
-                    />
-                </div>
-            )}
 
         </div>
 

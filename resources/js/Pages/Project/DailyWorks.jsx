@@ -34,6 +34,7 @@ import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
+import {Pagination} from "@nextui-org/react";
 dayjs.extend(minMax);
 
 
@@ -68,7 +69,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     endDate: filterData.endDate?.format('YYYY-MM-DD'),
                 }
             });
-            console.log(response.data)
+
             setData(response.data.data);
             setTotalRows(response.data.total);
             setLastPage(response.data.last_page);
@@ -231,6 +232,9 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     }, [currentPage, perPage, filterData, search]);
 
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
 
 
     return (
@@ -486,6 +490,21 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                 users={users}
                                 reports_with_daily_works={reports_with_daily_works}
                             />
+                            {totalRows >= 30 && (
+                                <div className="py-2 px-2 flex justify-center items-center">
+                                    <Pagination
+                                        initialPage={1}
+                                        isCompact
+                                        showControls
+                                        showShadow
+                                        color="primary"
+                                        variant={'bordered'}
+                                        page={currentPage}
+                                        total={lastPage}
+                                        onChange={handlePageChange}
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </GlassCard>
                 </Grow>
