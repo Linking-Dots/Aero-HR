@@ -64,7 +64,7 @@ class DailyWorkController extends Controller
     public function paginate(Request $request)
     {
         $user = Auth::user();
-        $perPage = $request->get('perPage', 10); // Default to 10 items per page
+        $perPage = $request->get('perPage', 30); // Default to 10 items per page
         $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
         $search = $request->get('search'); // Search query
         $statusFilter = $request->get('status'); // Filter by status

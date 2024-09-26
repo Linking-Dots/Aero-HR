@@ -4,84 +4,62 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Designation;
+use App\Models\Jurisdiction;
+use App\Models\Report;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 use Throwable;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
-    public function allAttendance(Request $request)
+    public function index()
     {
-        try {
+        $users = User::with('roles')->get();
 
-            $users = User::pluck('id');
-            $month = $request->input('month');
+        // Loop through each user and add a new field 'role' with the role name
+        $users->transform(function ($user) {
+            $user->role = $user->roles->first()->name;
+            return $user;
+        });
 
-            $formattedAttendance = [];
+        return Inertia::render('AttendanceAdmin', [
+            'allUsers' => $users,
+            'title' => 'Attendances of Employees',
+        ]);
+    }
 
-            foreach ($users as $userId) {
-                // Get the current month's data for the user
-                $currentMonthAttendance = Attendance::where('user_id', $userId)
-                    ->whereMonth('date', Carbon::parse($month)->month)
-                    ->get();
+    public function paginate(Request $request)
+    {
+        $perPage = $request->get('perPage', 10); // Default to 10 items per page
+        $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
+        $employee = $request->get('employee'); // Search query
+        $currentMonth = $request->get('currentMonth'); // Filter by start date
+        $currentYear = $request->get('currentYear'); // Filter by end date
 
-                // Initialize user data array
-                $userData = [
-                    'user_id' => $userId,
-                    'name' => User::find($userId)->name,
-                    'attendance' => [],
-                    'symbol_counts' => [
-                        "√" => 0, "§" => 0, "×" => 0, "◎" => 0, "■" => 0, "△" => 0, "□" => 0, "☆" => 0, "*" => 0, "○" => 0, "▼" => 0, "/" => 0, "#" => 0
-                    ]
-                ];
+        $query = Attendance::query();
 
-                // Get all dates for the current month
-                $startDate = Carbon::parse($month)->startOfMonth();
-                $endDate = Carbon::parse($month)->endOfMonth();
-                $allDates = [];
 
-                while ($startDate <= $endDate) {
-                    $allDates[] = $startDate->toDateString();
-                    $startDate->addDay();
-                }
-
-                // Loop through all dates of the month
-                foreach ($allDates as $date) {
-                    // Check if attendance record exists for the date
-                    $attendanceRecord = $currentMonthAttendance->firstWhere('date', $date);
-                    if ($attendanceRecord) {
-                        // Store attendance symbol for the date in the user's attendance array
-                        $userData['attendance'][$date] = $attendanceRecord->symbol;
-
-                        // Increment the count for the symbol
-                        $userData['symbol_counts'][$attendanceRecord->symbol]++;
-                    } else {
-                        // If attendance record doesn't exist, set it to null
-                        $userData['attendance'][$date] = null;
-                    }
-                }
-
-                // Add the formatted user data to the array
-                $formattedAttendance[] = $userData;
-            }
-
-            $formattedAttendance = collect($formattedAttendance)->sortBy('user_id')->values()->all();
-
-            return response()->json([
-                'attendance' => $formattedAttendance
-            ]);
-
-        } catch (QueryException $e) {
-            // Handle database query exceptions
-            return response()->json(['error' => $e->getMessage()], 500);
-        } catch (\Exception $e) {
-            // Handle other exceptions
-            return response()->json(['error' => $e->getMessage()], 500);
+        if ($employee) {
+            $userIds = User::where('name', 'LIKE', "%{$employee}%")->pluck('id');
+            $query->whereIn('user_id', $userIds);
         }
+
+
+        if ($currentYear && $currentMonth) {
+            $query->whereYear('date', $currentYear)
+                ->whereMonth('date', $currentMonth);
+        }
+
+        // Order by 'date' in descending order
+        $paginateAttendances = $query->orderBy('user_id', 'asc')->paginate($perPage, ['*'], 'page', $page);
+
+        // Return the paginated response as JSON
+        return response()->json($paginateAttendances);
     }
 
     public function updateAttendance(Request $request)

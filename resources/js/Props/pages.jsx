@@ -18,18 +18,20 @@ export const getPages = (permissions) => [
     { name: 'Dashboard', icon: <DashboardIcon sx={{ ml: 2 }}/>, route: 'dashboard' },
     { name: 'Leaves', icon: <LogoutIcon sx={{ ml: 2 }}/>, route: 'leaves-employee' },
     { name: 'Attendances', icon: <CalendarTodayIcon sx={{ ml: 2 }}/>, route: 'attendance-employee' },
-    {
-        name: 'Employees', icon: <PeopleIcon sx={{ ml: 2 }}/>, subMenu: [
-            ...(permissions.includes('read employee') ? [{ name: 'All Employees', icon: <PeopleIcon />, route: 'employees' }] : []),
-            ...(permissions.includes('read holidays') ? [{ name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' }] : []),
-            ...(permissions.includes('read leaves') ? [{ name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } }] : []),
-            ...(permissions.includes('read leaves') ? [{ name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' }] : []),
-            ...(permissions.includes('read attendances') ? [{ name: 'Attendances (Admin)', icon: <CalendarTodayIcon />, route: 'attendances' }] : []),
-            ...(permissions.includes('read departments') ? [{ name: 'Departments', icon: <HomeIcon />, route: 'departments' }] : []),
-            ...(permissions.includes('read designations') ? [{ name: 'Designations', icon: <WorkIcon />, route: 'designations' }] : []),
-            ...(permissions.includes('read timesheet') ? [{ name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' }] : []),
-        ]
-    },
+    ...(permissions.includes('read employee') ? [
+        {
+            name: 'Employees', icon: <PeopleIcon sx={{ ml: 2 }}/>, subMenu: [
+                ...(permissions.includes('read employee') ? [{ name: 'All Employees', icon: <PeopleIcon />, route: 'employees' }] : []),
+                ...(permissions.includes('read holidays') ? [{ name: 'Holidays', icon: <EventNoteIcon />, route: 'holidays' }] : []),
+                ...(permissions.includes('read leaves') ? [{ name: 'Leaves (Admin)', icon: <LogoutIcon />, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } }] : []),
+                ...(permissions.includes('read leaves') ? [{ name: 'Leave Settings', icon: <SettingsIcon />, route: 'leave-settings' }] : []),
+                ...(permissions.includes('read attendances') ? [{ name: 'Attendances (Admin)', icon: <CalendarTodayIcon />, route: 'attendances' }] : []),
+                ...(permissions.includes('read departments') ? [{ name: 'Departments', icon: <HomeIcon />, route: 'departments' }] : []),
+                ...(permissions.includes('read designations') ? [{ name: 'Designations', icon: <WorkIcon />, route: 'designations' }] : []),
+                ...(permissions.includes('read timesheet') ? [{ name: 'Timesheet', icon: <ListAltIcon />, route: 'timesheet' }] : []),
+            ]
+        }
+    ] : []),
     {
         name: 'Projects', icon: <WorkIcon sx={{ ml: 2 }}/>, subMenu: [
             // { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },

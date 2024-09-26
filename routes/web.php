@@ -110,7 +110,8 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
 
 
-
+    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
+    Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
 
 
 

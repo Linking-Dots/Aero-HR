@@ -25,6 +25,9 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     const [anchorEl, setAnchorEl] = useState(null);
     const theme = useTheme();
 
+    const userIsAdmin = auth.roles.includes('Administrator');
+    const userIsSe = auth.roles.includes('Supervision Engineer');
+
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -222,13 +225,13 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
     };
 
     const columns = [
-        { name: "Employee", uid: "employee" },
+        ...(userIsAdmin ? [{ name: "Employee", uid: "employee" }] : []),
         { name: "Leave Type", uid: "leave_type" },
         { name: "From Date", uid: "from_date" },
         { name: "To Date", uid: "to_date" },
         { name: "Status", uid: "status" },
         { name: "Reason", uid: "reason" },
-        { name: "Actions", uid: "actions" }
+        ...(userIsAdmin ? [{ name: "Actions", uid: "actions" }] : []),
     ];
 
     return (
