@@ -11,6 +11,7 @@ use App\Models\Tasks;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class DailyWorkSummaryController extends Controller
@@ -18,6 +19,7 @@ class DailyWorkSummaryController extends Controller
 
     public function index()
     {
+        // Get the authenticated user
         $user = Auth::user();
         // Query tasks based on date range
         $tasksQuery = DailyWork::query();
@@ -35,18 +37,52 @@ class DailyWorkSummaryController extends Controller
 
         $mergedSummaries = [];
 
+        // Iterate over $dailySummaries
+        foreach ($dailySummaries as $summary) {
+            $date = $summary['date'];
+
+            // Check if the date has been encountered before
+            $found = false;
+            foreach ($mergedSummaries as &$merged) {
+                if ($merged['date'] == $date) {
+                    // If the date is found, merge the current summary into it
+                    $merged['totalDailyWorks'] += $summary['totalDailyWorks'];
+                    $merged['resubmissions'] += $summary['resubmissions'];
+                    $merged['embankment'] += $summary['embankment'];
+                    $merged['structure'] += $summary['structure'];
+                    $merged['pavement'] += $summary['pavement'];
+
+                    // Set found flag to true
+                    $found = true;
+                    break;
+                }
+            }
+
+            // If the date is not found, add the current summary as a new entry
+            if (!$found) {
+                $mergedSummaries[] = $summary;
+            }
+        }
+        $dailySummaries = $mergedSummaries;
+
+        // Group tasks by date
+        $tasksByDate = [];
+        foreach ($dailyTasks as $task) {
+            $tasksByDate[$task->date][] = $task;
+        }
+
         // Iterate over summaries
         foreach ($dailySummaries as $summary) {
             $date = $summary->date;
             $completed = 0;
             $rfiSubmissions = 0;
-            $totalDailyWorks = $summary->totalDailyWorks;
+            $totalTasks = $summary->totalTasks;
 
             // Calculate total tasks for the current date
             if (isset($tasksByDate[$date])) {
                 foreach ($tasksByDate[$date] as $task) {
                     // Count completed tasks
-                    if ($task->status == 'complete') {
+                    if ($task->status == 'completed' || $task->status == 'complete') {
                         $completed++;
                     }
 
@@ -59,10 +95,7 @@ class DailyWorkSummaryController extends Controller
 
             // Update summary properties
             $summary->completed = $completed;
-            $summary->pending = $totalDailyWorks - $completed;
             $summary->rfiSubmissions = $rfiSubmissions;
-            $summary->completionPercentage = ($totalDailyWorks > 0) ? round(($completed / $totalDailyWorks) * 100, 1) : 0;
-            $summary->rfiSubmissionPercentage = ($totalDailyWorks > 0) ? round(($rfiSubmissions / $totalDailyWorks) * 100, 1) : 0;
         }
 
         return Inertia::render('Project/DailyWorkSummary', [
@@ -72,6 +105,7 @@ class DailyWorkSummaryController extends Controller
             'title' => 'Daily Work Summary',
         ]);
     }
+
 
 
 

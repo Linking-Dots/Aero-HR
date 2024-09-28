@@ -56,18 +56,56 @@ const DailyWorkSummaryDownloadForm = ({ open, closeModal,  filteredData, users }
     const exportToExcel = async (selectedColumns) => {
         const promise = new Promise((resolve, reject) => {
             try {
-                // Filter the columns based on the user's selection
+                // Check if there are selected columns
+                if (!selectedColumns || selectedColumns.length === 0) {
+                    reject('No columns selected for export.');
+                    return;
+                }
+
+                // Filter the data based on the selected columns
                 const exportData = filteredData.map(row => {
                     const selectedRow = {};
 
+                    // Calculate completion percentage and RFI submission percentage
+                    const totalDailyWorks = row.totalDailyWorks || 0;
+                    const completed = row.completed || 0;
+                    const rfiSubmissions = row.rfiSubmissions || 0;
+
+                    const pending = totalDailyWorks > 0
+                        ? `${((totalDailyWorks - completed))}`
+                        : '0';
+
+                    const completionPercentage = totalDailyWorks > 0
+                        ? `${((completed / totalDailyWorks) * 100).toFixed(1)}%`
+                        : '0%';
+
+                    const rfiSubmissionPercentage = totalDailyWorks > 0
+                        ? `${((rfiSubmissions / totalDailyWorks) * 100).toFixed(1)}%`
+                        : '0%';
+
+                    // Loop through selected columns and populate selectedRow
                     selectedColumns.forEach(column => {
                         if (column.checked) {
-                            selectedRow[column.label] = row[column.key];
+                            if (column.key === 'pending') {
+                                selectedRow[column.label] = pending;
+                            } else if (column.key === 'completionPercentage') {
+                                selectedRow[column.label] = completionPercentage;
+                            } else if (column.key === 'rfiSubmissionPercentage') {
+                                selectedRow[column.label] = rfiSubmissionPercentage;
+                            } else {
+                                selectedRow[column.label] = row[column.key] || ''; // Fallback to empty string if value is null/undefined
+                            }
                         }
                     });
 
                     return selectedRow;
                 });
+
+                // Check if there's data to export
+                if (exportData.length === 0) {
+                    reject('No data available for export.');
+                    return;
+                }
 
                 // Create and download Excel file
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -75,14 +113,12 @@ const DailyWorkSummaryDownloadForm = ({ open, closeModal,  filteredData, users }
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily Work Summary');
                 XLSX.writeFile(workbook, 'DailyWorkSummary.xlsx');
 
-                // Notify success
                 resolve('Export successful!');
-                closeModal(); // Close the modal
+                closeModal(); // Close modal after successful export
 
             } catch (error) {
-                // Handle any errors that occur during the export process
                 reject('Failed to export data. Please try again.');
-                console.error("Error exporting data to Excel:", error);
+                console.error("Error exporting data to Excel:", error); // Log the actual error for debugging
             }
         });
 

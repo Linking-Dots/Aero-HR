@@ -1,15 +1,9 @@
 import React from 'react';
 import DataTable from 'react-data-table-component';
-import {Avatar, Box, CircularProgress, GlobalStyles, IconButton, MenuItem, Select, TextField,} from '@mui/material';
+import {Box, GlobalStyles} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {usePage} from "@inertiajs/react";
-import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
-import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
-import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
-import EmergencyIcon from '@mui/icons-material/Error';
-import {toast} from "react-toastify";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -45,13 +39,9 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
+const DailyWorksTable = ({ filteredData }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
-
-    const userIsAdmin = auth.roles.includes('Administrator');
-    const userIsSe = auth.roles.includes('Supervision Engineer');
-
     const columns = [
         {
             name: 'Date',
@@ -104,25 +94,30 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
         },
         {
             name: 'Pending',
-            selector: row => row.pending,
+            selector: row => row.totalDailyWorks - row.completed,
             sortable: true,
             center: true,
             width: '130px',
         },
         {
             name: 'Completion Percentage',
-            selector: row => row.completionPercentage,
+            selector: row => row.totalDailyWorks > 0 ? parseFloat((row.completed / row.totalDailyWorks * 100).toFixed(1)) : 0,
             sortable: true,
             center: true,
             width: '180px',
-            cell: row => (
-                <Box sx={{
-                    textAlign: 'center',
-                    color: row.completionPercentage >= 100 ? 'green' : 'red',
-                }}>
-                    {row.completionPercentage}%
-                </Box>
-            ),
+            cell: row => {
+                const completionPercentage = row.totalDailyWorks > 0
+                    ? (row.completed / row.totalDailyWorks * 100).toFixed(1)
+                    : 0;
+                return (
+                    <Box sx={{
+                        textAlign: 'center',
+                        color: completionPercentage >= 100 ? 'green' : 'red',
+                    }}>
+                        {completionPercentage}%
+                    </Box>
+                );
+            },
         },
         {
             name: 'RFI Submissions',
@@ -133,95 +128,25 @@ const DailyWorksTable = ({ handleClickOpen, allInCharges,setDailyWorks, reports,
         },
         {
             name: 'RFI Submission Percentage',
-            selector: row => row.rfiSubmissionPercentage,
+            selector: row => row.rfiSubmissions > 0 ? parseFloat((row.rfiSubmissions / row.completed * 100).toFixed(1)) : 0,
             sortable: true,
             center: true,
             width: '180px',
-            cell: row => (
-                <Box sx={{
-                    textAlign: 'center',
-                    color: row.rfiSubmissionPercentage >= 100 ? 'green' : 'red',
-                }}>
-                    {row.rfiSubmissionPercentage}%
-                </Box>
-            ),
+            cell: row => {
+                const rfiSubmissionPercentage = row.rfiSubmissions > 0
+                    ? (row.rfiSubmissions / row.completed * 100).toFixed(1)
+                    : 0;
+                return (
+                    <Box sx={{
+                        textAlign: 'center',
+                        color: rfiSubmissionPercentage >= 100 ? 'green' : 'red',
+                    }}>
+                        {rfiSubmissionPercentage}%
+                    </Box>
+                );
+            },
         },
     ];
-
-
-
-
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'new':
-                return 'blue';
-            case 'resubmission':
-                return 'orange';
-            case 'completed':
-                return 'green';
-            case 'emergency':
-                return 'red';
-            default:
-                return '';
-        }
-    };
-
-
-    const handleChange = async (taskId, key, value) => {
-        try {
-            const response = await axios.post(route('dailyWorks.update'), {
-                id: taskId,
-                [key]: value,
-            });
-
-
-            if (response.status === 200) {
-                setDailyWorks(prevTasks =>
-                    prevTasks.map(task =>
-                        task.id === taskId ? { ...task, [key]: value } : task
-                    )
-                );
-                setFilteredData(prevFilteredData =>
-                    prevFilteredData.map(task =>
-                        task.id === taskId ? { ...task, [key]: value } : task
-                    )
-                );
-
-                toast.success(...response.data.messages || `Task updated successfully`, {
-                    icon: '🟢',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
-                });
-            } else {
-                toast.error(response.data.error || `Failed to update task ${[key]}.`, {
-                    icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
-                });
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
-                icon: '🔴',
-                style: {
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
-                    border: theme.glassCard.border,
-                    color: theme.palette.text.primary,
-                }
-            });
-        }
-    };
-
-
 
     return (
         <>

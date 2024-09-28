@@ -157,7 +157,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
 
 
 
-
+    console.log(filteredData)
 
     return (
         <>
