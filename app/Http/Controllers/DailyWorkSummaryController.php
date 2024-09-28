@@ -46,7 +46,7 @@ class DailyWorkSummaryController extends Controller
             if (isset($tasksByDate[$date])) {
                 foreach ($tasksByDate[$date] as $task) {
                     // Count completed tasks
-                    if ($task->status == 'completed') {
+                    if ($task->status == 'complete') {
                         $completed++;
                     }
 
