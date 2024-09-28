@@ -97,9 +97,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                         avatarProps={{ radius: "lg", src: attendance.user?.profile_image }}
                         description={attendance.user?.phone}
                         name={attendance.user?.name}
-                    >
-                        {attendance.user?.email}
-                    </User>
+                    />
                 );
             case "clockin_time":
                 return attendance.punchin_time
@@ -199,7 +197,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                             {(attendance) => (
                                                 <TableRow key={attendance.id}>
                                                     {(columnKey) => (
-                                                        <TableCell>{renderCell(attendance, columnKey)}</TableCell>
+                                                        <TableCell style={{whiteSpace: 'nowrap'}}>{renderCell(attendance, columnKey)}</TableCell>
                                                     )}
                                                 </TableRow>
                                             )}

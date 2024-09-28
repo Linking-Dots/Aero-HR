@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Designation;
 use App\Models\Jurisdiction;
+use App\Models\LeaveSetting;
 use App\Models\Report;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Throwable;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +21,9 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')->get();
+        $users = User::whereHas('roles', function($query) {
+            $query->where('name', 'Employee');
+        })->with('roles')->get();
 
         // Loop through each user and add a new field 'role' with the role name
         $users->transform(function ($user) {
@@ -27,39 +31,104 @@ class AttendanceController extends Controller
             return $user;
         });
 
+
+
         return Inertia::render('AttendanceAdmin', [
             'allUsers' => $users,
+
             'title' => 'Attendances of Employees',
         ]);
     }
 
     public function paginate(Request $request)
     {
-        $perPage = $request->get('perPage', 10); // Default to 10 items per page
-        $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
-        $employee = $request->get('employee'); // Search query
-        $currentMonth = $request->get('currentMonth'); // Filter by start date
-        $currentYear = $request->get('currentYear'); // Filter by end date
+        try {
+            $perPage = $request->get('perPage', 30); // Default to 10 items per page
+            $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
+            $employee = $request->get('employee'); // Search query
+            $currentMonth = $request->get('currentMonth'); // Filter by start date
+            $currentYear = $request->get('currentYear'); // Filter by end date
 
-        $query = Attendance::query();
+            $query = Attendance::query();
 
+            $leaveTypes = LeaveSetting::all();
+            $allLeaves = DB::table('leaves')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
+                ->where(function ($query) use ($currentYear, $currentMonth) {
+                    $query->whereYear('leaves.from_date', $currentYear)
+                        ->whereMonth('leaves.from_date', $currentMonth)
+                        ->orWhereYear('leaves.to_date', $currentYear)
+                        ->whereMonth('leaves.to_date', $currentMonth);
+                })
+                ->orderBy('leaves.from_date', 'desc')
+                ->get();
+            $leaveCounts = $allLeaves->groupBy('user_id')->map(function ($leaves, $userId) use ($leaveTypes) {
+                $counts = [];
+                foreach ($leaveTypes as $leaveType) {
+                    $type = strtolower($leaveType->type);
+                    $counts[$type] = $leaves->where('leave_type', $leaveType->type)->count();
+                }
+                return $counts;
+            });
 
-        if ($employee) {
-            $userIds = User::where('name', 'LIKE', "%{$employee}%")->pluck('id');
-            $query->whereIn('user_id', $userIds);
+            if ($employee) {
+                $userIds = User::where('name', 'LIKE', "%{$employee}%")->pluck('id');
+                $query->whereIn('user_id', $userIds);
+            }
+
+            if ($currentYear && $currentMonth) {
+                $query->whereYear('date', $currentYear)
+                    ->whereMonth('date', $currentMonth);
+            }
+
+            $attendances = $query->get()->groupBy('user_id')->map(function ($attendanceRecords, $userId) use ($currentYear, $currentMonth, $allLeaves, $leaveTypes) {
+                $daysInMonth = Carbon::create($currentYear, $currentMonth)->daysInMonth;
+                $attendanceData = ['user_id' => $userId];
+
+                // Loop through each day of the month
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $date = Carbon::create($currentYear, $currentMonth, $day)->toDateString();
+
+                    // Check if the date falls within any leave period
+                    $leave = $allLeaves->first(function ($leave) use ($date, $userId) {
+                        return $leave->user_id == $userId && $date >= $leave->from_date && $date <= $leave->to_date;
+                    });
+
+                    if ($leave) {
+                        // Find the leave type symbol
+                        $leaveType = $leaveTypes->firstWhere('type', $leave->leave_type);
+                        $attendanceData[$date] = $leaveType ? $leaveType->symbol : '√';
+                    } else {
+                        // Check attendance records
+                        $attendanceData[$date] = $attendanceRecords->contains(function ($record) use ($date) {
+                            return $record->date == $date && $record->punchin;
+                        }) ? '√' : '▼';
+                    }
+                }
+
+                return $attendanceData;
+            });
+
+            // Sort the collection by 'user_id'
+            $sortedAttendances = $attendances->sortBy('user_id');
+
+            // Paginate the collection manually
+            $paginatedAttendances = $sortedAttendances->slice(($page - 1) * $perPage, $perPage)->values();
+
+            // Return the paginated response as JSON
+            return response()->json([
+                'data' => $paginatedAttendances,
+                'total' => $sortedAttendances->count(),
+                'page' => $page,
+                'last_page' => ceil($sortedAttendances->count() / $perPage),
+                'leaveTypes' => $leaveTypes,
+                'leaveCounts' => $leaveCounts,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in paginate method: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while fetching attendance data.'], 500);
         }
-
-
-        if ($currentYear && $currentMonth) {
-            $query->whereYear('date', $currentYear)
-                ->whereMonth('date', $currentMonth);
-        }
-
-        // Order by 'date' in descending order
-        $paginateAttendances = $query->orderBy('user_id', 'asc')->paginate($perPage, ['*'], 'page', $page);
-
-        // Return the paginated response as JSON
-        return response()->json($paginateAttendances);
     }
 
     public function updateAttendance(Request $request)
