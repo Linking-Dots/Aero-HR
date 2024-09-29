@@ -72,8 +72,9 @@ class AttendanceController extends Controller
                         ->orWhereYear('leaves.to_date', $currentYear)
                         ->whereMonth('leaves.to_date', $currentMonth);
                 })
-                ->groupBy('leaves.user_id', 'leaves.leave_type')
+                ->groupBy('leaves.user_id', 'leave_settings.type') // Ensure leave type is included
                 ->get();
+
 
             $leaveCountsArray = [];
 

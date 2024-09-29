@@ -62,19 +62,6 @@ const AttendanceAdminTable = ({ loading, attendanceData, currentYear, currentMon
         });
     };
 
-
-
-    // // Check if attendanceData is available
-    // if (!columns || columns.length === 0) {
-    //     return (
-    //         <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-    //             <CircularProgress /> {/* Show loading spinner */}
-    //         </Box>
-    //     );
-    // }
-
-    console.log(attendanceData)
-
     return (
         <div style={{ maxHeight: '84vh', overflowY: 'auto' }}>
             {loading ? (
