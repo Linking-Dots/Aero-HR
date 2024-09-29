@@ -20,9 +20,10 @@ class SendPunchOutReminder extends Command
 
     public function handle()
     {
-        Log::info('Scheduled log message at ' . now());
-        $users = User::with('attendances', function ($query) {
-            $query->whereNotNull('punchin'); // Ensure punchin data exists
+        $users = User::with(['attendances' => function ($query) {
+            $query->whereNotNull('punchin'); // Filter attendances to only those with punchin data
+        }])->whereHas('attendances', function ($query) {
+            $query->whereNotNull('punchin'); // Ensure users have attendances with punchin
         })->whereNotNull('fcm_token')->get(); // Ensure users have the FCM token
 
 

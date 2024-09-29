@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
     public function sendPushNotification($token, $title, $body): \Illuminate\Http\JsonResponse
     {
+
         // Obtain an OAuth 2.0 access token
         $accessToken = $this->getAccessToken(); // Implement this method to retrieve the access token
 
@@ -22,7 +24,6 @@ class NotificationController extends Controller
                 'notification' => [
                     'title' => $title,
                     'body' => $body,
-                    'sound' => 'default', // Notification sound
                 ],
                 'data' => [  // Custom data
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',  // Adjust based on your frontend
@@ -31,11 +32,15 @@ class NotificationController extends Controller
             ],
         ];
 
+        Log::info($accessToken);
+
         // Send POST request to Firebase Cloud Messaging
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
         ])->post($firebaseUrl, $notificationData);
+
+        Log::info($response);
 
         // Handle response
         if ($response->successful()) {

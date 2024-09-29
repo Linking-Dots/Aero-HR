@@ -7,4 +7,4 @@ use Illuminate\Support\Facades\Schedule;
 use App\Console\Commands\SendPunchOutReminder;
 
 
-Schedule::command(SendPunchOutReminder::class)->everyMinute();
+Schedule::command(SendPunchOutReminder::class)->dailyAt('18:00');
