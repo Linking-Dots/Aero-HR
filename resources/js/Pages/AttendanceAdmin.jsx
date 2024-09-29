@@ -277,7 +277,7 @@ const AttendanceAdmin = React.memo(({ title  }) => {
                         <CardContent>
                             <Box>
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6} md={3}>
+                                    <Grid item xs={12} sm={6} md={4}>
                                         <TextField
                                             label="Employee"
                                             fullWidth
@@ -294,7 +294,7 @@ const AttendanceAdmin = React.memo(({ title  }) => {
                                             }}
                                         />
                                     </Grid>
-                                    <Grid item xs={6} sm={4} md={3}>
+                                    <Grid item xs={12} sm={6} md={4}>
                                         <TextField
                                             label="Current Month"
                                             type={'month'}
