@@ -89,6 +89,11 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(Education::class);
     }
 
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'user_id');
+    }
+
 
     public function setActiveStatus(bool $status)
     {

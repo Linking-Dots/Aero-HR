@@ -14,6 +14,7 @@ import Loader from '@/Components/Loader.jsx'
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
 import { NextUIProvider } from '@nextui-org/react';
+import {onMessageListener, requestNotificationPermission} from "@/firebase-config.js";
 function App({ children }) {
 
     const [loading, setLoading] = useState();
@@ -67,6 +68,34 @@ function App({ children }) {
     Inertia.on('finish', (event) => {
         setLoading(false);
     })
+
+    useEffect(() => {
+        requestNotificationPermission().then(async token => {
+
+            try {
+                // Make the POST request to the route that updates the FCM token
+                const response = await axios.post(route('updateFcmToken'), {
+                    fcm_token: token,
+                });
+
+                if (response.status === 200) {
+                    console.log(response.data.message,': ', response.data.fcm_token);
+                }
+            } catch (error) {
+                console.error(error);
+
+            }
+        });
+
+        // Listen to incoming messages
+        onMessageListener()
+            .then((payload) => {
+                console.log('Message received. ', payload);
+                alert(payload.notification.title + ": " + payload.notification.body);
+            })
+            .catch((err) => console.log('failed: ', err));
+    }, []);
+
 
 
     return (

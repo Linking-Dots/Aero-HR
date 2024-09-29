@@ -63,13 +63,6 @@ class HolidayController extends Controller
                 'holidays' => $holidays
             ]);
         } catch (\Exception $e) {
-            // Log detailed error information
-            \Log::error('Failed to add holiday', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all(),
-            ]);
-
             return response()->json([
                 'error' => 'Failed to add holiday. Please try again later.'
             ], 500);

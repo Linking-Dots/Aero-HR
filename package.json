@@ -44,6 +44,7 @@
         "date-fns": "^3.6.0",
         "dayjs": "^1.11.12",
         "exceljs": "^4.4.0",
+        "firebase": "^10.13.2",
         "framer-motion": "^11.5.4",
         "jszip": "^3.10.1",
         "leaflet": "^1.9.4",

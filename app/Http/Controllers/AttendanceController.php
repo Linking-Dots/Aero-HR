@@ -341,8 +341,6 @@ class AttendanceController extends Controller
                 ->whereDate('date', $selectedDate)
                 ->get();  // Retrieve all matching records
 
-            Log::info($attendanceRecords);
-
 
 
             if ($attendanceRecords->isEmpty()) {

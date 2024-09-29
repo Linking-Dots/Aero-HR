@@ -196,10 +196,8 @@ class LeaveController extends Controller
 
                 if ($request->has('status') && $leave->status !== $request->input('status')) {
                     $statusUpdated = true;
-                    Log::info(Auth::user()->id);
                     $leave->approved_by = Auth::user()->id;
                     $leave->save();
-                    Log::info($leave);
                 }
 
                 $leave->update($data);
@@ -289,13 +287,6 @@ class LeaveController extends Controller
                 'leavesData' => $leavesData
             ]);
         } catch (\Exception $e) {
-            // Log detailed error information
-            \Log::error('Failed to submit leave application', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all(),
-            ]);
-
             return response()->json([
                 'error' => 'Failed to submit leave application. Please try again later.'
             ], 500);

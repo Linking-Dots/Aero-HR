@@ -378,12 +378,8 @@ class DailyWorkController extends Controller
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             if ($e instanceof \Illuminate\Session\TokenMismatchException) {
-                Log::error('CSRF token mismatch: ' . $e->getMessage());
                 return response()->json(['error' => 'CSRF token mismatch'], 419);
             }
-
-            // Other exceptions occurred, log error and return response
-            Log::error($e->getMessage());
             // Other exceptions occurred, return error response
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -561,12 +557,8 @@ class DailyWorkController extends Controller
             return response()->json(['error' => $e->errors()], 422);
         } catch (\Exception $e) {
             if ($e instanceof \Illuminate\Session\TokenMismatchException) {
-                Log::error('CSRF token mismatch: ' . $e->getMessage());
                 return response()->json(['error' => 'CSRF token mismatch'], 419);
             }
-
-            // Other exceptions occurred, log error and return response
-            Log::error($e->getMessage());
             // Other exceptions occurred, return error response
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -72,7 +72,6 @@ class DashboardController extends Controller
             ->whereDate('holidays.from_date', '>=', now())
             ->first();
 
-        Log::info([$upcomingHoliday]);
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,

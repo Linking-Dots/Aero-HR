@@ -72,12 +72,10 @@ class EducationController extends Controller
                 'educations' => $updatedEducations,
             ]);
         } catch (ValidationException $e) {
-            Log::error($e->errors());
             return response()->json([
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             return response()->json(['error' => 'Update Education Error: ' . $e->getMessage()], 500);
         }
     }
@@ -122,7 +120,6 @@ class EducationController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Delete Education Error: '.$e->getMessage());
             return response()->json(['error' => 'Delete Education Error: '.$e->getMessage()], 500);
         }
     }

@@ -62,12 +62,10 @@ class ExperienceController extends Controller
             ]);
 
         } catch (ValidationException $e) {
-            Log::error($e->errors());
             return response()->json([
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             return response()->json(['error' => 'Update Experience Error: ' . $e->getMessage()], 500);
         }
     }
@@ -108,7 +106,6 @@ class ExperienceController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Delete Experience Error: '.$e->getMessage());
             return response()->json(['error' => 'Delete Experience Error: '.$e->getMessage()], 500);
         }
     }

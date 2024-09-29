@@ -214,12 +214,6 @@ class ProfileController extends Controller
 
             $validated = $request->validate($rules, $messages);
 
-            Log::info('Received data:', $validated);
-
-
-            // Find the user
-
-
             $messages = [];
 
             if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
@@ -381,8 +375,6 @@ class ProfileController extends Controller
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error( $e->errors());
-            // Return validation errors if any
             return response()->json(['errors' => $e->errors()], 422);
         }
     }

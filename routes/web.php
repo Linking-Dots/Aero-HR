@@ -98,6 +98,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');
     Route::put('/user/toggle-status/{id}', [UserController::class, 'toggleStatus'])->name('user.toggleStatus');
     Route::post('/update-role-module', [RoleController::class, 'updateRoleModule'])->name('updateRoleModule');
+    Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
 
 
 

@@ -21,7 +21,6 @@ class LeaveSettingController extends Controller
 
     public function store(Request $request)
     {
-        Log::info($request);
         $request->validate([
             'type' => 'required|string|max:255',
             'days' => 'required|integer',
