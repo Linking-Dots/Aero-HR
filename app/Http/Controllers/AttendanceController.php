@@ -21,21 +21,7 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        $users = User::whereHas('roles', function($query) {
-            $query->where('name', 'Employee');
-        })->with('roles')->get();
-
-        // Loop through each user and add a new field 'role' with the role name
-        $users->transform(function ($user) {
-            $user->role = $user->roles->first()->name;
-            return $user;
-        });
-
-
-
         return Inertia::render('AttendanceAdmin', [
-            'allUsers' => $users,
-
             'title' => 'Attendances of Employees',
         ]);
     }
@@ -49,72 +35,107 @@ class AttendanceController extends Controller
             $currentMonth = $request->get('currentMonth'); // Filter by start date
             $currentYear = $request->get('currentYear'); // Filter by end date
 
-            $query = Attendance::query();
+            $users = User::whereHas('roles', function($query) {
+                $query->where('name', 'Employee');
+            })->with([
+                'attendances' => function ($query) use ($currentYear, $currentMonth) {
+                    $query->whereYear('date', $currentYear)
+                        ->whereMonth('date', $currentMonth);
+                },
+                'leaves' => function ($query) use ($currentYear, $currentMonth) {
+                    $query->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                        ->select('leaves.*', 'leave_settings.type as leave_type')
+                        ->where(function ($query) use ($currentYear, $currentMonth) {
+                            $query->whereYear('leaves.from_date', $currentYear)
+                                ->whereMonth('leaves.from_date', $currentMonth)
+                                ->orWhereYear('leaves.to_date', $currentYear)
+                                ->whereMonth('leaves.to_date', $currentMonth);
+                        })
+                        ->orderBy('leaves.from_date', 'desc');
+                }
+            ]);
+
+            $users = $users->get();
 
             $leaveTypes = LeaveSetting::all();
-            $allLeaves = DB::table('leaves')
+
+            $leaveCounts = DB::table('leaves')
                 ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-                ->select('leaves.*', 'leave_settings.type as leave_type')
+                ->select(
+                    'leaves.user_id',
+                    'leave_settings.type as leave_type',
+                    DB::raw('SUM(DATEDIFF(leaves.to_date, leaves.from_date) + 1) as total_days')
+                )
                 ->where(function ($query) use ($currentYear, $currentMonth) {
                     $query->whereYear('leaves.from_date', $currentYear)
                         ->whereMonth('leaves.from_date', $currentMonth)
                         ->orWhereYear('leaves.to_date', $currentYear)
                         ->whereMonth('leaves.to_date', $currentMonth);
                 })
-                ->orderBy('leaves.from_date', 'desc')
+                ->groupBy('leaves.user_id', 'leaves.leave_type')
                 ->get();
-            $leaveCounts = $allLeaves->groupBy('user_id')->map(function ($leaves, $userId) use ($leaveTypes) {
-                $counts = [];
-                foreach ($leaveTypes as $leaveType) {
-                    $type = strtolower($leaveType->type);
-                    $counts[$type] = $leaves->where('leave_type', $leaveType->type)->count();
+
+            $leaveCountsArray = [];
+
+            foreach ($leaveCounts as $leave) {
+                $userId = $leave->user_id;
+                $leaveType = $leave->leave_type;
+                $totalDays = $leave->total_days;
+
+                // Initialize user and leave types if not set
+                if (!isset($leaveCountsArray[$userId])) {
+                    $leaveCountsArray[$userId] = [
+                        'Casual' => 0,
+                        'Sick' => 0,
+                        'Weekend' => 0,
+                        'Earned' => 0
+                    ];
                 }
-                return $counts;
-            });
 
-            if ($employee) {
-                $userIds = User::where('name', 'LIKE', "%{$employee}%")->pluck('id');
-                $query->whereIn('user_id', $userIds);
+                // Add the leave days to the respective leave type
+                $leaveCountsArray[$userId][$leaveType] = $totalDays;
             }
 
-            if ($currentYear && $currentMonth) {
-                $query->whereYear('date', $currentYear)
-                    ->whereMonth('date', $currentMonth);
-            }
-
-            $attendances = $query->get()->groupBy('user_id')->map(function ($attendanceRecords, $userId) use ($currentYear, $currentMonth, $allLeaves, $leaveTypes) {
+            $attendances = $users->map(function ($user) use ($currentYear, $currentMonth) {
                 $daysInMonth = Carbon::create($currentYear, $currentMonth)->daysInMonth;
-                $attendanceData = ['user_id' => $userId];
+                $attendanceData = ['user_id' => $user->id, 'name' => $user->name, 'profile_image' => $user->profile_image];
+                $leaveTypes = LeaveSetting::all();
 
                 // Loop through each day of the month
                 for ($day = 1; $day <= $daysInMonth; $day++) {
                     $date = Carbon::create($currentYear, $currentMonth, $day)->toDateString();
 
-                    // Check if the date falls within any leave period
-                    $leave = $allLeaves->first(function ($leave) use ($date, $userId) {
-                        return $leave->user_id == $userId && $date >= $leave->from_date && $date <= $leave->to_date;
+                    // Check if the user has leave on this date
+                    $leave = $user->leaves->first(function ($leave) use ($date) {
+                        return Carbon::parse($date)->between($leave->from_date, $leave->to_date);
                     });
 
                     if ($leave) {
-                        // Find the leave type symbol
                         $leaveType = $leaveTypes->firstWhere('type', $leave->leave_type);
                         $attendanceData[$date] = $leaveType ? $leaveType->symbol : '√';
                     } else {
-                        // Check attendance records
-                        $attendanceData[$date] = $attendanceRecords->contains(function ($record) use ($date) {
-                            return $record->date == $date && $record->punchin;
-                        }) ? '√' : '▼';
+                        // Check if the user was present on this date
+                        $attendance = $user->attendances->firstWhere('date', $date);
+                        $attendanceData[$date] = $attendance && $attendance->punchin ? '√' : '▼'; // Present or Absent
                     }
                 }
 
                 return $attendanceData;
             });
 
+
+
             // Sort the collection by 'user_id'
             $sortedAttendances = $attendances->sortBy('user_id');
 
-            // Paginate the collection manually
+            // Paginate manually
             $paginatedAttendances = $sortedAttendances->slice(($page - 1) * $perPage, $perPage)->values();
+
+            if ($employee) {
+                $paginatedAttendances = $paginatedAttendances->filter(function ($attendance) use ($employee) {
+                    return stripos($attendance['name'], $employee) !== false;
+                })->values();
+            }
 
             // Return the paginated response as JSON
             return response()->json([
@@ -123,7 +144,7 @@ class AttendanceController extends Controller
                 'page' => $page,
                 'last_page' => ceil($sortedAttendances->count() / $perPage),
                 'leaveTypes' => $leaveTypes,
-                'leaveCounts' => $leaveCounts,
+                'leaveCounts' => $leaveCountsArray,
             ]);
         } catch (\Exception $e) {
             Log::error('Error in paginate method: ' . $e->getMessage());

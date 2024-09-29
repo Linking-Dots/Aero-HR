@@ -106,4 +106,15 @@ class User extends Authenticatable implements HasMedia
         $this->save();
     }
 
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class, 'user_id');
+    }
+
+    // In User.php model
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'user_id');
+    }
+
 }

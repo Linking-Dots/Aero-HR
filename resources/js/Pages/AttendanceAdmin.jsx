@@ -22,8 +22,9 @@ import {useTheme} from "@mui/material/styles";
 import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
 
-const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
+const AttendanceAdmin = React.memo(({ title  }) => {
     const theme = useTheme();
+    const [loading, setLoading] = useState(false);
     const {auth} = usePage().props;
     const [attendanceData, setAttendanceData] = useState([]);
     const [leaveCounts, setLeaveCounts] = useState([]);
@@ -35,18 +36,20 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
-    const [openModalType, setOpenModalType] = useState(null);
 
     const [filterData, setFilterData] = useState({
-        currentYear: new Date().getFullYear(),
-        currentMonth: new Date().getMonth() + 1,
+        currentMonth: dayjs().format('YYYY-MM'),
     });
+
+
+
 
 
     // Get the number of days in the current month
     const daysInMonth = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-01`).daysInMonth();
 
     const handleFilterChange = useCallback((key, value) => {
+
         setFilterData(prevState => ({
             ...prevState,
             [key]: value,
@@ -54,6 +57,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
     }, []);
 
     const fetchData = async (page, perPage, filterData) => {
+        setLoading(true);
 
         try {
             const response = await axios.get(route('attendancesAdmin.paginate'), {
@@ -61,8 +65,8 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
                     page,
                     perPage,
                     employee: employee, // Assuming 'report' is the search field
-                    currentYear: filterData.currentYear !== 'all' ? filterData.currentYear : '',
-                    currentMonth: filterData.currentMonth !== 'all' ? filterData.currentMonth : '',
+                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
+                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
                 }
             });
 
@@ -84,6 +88,8 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
                 }
             });
 
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -116,18 +122,13 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
                     for (let i = 0; i < daysInMonth; i++) {
                         const day = i + 1;
                         const dateKey = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-${day}`).format('YYYY-MM-DD');
-                        attendanceRow[`day-${day}`] = userAttendance[dateKey] === 'present' ? '√' : '▼';
+                        attendanceRow[`day-${day}`] = userAttendance[dateKey] || '▼';
                     }
 
-                    // Adding absence-related columns based on your provided image structure
-                    attendanceRow.absence = user.absence || '-';
-                    attendanceRow.personal = user.personal || '-';
-                    attendanceRow.sick = user.sick || '-';
-                    attendanceRow.marital = user.marital || '-';
-                    attendanceRow.funeral = user.funeral || '-';
-                    attendanceRow.maternity = user.maternity || '-';
-                    attendanceRow.annualHoliday = user.annualHoliday || '-';
-                    attendanceRow.festivalHoliday = user.festivalHoliday || '-';
+                    // Adding leave counts
+                    leaveTypes.forEach((type) => {
+                        attendanceRow[type.type] = leaveCounts[user.id]?.[type.type] || 0;
+                    });
 
                     return attendanceRow;
                 });
@@ -138,22 +139,15 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
                     { label: 'Name', key: 'name' },
                     ...Array.from({ length: daysInMonth }, (_, i) => {
                         const day = i + 1;
-                        const date = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-${day}`);
-                        const weekday = date.format('ddd'); // Format day of the week (e.g., 'Fri')
                         return {
-                            label: `${day}\n${weekday}`, // '1\nFri', '2\nSat', etc.
+                            label: `${day}`,
                             key: `day-${day}`,
                         };
                     }),
-                    // Adding columns for absence-related data
-                    { label: 'Absence', key: 'absence' },
-                    { label: 'Personal', key: 'personal' },
-                    { label: 'Sick', key: 'sick' },
-                    { label: 'Marital', key: 'marital' },
-                    { label: 'Funeral', key: 'funeral' },
-                    { label: 'Maternity', key: 'maternity' },
-                    { label: 'Annual Holiday', key: 'annualHoliday' },
-                    { label: 'Festival Holiday', key: 'festivalHoliday' },
+                    ...leaveTypes.map((type) => ({
+                        label: type.type,
+                        key: type.type,
+                    })),
                 ];
 
                 // Create worksheet with headers
@@ -235,7 +229,8 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
         );
     };
 
-    console.log(attendanceData)
+
+
 
     return (
         <>
@@ -317,35 +312,17 @@ const AttendanceAdmin = React.memo(({ title, allUsers  }) => {
                                             }}
                                         />
                                     </Grid>
-                                    <Grid item xs={6} sm={4} md={3}>
-                                        <TextField
-                                            label="Current Year"
-                                            type={'year'}
-                                            fullWidth
-                                            variant="outlined"
-                                            placeholder="Year..."
-                                            value={filterData.currentYear}
-                                            onChange={(e) => handleFilterChange('currentYear', e.target.value)}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <CalendarMonth />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-                                    </Grid>
                                 </Grid>
                             </Box>
                         </CardContent>
                         <CardContent>
                             <AttendanceAdminTable
-                                allUsers={allUsers}
                                 attendanceData={attendanceData}
                                 currentYear={filterData.currentYear}
                                 currentMonth={filterData.currentMonth}
                                 leaveTypes={leaveTypes}
                                 leaveCounts={leaveCounts}
+                                loading={loading}
                             />
                             {totalRows >= 30 && (
                                 <div className="py-2 px-2 flex justify-center items-center">

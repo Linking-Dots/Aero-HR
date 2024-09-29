@@ -5,15 +5,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import DoneIcon from '@mui/icons-material/Done';
 import dayjs from 'dayjs';
 
-const AttendanceAdminTable = ({ allUsers, attendanceData, currentYear, currentMonth, leaveTypes, leaveCounts }) => {
-    // Check if attendanceData is available
-    if (!attendanceData || attendanceData.length === 0) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <CircularProgress /> {/* Show loading spinner */}
-            </Box>
-        );
-    }
+const AttendanceAdminTable = ({ loading, attendanceData, currentYear, currentMonth, leaveTypes, leaveCounts }) => {
+
 
     // Get the number of days in the current month
     const daysInMonth = dayjs(`${currentYear}-${currentMonth}-01`).daysInMonth();
@@ -37,23 +30,12 @@ const AttendanceAdminTable = ({ allUsers, attendanceData, currentYear, currentMo
 
     ];
 
-    console.log(columns)
 
-    // Helper function to render the attendance status icon
-    const renderAttendanceIcon = (status) => {
-        return status === 'present' ? (
-            <DoneIcon style={{ color: 'green' }} />
-        ) : (
-            <CloseIcon style={{ color: 'red' }} />
-        );
-    };
-
-    // Render leave counts
     const renderLeaveCell = (userId) => {
         return leaveTypes.map((type) => {
-            const leaveCount = leaveCounts[userId]?.[type] || 0;
+            const leaveCount = leaveCounts[userId]?.[type.type] || 0;
             return (
-                <TableCell key={type} align="center">
+                <TableCell key={`${userId + type.type}`} align="center">
                     {leaveCount}
                 </TableCell>
             );
@@ -61,7 +43,7 @@ const AttendanceAdminTable = ({ allUsers, attendanceData, currentYear, currentMo
     };
 
     // Function to render attendance cells
-    const renderCell = (userId) => {
+    const renderAttendanceCell = (userId) => {
 
         const attendance = attendanceData.find((record) => record.user_id === userId);
 
@@ -82,46 +64,73 @@ const AttendanceAdminTable = ({ allUsers, attendanceData, currentYear, currentMo
 
 
 
+    // // Check if attendanceData is available
+    // if (!columns || columns.length === 0) {
+    //     return (
+    //         <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+    //             <CircularProgress /> {/* Show loading spinner */}
+    //         </Box>
+    //     );
+    // }
+
+    console.log(attendanceData)
 
     return (
         <div style={{ maxHeight: '84vh', overflowY: 'auto' }}>
-            <Table
-                isStriped
-                selectionMode="multiple"
-                selectionBehavior="toggle"
-                isCompact
-                isHeaderSticky
-                removeWrapper
-                aria-label="Attendance Table"
-            >
-                <TableHeader columns={columns}>
-                    {(column) => (
-                        <TableColumn key={column.key} align="center">
-                            {column.label}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody>
-                    {allUsers.map((user, index) => (
-                        <TableRow key={user.id}>
-                            {/* Serial number */}
-                            <TableCell>{index + 1}</TableCell>
+            {loading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                    <CircularProgress /> {/* Show loading spinner */}
+                </Box>
+            ) : (
+                <Table
+                    isStriped
+                    selectionMode="multiple"
+                    selectionBehavior="toggle"
+                    isCompact
+                    isHeaderSticky
+                    removeWrapper
+                    aria-label="Attendance Table"
+                    css={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        '& td': {
+                            border: '1px solid #ddd',
+                        },
+                        '& th': {
+                            backgroundColor: '#f4f4f4',
+                        },
+                    }}
+                >
+                    <TableHeader columns={columns}>
+                        {(column) => (
+                            <TableColumn key={column.key} align="center">
+                                {column.label}
+                            </TableColumn>
+                        )}
+                    </TableHeader>
+                    <TableBody>
+                        {attendanceData.map((data, index) => (
+                            <TableRow key={data.user_id}>
+                                {/* Serial number */}
+                                <TableCell>{index + 1}</TableCell>
 
-                            {/* User name */}
-                            <TableCell style={{ whiteSpace: 'nowrap', textAlign: 'start'}}>
-                                <User
-                                    avatarProps={{ radius: "lg", src: user.profile_image }}
-                                    name={user.name}
-                                />
-                            </TableCell>
+                                {/* User name */}
+                                <TableCell style={{ whiteSpace: 'nowrap', textAlign: 'start'}}>
+                                    <User
+                                        avatarProps={{ radius: "lg", src: data.profile_image }}
+                                        name={data.name}
+                                    />
+                                </TableCell>
 
-                            {/* Attendance cells for each day */}
-                            {renderCell(user.id)}
-                            {renderLeaveCell(user.id)}
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                                {/* Attendance cells for each day */}
+                                {renderAttendanceCell(data.user_id)}
+                                {renderLeaveCell(data.user_id)}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+
         </div>
     );
 };
