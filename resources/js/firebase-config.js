@@ -1,7 +1,6 @@
 // firebase-config.js
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import {env} from "@headlessui/react/dist/utils/env.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyD9xbEpS5pPQ6X3PggFoAP1c9gPoO4wN28",
@@ -18,7 +17,7 @@ const messaging = getMessaging(app);
 
 export const requestNotificationPermission = async () => {
     try {
-        const vapidKey = process.env.REACT_APP_VAPID_ID;
+        const vapidKey = import.meta.env.VITE_VAPID_KEY;
         const token = await getToken(messaging, { vapidKey });
         if (token) {
             return token;
