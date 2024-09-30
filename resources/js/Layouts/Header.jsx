@@ -159,8 +159,9 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         ${activePage === "/"+page.route ? 'shadow' : ''}
                                                         px-2 w-full py-4 hover:shadow rounded-lg h-14 flex items-center
                                                     `}
-                                                    href={page.route}
-                                                    size="lg"
+                                                    href={route(page.route)}
+                                                    method={page.method || undefined}
+                                                    size="sm"
                                                     color="foreground"
                                                     onClick={() => setIsMenuOpen(false)}
                                                 >
@@ -197,8 +198,9 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                     ${activePage === "/"+subPage.route ? 'shadow' : ''}
                                                                     px-2 w-full py-4 hover:shadow rounded-lg h-14 flex items-center
                                                                 `}
-                                                                href={subPage.route}
-                                                                size="lg"
+                                                                href={route(subPage.route)}
+                                                                method={page.method || undefined}
+                                                                size="sm"
                                                                 color="foreground"
                                                                 onClick={() => setIsMenuOpen(false)}
                                                             >
