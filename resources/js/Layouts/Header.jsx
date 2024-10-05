@@ -278,7 +278,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
             }
             {isDesktop &&
                 <Slide appear={false} direction="down" in={!trigger}>
-                    <Box sx={{ p: 2, flexGrow: 1, display: {xs: 'none', md: 'flex'} }}>
+                    <Box sx={{ p: 2 }}>
                         <Grow in>
                             <GlassCard>
                                 <Container maxWidth="xl">
