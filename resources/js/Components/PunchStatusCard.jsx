@@ -70,70 +70,35 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
-    const getCurrentPosition = async () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setPosition({
-                        latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude
-                    });
-                    console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
-                },
-                (error) => handleLocationError(error),
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            toast.error('Geolocation is not supported by this browser.', {
-                icon: '🔴',
-                style: {
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
-                    border: theme.glassCard.border,
-                    color: theme.palette.text.primary,
-                }
-            });
-        }
-        // const permissionStatus = await navigator.permissions.query({name: 'geolocation'});
-        //
-        // if (permissionStatus.state === 'denied') {
-        //     toast.error('Location permission denied. Please enable location services in your browser settings.', {
-        //         icon: '🔴',
-        //         style: {
-        //             backdropFilter: 'blur(16px) saturate(200%)',
-        //             backgroundColor: theme.glassCard.backgroundColor,
-        //             border: theme.glassCard.border,
-        //             color: theme.palette.text.primary,
-        //         }
-        //     });
-        // } else if (permissionStatus.state === 'prompt') {
-        //     navigator.geolocation.getCurrentPosition(
-        //         (pos) => {
-        //             setPosition({
-        //                 latitude: pos.coords.latitude,
-        //                 longitude: pos.coords.longitude
-        //             });
-        //             console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
-        //         },
-        //         (error) => handleLocationError(error)
-        //     );
-        // } else  {
-        //     navigator.geolocation.getCurrentPosition(
-        //         (pos) => {
-        //             setPosition({
-        //                 latitude: pos.coords.latitude,
-        //                 longitude: pos.coords.longitude
-        //             });
-        //             console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
-        //         },
-        //         (error) => handleLocationError(error)
-        //     );
-        // }
-    };
+    // const getCurrentPosition = async () => {
+    //     if (navigator.geolocation) {
+    //         navigator.geolocation.getCurrentPosition(
+    //             (pos) => {
+    //                 setPosition({
+    //                     latitude: pos.coords.latitude,
+    //                     longitude: pos.coords.longitude
+    //                 });
+    //                 console.log(`Location retrieved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+    //             },
+    //             (error) => handleLocationError(error),
+    //             {
+    //                 enableHighAccuracy: true,
+    //                 timeout: 10000,
+    //                 maximumAge: 0
+    //             }
+    //         );
+    //     } else {
+    //         toast.error('Geolocation is not supported by this browser.', {
+    //             icon: '🔴',
+    //             style: {
+    //                 backdropFilter: 'blur(16px) saturate(200%)',
+    //                 backgroundColor: theme.glassCard.backgroundColor,
+    //                 border: theme.glassCard.border,
+    //                 color: theme.palette.text.primary,
+    //             }
+    //         });
+    //     }
+    // };
     const handleLocationError = (error, reject) => {
         console.log('Location error:', error);
         if (error.code === error.PERMISSION_DENIED) {
@@ -158,28 +123,141 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
             });
         }
     };
+    // const processPunch = async (action) => {
+    //     const promise = new Promise(async (resolve, reject) => {
+    //         const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+    //
+    //         try {
+    //             const response = await axios.post(endpoint, {
+    //                 user_id: auth.user.id,
+    //                 location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
+    //             });
+    //
+    //             if (response.status === 200) {
+    //                 await fetchData();
+    //                 handlePunchSuccess();
+    //                 resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
+    //             } else {
+    //                 reject(['Failed to set attendance. Please try again.']);
+    //             }
+    //         } catch (error) {
+    //             console.log(error);
+    //             reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
+    //         }
+    //     });
+    //     toast.promise(
+    //         promise,
+    //         {
+    //             pending: {
+    //                 render() {
+    //                     return (
+    //                         <div style={{ display: 'flex', alignItems: 'center' }}>
+    //                             <CircularProgress />
+    //                             <span style={{ marginLeft: '8px' }}>{action === 'punchin' ? 'Punching in...' : 'Punching out...'}</span>
+    //                         </div>
+    //                     );
+    //                 },
+    //                 icon: false,
+    //                 style: {
+    //                     backdropFilter: 'blur(16px) saturate(200%)',
+    //                     backgroundColor: theme.glassCard.backgroundColor,
+    //                     border: theme.glassCard.border,
+    //                     color: theme.palette.text.primary,
+    //                 },
+    //             },
+    //             success: {
+    //                 render({ data }) {
+    //                     return (
+    //                         <>
+    //                             {data.map((message, index) => (
+    //                                 <div key={index}>{message}</div>
+    //                             ))}
+    //                         </>
+    //                     );
+    //                 },
+    //                 icon: '🟢',
+    //                 style: {
+    //                     backdropFilter: 'blur(16px) saturate(200%)',
+    //                     backgroundColor: theme.glassCard.backgroundColor,
+    //                     border: theme.glassCard.border,
+    //                     color: theme.palette.text.primary,
+    //                 },
+    //             },
+    //             error: {
+    //                 render({ data }) {
+    //                     return (
+    //                         <>
+    //                             {data}
+    //                         </>
+    //                     );
+    //                 },
+    //                 icon: '🔴',
+    //                 style: {
+    //                     backdropFilter: 'blur(16px) saturate(200%)',
+    //                     backgroundColor: theme.glassCard.backgroundColor,
+    //                     border: theme.glassCard.border,
+    //                     color: theme.palette.text.primary,
+    //                 },
+    //             },
+    //         }
+    //     );
+    // }
+
     const processPunch = async (action) => {
         const promise = new Promise(async (resolve, reject) => {
-            const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        const position = {
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                        };
+                        console.log(`Location retrieved: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`);
 
-            try {
-                const response = await axios.post(endpoint, {
-                    user_id: auth.user.id,
-                    location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
+                        const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+
+                        try {
+                            const response = await axios.post(endpoint, {
+                                user_id: auth.user.id,
+                                location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`,
+                            });
+
+                            if (response.status === 200) {
+                                await fetchData();
+                                handlePunchSuccess();
+                                resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
+                            } else {
+                                reject(['Failed to set attendance. Please try again.']);
+                            }
+                        } catch (error) {
+                            console.log(error);
+                            reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
+                        }
+                    },
+                    (error) => {
+                        handleLocationError(error);
+                        reject([`Error retrieving location: ${error.message}`]);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0,
+                    }
+                );
+            } else {
+                toast.error('Geolocation is not supported by this browser.', {
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
                 });
-
-                if (response.status === 200) {
-                    await fetchData();
-                    handlePunchSuccess();
-                    resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
-                } else {
-                    reject(['Failed to set attendance. Please try again.']);
-                }
-            } catch (error) {
-                console.log(error);
-                reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
+                reject(['Geolocation is not supported by this browser.']);
             }
         });
+
         toast.promise(
             promise,
             {
@@ -236,7 +314,8 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                 },
             }
         );
-    }
+    };
+
 
 
 
@@ -244,9 +323,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        getCurrentPosition(); // Update position when component loads
-    }, []);
+    // useEffect(() => {
+    //     getCurrentPosition(); // Update position when component loads
+    // }, []);
 
     useEffect(() => {
         setElapsedTime(calculateElapsedTime());

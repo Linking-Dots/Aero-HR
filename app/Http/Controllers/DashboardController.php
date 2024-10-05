@@ -28,7 +28,7 @@ class DashboardController extends Controller
             });
         $tasks = $user->hasRole('Supervision Engineer')
             ? DailyWork::where('incharge', $user->id)->get()
-            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspecto')
+            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
                 ? DailyWork::where('assigned', $user->id)->get()
                 : DailyWork::all()
             );
