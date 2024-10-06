@@ -1,3 +1,6 @@
+
+
+
 {
     "name": "DBEDC ERP",
     "start_url": "https://erp.dhakabypass.com",
@@ -5,7 +8,7 @@
     "scope": "https://erp.dhakabypass.com",
     "lang": "en",
     "orientation": "any",
-    "display": "fullscreen",
+    "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
     "short_name": "DBEDC ERP",
@@ -13,6 +16,11 @@
     "description": "DBEDC ERP",
     "categories": [
         "productivity"
+    ],
+    "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "browser"
     ],
     "icons": [
         {
