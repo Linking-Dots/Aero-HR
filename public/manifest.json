@@ -1,13 +1,19 @@
 {
-  "name": "DBEDC ERP",
-  "theme_color": "#000000",
-  "background_color": "#000000",
-  "short_name": "DBEDC ERP",
-  "id": "dbedc_erp",
-  "description": "DBEDC ERP",
-  "categories": [
-    "productivity"
-  ],
+    "name": "DBEDC ERP",
+    "start_url": "https://erp.dhakabypass.com",
+    "dir": "ltr",
+    "scope": "https://erp.dhakabypass.com",
+    "lang": "en",
+    "orientation": "any",
+    "display": "fullscreen",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "short_name": "DBEDC ERP",
+    "id": "dbedc_erp",
+    "description": "DBEDC ERP",
+    "categories": [
+        "productivity"
+    ],
     "icons": [
         {
             "src": "windows11/SmallTile.scale-100.png",
