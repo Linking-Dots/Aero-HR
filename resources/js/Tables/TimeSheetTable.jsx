@@ -9,7 +9,7 @@ import {
     Chip,
     Collapse, TextField
 } from '@mui/material';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Avatar } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Avatar, Input } from "@nextui-org/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
@@ -160,19 +160,13 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                             sx={{padding: '24px'}}
                             action={
                                 <Box gap={2}>
-                                    <TextField
+                                    <Input
                                         label="Select Date"
-                                        fullWidth
-                                        size="small"
                                         type="date"
+                                        variant={'bordered'}
                                         onChange={handleDateChange}
                                         value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
-                                        style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
-                                        inputProps={{
-                                            placeholder: 'yyyy-MM-dd'
-                                        }}
                                     />
-
                                 </Box>
                             }
                         />

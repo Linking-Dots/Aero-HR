@@ -1,5 +1,6 @@
 import React from 'react';
-import {Avatar, Box, CardContent, CardHeader, Divider, Grid, Grow, Popover, Typography, AvatarGroup} from '@mui/material';
+import {Box, CardContent, CardHeader, Divider, Grid, Grow, Popover, Typography} from '@mui/material';
+import {Avatar, AvatarGroup} from "@nextui-org/react";
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
 import { useState } from 'react';
@@ -45,7 +46,10 @@ const UpdateSection = ({ props, title, items, users }) => {
                                     const leaves = item.leaves.filter((leave) => leave.leave_type === item.type);
                                     return (
                                         <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <AvatarGroup max={5} total={leaves.length}>
+                                            <AvatarGroup
+                                                max={5}
+                                                isBordered
+                                            >
                                                 {leaves.map((leave, idx) => {
                                                     const user = users.find((user) => String(user.id) === String(leave.user_id));
                                                     return (

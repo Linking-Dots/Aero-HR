@@ -20,9 +20,11 @@ import logo from '../../../../public/assets/images/logo.png';
 import App from '@/Layouts/App.jsx'
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
-
+import {Input, Button} from '@nextui-org/react';
+import EmailIcon from '@mui/icons-material/Email';
 import {useTheme} from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import PasswordIcon from '@mui/icons-material/Password';
 
 const Login = () => {
     const theme = useTheme();
@@ -39,6 +41,7 @@ const Login = () => {
         post('/login', {
         });
     };
+    console.log(errors)
 
 
     return (
@@ -71,50 +74,55 @@ const Login = () => {
                                     </Box>
                                     <Box mt={4}>
                                         <form onSubmit={handleSubmit}>
-                                            <Box mb={3}>
-                                                <FormControl fullWidth>
-                                                    <TextField
-                                                        label="Email"
-                                                        variant="outlined"
-                                                        type="email"
-                                                        id="email"
-                                                        name="email"
-                                                        value={data.email}
-                                                        onChange={(e) => setData('email', e.target.value)}
-                                                        required
-                                                        autoFocus
-                                                        fullWidth
-                                                        error={!!errors.email}
-                                                        helperText={errors.email}
-                                                    />
-                                                </FormControl>
-                                            </Box>
-                                            <Box mb={3}>
-                                                <TextField
+                                            <Box mb={4}>
+                                                <Input
+                                                    isClearable
+                                                    type="email"
+                                                    label="Email"
+                                                    variant="bordered"
+                                                    id="email"
+                                                    name="email"
+                                                    value={data.email}
+                                                    onChange={(e) => {
+                                                        setData('email', e.target.value);
+                                                    }}
+                                                    onClear={() => setData('email', '')}
+                                                    required
+                                                    autoFocus
                                                     fullWidth
-                                                    id="password"
+                                                    isInvalid={!!errors.email}
+                                                    errorMessage={errors.email}
+                                                    placeholder="you@example.com"
+                                                    labelPlacement="outside"
+                                                    startContent={
+                                                        <EmailIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
+                                                    }
+                                                />
+                                            </Box>
+                                            <Box mb={4}>
+                                                <Input
                                                     label="Password"
-                                                    type={showPassword ? 'text' : 'password'}
+                                                    variant="bordered"
+                                                    placeholder="Enter your password"
+                                                    startContent={
+                                                        <PasswordIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
+                                                    }
+                                                    endContent={
+                                                        <button className="focus:outline-none" type="button" onClick={() => setShowPassword(!showPassword)} aria-label="toggle password visibility">
+                                                            {showPassword ? (
+                                                                <VisibilityOff className="text-2xl text-default-400 pointer-events-none" />
+                                                            ) : (
+                                                                <Visibility className="text-2xl text-default-400 pointer-events-none" />
+                                                            )}
+                                                        </button>
+                                                    }
+                                                    type={showPassword ? "text" : "password"}
                                                     value={data.password}
                                                     onChange={(e) => setData('password', e.target.value)}
                                                     required
-                                                    error={!!errors.password}
-                                                    helperText={errors.password}
-                                                    InputProps={{
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <IconButton
-                                                                    aria-label="toggle password visibility"
-                                                                    onClick={() => setShowPassword(!showPassword)}
-                                                                    onMouseDown={(e) => e.preventDefault()}
-                                                                    edge="end"
-                                                                >
-                                                                    {showPassword ? <VisibilityOff/> :
-                                                                        <Visibility/>}
-                                                                </IconButton>
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
+                                                    isInvalid={!!errors.password}
+                                                    errorMessage={errors.password}
+                                                    labelPlacement="outside"
                                                 />
                                                 <Box display="flex" justifyContent="space-between"
                                                      alignItems="center">
@@ -136,15 +144,22 @@ const Login = () => {
                                                 label="Remember me"
                                             />
                                             <Box mt={4}>
-                                                <LoadingButton
+                                                {/*<LoadingButton*/}
+
+                                                {/*    color="primary"*/}
+
+                                                {/*    loading={processing}*/}
+                                                {/*>*/}
+                                                {/*    Log in*/}
+                                                {/*</LoadingButton>*/}
+                                                <Button
                                                     fullWidth
-                                                    variant="outlined"
-                                                    color="primary"
+                                                    variant="bordered"
                                                     type="submit"
-                                                    loading={processing}
-                                                >
-                                                    Log in
-                                                </LoadingButton>
+                                                    color="primary"
+                                                    isLoading={processing}>
+                                                    Login
+                                                </Button>
                                             </Box>
                                         </form>
                                     </Box>

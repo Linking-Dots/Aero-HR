@@ -10,6 +10,7 @@ import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import L from 'leaflet';
 import 'leaflet-routing-machine';
+import {Avatar} from '@nextui-org/react';
 
 const RoutingMachine = ({ startLocation, endLocation }) => {
     const map = useMap();

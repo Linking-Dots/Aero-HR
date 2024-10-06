@@ -17,7 +17,7 @@ import Grow from "@mui/material/Grow";
 import axios from "axios";
 import {toast} from "react-toastify";
 import SearchIcon from "@mui/icons-material/Search.js";
-import {Pagination} from "@nextui-org/react";
+import {Pagination, Input} from "@nextui-org/react";
 import {useTheme} from "@mui/material/styles";
 import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
@@ -295,21 +295,14 @@ const AttendanceAdmin = React.memo(({ title  }) => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6} md={4}>
-                                        <TextField
+                                        <Input
                                             label="Current Month"
                                             type={'month'}
                                             fullWidth
-                                            variant="outlined"
+                                            variant="bordered"
                                             placeholder="Month..."
                                             value={filterData.currentMonth}
                                             onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <CalendarMonth />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
                                         />
                                     </Grid>
                                 </Grid>
