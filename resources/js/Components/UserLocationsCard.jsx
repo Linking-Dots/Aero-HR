@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Box, CardContent, CardHeader, CircularProgress } from '@mui/material';
+import {Box, CardContent, CardHeader, CircularProgress, Typography} from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-fullscreen/dist/Leaflet.fullscreen.js'; // Import fullscreen control
@@ -147,12 +147,16 @@ const UserLocationsCard = ({updateMap, selectedDate}) => {
             <Grow in>
                 <GlassCard>
                     <CardHeader title={
-                        "Users Locations for " +
-                            selectedDate.toLocaleString('en-US', {
-                                month: 'long',
-                                day: 'numeric',
-                                year: 'numeric'
-                            })
+                        <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
+                            {"Users Locations for " +
+                                selectedDate.toLocaleString('en-US', {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                })
+                            }
+                        </Typography>
+
                     } />
                     <CardContent>
                         <Box sx={{ height: '70vh', borderRadius: '20px' }}>

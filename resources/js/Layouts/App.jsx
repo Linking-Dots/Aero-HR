@@ -150,10 +150,10 @@ function App({ children }) {
                             overflow: 'auto', // Enable vertical scrolling
                         }}
                     >
-                        <ScrollShadow>
-                            {auth.user &&
-                                <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
-                                        sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                        {auth.user &&
+                            <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
+                                    sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                        <ScrollShadow  hideScrollBar>
                             {auth.user && <Breadcrumb/>}
                             {children}
                             {/*{!isMobile && <Footer/>}*/}

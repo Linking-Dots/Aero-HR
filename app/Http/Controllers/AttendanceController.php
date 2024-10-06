@@ -364,7 +364,17 @@ class AttendanceController extends Controller
                 ];
             });
 
-            return response()->json($formattedRecords);
+            $todayLeaves = DB::table('leaves')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
+                ->whereDate('leaves.from_date', '<=', $selectedDate)  // Check that today's date is after or on the start date
+                ->whereDate('leaves.to_date', '>=', $selectedDate)    // Check that today's date is before or on the end date
+                ->get();
+
+            return response()->json([
+                'attendances' => $formattedRecords,
+                'leaves' => $todayLeaves,
+            ]);
 
         } catch (Throwable $exception) {
             // Handle unexpected exceptions during data retrieval

@@ -117,6 +117,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                 <Box sx={{mb: 2}}>
                     <Grow in>
                         <Navbar
+                            shouldHideOnScroll
                             isBordered
                             isMenuOpen={isMenuOpen}
                             onMenuOpenChange={setIsMenuOpen}

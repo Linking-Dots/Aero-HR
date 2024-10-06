@@ -20,25 +20,33 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
                 <CardContent>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
-                            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' } }}>
-                                {title}
-                            </Typography>
-                            <Typography sx={{ mt: 2, fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' } }}>
-                                {value}
-                            </Typography>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} md={12} sm={12}>
+                                    <Typography color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' } }}>
+                                        {title}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6} md={6} sm={6}>
+                                    <Typography sx={{ fontSize: { xs: '1.0rem', sm: '2rem', md: '3rem' } }}>
+                                        {value}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6} md={6} sm={6}>
+                                    <Avatar
+                                        sx={{
+                                            bgcolor: color,
+                                            color: `${color}.contrastText`,
+                                            width: { xs: 38, sm: 38, md: 56 },
+                                            height: { xs: 38, sm: 38, md: 56 }
+                                        }}
+                                    >
+                                        <Box sx={{ p: 1 }}>
+                                            {icon}
+                                        </Box>
+                                    </Avatar>
+                                </Grid>
+                            </Grid>
                         </Box>
-                        <Avatar
-                            sx={{
-                                bgcolor: color,
-                                color: `${color}.contrastText`,
-                                width: { xs: 38, sm: 38, md: 56 },
-                                height: { xs: 38, sm: 38, md: 56 }
-                            }}
-                        >
-                            <Box sx={{ p: 1 }}>
-                                {icon}
-                            </Box>
-                        </Avatar>
                     </Box>
                 </CardContent>
             </GlassCard>

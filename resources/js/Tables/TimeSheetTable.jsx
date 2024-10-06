@@ -15,9 +15,8 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
 const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
 
-    const { todayLeaves } = usePage().props;
-
     const [attendances, setAttendances] = useState([]);
+    const [leaves, setLeaves] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
 
@@ -52,7 +51,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     };
 
     const getUserLeave = (userId) => {
-        return todayLeaves.find((leave) => String(leave.user_id) === String(userId));
+        return leaves.find((leave) => String(leave.user_id) === String(userId));
     };
 
     const getAllUsersAttendanceForDate = async (selectedDate) => {
@@ -61,7 +60,8 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                 params: { date: selectedDate }
             });
             if (response.status === 200) {
-                setAttendances(response.data);  // Set the attendance data
+                setAttendances(response.data.attendances);  // Set the attendance data
+                setLeaves(response.data.leaves);
             } else {
                 setError(response.data.message || 'Error fetching attendance data');
             }
@@ -150,13 +150,15 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                     <GlassCard>
                         <CardHeader
                             title={
-                            "Timesheet of " +
-                            selectedDate.toLocaleString('en-US', {
-                                month: 'long',
-                                day: 'numeric',
-                                year: 'numeric'
-                            })
-                        }
+                                <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
+                                    {"Timesheet of " +
+                                        selectedDate.toLocaleString('en-US', {
+                                            month: 'long',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                </Typography>
+                            }
                             sx={{padding: '24px'}}
                             action={
                                 <Box gap={2}>
@@ -213,13 +215,15 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 <CardHeader
                                     title={
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {"Absent on " +
-                                                selectedDate.toLocaleString('en-US', {
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    year: 'numeric'
-                                                })}
-                                            <Chip sx={{ ml: 1 }} label={absentUsers.length} variant="outlined" color="error" size="small" />
+                                            <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
+                                                {"Absent on " +
+                                                    selectedDate.toLocaleString('en-US', {
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                            </Typography>
+                                            <Chip sx={{ ml: 1, fontSize: { xs: '0.8rem', sm: '1.1rem', md: '1.4rem' } }} label={absentUsers.length} variant="outlined" color="error" size="small" />
                                         </Box>
                                     }
                                 />
@@ -233,28 +237,32 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                                         ref={userItemRef} // Use this ref to measure the height of each user item
                                                         sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}
                                                     >
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <Avatar src={user.profile_image} alt={user.name} />
-                                                            <Box sx={{ ml: 2 }}>
-                                                                <Typography variant="body1">{user.name}</Typography>
-                                                            </Box>
-                                                        </Box>
-                                                        <Grid container alignItems="center" sx={{ mt: 2 }}>
-                                                            <Grid item xs={6}>
-                                                                {userLeave ?
-                                                                    <>
-                                                                        <Typography variant="h6" sx={{ mb: 0 }}>
+                                                        <Grid container alignItems="center">
+                                                            <Grid item xs={12}>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                    <Avatar src={user.profile_image} alt={user.name} />
+                                                                    <Typography sx={{ m: 2, fontSize: { xs: '1.0rem', sm: '1.2rem', md: '1.4rem' } }}>{user.name}</Typography>
+                                                                </Box>
+                                                            </Grid>
+                                                            {userLeave ? (
+                                                                <>
+                                                                    <Grid item xs={6}>
+                                                                        <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.2rem', md: '1.4rem' } }}>
                                                                             {userLeave.from_date === userLeave.to_date ? userLeave.from_date : `${userLeave.from_date} to ${userLeave.to_date}`}
                                                                         </Typography>
-                                                                        <Typography variant="body2" color="textSecondary">{"On " + userLeave.leave_type + " Leave"}</Typography>
-                                                                    </> :
-                                                                    <Typography color="error" variant="h6" sx={{ mb: 0 }}>Absent without Leave</Typography>
-                                                                }
-                                                            </Grid>
-                                                            {userLeave ? <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                <Chip label={userLeave.status} variant="outlined" color={userLeave.status === 'Pending' ? 'error' : 'success'} size="small" />
-                                                            </Grid> : ''}
-
+                                                                        <Typography sx={{ fontSize: { xs: '0.8rem', sm: '1.0rem', md: '1.2rem' } }} color="textSecondary">
+                                                                            {"On " + userLeave.leave_type + " Leave"}
+                                                                        </Typography>
+                                                                    </Grid>
+                                                                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                        <Chip label={userLeave.status} variant="outlined" color={userLeave.status === 'Pending' ? 'error' : 'success'} size="small" />
+                                                                    </Grid>
+                                                                </>
+                                                            ) : (
+                                                                <Grid item xs={12}>
+                                                                    <Typography color="error" sx={{ fontSize: { xs: '1.0rem', sm: '1.2rem', md: '1.4rem' } }}>Absent without Leave</Typography>
+                                                                </Grid>
+                                                            )}
                                                         </Grid>
                                                     </Box>
                                                 </Collapse>
