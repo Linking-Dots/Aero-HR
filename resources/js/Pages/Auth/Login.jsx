@@ -3,7 +3,6 @@ import {Head, Link, useForm} from '@inertiajs/react';
 import {
     Box,
     CardContent,
-    Checkbox,
     Container,
     FormControl,
     FormControlLabel,
@@ -20,7 +19,7 @@ import logo from '../../../../public/assets/images/logo.png';
 import App from '@/Layouts/App.jsx'
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
-import {Input, Button} from '@nextui-org/react';
+import {Input, Button, Checkbox} from '@nextui-org/react';
 import EmailIcon from '@mui/icons-material/Email';
 import {useTheme} from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -65,12 +64,11 @@ const Login = () => {
                                             alignItems: 'center',
                                             display: 'inline-flex',
 
-                                        }} href={route('dashboard')} className="mt-3 d-inline-block auth-logo">
-                                            <img src={logo} alt="Logo" height="100"/>
+                                        }} href={route('dashboard')} className="d-inline-block auth-logo">
+                                            <img src={logo} alt="Logo" className="h-24 md:h-40 sm:h-40 xs:h-10"/>
                                         </Link>
-                                        <Typography variant="h5" color="primary">Welcome Back!</Typography>
-                                        <Typography variant="body2" color="text.secondary">Sign in to
-                                            continue</Typography>
+                                        <Typography color="primary" sx={{ fontSize: { xs: '0.750rem', sm: '1.0rem', md: '1.25rem' } }}>Welcome Back!</Typography>
+                                        <Typography color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' } }}>Sign in to continue</Typography>
                                     </Box>
                                     <Box mt={4}>
                                         <form onSubmit={handleSubmit}>
@@ -124,34 +122,9 @@ const Login = () => {
                                                     errorMessage={errors.password}
                                                     labelPlacement="outside"
                                                 />
-                                                <Box display="flex" justifyContent="space-between"
-                                                     alignItems="center">
-                                                    <Link href={route('password.request')} variant="body2"
-                                                          color="text.secondary">
-                                                        Forgot your password?
-                                                    </Link>
-                                                </Box>
                                             </Box>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        name="remember"
-                                                        checked={data.remember}
-                                                        onChange={(e) => setData('remember', e.target.checked)}
-                                                        color="primary"
-                                                    />
-                                                }
-                                                label="Remember me"
-                                            />
-                                            <Box mt={4}>
-                                                {/*<LoadingButton*/}
 
-                                                {/*    color="primary"*/}
-
-                                                {/*    loading={processing}*/}
-                                                {/*>*/}
-                                                {/*    Log in*/}
-                                                {/*</LoadingButton>*/}
+                                            <Box>
                                                 <Button
                                                     fullWidth
                                                     variant="bordered"
@@ -160,6 +133,11 @@ const Login = () => {
                                                     isLoading={processing}>
                                                     Login
                                                 </Button>
+                                            </Box>
+                                            <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+                                                <Link href={route('password.request')} className="text-sm mx-auto text-primary">
+                                                    Forgot password?
+                                                </Link>
                                             </Box>
                                         </form>
                                     </Box>

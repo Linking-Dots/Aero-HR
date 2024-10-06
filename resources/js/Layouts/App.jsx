@@ -13,7 +13,7 @@ import { Inertia } from '@inertiajs/inertia'
 import Loader from '@/Components/Loader.jsx'
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
-import { NextUIProvider } from '@nextui-org/react';
+import { NextUIProvider, ScrollShadow } from '@nextui-org/react';
 import {onMessageListener, requestNotificationPermission} from "@/firebase-config.js";
 function App({ children }) {
 
@@ -150,12 +150,14 @@ function App({ children }) {
                             overflow: 'auto', // Enable vertical scrolling
                         }}
                     >
-                        {auth.user &&
-                            <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
-                                    sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                        {auth.user && <Breadcrumb/>}
-                        {children}
-                        {/*{!isMobile && <Footer/>}*/}
+                        <ScrollShadow>
+                            {auth.user &&
+                                <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
+                                        sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                            {auth.user && <Breadcrumb/>}
+                            {children}
+                            {/*{!isMobile && <Footer/>}*/}
+                        </ScrollShadow>
                         {auth.user && isMobile &&
                             <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
                     </Box>

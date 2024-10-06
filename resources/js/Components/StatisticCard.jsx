@@ -20,17 +20,25 @@ const StatisticCard = ({ title, value, icon, color, props }) => (
                 <CardContent>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' } }}>
                                 {title}
                             </Typography>
-                            <Typography variant="h4" sx={{ mt: 2 }}>
+                            <Typography sx={{ mt: 2, fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' } }}>
                                 {value}
                             </Typography>
                         </Box>
-                        <Avatar sx={{ bgcolor: color, color: `${color}.contrastText`, width: 56, height: 56 }}>
-                            {icon}
+                        <Avatar
+                            sx={{
+                                bgcolor: color,
+                                color: `${color}.contrastText`,
+                                width: { xs: 38, sm: 38, md: 56 },
+                                height: { xs: 38, sm: 38, md: 56 }
+                            }}
+                        >
+                            <Box sx={{ p: 1 }}>
+                                {icon}
+                            </Box>
                         </Avatar>
-
                     </Box>
                 </CardContent>
             </GlassCard>
@@ -60,8 +68,6 @@ const StatisticsWidgets = (props) => {
                                         preserveAspectRatio: "xMidYMid slice"
                                     }
                                 }}
-                                height={40}
-                                width={40}
                             />
                         }
                         color={blue[100]}
@@ -85,8 +91,6 @@ const StatisticsWidgets = (props) => {
                                         preserveAspectRatio: "xMidYMid slice"
                                     }
                                 }}
-                                height={40}
-                                width={40}
                             />
                         }
                         color={green[100]}
@@ -110,8 +114,6 @@ const StatisticsWidgets = (props) => {
                                         preserveAspectRatio: "xMidYMid slice"
                                     }
                                 }}
-                                height={40}
-                                width={40}
                             />
                         }
                         color={yellow[100]}
@@ -135,8 +137,6 @@ const StatisticsWidgets = (props) => {
                                         preserveAspectRatio: "xMidYMid slice"
                                     }
                                 }}
-                                height={40}
-                                width={40}
                             />
                         }
                         color={blue[100]}
