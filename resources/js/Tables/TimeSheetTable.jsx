@@ -7,13 +7,27 @@ import {
     Button,
     Grid,
     Chip,
-    Collapse, TextField
+    Collapse, TextField, useMediaQuery
 } from '@mui/material';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Avatar, Input } from "@nextui-org/react";
+import {
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
+    User,
+    Avatar,
+    Input,
+    ScrollShadow
+} from "@nextui-org/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
 const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
+    const isSmallScreen = useMediaQuery('(max-width: 640px)'); // equivalent to 'sm'
+    const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)'); // equivalent to 'md'
+    const isLargeScreen = useMediaQuery('(min-width: 1025px)'); // equivalent to 'lg'
 
     const [attendances, setAttendances] = useState([]);
     const [leaves, setLeaves] = useState([]);
@@ -88,37 +102,59 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     }, [attendances]);
 
     const renderCell = (attendance, columnKey) => {
+        const avatarSize = isLargeScreen ? 'lg' : isMediumScreen ? 'md' : 'sm'; // Assuming you have these media queries set up.
+
         switch (columnKey) {
             case "date":
-                return new Date(attendance.date).toLocaleString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
+                return (
+                    <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">
+                        {new Date(attendance.date).toLocaleString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                        })}
+                    </TableCell>
+                );
             case "employee":
                 return (
-                    <User
-                        avatarProps={{ radius: "lg", src: attendance.user?.profile_image }}
-                        description={attendance.user?.phone}
-                        name={attendance.user?.name}
-                    />
+                    <TableCell
+                        className="whitespace-nowrap text-xs sm:text-sm md:text-base lg:text-lg"
+                    >
+                        <User
+                            avatarProps={{
+                                radius: "lg",
+                                size: avatarSize,
+                                src: attendance.user?.profile_image,
+                            }}
+                            description={attendance.user?.phone}
+                            name={attendance.user?.name}
+                        />
+                    </TableCell>
                 );
             case "clockin_time":
-                return attendance.punchin_time
-                    ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    })
-                    : 'N/A';
+                return (
+                    <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">
+                        {attendance.punchin_time
+                            ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                            })
+                            : 'N/A'}
+                    </TableCell>
+                );
             case "clockout_time":
-                return attendance.punchout_time
-                    ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    })
-                    : 'N/A';
+                return (
+                    <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">
+                        {attendance.punchout_time
+                            ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                            })
+                            : 'N/A'}
+                    </TableCell>
+                );
             case "production_time":
                 if (attendance.punchin_time && attendance.punchout_time) {
                     const punchIn = new Date(`2024-06-04T${attendance.punchin_time}`);
@@ -126,13 +162,18 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                     const diffMs = punchOut - punchIn;
                     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
                     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                    return `${diffHrs}h ${diffMins}m`;
+                    return (
+                        <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">
+                            {`${diffHrs}h ${diffMins}m`}
+                        </TableCell>
+                    );
                 }
-                return 'N/A';
+                return <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">N/A</TableCell>;
             default:
-                return null;
+                return <TableCell className="text-xs sm:text-sm md:text-base lg:text-lg">N/A</TableCell>;
         }
     };
+
 
     const columns = [
         { name: "Date", uid: "date" },
@@ -177,32 +218,34 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 <Typography color="error">{error}</Typography>
                             ) : (
                                 <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
-                                    <Table
-                                        isStriped
-                                        selectionMode="multiple"
-                                        selectionBehavior={'toggle'}
-                                        isCompact
-                                        removeWrapper
-                                        aria-label="Attendance Table"
-                                        isHeaderSticky
-                                    >
-                                        <TableHeader columns={columns}>
-                                            {(column) => (
-                                                <TableColumn key={column.uid} align="start">
-                                                    {column.name}
-                                                </TableColumn>
-                                            )}
-                                        </TableHeader>
-                                        <TableBody items={attendances}>
-                                            {(attendance) => (
-                                                <TableRow key={attendance.id}>
-                                                    {(columnKey) => (
-                                                        <TableCell style={{whiteSpace: 'nowrap'}}>{renderCell(attendance, columnKey)}</TableCell>
-                                                    )}
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
+                                    <ScrollShadow orientation={'horizontal'}>
+                                        <Table
+                                            isStriped
+                                            selectionMode="multiple"
+                                            selectionBehavior={'toggle'}
+                                            isCompact
+                                            removeWrapper
+                                            aria-label="Attendance Table"
+                                            isHeaderSticky
+                                        >
+                                            <TableHeader columns={columns}>
+                                                {(column) => (
+                                                    <TableColumn key={column.uid} align="start">
+                                                        {column.name}
+                                                    </TableColumn>
+                                                )}
+                                            </TableHeader>
+                                            <TableBody items={attendances}>
+                                                {(attendance) => (
+                                                    <TableRow key={attendance.id}>
+                                                        {(columnKey) => renderCell(attendance, columnKey)}
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+
+                                    </ScrollShadow>
+
                                 </div>
                             )}
                         </CardContent>
