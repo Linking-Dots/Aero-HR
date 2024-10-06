@@ -46,7 +46,7 @@ export default function Dashboard({auth,users}) {
                     </Grid>
                 </Grid>
                 {auth.roles.includes('Administrator') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
-                {auth.roles.includes('Administrator') && <UserLocationsCard updateMap={updateMap}/>}
+                {auth.roles.includes('Administrator') && <UserLocationsCard selectedDate={selectedDate} updateMap={updateMap}/>}
                 <UpdatesCards/>
                 <LeaveCard/>
             </Box>

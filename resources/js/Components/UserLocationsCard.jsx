@@ -29,16 +29,16 @@ const RoutingMachine = ({ startLocation, endLocation }) => {
     return null;
 };
 
-const UserMarkers = () => {
+const UserMarkers = ({selectedDate}) => {
     const [users, setUsers] = useState(null);
 
     const initMap = async () => {
-        const endpoint = route('getUserLocationsForToday');
+        const endpoint = route('getUserLocationsForDate', { date: selectedDate });
 
         try {
             const response = await fetch(endpoint);
             const data = await response.json();
-            setUsers(data);
+            setUsers(data.locations);
         } catch (error) {
             console.error('Error fetching user locations:', error);
         }
@@ -46,7 +46,7 @@ const UserMarkers = () => {
 
     useEffect(() => {
         initMap();
-    }, []);
+    }, [selectedDate]);
 
     const map = useMap();
 
@@ -135,7 +135,7 @@ const UserMarkers = () => {
     return null;
 };
 
-const UserLocationsCard = ({updateMap}) => {
+const UserLocationsCard = ({updateMap, selectedDate}) => {
 
     const projectLocation = { lat: 23.879132, lng: 90.502617 };
     const startLocation = { lat: 23.987057, lng: 90.361908 };
@@ -145,10 +145,18 @@ const UserLocationsCard = ({updateMap}) => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Grow in>
                 <GlassCard>
-                    <CardHeader title="Users Locations" />
+                    <CardHeader title={
+                        "Users Locations for " +
+                            selectedDate.toLocaleString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })
+                    } />
                     <CardContent>
                         <Box sx={{ height: '70vh', borderRadius: '20px' }}>
                             <MapContainer
+                                key={updateMap}
                                 center={projectLocation}
                                 zoom={12}
                                 style={{ height: '100%', width: '100%' }}
@@ -163,7 +171,7 @@ const UserLocationsCard = ({updateMap}) => {
                                     maxZoom={19}
                                 />
                                 <RoutingMachine startLocation={startLocation} endLocation={endLocation} />
-                                <UserMarkers key={updateMap}/>
+                                <UserMarkers selectedDate={selectedDate}/>
                             </MapContainer>
                         </Box>
                     </CardContent>

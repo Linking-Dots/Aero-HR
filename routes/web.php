@@ -81,7 +81,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
 
     Route::get('/employees', [UserController::class, 'index1'])->name('employees');
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
-    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForToday'])->name('getUserLocationsForToday');
+    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
     Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
     Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');

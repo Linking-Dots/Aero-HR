@@ -258,13 +258,13 @@ class AttendanceController extends Controller
     }
 
 
-    public function getUserLocationsForToday()
+    public function getUserLocationsForDate(Request $request)
     {
         try {
-            $today = Carbon::today();
+            $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
 
             $userLocations = Attendance::whereNotNull('punchin')
-                ->whereDate('date', $today)
+                ->whereDate('date', $selectedDate)
                 ->get()
                 ->map(function ($location) {
                     $user = User::find($location->user_id);
@@ -281,7 +281,10 @@ class AttendanceController extends Controller
                     ];
                 });
 
-            return response()->json($userLocations);
+            return response()->json([
+                'locations' => $userLocations,
+                'date' => $selectedDate
+            ]);
 
         } catch (\Exception $e) {
             // Return a standardized error response

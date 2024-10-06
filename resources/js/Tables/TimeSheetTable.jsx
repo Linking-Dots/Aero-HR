@@ -76,11 +76,15 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     }, [selectedDate]);
 
     useEffect(() => {
-        setAbsentUsers(
-            users.filter(user =>
-                !attendances.some(attendance => attendance.user.id === user.id)
-            )
-        )
+        if (attendances.length > 0) {
+            setAbsentUsers(
+                users.filter(user =>
+                    !attendances.some(attendance => attendance.user.id === user.id)
+                )
+            );
+        } else {
+            setAbsentUsers(users);
+        }
     }, [attendances]);
 
     const renderCell = (attendance, columnKey) => {
@@ -208,73 +212,76 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                         </CardContent>
                     </GlassCard>
                 </Grid>
-                <Grid item xs={12} md={3}>
-                    <Grow in>
-                        <GlassCard ref={cardRef}>
-                            <CardHeader
-                                title={
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {"Absent on " +
-                                            selectedDate.toLocaleString('en-US', {
-                                                month: 'long',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })}
-                                        <Chip sx={{ ml: 1 }} label={absentUsers.length} variant="outlined" color="error" size="small" />
-                                    </Box>
-                                }
-                            />
-                            <CardContent>
-                                <Box>
-                                    {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
-                                        const userLeave = getUserLeave(user.id);
-                                        return (
-                                            <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
-                                                <Box
-                                                    ref={userItemRef} // Use this ref to measure the height of each user item
-                                                    sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}
-                                                >
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Avatar src={user.profile_image} alt={user.name} />
-                                                        <Box sx={{ ml: 2 }}>
-                                                            <Typography variant="body1">{user.name}</Typography>
-                                                        </Box>
-                                                    </Box>
-                                                    <Grid container alignItems="center" sx={{ mt: 2 }}>
-                                                        <Grid item xs={6}>
-                                                            {userLeave ?
-                                                                <>
-                                                                    <Typography variant="h6" sx={{ mb: 0 }}>
-                                                                        {userLeave.from_date === userLeave.to_date ? userLeave.from_date : `${userLeave.from_date} to ${userLeave.to_date}`}
-                                                                    </Typography>
-                                                                    <Typography variant="body2" color="textSecondary">{"On " + userLeave.leave_type + " Leave"}</Typography>
-                                                                </> :
-                                                                <Typography color="error" variant="h6" sx={{ mb: 0 }}>Absent without Leave</Typography>
-                                                            }
-                                                        </Grid>
-                                                        {userLeave ? <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                            <Chip label={userLeave.status} variant="outlined" color={userLeave.status === 'Pending' ? 'error' : 'success'} size="small" />
-                                                        </Grid> : ''}
-
-                                                    </Grid>
-                                                </Box>
-                                            </Collapse>
-                                        );
-                                    })}
-
-                                    {/* Only show the load more button if there are more users to load */}
-                                    {visibleUsersCount < absentUsers.length && (
-                                        <Box textAlign="center">
-                                            <Button variant="outlined" onClick={handleLoadMore}>
-                                                Load More
-                                            </Button>
+                {absentUsers.length > 0 && (
+                    <Grid item xs={12} md={3}>
+                        <Grow in>
+                            <GlassCard ref={cardRef}>
+                                <CardHeader
+                                    title={
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {"Absent on " +
+                                                selectedDate.toLocaleString('en-US', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                })}
+                                            <Chip sx={{ ml: 1 }} label={absentUsers.length} variant="outlined" color="error" size="small" />
                                         </Box>
-                                    )}
-                                </Box>
-                            </CardContent>
-                        </GlassCard>
-                    </Grow>
-                </Grid>
+                                    }
+                                />
+                                <CardContent>
+                                    <Box>
+                                        {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
+                                            const userLeave = getUserLeave(user.id);
+                                            return (
+                                                <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
+                                                    <Box
+                                                        ref={userItemRef} // Use this ref to measure the height of each user item
+                                                        sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}
+                                                    >
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Avatar src={user.profile_image} alt={user.name} />
+                                                            <Box sx={{ ml: 2 }}>
+                                                                <Typography variant="body1">{user.name}</Typography>
+                                                            </Box>
+                                                        </Box>
+                                                        <Grid container alignItems="center" sx={{ mt: 2 }}>
+                                                            <Grid item xs={6}>
+                                                                {userLeave ?
+                                                                    <>
+                                                                        <Typography variant="h6" sx={{ mb: 0 }}>
+                                                                            {userLeave.from_date === userLeave.to_date ? userLeave.from_date : `${userLeave.from_date} to ${userLeave.to_date}`}
+                                                                        </Typography>
+                                                                        <Typography variant="body2" color="textSecondary">{"On " + userLeave.leave_type + " Leave"}</Typography>
+                                                                    </> :
+                                                                    <Typography color="error" variant="h6" sx={{ mb: 0 }}>Absent without Leave</Typography>
+                                                                }
+                                                            </Grid>
+                                                            {userLeave ? <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                <Chip label={userLeave.status} variant="outlined" color={userLeave.status === 'Pending' ? 'error' : 'success'} size="small" />
+                                                            </Grid> : ''}
+
+                                                        </Grid>
+                                                    </Box>
+                                                </Collapse>
+                                            );
+                                        })}
+
+                                        {/* Only show the load more button if there are more users to load */}
+                                        {visibleUsersCount < absentUsers.length && (
+                                            <Box textAlign="center">
+                                                <Button variant="outlined" onClick={handleLoadMore}>
+                                                    Load More
+                                                </Button>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </CardContent>
+                            </GlassCard>
+                        </Grow>
+                    </Grid>
+                )}
+
             </Grid>
         </Box>
     );

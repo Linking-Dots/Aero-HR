@@ -186,7 +186,6 @@ const UpdatesCards = (props) => {
 
     );
 
-    console.log(upcomingLeaves,todayLeaves)
 
     const tomorrowLeaves = upcomingLeaves.filter((leave) => dayjs(tomorrow).isBetween(dayjs(leave.from_date), dayjs(leave.to_date), 'day', '[]'));
 
