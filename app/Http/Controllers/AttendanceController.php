@@ -19,20 +19,19 @@ use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
-    public function index1()
+    public function index1(): \Inertia\Response
     {
         return Inertia::render('AttendanceAdmin', [
             'title' => 'Attendances of Employees',
         ]);
     }
-
-    public function index2()
+    public function index2(): \Inertia\Response
     {
         return Inertia::render('AttendanceEmployee', [
             'title' => 'Attendances',
         ]);
     }
-    public function paginate(Request $request)
+    public function paginate(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             $perPage = $request->get('perPage', 30); // Default to 10 items per page
@@ -158,7 +157,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'An error occurred while fetching attendance data.'], 500);
         }
     }
-    public function updateAttendance(Request $request)
+    public function updateAttendance(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             // Validate the incoming request data
@@ -194,7 +193,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function punchIn(Request $request)
+    public function punchIn(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             // Validate incoming request data
@@ -227,7 +226,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()]);
         }
     }
-    public function punchOut(Request $request)
+    public function punchOut(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             // Validate incoming request data
@@ -259,7 +258,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function getUserLocationsForDate(Request $request)
+    public function getUserLocationsForDate(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
@@ -294,7 +293,7 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-    public function getCurrentUserPunch()
+    public function getCurrentUserPunch(): \Illuminate\Http\JsonResponse
     {
         $today = Carbon::today();
 
@@ -326,8 +325,7 @@ class AttendanceController extends Controller
             return response()->json('An error occurred while retrieving attendance data.', 500);  // Example: Return a 500 Internal Server Error response
         }
     }
-
-    public function getAllUsersAttendanceForDate(Request $request)
+    public function getAllUsersAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
     {
         // Get the date from the query parameter, defaulting to today's date if none is provided
         $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
@@ -338,7 +336,7 @@ class AttendanceController extends Controller
 
         try {
             // Retrieve all users
-            $users = User::all();
+            $users = User::role('Employee')->get();
             // For Administrators, get all attendance records for the selected date
             $attendanceQuery = Attendance::with('user') // Include user data
             ->whereNotNull('punchin')
@@ -410,8 +408,7 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-
-    public function getCurrentUserAttendanceForDate(Request $request)
+    public function getCurrentUserAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
     {
         $perPage = $request->get('perPage', 10); // Default to 30 items per page
         $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
@@ -469,7 +466,4 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-
-
-
 }

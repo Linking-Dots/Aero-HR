@@ -103,12 +103,6 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 
     const open = Boolean(anchorEl);
 
-
-
-
-
-
-
     return (
         <>
             <Head title={user.name}/>

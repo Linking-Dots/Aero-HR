@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,6 +45,50 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'gender' => 'nullable|string',
+            'birthday' => 'nullable|date',
+            'date_of_joining' => 'nullable|date',
+            'address' => 'nullable|string',
+            'employee_id' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'email' => 'required|email|unique:users,email',
+            'department' => 'nullable|string',
+            'designation' => 'nullable|string',
+            'report_to' => 'nullable|string',
+        ]);
+
+        // If validation fails, return the errors
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a new user
+        $user = User::create([
+            'name' => $request->name,
+            'user_name' => strtolower(str_replace(' ', '_', $request->name)),
+            'gender' => $request->gender,
+            'birthday' => $request->birthday,
+            'date_of_joining' => $request->date_of_joining,
+            'address' => $request->address,
+            'employee_id' => $request->employee_id,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'department' => $request->department,
+            'designation' => $request->designation,
+            'report_to' => $request->report_to,
+        ]);
+
+        // Return a success response with the created user data
+        return response()->json([
+            'message' => 'User created successfully.',
+            'user' => $user,
+        ], 201);
+    }
 
     /**
      * Update the user's profile information.

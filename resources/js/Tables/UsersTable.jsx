@@ -328,6 +328,7 @@ const UsersTable = ({allUsers, roles}) => {
                     <FormControl size="small" fullWidth>
                         <InputLabel id="role">Role</InputLabel>
                         <Select
+                            disabled={!user.active}
                             labelId="role"
                             id={'role'}
                             multiple

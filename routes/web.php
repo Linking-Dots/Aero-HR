@@ -95,6 +95,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
 
 
     Route::get('/users', [UserController::class, 'index2'])->name('users');
+    Route::post('/users', [ProfileController::class, 'store'])->name('addUser');
     Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
     Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
     Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');

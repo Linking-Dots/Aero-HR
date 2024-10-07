@@ -149,7 +149,7 @@ const UserLocationsCard = ({updateMap, selectedDate}) => {
                     <CardHeader title={
                         <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
                             {"Users Locations for " +
-                                selectedDate.toLocaleString('en-US', {
+                                new Date(selectedDate).toLocaleString('en-US', {
                                     month: 'long',
                                     day: 'numeric',
                                     year: 'numeric'

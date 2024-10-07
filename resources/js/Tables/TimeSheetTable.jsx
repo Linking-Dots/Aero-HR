@@ -222,118 +222,124 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
             <Grid container spacing={2}>
                 {/* Existing Attendance Table */}
                 <Grid item xs={12} md={(url !== '/attendance-employee') ? 9 : 12}>
-                    <GlassCard>
-                        <CardHeader
-                            title={
-                                <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
-                                    {"Timesheet of " +
-                                        selectedDate.toLocaleString('en-US', {
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
-                                </Typography>
-                            }
-                            sx={{padding: '24px'}}
-                        />
-                        <CardContent>
-                            <Box>
-                                <Grid container spacing={2}>
-                                    {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && (
-                                        <>
+                    <Grow in>
+                        <GlassCard>
+                            <CardHeader
+                                title={
+                                    <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
+                                        {url === '/attendance-employee'
+                                            ? "Timesheet for the month of " + new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+                                            : "Timesheet of " +
+                                            new Date(selectedDate).toLocaleString('en-US', {
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                            })
+                                        }
+                                    </Typography>
+                                }
+                                sx={{padding: '24px'}}
+                            />
+                            <CardContent>
+                                <Box>
+                                    <Grid container spacing={2}>
+                                        {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && (
+                                            <>
+                                                <Grid item xs={12} sm={6} md={4}>
+                                                    <Input
+                                                        label="Search"
+                                                        type={'text'}
+                                                        fullWidth
+                                                        variant="bordered"
+                                                        placeholder="Employee..."
+                                                        value={employee}
+                                                        onChange={handleSearch}
+                                                        endContent={<SearchIcon />}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} md={4}>
+                                                    <Input
+                                                        label="Select Date"
+                                                        type="date"
+                                                        variant={'bordered'}
+                                                        onChange={handleDateChange}
+                                                        value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
+                                                    />
+                                                </Grid>
+                                            </>
+                                        )}
+                                        {(auth.roles.includes('Employee')) && (url === '/attendance-employee') && (
                                             <Grid item xs={12} sm={6} md={4}>
                                                 <Input
-                                                    label="Search"
-                                                    type={'text'}
+                                                    label="Current Month"
+                                                    type={'month'}
                                                     fullWidth
                                                     variant="bordered"
-                                                    placeholder="Employee..."
-                                                    value={employee}
-                                                    onChange={handleSearch}
-                                                    endContent={<SearchIcon />}
+                                                    placeholder="Month..."
+                                                    value={filterData.currentMonth}
+                                                    onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
                                                 />
                                             </Grid>
-                                            <Grid item xs={12} sm={6} md={4}>
-                                                <Input
-                                                    label="Select Date"
-                                                    type="date"
-                                                    variant={'bordered'}
-                                                    onChange={handleDateChange}
-                                                    value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
-                                                />
-                                            </Grid>
-                                        </>
-                                    )}
-                                    {(auth.roles.includes('Employee')) && (url === '/attendance-employee') && (
-                                        <Grid item xs={12} sm={6} md={4}>
-                                            <Input
-                                                label="Current Month"
-                                                type={'month'}
-                                                fullWidth
-                                                variant="bordered"
-                                                placeholder="Month..."
-                                                value={filterData.currentMonth}
-                                                onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
-                                            />
-                                        </Grid>
-                                    )}
+                                        )}
 
-                                </Grid>
-                            </Box>
-                        </CardContent>
-                        <CardContent>
-                            {error ? (
-                                <Typography color="error">{error}</Typography>
-                            ) : (
-                                <div style={{maxHeight: '84vh'}}>
-                                    <ScrollShadow
-                                        orientation={'horizontal'}
-                                        className={'overflow-y-hidden'}
-                                    >
-                                        <Table
-                                            isStriped
-                                            selectionMode="multiple"
-                                            selectionBehavior={'toggle'}
-                                            isCompact
-                                            removeWrapper
-                                            aria-label="Attendance Table"
-                                            isHeaderSticky
+                                    </Grid>
+                                </Box>
+                            </CardContent>
+                            <CardContent>
+                                {error ? (
+                                    <Typography color="error">{error}</Typography>
+                                ) : (
+                                    <div style={{maxHeight: '84vh'}}>
+                                        <ScrollShadow
+                                            orientation={'horizontal'}
+                                            className={'overflow-y-hidden'}
                                         >
-                                            <TableHeader columns={columns}>
-                                                {(column) => (
-                                                    <TableColumn key={column.uid} align="start">
-                                                        {column.name}
-                                                    </TableColumn>
-                                                )}
-                                            </TableHeader>
-                                            <TableBody items={attendances}>
-                                                {(attendance) => (
-                                                    <TableRow key={attendance.id}>
-                                                        {(columnKey) => renderCell(attendance, columnKey)}
-                                                    </TableRow>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </ScrollShadow>
-                                    {totalRows >= 10 && (
-                                        <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
-                                            <Pagination
-                                                initialPage={1}
+                                            <Table
+                                                isStriped
+                                                selectionMode="multiple"
+                                                selectionBehavior={'toggle'}
                                                 isCompact
-                                                showControls
-                                                showShadow
-                                                color="primary"
-                                                variant={'bordered'}
-                                                page={currentPage}
-                                                total={lastPage}
-                                                onChange={handlePageChange}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </CardContent>
-                    </GlassCard>
+                                                removeWrapper
+                                                aria-label="Attendance Table"
+                                                isHeaderSticky
+                                            >
+                                                <TableHeader columns={columns}>
+                                                    {(column) => (
+                                                        <TableColumn key={column.uid} align="start">
+                                                            {column.name}
+                                                        </TableColumn>
+                                                    )}
+                                                </TableHeader>
+                                                <TableBody items={attendances}>
+                                                    {(attendance) => (
+                                                        <TableRow key={attendance.id}>
+                                                            {(columnKey) => renderCell(attendance, columnKey)}
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </ScrollShadow>
+                                        {totalRows >= 10 && (
+                                            <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
+                                                <Pagination
+                                                    initialPage={1}
+                                                    isCompact
+                                                    showControls
+                                                    showShadow
+                                                    color="primary"
+                                                    variant={'bordered'}
+                                                    page={currentPage}
+                                                    total={lastPage}
+                                                    onChange={handlePageChange}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </GlassCard>
+                    </Grow>
+
                 </Grid>
                 {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && absentUsers.length > 0 && (
                     <Grid item xs={12} md={3}>
@@ -344,11 +350,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Typography sx={{ fontSize: { xs: '1.0rem', sm: '1.4rem', md: '1.8rem' } }}>
                                                 {"Absent on " +
-                                                    selectedDate.toLocaleString('en-US', {
+                                                    new Date(selectedDate).toLocaleString('en-US', {
                                                         month: 'long',
                                                         day: 'numeric',
                                                         year: 'numeric'
-                                                    })}
+                                                    })
+                                                }
                                             </Typography>
                                             <Chip sx={{ ml: 1, fontSize: { xs: '0.8rem', sm: '1.1rem', md: '1.4rem' } }} label={absentUsers.length} variant="outlined" color="error" size="small" />
                                         </Box>

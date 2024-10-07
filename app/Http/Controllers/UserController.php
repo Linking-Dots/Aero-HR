@@ -22,7 +22,6 @@ class UserController extends Controller
             'departments' => Department::all(),
         ]);
     }
-
     public function index2(): \Inertia\Response
     {
         $users = User::withTrashed()
@@ -36,6 +35,8 @@ class UserController extends Controller
             'title' => 'Users',
             'allUsers' => $users,
             'roles' => Role::all(),
+            'designations' => Designation::all(),
+            'departments' => Department::all(),
         ]);
     }
     public function updateUserRole(Request $request, $id)
@@ -59,8 +60,6 @@ class UserController extends Controller
             return response()->json(['errors' => ['An unexpected error occurred. Please try again later.']], 500);
         }
     }
-
-
     public function toggleStatus($id, Request $request)
     {
         $user = User::withTrashed()->findOrFail($id);
@@ -82,8 +81,6 @@ class UserController extends Controller
             'active' => $user->active,
         ]);
     }
-
-
     public function updateFcmToken(Request $request)
     {
         // Validate that the request contains an FCM token

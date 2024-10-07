@@ -14,7 +14,12 @@ export default function Dashboard({auth,users}) {
 
     const [updateMap, setUpdateMap] = useState(false);
     const [updateTimeSheet, setUpdateTimeSheet] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(new Date()); // State to hold the selected date
+    const [selectedDate, setSelectedDate] = useState(new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Dhaka',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(new Date()));
 
     const handlePunchSuccess = () => {
         // Toggle the state to re-render UserLocationsCard
@@ -25,7 +30,12 @@ export default function Dashboard({auth,users}) {
     // Handle date change from DatePicker
     const handleDateChange = (event) => {
         const newDate = event.target.value; // Date from the input field
-        setSelectedDate(new Date(newDate)); // Set it as a valid Date object
+        setSelectedDate(new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Dhaka',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        }).format(new Date(newDate))); // Set it as a valid Date object
         setUpdateTimeSheet(prev => !prev);  // Re-render components if necessary
         setUpdateMap(prev => !prev);        // Re-render components if necessary
     };

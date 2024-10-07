@@ -305,9 +305,21 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                     <Grid container>
                                                         {pages.map((page) => (
                                                             page.subMenu ? (
-                                                                <Grid sx={{
-                                                                    backgroundColor: page.subMenu.find(subPage => "/" + subPage.route === activePage) ? theme.palette.action.selected : 'transparent',
-                                                                }} xs={12} sm={4} md={3} lg={3} item key={page.name} >
+                                                                <Grid
+                                                                    sx={{
+                                                                        display: 'flex',
+                                                                        justifyContent: 'center',
+                                                                        padding: '0px 8px 0px 8px',
+                                                                        borderRadius: '25px',
+                                                                        backgroundColor: page.subMenu.find(subPage => "/" + subPage.route === activePage) ? theme.palette.action.selected : 'transparent',
+                                                                    }}
+                                                                    xs={12}
+                                                                    sm={4}
+                                                                    md={3}
+                                                                    lg={3}
+                                                                    item
+                                                                    key={page.name}
+                                                                >
                                                                     <GlassDropdown type='menu'>
                                                                         <DropdownTrigger>
                                                                             <Button
@@ -349,6 +361,10 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                 </Grid>
                                                             ) : (
                                                                 <Grid sx={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'center',
+                                                                    padding: '0px 8px 0px 8px',
+                                                                    borderRadius: '25px',
                                                                     backgroundColor: activePage === "/"+page.route ? theme.palette.action.selected : 'transparent',
                                                                 }} xs={12} sm={4} md={3} lg={3} item key={page.name}>
                                                                     <Button
