@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
@@ -50,6 +51,13 @@ class ProfileController extends Controller
         // Validate the incoming request
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'user_name' => ['required', 'string', 'unique:users,user_name', function ($attribute, $value, $fail) {
+                if (preg_match('/\s/', $value) || strtolower($value) !== $value) {
+                    $fail('The ' . $attribute . ' must not contain spaces and must be all lowercase.');
+                }
+            }],
+            'password' => 'required|string|min:8',
+            'confirmPassword' => 'required|string|same:password',
             'gender' => 'nullable|string',
             'birthday' => 'nullable|date',
             'date_of_joining' => 'nullable|date',
@@ -70,7 +78,7 @@ class ProfileController extends Controller
         // Create a new user
         $user = User::create([
             'name' => $request->name,
-            'user_name' => strtolower(str_replace(' ', '_', $request->name)),
+            'user_name' => $request->user_name,
             'gender' => $request->gender,
             'birthday' => $request->birthday,
             'date_of_joining' => $request->date_of_joining,
@@ -78,6 +86,7 @@ class ProfileController extends Controller
             'employee_id' => $request->employee_id,
             'phone' => $request->phone,
             'email' => $request->email,
+            'password' => Hash::make($request->password),
             'department' => $request->department,
             'designation' => $request->designation,
             'report_to' => $request->report_to,

@@ -22,9 +22,13 @@ import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {toast} from "react-toastify";
 import {Input, SelectItem, Select} from "@nextui-org/react";
+import PasswordIcon from "@mui/icons-material/Password.js";
+import VisibilityOff from "@mui/icons-material/VisibilityOff.js";
+import Visibility from "@mui/icons-material/Visibility.js";
 
 const AddUserForm = ({user, allUsers, departments, designations,setUser, open, closeModal }) => {
 
+    const [showPassword, setShowPassword] = useState(false);
     const [initialUserData, setInitialUserData] = useState({
         id: user?.id,
         name: user?.name || '',
@@ -39,6 +43,8 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
         department: user?.department || '',
         designation: user?.designation || '',
         report_to: user?.report_to || '',
+        password: '',
+        confirmPassword: ''
     });
 
 
@@ -177,6 +183,7 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
 
 
     const handleChange = (key, value) => {
+        console.log(key, value)
         setInitialUserData((prevUser) => {
             const updatedData = { ...prevUser, [key]: value };
 
@@ -241,8 +248,7 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
         setDataChanged(hasChanges);
 
     }, [initialUserData, changedUserData]);
-
-
+    console.log(initialUserData)
     return (
         <GlassDialog
             open={open}
@@ -370,8 +376,38 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 errorMessage={errors.phone}
                             />
                         </Grid>
-
-
+                        <Grid item xs={12} md={6}>
+                            <Input
+                                variant={'bordered'}
+                                errorMessage={errors.password}
+                                isInvalid={Boolean(errors.password)}
+                                label="Password"
+                                type={showPassword ? "text" : "password"}
+                                value={changedUserData.password || initialUserData.password}
+                                onChange={(e) => handleChange('password', e.target.value)}
+                                fullWidth
+                                endContent={
+                                    <IconButton
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        edge="end"
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <Input
+                                label="Confirm Password"
+                                type={"password"}
+                                variant={'bordered'}
+                                errorMessage={errors.confirmPassword}
+                                isInvalid={Boolean(errors.confirmPassword)}
+                                value={changedUserData.confirmPassword || initialUserData.confirmPassword}
+                                onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                                fullWidth
+                            />
+                        </Grid>
                         <Grid item xs={12} md={6}>
                             <Select
                                 variant={'bordered'}
@@ -379,60 +415,71 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Gender"
                                 placeholder="Select Gender"
                                 value={changedUserData.gender || initialUserData.gender || 'na'}
-                                onChange={(value) => handleChange('gender', value)}
+                                onChange={(e) => {
+                                    console.log(e); // Log the event or value
+                                    handleChange('gender', e.target ? e.target.value : e); // Check if it's an event object or a value
+                                }}
                                 errorMessage={Boolean(errors.gender)}
-                                selectedKeys={[changedUserData.gender || initialUserData.gender || 'na']}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg border-inherit",
+                                    },
+                                }}
                             >
                                 <SelectItem value="na" disabled>
                                     Select Gender
                                 </SelectItem>
-                                <SelectItem value="Male">Male</SelectItem>
-                                <SelectItem value="Female">Female</SelectItem>
+                                <SelectItem value={'Male'}>Male</SelectItem>
+                                <SelectItem value={'Female'}>Female</SelectItem>
                             </Select>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
                                 label="Birth Date"
                                 type="date"
                                 fullWidth
+                                variant="bordered"
                                 value={changedUserData.birthday || initialUserData.birthday || ''}
                                 onChange={(e) => handleChange('birthday', e.target.value)}
-                                InputLabelProps={{shrink: true}}
-                                error={Boolean(errors.birthday)}
-                                helperText={errors.birthday}
+                                isInvalid={Boolean(errors.birthday)}
+                                errorMessage={errors.birthday}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
                                 label="Joining Date"
                                 type="date"
+                                variant="bordered"
                                 fullWidth
                                 value={changedUserData.date_of_joining || initialUserData.date_of_joining || ''}
                                 onChange={(e) => handleChange('date_of_joining', e.target.value)}
-                                InputLabelProps={{shrink: true}}
-                                error={Boolean(errors.date_of_joining)}
-                                helperText={errors.date_of_joining}
+                                isInvalid={Boolean(errors.date_of_joining)}
+                                errorMessage={errors.date_of_joining}
                             />
                         </Grid>
 
                         <Grid item xs={12}>
-                            <TextField
+                            <Input
                                 label="Address"
                                 fullWidth
+                                type={'text'}
+                                variant="bordered"
                                 value={changedUserData.address || initialUserData.address}
                                 onChange={(e) => handleChange('address', e.target.value)}
-                                error={Boolean(errors.address)}
-                                helperText={errors.address}
+                                isInvalid={Boolean(errors.address)}
+                                errorMessage={errors.address}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
                                 label="Employee ID"
+                                type={'text'}
+                                variant="bordered"
                                 fullWidth
                                 value={changedUserData.employee_id || initialUserData.employee_id || ''}
                                 onChange={(e) => handleChange('employee_id', e.target.value)}
-                                error={Boolean(errors.employee_id)}
-                                helperText={errors.employee_id}
+                                isInvalid={Boolean(errors.employee_id)}
+                                errorMessage={errors.employee_id}
                             />
                         </Grid>
 
@@ -443,9 +490,16 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Department"
                                 placeholder="Select Department"
                                 value={changedUserData.department || initialUserData.department || 'na'}
-                                onChange={(value) => handleChange('department', value)}
+                                onChange={(e) => {
+                                    console.log(e); // Log the event or value
+                                    handleChange('department', e.target ? e.target.value : e); // Check if it's an event object or a value
+                                }}
                                 errorMessage={Boolean(errors.department)}
-                                selectedKeys={[changedUserData.department || initialUserData.department || 'na']}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg",
+                                    },
+                                }}
                             >
                                 <SelectItem value="na" disabled>
                                     Select Department
@@ -464,10 +518,17 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Designation"
                                 placeholder="Select Designation"
                                 value={changedUserData.designation || initialUserData.designation || 'na'}
-                                onChange={(value) => handleChange('designation', value)}
+                                onChange={(e) => {
+                                    console.log(e); // Log the event or value
+                                    handleChange('designation', e.target ? e.target.value : e); // Check if it's an event object or a value
+                                }}
                                 errorMessage={Boolean(errors.designation) ? 'This field is required' : ''}
                                 disabled={!user?.department}
-                                selectedKeys={[changedUserData.designation || initialUserData.designation || 'na']}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg",
+                                    },
+                                }}
                             >
                                 <SelectItem value="na" disabled>
                                     Select Designation
@@ -486,10 +547,17 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 label="Reports To"
                                 placeholder="Select Reports To"
                                 value={changedUserData.report_to || initialUserData.report_to}
-                                onChange={(value) => handleChange('report_to', value)}
+                                onChange={(e) => {
+                                    console.log(e); // Log the event or value
+                                    handleChange('report_to', e.target ? e.target.value : e); // Check if it's an event object or a value
+                                }}
                                 errorMessage={Boolean(errors.report_to) ? 'This field is required' : ''}
                                 disabled={user?.report_to === 'na'}
-                                selectedKeys={[changedUserData.report_to || initialUserData.report_to]}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg",
+                                    },
+                                }}
                             >
                                 <SelectItem value="na" disabled>
                                     --
