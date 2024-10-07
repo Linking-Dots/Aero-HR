@@ -49,7 +49,6 @@ const AttendanceAdmin = React.memo(({ title  }) => {
     const daysInMonth = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-01`).daysInMonth();
 
     const handleFilterChange = useCallback((key, value) => {
-
         setFilterData(prevState => ({
             ...prevState,
             [key]: value,
@@ -278,20 +277,15 @@ const AttendanceAdmin = React.memo(({ title  }) => {
                             <Box>
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6} md={4}>
-                                        <TextField
-                                            label="Employee"
+                                        <Input
+                                            label="Search"
+                                            type={'text'}
                                             fullWidth
-                                            variant="outlined"
+                                            variant="bordered"
                                             placeholder="Employee..."
                                             value={employee}
                                             onChange={handleSearch}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <SearchIcon />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
+                                            endContent={<SearchIcon />}
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6} md={4}>

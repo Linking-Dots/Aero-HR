@@ -67,47 +67,14 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
         setActivePage(url);
     }, [url]);
 
-    const [anchorElNav, setAnchorElNav] = useState(null);
-    const [anchorElUser, setAnchorElUser] = useState(null);
-    const [anchorElSubMenu, setAnchorElSubMenu] = useState(null);
-    const [openSubMenu, setOpenSubMenu] = useState(null);
-    const [menuOpen, setMenuOpen] = useState(false);
+
 
     const settings = [
         { name: 'Settings', route: 'dashboard', icon: <Settings /> },
         { name: 'Logout', route: 'logout', method: 'post', icon: <ExitToApp /> }
     ];
 
-    const handleOpenNavMenu = useCallback((event) => {
-        setAnchorElNav(event.currentTarget);
-        setMenuOpen(true);
-    }, []);
 
-    const handleOpenUserMenu = useCallback((event) => {
-        setAnchorElUser(event.currentTarget);
-    }, []);
-
-    const handleOpenSubMenu = useCallback((pageName, event) => {
-        setAnchorElSubMenu(event.currentTarget); // Set the submenu anchor element
-        setOpenSubMenu(prev => prev === pageName ? null : pageName);
-        event.stopPropagation(); // Prevent event from propagating to parent
-    }, []);
-
-    const handleCloseNavMenu = useCallback(() => {
-        setAnchorElNav(null);
-        setMenuOpen(false);
-    }, []);
-
-    const handleCloseUserMenu = useCallback(() => {
-        setAnchorElUser(null);
-    }, []);
-
-    const handleCloseSubMenu = useCallback(() => {
-        setAnchorElSubMenu(null);
-        setOpenSubMenu(null);
-        setAnchorElNav(null);
-        setMenuOpen(false);
-    }, []);
     const trigger = useScrollTrigger();
 
 

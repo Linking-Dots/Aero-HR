@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
     Box,
     CardContent,
@@ -19,12 +19,18 @@ import {
     User,
     Avatar,
     Input,
-    ScrollShadow
+    ScrollShadow, Pagination
 } from "@nextui-org/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
-const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}) => {
+import dayjs from "dayjs";
+import SearchIcon from "@mui/icons-material/Search";
+import PeopleIcon from "@mui/icons-material/People.js";
+const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
+
+    const {auth} = usePage().props;
+    const { url } = usePage();
     const isSmallScreen = useMediaQuery('(max-width: 640px)'); // equivalent to 'sm'
     const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)'); // equivalent to 'md'
     const isLargeScreen = useMediaQuery('(min-width: 1025px)'); // equivalent to 'lg'
@@ -33,6 +39,22 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
     const [leaves, setLeaves] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
+
+    const [totalRows, setTotalRows] = useState(0);
+    const [lastPage, setLastPage] = useState(0);
+    const [perPage, setPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [employee, setEmployee] = useState('');
+
+    const [filterData, setFilterData] = useState({
+        currentMonth: dayjs().format('YYYY-MM'),
+    });
+
+
+    const handleSearch = (event) => {
+        const value = event.target.value.toLowerCase();
+        setEmployee(value);
+    };
 
 
     const [visibleUsersCount, setVisibleUsersCount] = useState(2); // Default to 2 initially
@@ -50,15 +72,6 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
         }
     };
 
-    // Call the function when component mounts or the window resizes
-    useEffect(() => {
-        setTimeout(() => {
-            calculateVisibleUsers();
-        }, 500);
-        window.addEventListener('resize', calculateVisibleUsers);
-        return () => window.removeEventListener('resize', calculateVisibleUsers);
-    }, []);
-
     // Handle the load more click
     const handleLoadMore = () => {
         setVisibleUsersCount((prevCount) => prevCount + 2);
@@ -68,42 +81,36 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
         return leaves.find((leave) => String(leave.user_id) === String(userId));
     };
 
-    const getAllUsersAttendanceForDate = async (selectedDate) => {
+    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData) => {
+        const attendanceRoute = (url !== '/attendance-employee') ? route('getAllUsersAttendanceForDate') : route('getCurrentUserAttendanceForDate');
+
         try {
-            const response = await axios.get(route('getAllUsersAttendanceForDate'), {
-                params: { date: selectedDate }
+            const response = await axios.get(attendanceRoute, {
+                params: {
+                    page,
+                    perPage,
+                    employee: employee,
+                    date: selectedDate,
+                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
+                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
+                }
             });
+
             if (response.status === 200) {
                 setAttendances(response.data.attendances);  // Set the attendance data
                 setLeaves(response.data.leaves);
-            } else {
-                setError(response.data.message || 'Error fetching attendance data');
+                setAbsentUsers(response.data.absent_users);
+                setTotalRows(response.data.total);
+                setLastPage(response.data.last_page);
             }
         } catch (error) {
             console.error('Error fetching attendance data:', error);
             setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
+            setAbsentUsers(error.response?.data?.absent_users);
         }
     };
 
-    useEffect(() => {
-        getAllUsersAttendanceForDate(selectedDate);
-    }, [selectedDate]);
-
-    useEffect(() => {
-        if (attendances.length > 0) {
-            setAbsentUsers(
-                users.filter(user =>
-                    !attendances.some(attendance => attendance.user.id === user.id)
-                )
-            );
-        } else {
-            setAbsentUsers(users);
-        }
-    }, [attendances]);
-
     const renderCell = (attendance, columnKey) => {
-        const avatarSize = isLargeScreen ? 'lg' : isMediumScreen ? 'md' : 'sm'; // Assuming you have these media queries set up.
-
         switch (columnKey) {
             case "date":
                 return (
@@ -116,6 +123,7 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                     </TableCell>
                 );
             case "employee":
+                const avatarSize = isLargeScreen ? 'md' : isMediumScreen ? 'md' : 'sm';
                 return (
                     <TableCell
                         className="whitespace-nowrap text-xs sm:text-sm md:text-base lg:text-lg"
@@ -177,17 +185,43 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
 
     const columns = [
         { name: "Date", uid: "date" },
-        { name: "Employee", uid: "employee" },
+        ...((auth.roles.includes('Administrator')) && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee" }] : []),
         { name: "Clockin Time", uid: "clockin_time" },
         { name: "Clockout Time", uid: "clockout_time" },
         { name: "Production Time", uid: "production_time" }
     ];
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handleFilterChange = useCallback((key, value) => {
+        setFilterData(prevState => ({
+            ...prevState,
+            [key]: value,
+        }));
+    }, []);
+
+    // Call the function when component mounts or the window resizes
+    useEffect(() => {
+        setTimeout(() => {
+            calculateVisibleUsers();
+        }, 500);
+        window.addEventListener('resize', calculateVisibleUsers);
+        return () => window.removeEventListener('resize', calculateVisibleUsers);
+    }, []);
+
+    useEffect(() => {
+        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
+    }, [selectedDate, currentPage, perPage, employee, filterData]);
+
+
+
     return (
         <Box  sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Grid container spacing={2}>
                 {/* Existing Attendance Table */}
-                <Grid item xs={12} md={9}>
+                <Grid item xs={12} md={(url !== '/attendance-employee') ? 9 : 12}>
                     <GlassCard>
                         <CardHeader
                             title={
@@ -201,24 +235,61 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                 </Typography>
                             }
                             sx={{padding: '24px'}}
-                            action={
-                                <Box gap={2}>
-                                    <Input
-                                        label="Select Date"
-                                        type="date"
-                                        variant={'bordered'}
-                                        onChange={handleDateChange}
-                                        value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
-                                    />
-                                </Box>
-                            }
                         />
+                        <CardContent>
+                            <Box>
+                                <Grid container spacing={2}>
+                                    {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && (
+                                        <>
+                                            <Grid item xs={12} sm={6} md={4}>
+                                                <Input
+                                                    label="Search"
+                                                    type={'text'}
+                                                    fullWidth
+                                                    variant="bordered"
+                                                    placeholder="Employee..."
+                                                    value={employee}
+                                                    onChange={handleSearch}
+                                                    endContent={<SearchIcon />}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} sm={6} md={4}>
+                                                <Input
+                                                    label="Select Date"
+                                                    type="date"
+                                                    variant={'bordered'}
+                                                    onChange={handleDateChange}
+                                                    value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
+                                                />
+                                            </Grid>
+                                        </>
+                                    )}
+                                    {(auth.roles.includes('Employee')) && (url === '/attendance-employee') && (
+                                        <Grid item xs={12} sm={6} md={4}>
+                                            <Input
+                                                label="Current Month"
+                                                type={'month'}
+                                                fullWidth
+                                                variant="bordered"
+                                                placeholder="Month..."
+                                                value={filterData.currentMonth}
+                                                onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
+                                            />
+                                        </Grid>
+                                    )}
+
+                                </Grid>
+                            </Box>
+                        </CardContent>
                         <CardContent>
                             {error ? (
                                 <Typography color="error">{error}</Typography>
                             ) : (
-                                <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
-                                    <ScrollShadow orientation={'horizontal'}>
+                                <div style={{maxHeight: '84vh'}}>
+                                    <ScrollShadow
+                                        orientation={'horizontal'}
+                                        className={'overflow-y-hidden'}
+                                    >
                                         <Table
                                             isStriped
                                             selectionMode="multiple"
@@ -243,15 +314,28 @@ const TimeSheetTable = ({users, handleDateChange, selectedDate, updateTimeSheet}
                                                 )}
                                             </TableBody>
                                         </Table>
-
                                     </ScrollShadow>
-
+                                    {totalRows >= 10 && (
+                                        <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
+                                            <Pagination
+                                                initialPage={1}
+                                                isCompact
+                                                showControls
+                                                showShadow
+                                                color="primary"
+                                                variant={'bordered'}
+                                                page={currentPage}
+                                                total={lastPage}
+                                                onChange={handlePageChange}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </CardContent>
                     </GlassCard>
                 </Grid>
-                {absentUsers.length > 0 && (
+                {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && absentUsers.length > 0 && (
                     <Grid item xs={12} md={3}>
                         <Grow in>
                             <GlassCard ref={cardRef}>

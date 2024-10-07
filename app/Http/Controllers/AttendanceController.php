@@ -19,18 +19,24 @@ use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
-    public function index()
+    public function index1()
     {
         return Inertia::render('AttendanceAdmin', [
             'title' => 'Attendances of Employees',
         ]);
     }
 
+    public function index2()
+    {
+        return Inertia::render('AttendanceEmployee', [
+            'title' => 'Attendances',
+        ]);
+    }
     public function paginate(Request $request)
     {
         try {
             $perPage = $request->get('perPage', 30); // Default to 10 items per page
-            $page = $request->get('search') != '' ? 1 : $request->get('page', 1);
+            $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
             $employee = $request->get('employee'); // Search query
             $currentMonth = $request->get('currentMonth'); // Filter by start date
             $currentYear = $request->get('currentYear'); // Filter by end date
@@ -152,7 +158,6 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'An error occurred while fetching attendance data.'], 500);
         }
     }
-
     public function updateAttendance(Request $request)
     {
         try {
@@ -189,7 +194,6 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
     public function punchIn(Request $request)
     {
         try {
@@ -223,7 +227,6 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()]);
         }
     }
-
     public function punchOut(Request $request)
     {
         try {
@@ -256,8 +259,6 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-
     public function getUserLocationsForDate(Request $request)
     {
         try {
@@ -293,9 +294,6 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-
-
-
     public function getCurrentUserPunch()
     {
         $today = Carbon::today();
@@ -331,24 +329,43 @@ class AttendanceController extends Controller
 
     public function getAllUsersAttendanceForDate(Request $request)
     {
-
         // Get the date from the query parameter, defaulting to today's date if none is provided
         $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
-
+        $perPage = $request->get('perPage', 10); // Default to 30 items per page
+        $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+        $employee = $request->get('employee', '');
 
 
         try {
-            // Get attendance records for all users for the selected date
-            $attendanceRecords = Attendance::with('user')  // Include user data with first_name and avatar
+            // Retrieve all users
+            $users = User::all();
+            // For Administrators, get all attendance records for the selected date
+            $attendanceQuery = Attendance::with('user') // Include user data
             ->whereNotNull('punchin')
-                ->whereDate('date', $selectedDate)
-                ->get();  // Retrieve all matching records
+                ->whereDate('date', $selectedDate);
+
+            // Retrieve all attendance records to identify absent users
+            $allAttendanceRecords = $attendanceQuery->get();
+
+            // Identify absent users: filter out users who don't have a matching attendance record
+            $absentUsers = $users->filter(function ($user) use ($allAttendanceRecords) {
+                return !$allAttendanceRecords->contains('user_id', $user->id);
+            });
+
+            if ($employee !== '') {
+                $attendanceQuery->whereHas('user', function ($query) use ($employee) {
+                    $query->where('name', 'like', '%' . $employee . '%');
+                });
+            }
 
 
+            $attendanceRecords = $attendanceQuery->paginate($perPage, ['*'], 'page', $page);
 
             if ($attendanceRecords->isEmpty()) {
-                // Handle the case where no punch-in data is found for any user on the selected date
-                return response()->json(['message' => 'No attendance records found for the selected date.'], 404);
+                return response()->json([
+                    'message' => 'No attendance records found for the selected date.',
+                    'absent_users' => $users // All users are absent if no attendance is recorded
+                ], 404);
             }
 
             // Transform the attendance records into a response-friendly format
@@ -364,21 +381,88 @@ class AttendanceController extends Controller
                 ];
             });
 
+
+
+            // Get today's leaves
             $todayLeaves = DB::table('leaves')
                 ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                 ->select('leaves.*', 'leave_settings.type as leave_type')
-                ->whereDate('leaves.from_date', '<=', $selectedDate)  // Check that today's date is after or on the start date
-                ->whereDate('leaves.to_date', '>=', $selectedDate)    // Check that today's date is before or on the end date
+                ->whereDate('leaves.from_date', '<=', $selectedDate)
+                ->whereDate('leaves.to_date', '>=', $selectedDate)
                 ->get();
 
+            // Return paginated data for attendances, absent users, and leave data
             return response()->json([
                 'attendances' => $formattedRecords,
+                'absent_users' => $absentUsers->values(), // Return absent users in array format
                 'leaves' => $todayLeaves,
+                'current_page' => $attendanceRecords->currentPage(),
+                'last_page' => $attendanceRecords->lastPage(),
+                'total' => $attendanceRecords->total(),
             ]);
 
         } catch (Throwable $exception) {
             // Handle unexpected exceptions during data retrieval
-            report($exception);  // Report the exception for debugging or logging
+            report($exception); // Report the exception for debugging or logging
+            return response()->json([
+                'error' => 'An error occurred while retrieving attendance data.',
+                'details' => $exception->getMessage() // Return the error message for debugging
+            ], 500);
+        }
+    }
+
+    public function getCurrentUserAttendanceForDate(Request $request)
+    {
+        $perPage = $request->get('perPage', 10); // Default to 30 items per page
+        $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+        $currentMonth = $request->get('currentMonth'); // Filter by start date
+        $currentYear = $request->get('currentYear'); // Filter by end date
+
+        try {
+
+            $attendanceQuery = Attendance::whereNotNull('punchin')
+                ->where('user_id', Auth::id())
+                ->whereYear('date', $currentYear)
+                ->whereMonth('date', $currentMonth);
+
+
+            $attendanceRecords = $attendanceQuery->paginate($perPage, ['*'], 'page', $page);
+
+            if ($attendanceRecords->isEmpty()) {
+                return response()->json([
+                    'message' => 'No attendance records found for the selected month.',
+                    'absent_users' => [] // All users are absent if no attendance is recorded
+                ], 404);
+            }
+
+            // Transform the attendance records into a response-friendly format
+            $formattedRecords = $attendanceRecords->map(function ($record) {
+                return [
+                    'id' => $record->id,
+                    'date' => Carbon::parse($record->date)->toIso8601String(),
+                    'punchin_time' => $record->punchin,
+                    'punchin_location' => $record->punchin_location,
+                    'punchout_time' => $record->punchout,
+                    'punchout_location' => $record->punchout_location,
+                ];
+            });
+
+
+
+
+            // Return paginated data for attendances, absent users, and leave data
+            return response()->json([
+                'attendances' => $formattedRecords,
+                'absent_users' => [], // Return absent users in array format
+                'leaves' => [],
+                'current_page' => $attendanceRecords->currentPage(),
+                'last_page' => $attendanceRecords->lastPage(),
+                'total' => $attendanceRecords->total(),
+            ]);
+
+        } catch (Throwable $exception) {
+            // Handle unexpected exceptions during data retrieval
+            report($exception); // Report the exception for debugging or logging
             return response()->json([
                 'error' => 'An error occurred while retrieving attendance data.',
                 'details' => $exception->getMessage() // Return the error message for debugging

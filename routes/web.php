@@ -32,8 +32,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
 
-    Route::get('/attendance-employee', [AttendanceController::class, 'index'])->name('attendance-employee');
-
+    Route::get('/attendance-employee', [AttendanceController::class, 'index2'])->name('attendance-employee');
+    Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
+    Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
+    Route::get('/get-current-user-attendance-for-date', [AttendanceController::class, 'getCurrentUserAttendanceForDate'])->name('getCurrentUserAttendanceForDate');
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
     Route::get('/daily-works-paginate', [DailyWorkController::class, 'paginate'])->name('dailyWorks.paginate');
@@ -80,7 +82,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
 
     Route::get('/employees', [UserController::class, 'index1'])->name('employees');
-    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
+    Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
     Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
     Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
@@ -181,8 +183,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 
-    Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
-    Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
+
 });
 
 
