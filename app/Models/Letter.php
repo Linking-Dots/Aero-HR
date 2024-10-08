@@ -26,6 +26,12 @@ class Letter extends Model
         'dealt_by',          // Foreign key for User model
     ];
 
+    protected $casts = [
+        'need_reply' => 'boolean',
+        'replied_status' => 'boolean',
+
+    ];
+
     /**
      * Get the user who dealt with the letter.
      */

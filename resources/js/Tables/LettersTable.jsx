@@ -249,7 +249,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
-                    checked={row.need_reply}
+                    isSelected={row.need_reply}
                     onChange={(e) => handleChange(row.id, 'need_reply', e.target.checked)}
                 />
             ),
@@ -261,7 +261,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
-                    checked={row.replied_status}
+                    isSelected={row.replied_status}
                     onChange={(e) => handleChange(row.id, 'replied_status', e.target.checked)}
                 />
             ),
@@ -273,7 +273,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
-                    checked={row.need_forward}
+                    isSelected={row.need_forward}
                     onChange={(e) => handleChange(row.id, 'need_forward', e.target.checked)}
                 />
             ),
@@ -285,7 +285,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '90px',
             cell: row => (
                 <Checkbox
-                    checked={row.forwarded_status}
+                    isSelected={row.forwarded_status}
                     onChange={(e) => handleChange(row.id, 'forwarded_status', e.target.checked)}
                 />
             ),
