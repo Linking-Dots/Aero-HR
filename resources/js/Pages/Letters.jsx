@@ -18,30 +18,30 @@ import { AddBox, Download, Upload } from '@mui/icons-material';
 import { Head } from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
-import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';
+import LettersTable from '@/Tables/LettersTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import minMax from 'dayjs/plugin/minMax';
-import DailyWorkForm from "@/Forms/DailyWorkForm.jsx";
-import DeleteDailyWorkForm from "@/Forms/DeleteDailyWorkForm.jsx";
-import DailyWorksDownloadForm from "@/Forms/DailyWorksDownloadForm.jsx";
+// import LetterForm from "@/Forms/LetterForm.jsx";
+// import DeleteLetterForm from "@/Forms/DeleteLetterForm.jsx";
+// import LettersDownloadForm from "@/Forms/LettersDownloadForm.jsx";
 import { styled } from '@mui/system';
 import SearchIcon from "@mui/icons-material/Search";
-import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
+// import LettersUploadForm from "@/Forms/LettersUploadForm.jsx";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import {Pagination} from "@nextui-org/react";
+import {Input, Pagination} from "@nextui-org/react";
 dayjs.extend(minMax);
 
 
-const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
+const Letters = React.memo(({ auth, title, users }) => {
     const theme = useTheme();
 
-    // const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
+
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalRows, setTotalRows] = useState(0);
@@ -56,19 +56,16 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const fetchData = async (page, perPage, filterData) => {
+    const fetchData = async (page, perPage, search) => {
         try {
-            const response = await axios.get(route('dailyWorks.paginate'), {
+            const response = await axios.get(route('letters.paginate'), {
                 params: {
                     page,
                     perPage,
                     search: search, // Assuming 'report' is the search field
-                    status: filterData.status !== 'all' ? filterData.status : '',
-                    inCharge: filterData.incharge !== 'all' ? filterData.incharge : '',
-                    startDate: filterData.startDate?.format('YYYY-MM-DD'), // Send startDate in proper format
-                    endDate: filterData.endDate?.format('YYYY-MM-DD'),
                 }
             });
+            console.log(response)
 
             setData(response.data.data);
             setTotalRows(response.data.total);
@@ -194,31 +191,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         setOpenModalType(null);
     }, []);
 
-    const [filterData, setFilterData] = useState({
-        startDate: null,
-        endDate: null,
-        status: 'all',
-        incharge: 'all',
-        report: '',
-    });
-
-    const handleFilterChange = useCallback((key, value) => {
-        if (key === 'dates') {
-            const [startDate, endDate] = value; // Destructure the new values
-            setFilterData(prevState => ({
-                ...prevState,
-                startDate, // Update startDate
-                endDate,   // Update endDate
-            }));
-        } else {
-            setFilterData(prevState => ({
-                ...prevState,
-                [key]: value,
-            }));
-        }
-
-    }, []);
-
     const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setSearch(value);
@@ -228,8 +200,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
     useEffect(() => {
         setLoading(true);
-        fetchData(currentPage, perPage, filterData);
-    }, [currentPage, perPage, filterData, search]);
+        fetchData(currentPage, perPage, search);
+    }, [currentPage, perPage, search]);
 
 
     const handlePageChange = (page) => {
@@ -240,33 +212,33 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     return (
         <>
             <Head title={title}/>
-            {openModalType === 'editDailyWork' && (
-                <DailyWorkForm
-                    open={openModalType === 'editDailyWork'}
+            {openModalType === 'editLetter' && (
+                <LetterForm
+                    open={openModalType === 'editLetter'}
                     currentRow={currentRow}
                     setData={setData}
                     closeModal={closeModal}
                 />
             )}
-            {openModalType === 'deleteDailyWork' && (
-                <DeleteDailyWorkForm
-                    open={openModalType === 'deleteDailyWork'}
+            {openModalType === 'deleteLetter' && (
+                <DeleteLetterForm
+                    open={openModalType === 'deleteLetter'}
                     handleClose={handleClose}
                     handleDelete={handleDelete}
                     setData={setData}
                 />
             )}
-            {openModalType === 'importDailyWorks' && (
-                <DailyWorksUploadForm
-                    open={openModalType === 'importDailyWorks'}
+            {openModalType === 'importLetters' && (
+                <LettersUploadForm
+                    open={openModalType === 'importLetters'}
                     closeModal={closeModal}
                     setData={setData}
                     setTotalRows={setTotalRows}
                 />
             )}
-            {openModalType === 'exportDailyWorks' && (
-                <DailyWorksDownloadForm
-                    open={openModalType === 'exportDailyWorks'}
+            {openModalType === 'exportLetters' && (
+                <LettersDownloadForm
+                    open={openModalType === 'exportLetters'}
                     closeModal={closeModal}
                     data={data}
                     users={users}
@@ -292,16 +264,16 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             {isMobile ? (
                                                 <>
                                                     <IconButton
-                                                        title="Import Daily Works"
+                                                        title="Import Letters"
                                                         color="warning"
-                                                        onClick={() => openModal('importDailyWorks')} // Handle opening the modal
+                                                        onClick={() => openModal('importLetters')} // Handle opening the modal
                                                     >
                                                         <Upload />
                                                     </IconButton>
                                                     <IconButton
-                                                        title="Export Daily Works"
+                                                        title="Export Letters"
                                                         color="success"
-                                                        onClick={() => openModal('exportDailyWorks')}
+                                                        onClick={() => openModal('exportLetters')}
                                                     >
                                                         <Download />
                                                     </IconButton>
@@ -310,20 +282,20 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                             ) : (
                                                 <>
                                                     <Button
-                                                        title="Import Daily Works"
+                                                        title="Import Letters"
                                                         variant="outlined"
                                                         color="warning"
                                                         startIcon={<Upload />}
-                                                        onClick={() => openModal('importDailyWorks')} // Handle opening the modal
+                                                        onClick={() => openModal('importLetters')} // Handle opening the modal
                                                     >
                                                         Import
                                                     </Button>
                                                     <Button
-                                                        title="Export Daily Works"
+                                                        title="Export Letters"
                                                         variant="outlined"
                                                         color="success"
                                                         startIcon={<Download />}
-                                                        onClick={() => openModal('exportDailyWorks')}
+                                                        onClick={() => openModal('exportLetters')}
                                                     >
                                                         Export
                                                     </Button>
@@ -338,157 +310,35 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                             <Box>
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6} md={3}>
-                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <Box display="flex" alignItems="center">
-                                                <DateRangePicker
-                                                    value={[filterData.startDate, filterData.endDate]}
-                                                    onChange={(newValue) => handleFilterChange('dates', newValue)}
-                                                    localeText={{ start: 'Start date', end: 'End date' }}
-                                                    renderInput={(startProps, endProps) => (
-                                                        <>
-                                                            <TextField {...startProps} fullWidth size="small" />
-                                                            <Box sx={{ mx: 1 }}> to </Box>
-                                                            <TextField {...endProps} fullWidth size="small" />
-                                                        </>
-                                                    )}
-                                                />
-                                            </Box>
-                                        </LocalizationProvider>
-                                    </Grid>
-                                    <Grid item xs={6} sm={4} md={3}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="status-label">Status</InputLabel>
-                                            <Select
-                                                variant="outlined"
-                                                labelId="status-label"
-                                                label="Status"
-                                                name="status"
-                                                value={filterData.status}
-                                                onChange={(e) => handleFilterChange('status', e.target.value)}
-                                                MenuProps={{
-                                                    PaperProps: {
-                                                        sx: {
-                                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                                            backgroundColor: theme.glassCard.backgroundColor,
-                                                            border: theme.glassCard.border,
-                                                            borderRadius: 2,
-                                                            boxShadow:
-                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                <MenuItem value="all">All</MenuItem>
-                                                <MenuItem value="completed">Completed</MenuItem>
-                                                <MenuItem value="new">New</MenuItem>
-                                                <MenuItem value="resubmission">Resubmission</MenuItem>
-                                                <MenuItem value="emergency">Emergency</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    {auth.roles.includes('Administrator') && (
-                                        <Grid item xs={6} sm={4} md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel id="incharge-label">Incharge</InputLabel>
-                                                <Select
-                                                    variant="outlined"
-                                                    labelId="incharge-label"
-                                                    label="Incharge"
-                                                    name="incharge"
-                                                    value={filterData.incharge}
-                                                    onChange={(e) => handleFilterChange('incharge', e.target.value)}
-                                                    MenuProps={{
-                                                        PaperProps: {
-                                                            sx: {
-                                                                backdropFilter: 'blur(16px) saturate(200%)',
-                                                                backgroundColor: theme.glassCard.backgroundColor,
-                                                                border: theme.glassCard.border,
-                                                                borderRadius: 2,
-                                                                boxShadow:
-                                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                            },
-                                                        },
-                                                    }}
-                                                >
-                                                    <MenuItem value="all">All</MenuItem>
-                                                    {allData.allInCharges.map(inCharge => (
-                                                        <MenuItem key={inCharge.id} value={inCharge.id}>
-                                                            {inCharge.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                    )}
-                                    <Grid item xs={6} sm={4} md={3}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="report-label">Report</InputLabel>
-                                            <Select
-                                                variant="outlined"
-                                                labelId="report-label"
-                                                label="Report"
-                                                name="report"
-                                                value={filterData.report}
-                                                onChange={(e) => handleFilterChange('report', e.target.value)}
-                                                MenuProps={{
-                                                    PaperProps: {
-                                                        sx: {
-                                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                                            backgroundColor: theme.glassCard.backgroundColor,
-                                                            border: theme.glassCard.border,
-                                                            borderRadius: 2,
-                                                            boxShadow:
-                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                <MenuItem value="" disabled>Select Report</MenuItem>
-                                                {/* Add your report options here */}
-                                            </Select>
-                                        </FormControl>
+                                        <Input
+                                            label="Search"
+                                            type={'text'}
+                                            fullWidth
+                                            variant="bordered"
+                                            placeholder="Employee..."
+                                            value={search}
+                                            onChange={handleSearch}
+                                            endContent={<SearchIcon />}
+                                        />
                                     </Grid>
                                 </Grid>
                             </Box>
                         </CardContent>
 
                         <CardContent >
-
-                            <TextField
-                                label="Search"
-                                fullWidth
-                                variant="outlined"
-                                placeholder="Search..."
-                                value={search}
-                                onChange={handleSearch}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <DailyWorksTable
+                            <LettersTable
                                 setData={setData}
-                                filteredData={filteredData}
-                                setFilteredData={setFilteredData}
-                                reports={reports}
                                 setCurrentRow={setCurrentRow}
                                 currentPage={currentPage}
                                 setCurrentPage={setCurrentPage}
                                 setLoading={setLoading}
                                 handleClickOpen={handleClickOpen}
                                 openModal={openModal}
-                                juniors={allData.juniors}
                                 totalRows={totalRows}
                                 lastPage={lastPage}
                                 loading={loading}
                                 allData={data}
-                                allInCharges={allData.allInCharges}
-                                jurisdictions={jurisdictions}
                                 users={users}
-                                reports_with_daily_works={reports_with_daily_works}
                             />
                             {totalRows >= 30 && (
                                 <div className="py-2 px-2 flex justify-center items-center">
@@ -514,6 +364,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     );
 });
 
-DailyWorks.layout = (page) => <App>{page}</App>;
+Letters.layout = (page) => <App>{page}</App>;
 
-export default DailyWorks;
+export default Letters;

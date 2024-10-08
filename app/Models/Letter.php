@@ -14,6 +14,7 @@ class Letter extends Model
         'status',
         'received_date',
         'memo_number',
+        'handling_memo',
         'subject',
         'action_taken',
         'response_date',

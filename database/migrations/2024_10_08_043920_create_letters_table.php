@@ -17,6 +17,7 @@ return new class extends Migration
             $table->enum('status', ['Closed', 'Open'])->default('Open');
             $table->date('received_date');
             $table->string('memo_number', 191)->unique();
+            $table->string('handling_memo', 191)->unique();
             $table->text('subject');
             $table->text('action_taken')->nullable();
             $table->date('response_date')->nullable();
