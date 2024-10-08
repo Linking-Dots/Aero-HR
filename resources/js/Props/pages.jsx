@@ -13,6 +13,8 @@ import HomeIcon from '@mui/icons-material/Home';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
 import GroupIcon from '@mui/icons-material/Group';
 import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 // Function to create pages array
 export const getPages = (permissions) => [
     { name: 'Dashboard', icon: <DashboardIcon/>, route: 'dashboard' },
@@ -39,6 +41,14 @@ export const getPages = (permissions) => [
             { name: 'Daily Work Summary', icon: <ListIcon sx={{ ml: 2 }}/>, route: 'dailyWorkSummary' }
         ]
     },
+    ...(permissions.includes('read users') ? [
+        {
+            name: 'Documents', icon: <FolderOpenIcon/>, subMenu: [
+                // { name: 'Projects', icon: <WorkIcon />, route: 'dashboard' },
+                { name: 'Letters', icon: <MailOutlineIcon sx={{ ml: 2 }}/>, route: 'letters' },
+            ]
+        }
+    ] : []),
     ...(permissions.includes('read users') ? [{name: 'Users', icon: <GroupIcon/>, route: 'users'}] : []),
     ...(permissions.includes('read settings') ? [{name: 'Settings', icon: <Settings/>, route: 'company-settings'}] : []),
 

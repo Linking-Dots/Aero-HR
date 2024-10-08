@@ -10,6 +10,7 @@ use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\JurisdictionController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\LetterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
@@ -75,6 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->group(function () {
 
+    Route::get('/letters', [LetterController::class, 'index'])->name('letters');
+
     Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
     Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
     Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('update-leave-type');
@@ -118,36 +121,12 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
 
 
-
-
-
-
-
-
     // Routes accessible only to users with the 'admin' role
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');
     Route::post('/tasks-filtered', [TaskController::class, 'filterTasks'])->name('filterTasks');
 
     Route::post('/task/add', [TaskController::class, 'addTask'])->name('addTask');
 
-    Route::get('/export-tasks', [TaskController::class, 'exportTasks'])->name('exportTasks');
-    Route::post('/task/import', [TaskController::class, 'importCSV'])->name('importCSV');
-    Route::post('/task/update-rfi-submission-date', [TaskController::class, 'updateRfiSubmissionDate'])->name('updateRfiSubmissionDate');
-    Route::post('/task/update-completion-date-time', [TaskController::class, 'updateCompletionDateTime'])->name('updateCompletionDateTime');
-    Route::get('/tasks/daily-summary', [DailyWorkSummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummary');
-    Route::get('/tasks/daily-summary-get', [DailyWorkSummaryController::class, 'dailySummary'])->name('dailySummary');
-    Route::post('/tasks/daily-summary-filtered', [DailyWorkSummaryController::class, 'filterSummary'])->name('filterSummary');
-    Route::get('/tasks/daily-summary-export', [DailyWorkSummaryController::class, 'exportDailySummary'])->name('exportDailySummary');
-    Route::post('/task/incharge', [TaskController::class, 'assignIncharge'])->name('assignIncharge');
-
-
-    Route::get('/team-members', [ProfileController::class, 'members'])->name('members');
-    Route::post('/user/update-role', [ProfileController::class, 'updateUserRole'])->name('updateUserRole');
-    Route::post('/user/update-incharge', [ProfileController::class, 'updateUserIncharge'])->name('updateUserIncharge');
-
-
-    Route::get('/attendance-json', [AttendanceController::class, 'allAttendance'])->name('allAttendance');
-    Route::post('/attendance-update', [AttendanceController::class, 'updateAttendance'])->name('updateAttendance');
 
     Route::get('/work-location', [JurisdictionController::class, 'showWorkLocations'])->name('showWorkLocations');
     Route::get('/work-location-json', [JurisdictionController::class, 'allWorkLocations'])->name('allWorkLocations');
