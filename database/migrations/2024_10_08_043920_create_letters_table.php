@@ -16,11 +16,10 @@ return new class extends Migration
             $table->string('from');
             $table->enum('status', ['Closed', 'Open'])->default('Open');
             $table->date('received_date');
-            $table->string('memo_number', 191)->unique();
-            $table->string('handling_memo', 191)->unique();
+            $table->string('memo_number', 191)->nullable();
+            $table->string('handling_memo', 191)->nullable();
             $table->text('subject');
             $table->text('action_taken')->nullable();
-            $table->date('response_date')->nullable();
             $table->string('handling_link')->nullable();
             $table->string('handling_status')->nullable();
             $table->boolean('need_reply')->default(false);

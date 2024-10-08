@@ -53,4 +53,111 @@ class LetterController extends Controller
         // Return the paginated response as JSON
         return response()->json($paginatedLetters);
     }
+
+    public function update(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            // Find task by ID
+            $letter = Letter::find($request->id);
+
+            // If task not found, return 404 error response
+            if (!$letter) {
+                return response()->json(['error' => 'Letter not found'], 404);
+            }
+
+            $messages = [];  // Initialize an empty array to hold success messages
+
+            // Check if the 'ruleSet' is 'details' and perform validation
+            if ($request->has('ruleSet') && $request->input('ruleSet') === 'details') {
+                $validatedData = $request->validate([
+                    'date' => 'required|date',
+                    'number' => 'required|string',
+                    'type' => 'required|string',
+                    'description' => 'nullable|string',
+                    'location' => 'required|string',
+                    'side' => 'nullable|string',
+                    'qty_layer' => 'nullable|string',
+                    'planned_time' => 'required|string',
+                ]);
+
+                // Update the Letter fields with the validated data
+                $fields = [
+                    'date' => 'Date',
+                    'number' => 'Number',
+                    'type' => 'Type',
+                    'description' => 'Description',
+                    'location' => 'Location',
+                    'side' => 'Side',
+                    'qty_layer' => 'Quantity Layer',
+                    'planned_time' => 'Planned Time',
+                ];
+
+                foreach ($fields as $key => $label) {
+                    if (array_key_exists($key, $validatedData) && $letter->$key !== $validatedData[$key]) {
+                        $letter->$key = $validatedData[$key];
+                        $messages[] = "{$label} updated successfully to '{$validatedData[$key]}'";
+                    }
+                }
+            }
+
+
+            // Additional fields update checks
+            if ($request->has('status')) {
+                $request->validate(['status' => 'required|string']);
+                $letter->status = $request->status;
+                $messages[] = 'Letter status updated to ' . $letter->status;
+            }
+            if ($request->has('received_date')) {
+                $request->validate(['received_date' => 'required|date']);
+                $letter->received_date = $request->received_date;
+                $messages[] = 'Letter received date updated to ' . $letter->received_date;
+            }
+            if ($request->has('action_taken')) {
+                $request->validate(['action_taken' => 'nullable|string']);
+                $letter->action_taken = $request->action_taken;
+                $messages[] = 'Letter action taken updated to ' . $letter->action_taken;
+            }
+            if ($request->has('need_reply')) {
+                $letter->need_reply = $request->need_reply;
+                $messages[] = $letter->memo_number . ' letter set to ' . ($request->need_reply ? 'needs reply' : 'does not need reply');
+            }
+            if ($request->has('forwarded_status')) {
+                $letter->forwarded_status = $request->forwarded_status;
+                $messages[] = $letter->memo_number . ' letter set to ' . ($request->forwarded_status ? 'forwarded' : 'not forwarded');
+            }
+            if ($request->has('need_forward')) {
+                $letter->need_forward = $request->need_forward;
+                $messages[] = $letter->memo_number . ' letter set to ' . ($request->need_forward ? 'needs forward' : 'does not need forward');
+            }
+            if ($request->has('replied_status')) {
+                $letter->replied_status = $request->replied_status;
+                $messages[] = $letter->memo_number . ' letter set to ' . ($request->replied_status ? 'replied' : 'not replied');
+            }
+
+            if ($request->has('rfi_submission_date')) {
+                $letter->rfi_submission_date = $request->rfi_submission_date;
+                $messages[] = 'RFI Submission date updated';
+            }
+            if ($request->has('completion_time')) {
+                $letter->completion_time = $request->completion_time;
+                $messages[] = 'Completion date-time updated';
+            }
+
+            // Save the Letter with the updated fields
+            $letter->save();
+
+            // Return JSON response with the success messages
+            return response()->json(['messages' => $messages]);
+
+        } catch (ValidationException $e) {
+            // Validation failed, return error response
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            if ($e instanceof \Illuminate\Session\TokenMismatchException) {
+                return response()->json(['error' => 'CSRF token mismatch'], 419);
+            }
+            // Other exceptions occurred, return error response
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

@@ -78,6 +78,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
 
     Route::get('/letters', [LetterController::class, 'index'])->name('letters');
     Route::get('/letters-paginate', [LetterController::class, 'paginate'])->name('letters.paginate');
+    Route::put('/letters-update', [LetterController::class, 'update'])->name('letters.update');
 
     Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
     Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');

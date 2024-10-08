@@ -5,7 +5,7 @@ import {
     CircularProgress,
     GlobalStyles,
 } from '@mui/material';
-import {SelectItem, Select, Input, Textarea, Checkbox, ButtonGroup, Button, Link} from '@nextui-org/react';
+import {SelectItem, Select, Input, Textarea, Checkbox, ButtonGroup, Button, Link, Tooltip} from '@nextui-org/react';
 import {styled, useTheme} from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -27,6 +27,9 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
         backgroundColor: 'transparent',
         '& .rdt_TableHead': {
             '& .rdt_TableHeadRow': {
+                '& .hZUxNm': {
+                    'white-space': 'normal',
+                },
                 backgroundColor: 'transparent',
                 color: theme.palette.text.primary,
             },
@@ -34,8 +37,13 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
             zIndex: 1, // Ensure header is above the scrollable body
         },
         '& .rdt_TableBody': {
-
+            overflowY: 'auto',
             maxHeight: '52vh',
+            '&::-webkit-scrollbar': {
+                display: 'none',
+            },
+            '-ms-overflow-style': 'none',  // IE and Edge
+            'scrollbar-width': 'none',  // Firefox
             '& .rdt_TableRow': {
                 minHeight: 'auto',
                 backgroundColor: 'transparent',
@@ -60,6 +68,8 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
     const { auth } = usePage().props;
     const theme = useTheme();
 
+    const [editingRow, setEditingRow] = useState(null);
+
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
 
@@ -68,24 +78,34 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             name: 'From',
             selector: row => row.from,
             sortable: true,
-            center: true,
+            center: 'true',
         },
         {
             name: 'Status',
             selector: row => row.status,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '170px',
             cell: row => (
                 <Select
-                    variant={'bordered'}
+                    aria-label={'Status'}
+                    color={getStatusColor(row.status)}
                     placeholder="Select Status"
                     value={row.status}
-                    onChange={(value) => handleChange(row.id, 'status', value)}
+                    onChange={(e) => handleChange(row.id, 'status', e.target.value)}
                     fullWidth
+                    selectedKeys={[row.status]}
+                    popoverProps={{
+                        classNames: {
+                            content: "bg-transparent backdrop-blur-lg border-inherit",
+                        },
+                    }}
                 >
-                    <SelectItem value="Open">Open</SelectItem>
-                    <SelectItem value="Closed">Closed</SelectItem>
+                    {['Open', 'Closed'].map(option => (
+                        <SelectItem key={option} value={row.status}>
+                            {option}
+                        </SelectItem>
+                    ))}
                 </Select>
             ),
         },
@@ -93,11 +113,11 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             name: 'Received Date',
             selector: row => row.received_date,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '160px',
             cell: row => (
                 <Input
-                    variant={'bordered'}
+                    variant={'underlined'}
                     type="date"
                     fullWidth
                     value={row.received_date}
@@ -109,7 +129,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             name: 'Memo Number',
             selector: row => row.memo_number,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '140px',
         },
         {
@@ -119,15 +139,32 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             left: true,
             width: '260px',
             cell: row => (
-                <Box sx={{
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                }}>
-                    {row.subject}
-                </Box>
+                <Tooltip
+                    content={row.subject}
+                    placement="top"
+                    showArrow={true}
+                    radius={'md'}
+                    size={'md'}
+                    classNames={{
+                        content: [
+                            'bg-transparent backdrop-blur-lg border border-gray-200',
+                            'max-w-[300px] text-sm',
+                        ]
+                    }}
+                >
+                    <Box sx={{
+                        whiteSpace: 'normal',
+                        wordWrap: 'break-word',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                    }}>
+                        {row.subject}
+                    </Box>
+                </Tooltip>
             ),
         },
         {
@@ -136,36 +173,34 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             sortable: true,
             left: true,
             width: '250px',
-            cell: row => (
-                <Textarea
-                    variant={'bordered'}
-                    fullWidth
-                    value={row.action_taken || ''}
-                    onChange={(e) => handleChange(row.id, 'action_taken', e.target.value)}
-                />
-            ),
-        },
-        {
-            name: 'Response Date',
-            selector: row => row.response_date,
-            sortable: true,
-            center: true,
-            width: '160px',
-            cell: row => (
-                <Input
-                    variant={'bordered'}
-                    type="date"
-                    fullWidth
-                    value={row.response_date || ''}
-                    onChange={(e) => handleChange(row.id, 'response_date', e.target.value)}
-                />
-            ),
+            cell: row => {
+                const [inputValue, setInputValue] = useState(row.action_taken);
+                const handleInputChange = (event) => {
+                    setInputValue(event.target.value);
+                };
+                const handleBlur = () => {
+                    handleChange(row.id,'action_taken', inputValue);
+                };
+
+                return (
+                    <Textarea
+                        variant="underlined"
+                        size={'sm'}
+                        radius={'sm'}
+                        maxRows={2}
+                        fullWidth
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                    />
+                )
+            },
         },
         {
             name: 'Handling Link',
             selector: row => row.handling_link,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '200px',
             cell: row => (
                 <Link
@@ -182,26 +217,36 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             name: 'Handling Status',
             selector: row => row.handling_status,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '180px',
             cell: row => (
                 <Select
-                    variant={'bordered'}
+                    aria-label={'Handling Status'}
+                    color={getStatusColor(row.handling_status)}
+                    placeholder="Select Status"
                     value={row.handling_status}
-                    onChange={(value) => handleChange(row.id, 'handling_status', value)}
+                    onChange={(e) => handleChange(row.id, 'handling_status', e.target.value)}
                     fullWidth
+                    selectedKeys={[row.handling_status]}
+                    popoverProps={{
+                        classNames: {
+                            content: "bg-transparent backdrop-blur-lg border-inherit",
+                        },
+                    }}
                 >
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
+                    {['Processing', 'Signed', 'Sent'].map(option => (
+                        <SelectItem key={option} value={row.handling_status}>
+                            {option}
+                        </SelectItem>
+                    ))}
                 </Select>
             ),
         },
         {
             name: 'Need Reply',
             selector: row => row.need_reply,
-            sortable: true,
-            center: true,
-            width: '120px',
+            center: 'true',
+            width: '80px',
             cell: row => (
                 <Checkbox
                     checked={row.need_reply}
@@ -212,9 +257,8 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
         {
             name: 'Replied Status',
             selector: row => row.replied_status,
-            sortable: true,
-            center: true,
-            width: '150px',
+            center: 'true',
+            width: '80px',
             cell: row => (
                 <Checkbox
                     checked={row.replied_status}
@@ -225,9 +269,8 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
         {
             name: 'Need Forward',
             selector: row => row.need_forward,
-            sortable: true,
-            center: true,
-            width: '120px',
+            center: 'true',
+            width: '80px',
             cell: row => (
                 <Checkbox
                     checked={row.need_forward}
@@ -238,9 +281,8 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
         {
             name: 'Forwarded Status',
             selector: row => row.forwarded_status,
-            sortable: true,
-            center: true,
-            width: '150px',
+            center: 'true',
+            width: '90px',
             cell: row => (
                 <Checkbox
                     checked={row.forwarded_status}
@@ -252,13 +294,13 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             name: 'Dealt By',
             selector: row => row.dealt_by,
             sortable: true,
-            center: true,
+            center: 'true',
             width: '200px',
             cell: row => {
                 const user = users.find(u => u.id === row.dealt_by);
                 return user ? (
                     <Box css={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={user.avatar} alt={user.name} css={{ marginRight: '8px' }} />
+                        <Avatar src={user.profile_image} alt={user.name} css={{ marginRight: '8px' }} />
                         {user.name}
                     </Box>
                 ) : 'N/A';
@@ -266,7 +308,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
         },
         {
             name: 'Actions',
-            center: true,
+            center: 'true',
             width: '150px',
             cell: row => (
                 <ButtonGroup>
@@ -280,21 +322,24 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'new':
-                return 'blue';
-            case 'resubmission':
-                return 'orange';
-            case 'completed':
-                return 'green';
-            case 'emergency':
-                return 'red';
+            case 'Open':
+                return 'danger';
+            case 'Closed':
+                return 'success';
+            case 'Processing':
+                return 'warning';
+            case 'Signed':
+                return 'info';
+            case 'Sent':
+                return 'primary';
             default:
                 return '';
         }
     };
     const handleChange = async (letterId, key, value) => {
+        console.log(letterId,key,value)
         try {
-            const response = await axios.post(route('dailyWorks.update'), {
+            const response = await axios.put(route('letters.update'), {
                 id: letterId,
                 [key]: value,
             });
@@ -352,20 +397,15 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                     '& .cgTKyH': {
                         backgroundColor: 'transparent !important',
                         color: theme.palette.text.primary
-
                     },
                 }}
             />
             <CustomDataTable
-                classNames={{
-                    base: "max-h-[84vh] overflow-scroll",
-                    table: "min-h-[84vh]",
-                }}
                 columns={columns}
                 data={allData}
                 loading={loading}
                 loadingComponent={<CircularProgress />}
-                defaultSortField="date"
+                defaultSortField="received_date"
                 highlightOnHover
                 responsive
                 dense

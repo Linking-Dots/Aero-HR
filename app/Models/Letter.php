@@ -17,7 +17,6 @@ class Letter extends Model
         'handling_memo',
         'subject',
         'action_taken',
-        'response_date',
         'handling_link',
         'handling_status',
         'need_reply',
