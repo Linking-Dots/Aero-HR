@@ -64,7 +64,7 @@ const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
 }));
 
-const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openModal, setCurrentRow }) => {
+const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openModal, setCurrentRow , search}) => {
     const { auth } = usePage().props;
     const theme = useTheme();
 
@@ -73,6 +73,41 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Open':
+                return 'danger';
+            case 'Closed':
+                return 'success';
+            case 'Processing':
+                return 'warning';
+            case 'Signed':
+                return 'info';
+            case 'Sent':
+                return 'primary';
+            default:
+                return '';
+        }
+    };
+    const highlightText = (text) => {
+        if (!search) return text;
+
+        // Split the search terms by spaces and create a regex pattern to match each term.
+        const searchTerms = search.split(' ').filter(Boolean); // Filters out empty strings
+        const regex = new RegExp(`(${searchTerms.join('|')})`, 'gi');
+
+        // Split the text into parts based on the search terms and highlight matching parts
+        const parts = text.split(regex);
+
+        return parts.map((part, index) =>
+            searchTerms.some(term => part.toLowerCase() === term.toLowerCase()) ? (
+                <span key={index} style={{ backgroundColor: 'yellow' }}>{part}</span>
+            ) : (
+                part
+            )
+        );
+    };
+
     const columns = [
         {
             name: 'From',
@@ -80,6 +115,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             sortable: true,
             center: 'true',
             width: '80px',
+            cell: row => highlightText(row.from),
         },
         {
             name: 'Status',
@@ -132,6 +168,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             sortable: true,
             center: 'true',
             width: '140px',
+            cell: row => highlightText(row.memo_number),
         },
         {
             name: 'Subject',
@@ -163,7 +200,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                     }}>
-                        {row.subject}
+                        {highlightText(row.subject)}
                     </Box>
                 </Tooltip>
             ),
@@ -175,7 +212,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             left: true,
             width: '250px',
             cell: row => {
-                const [inputValue, setInputValue] = useState(row.action_taken);
+                const [inputValue, setInputValue] = useState(row.action_taken || '');
                 const handleInputChange = (event) => {
                     setInputValue(event.target.value);
                 };
@@ -302,7 +339,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                 return user ? (
                     <Box css={{ display: 'flex', alignItems: 'center' }}>
                         <Avatar src={user.profile_image} alt={user.name} css={{ marginRight: '8px' }} />
-                        {user.name}
+                        {highlightText(user.name)}
                     </Box>
                 ) : 'N/A';
             },
@@ -321,22 +358,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
     ];
 
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'Open':
-                return 'danger';
-            case 'Closed':
-                return 'success';
-            case 'Processing':
-                return 'warning';
-            case 'Signed':
-                return 'info';
-            case 'Sent':
-                return 'primary';
-            default:
-                return '';
-        }
-    };
+
     const handleChange = async (letterId, key, value) => {
         console.log(letterId,key,value)
         try {

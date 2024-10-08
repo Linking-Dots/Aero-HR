@@ -192,7 +192,7 @@ const Letters = React.memo(({ auth, title, users }) => {
     }, []);
 
     const handleSearch = (event) => {
-        const value = event.target.value.toLowerCase();
+        const value = event.target.value;
         setSearch(value);
     };
 
@@ -315,7 +315,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                                             type={'text'}
                                             fullWidth
                                             variant="bordered"
-                                            placeholder="Employee..."
+                                            placeholder="Search..."
                                             value={search}
                                             onChange={handleSearch}
                                             endContent={<SearchIcon />}
@@ -339,6 +339,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                                 loading={loading}
                                 allData={data}
                                 users={users}
+                                search={search}
                             />
                             {totalRows >= 30 && (
                                 <div className="py-2 px-2 flex justify-center items-center">

@@ -40,9 +40,9 @@ class LetterController extends Controller
                 $q->where('from', 'LIKE', "%{$search}%")
                     ->orWhere('received_date', 'LIKE', "%{$search}%")
                     ->orWhere('memo_number', 'LIKE', "%{$search}%")
+                    ->orWhere('handling_memo', 'LIKE', "%{$search}%")
                     ->orWhere('subject', 'LIKE', "%{$search}%")
                     ->orWhere('action_taken', 'LIKE', "%{$search}%");
-
             });
         }
 
