@@ -79,6 +79,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             selector: row => row.from,
             sortable: true,
             center: 'true',
+            width: '80px',
         },
         {
             name: 'Status',

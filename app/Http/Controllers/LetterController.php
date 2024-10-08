@@ -107,6 +107,11 @@ class LetterController extends Controller
                 $letter->status = $request->status;
                 $messages[] = 'Letter status updated to ' . $letter->status;
             }
+            if ($request->has('handling_status')) {
+                $request->validate(['handling_status' => 'required|string']);
+                $letter->handling_status = $request->handling_status;
+                $messages[] = 'Letter handling status updated to ' . $letter->handling_status;
+            }
             if ($request->has('received_date')) {
                 $request->validate(['received_date' => 'required|date']);
                 $letter->received_date = $request->received_date;
