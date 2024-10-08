@@ -41,8 +41,7 @@ class LetterController extends Controller
                     ->orWhere('received_date', 'LIKE', "%{$search}%")
                     ->orWhere('memo_number', 'LIKE', "%{$search}%")
                     ->orWhere('subject', 'LIKE', "%{$search}%")
-                    ->orWhere('action_taken', 'LIKE', "%{$search}%")
-                    ->orWhere('response_date', 'LIKE', "%{$search}%");
+                    ->orWhere('action_taken', 'LIKE', "%{$search}%");
 
             });
         }
