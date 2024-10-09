@@ -117,4 +117,9 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(Attendance::class, 'user_id');
     }
 
+    public function designation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Designation::class, 'designation');
+    }
+
 }

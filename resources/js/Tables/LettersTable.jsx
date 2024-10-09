@@ -1,11 +1,22 @@
 import DataTable from 'react-data-table-component';
 import {
-    Avatar,
     Box,
     CircularProgress,
     GlobalStyles,
 } from '@mui/material';
-import {SelectItem, Select, Input, Textarea, Checkbox, ButtonGroup, Button, Link, Tooltip} from '@nextui-org/react';
+import {
+    SelectItem,
+    Select,
+    Input,
+    Textarea,
+    Checkbox,
+    ButtonGroup,
+    Button,
+    Link,
+    Tooltip,
+    Avatar,
+    User
+} from '@nextui-org/react';
 import {styled, useTheme} from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -20,6 +31,9 @@ import {Pagination} from "@nextui-org/react";
 import Loader from "@/Components/Loader.jsx";
 import {  usePage } from '@inertiajs/react';
 import LinkIcon from '@mui/icons-material/Link';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -80,11 +94,11 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             case 'Closed':
                 return 'success';
             case 'Processing':
-                return 'warning';
-            case 'Signed':
-                return 'info';
-            case 'Sent':
                 return 'primary';
+            case 'Signed':
+                return 'warning';
+            case 'Sent':
+                return 'success';
             default:
                 return '';
         }
@@ -107,6 +121,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             )
         );
     };
+    console.log(users)
 
     const columns = [
         {
@@ -243,6 +258,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             cell: row => (
                 <Link
                     isExternal
+                    isBlock
                     showAnchorIcon
                     href={row.handling_link || '#'}
                     anchorIcon={<LinkIcon />}
@@ -287,6 +303,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
+                    color={getStatusColor(row.status)}
                     isSelected={row.need_reply}
                     onChange={(e) => handleChange(row.id, 'need_reply', e.target.checked)}
                 />
@@ -299,6 +316,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
+                    color={getStatusColor(row.status)}
                     isSelected={row.replied_status}
                     onChange={(e) => handleChange(row.id, 'replied_status', e.target.checked)}
                 />
@@ -311,6 +329,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '80px',
             cell: row => (
                 <Checkbox
+                    color={getStatusColor(row.status)}
                     isSelected={row.need_forward}
                     onChange={(e) => handleChange(row.id, 'need_forward', e.target.checked)}
                 />
@@ -323,6 +342,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             width: '90px',
             cell: row => (
                 <Checkbox
+                    color={getStatusColor(row.status)}
                     isSelected={row.forwarded_status}
                     onChange={(e) => handleChange(row.id, 'forwarded_status', e.target.checked)}
                 />
@@ -333,34 +353,91 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             selector: row => row.dealt_by,
             sortable: true,
             center: 'true',
-            width: '200px',
-            cell: row => {
-                const user = users.find(u => u.id === row.dealt_by);
-                return user ? (
-                    <Box css={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={user.profile_image} alt={user.name} css={{ marginRight: '8px' }} />
-                        {highlightText(user.name)}
-                    </Box>
-                ) : 'N/A';
-            },
+            cell: row => (
+
+                <Select
+                    items={users}
+                    variant="underlined"
+                    aria-label={'Dealt By'}
+                    fullWidth
+                    value={row.dealt_by || 'na'}  // Set the value to 'na' if no user is assigned
+                    onChange={(e) => handleChange(row.id, 'dealt_by', e.target.value)}
+                    selectedKeys={[String(row.dealt_by)]}
+                    style={{
+                        minWidth: '260px',  // Optionally set a minimum width
+                    }}
+                    popoverProps={{
+                        classNames: {
+                            content: "bg-transparent backdrop-blur-lg border-inherit",
+                        },
+                        style: {
+                            whiteSpace: 'nowrap', // Ensure content wraps
+                            minWidth: 'fit-content',  // Optionally set a minimum width
+                        },
+                    }}
+                    placeholder="Select a user"
+                    renderValue={(selectedUsers) => {
+                        // Handle display of selected value(s)
+                        return selectedUsers.map((selectedUser) => (
+                            <div key={selectedUser.key} className="flex items-center gap-2 m-1">
+                                <User
+                                    style={{
+                                        whiteSpace: 'nowrap', // Ensure content wraps
+                                    }}
+                                    size="sm"
+                                    name={selectedUser.data.name}
+                                    description={selectedUser.data.designation.title}
+                                    avatarProps={{
+                                        radius: "sm",
+                                        size: "sm",
+                                        src: selectedUser.data.profile_image
+                                    }}
+                                />
+                            </div>
+                        ));
+                    }}
+                >
+                    {(user) => (
+                        <SelectItem key={user.id} textValue={user.id}>
+                            <User
+                                style={{
+                                    whiteSpace: 'nowrap', // Ensure content wraps
+                                }}
+                                size="sm"
+                                name={user.name}
+                                description={user.designation.title}
+                                avatarProps={{
+                                    radius: "sm",
+                                    size: "sm",
+                                    src: user.profile_image
+                                }}
+                            />
+                        </SelectItem>
+                    )}
+                </Select>
+
+            ),
         },
         {
             name: 'Actions',
             center: 'true',
             width: '150px',
             cell: row => (
-                <ButtonGroup>
-                    <Button onClick={() => openModal('editLetter', row)}>Edit</Button>
-                    <Button color="error" onClick={() => handleDelete(row.id)}>Delete</Button>
-                </ButtonGroup>
+                <div className="flex gap-4 items-center">
+                    <Button variant={'bordered'} isIconOnly color="warning" aria-label="Edit" onClick={() => openModal('editLetter', row)}>
+                        <EditIcon/>
+                    </Button>
+                    <Button variant={'bordered'} isIconOnly color="danger" aria-label="Delete" onClick={() => handleDelete(row.id)}>
+                        <DeleteIcon/>
+                    </Button>
+                </div>
             ),
         },
     ];
 
 
-
     const handleChange = async (letterId, key, value) => {
-        console.log(letterId,key,value)
+        console.log(letterId, key, value)
         try {
             const response = await axios.put(route('letters.update'), {
                 id: letterId,
@@ -426,12 +503,13 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             <CustomDataTable
                 columns={columns}
                 data={allData}
-                loading={loading}
-                loadingComponent={<CircularProgress />}
                 defaultSortField="received_date"
                 highlightOnHover
                 responsive
                 dense
+                sortIcon={<KeyboardArrowDownIcon />}
+                keyField="id"
+
             />
 
         </div>

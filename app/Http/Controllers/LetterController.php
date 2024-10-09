@@ -5,19 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Letter;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class LetterController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')->get();
-
-        // Loop through each user and add a new field 'role' with the role name
-        $users->transform(function ($user) {
-            $user->role = $user->roles->first()->name;
-            return $user;
-        });
+        $users = User::with(['designation'])->get();
 
         return Inertia::render('Letters', [
             'users' => $users,
@@ -138,9 +133,9 @@ class LetterController extends Controller
                 $messages[] = $letter->memo_number . ' letter set to ' . ($request->replied_status ? 'replied' : 'not replied');
             }
 
-            if ($request->has('rfi_submission_date')) {
-                $letter->rfi_submission_date = $request->rfi_submission_date;
-                $messages[] = 'RFI Submission date updated';
+            if ($request->has('dealt_by')) {
+                $letter->dealt_by = $request->dealt_by;
+                $messages[] = $letter->memo_number . ' letter dealt by ' . (User::find($request->dealt_by)->name ?? 'Unknown');
             }
             if ($request->has('completion_time')) {
                 $letter->completion_time = $request->completion_time;
