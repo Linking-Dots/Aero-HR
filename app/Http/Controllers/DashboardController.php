@@ -69,8 +69,9 @@ class DashboardController extends Controller
             ->get();
 
         $upcomingHoliday = DB::table('holidays')
-            ->whereDate('holidays.from_date', '>=', now())
-            ->first();
+    ->whereDate('holidays.from_date', '>=', now())
+    ->orderBy('holidays.from_date', 'asc')
+    ->first();
 
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
