@@ -87,11 +87,8 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
 
     Route::get('/employees', [UserController::class, 'index1'])->name('employees');
-    Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
-    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments');
     Route::get('/designations', [DesignationController::class, 'index'])->name('designations');
-    Route::get('/timesheet', [AttendanceController::class, 'index'])->name('timesheet');
     Route::get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
 
 
@@ -119,8 +116,9 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
 
 
-    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances');
+    Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
     Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
+    Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
 
 
     // Routes accessible only to users with the 'admin' role

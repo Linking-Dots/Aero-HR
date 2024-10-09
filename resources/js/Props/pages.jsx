@@ -30,7 +30,6 @@ export const getPages = (permissions) => [
                 ...(permissions.includes('read attendances') ? [{ name: 'Attendances (Admin)', icon: <CalendarTodayIcon sx={{ ml: 2 }}/>, route: 'attendances' }] : []),
                 ...(permissions.includes('read departments') ? [{ name: 'Departments', icon: <HomeIcon sx={{ ml: 2 }}/>, route: 'departments' }] : []),
                 ...(permissions.includes('read designations') ? [{ name: 'Designations', icon: <WorkIcon sx={{ ml: 2 }}/>, route: 'designations' }] : []),
-                ...(permissions.includes('read timesheet') ? [{ name: 'Timesheet', icon: <ListAltIcon sx={{ ml: 2 }}/>, route: 'timesheet' }] : []),
             ]
         }
     ] : []),
