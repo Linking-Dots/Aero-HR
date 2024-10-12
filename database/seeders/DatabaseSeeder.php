@@ -18,18 +18,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        $roles = [
-//            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
-//            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
-//            'HR', 'UI/UX Developer', 'SEO Analyst'
-//        ];
-//
-//        // Create roles
-//        foreach ($roles as $roleName) {
-//            Role::firstOrCreate(['name' => $roleName]);
-//        }
-//
-//        // Define modules and their permissions
+        $roles = [
+            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
+            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
+            'HR', 'UI/UX Developer', 'SEO Analyst'
+        ];
+
+        // Create roles
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(['name' => $roleName]);
+        }
+
+        // Define modules and their permissions
         $modules = [
             'Settings', 'Attendances', 'Departments', 'Designations', 'Timesheet', 'Users'
         ];
