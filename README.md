@@ -92,12 +92,3 @@ Contributions are welcome! If you'd like to contribute to this project, please f
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-Feel free to customize this README further by adding specific instructions, project structure details, or any other relevant information. Good luck with your HR and ERP solution! If you have any questions or need further assistance, feel free to ask. 😊
-
-Source: Conversation with Copilot, 10/12/2024
-(1) How to create a glassmorphism effect in React - LogRocket Blog. https://blog.logrocket.com/how-to-create-glassmorphism-effect-react/.
-(2) laravel-react · GitHub Topics · GitHub. https://github.com/topics/laravel-react.
-(3) Glassmorphic UI in React using CSS - OpenReplay. https://blog.openreplay.com/glassmorphic-ui-in-react-using-css/.
