@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Designation;
+use App\Models\Holiday;
 use App\Models\Jurisdiction;
 use App\Models\LeaveSetting;
 use App\Models\Report;
@@ -58,11 +59,16 @@ class AttendanceController extends Controller
                         })
                         ->orderBy('leaves.from_date', 'desc');
                 }
-            ]);
-
-            $users = $users->get();
+            ])->get();
 
             $leaveTypes = LeaveSetting::all();
+
+            $holidays = Holiday::where(function ($query) use ($currentYear, $currentMonth) {
+                $query->whereYear('from_date', $currentYear)
+                    ->whereMonth('from_date', $currentMonth)
+                    ->orWhereYear('to_date', $currentYear)
+                    ->whereMonth('to_date', $currentMonth);
+            })->get();
 
             $leaveCounts = DB::table('leaves')
                 ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
@@ -102,27 +108,40 @@ class AttendanceController extends Controller
                 $leaveCountsArray[$userId][$leaveType] = $totalDays;
             }
 
-            $attendances = $users->map(function ($user) use ($currentYear, $currentMonth) {
+            $attendances = $users->map(function ($user) use ($currentYear, $currentMonth, $holidays, $leaveTypes) {
                 $daysInMonth = Carbon::create($currentYear, $currentMonth)->daysInMonth;
                 $attendanceData = ['user_id' => $user->id, 'name' => $user->name, 'profile_image' => $user->profile_image];
-                $leaveTypes = LeaveSetting::all();
 
+
+                // Loop through each day of the month
                 // Loop through each day of the month
                 for ($day = 1; $day <= $daysInMonth; $day++) {
                     $date = Carbon::create($currentYear, $currentMonth, $day)->toDateString();
 
-                    // Check if the user has leave on this date
-                    $leave = $user->leaves->first(function ($leave) use ($date) {
-                        return Carbon::parse($date)->between($leave->from_date, $leave->to_date);
+                    // Check if the user was present on this date
+                    $attendance = $user->attendances->firstWhere('date', $date);
+
+                    // Check if the date is within any holiday's date range
+                    $holiday = $holidays->first(function ($holiday) use ($date) {
+                        return Carbon::parse($date)->between($holiday->from_date, $holiday->to_date);
                     });
 
-                    if ($leave) {
-                        $leaveType = $leaveTypes->firstWhere('type', $leave->leave_type);
-                        $attendanceData[$date] = $leaveType ? $leaveType->symbol : '√';
+                    if ($holiday && $attendance && $attendance->punchin) {
+                        $attendanceData[$date] = '√'; // Present on a holiday
+                    } elseif ($holiday) {
+                        $attendanceData[$date] = '#'; // Mark as Holiday
                     } else {
-                        // Check if the user was present on this date
-                        $attendance = $user->attendances->firstWhere('date', $date);
-                        $attendanceData[$date] = $attendance && $attendance->punchin ? '√' : '▼'; // Present or Absent
+                        // Check if the user has leave on this date
+                        $leave = $user->leaves->first(function ($leave) use ($date) {
+                            return Carbon::parse($date)->between($leave->from_date, $leave->to_date);
+                        });
+
+                        if ($leave) {
+                            $leaveType = $leaveTypes->firstWhere('type', $leave->leave_type);
+                            $attendanceData[$date] = $leaveType ? $leaveType->symbol : '√';
+                        } else {
+                            $attendanceData[$date] = $attendance && $attendance->punchin ? '√' : '▼'; // Present or Absent
+                        }
                     }
                 }
 
