@@ -4,4 +4,3 @@
 /vendor/
 public/hot
 .env
-.env.example
