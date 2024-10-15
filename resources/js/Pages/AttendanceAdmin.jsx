@@ -22,7 +22,7 @@ import {useTheme} from "@mui/material/styles";
 import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
 
-const AttendanceAdmin = React.memo(({ title  }) => {
+const AttendanceAdmin = React.memo(({ title, allUsers }) => {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const {auth} = usePage().props;

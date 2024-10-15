@@ -23,6 +23,7 @@ class AttendanceController extends Controller
     public function index1(): \Inertia\Response
     {
         return Inertia::render('AttendanceAdmin', [
+            'allUsers' => User::role('Employee')->get(),
             'title' => 'Attendances of Employees',
         ]);
     }
