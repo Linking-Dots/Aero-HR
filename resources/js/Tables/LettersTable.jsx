@@ -31,6 +31,7 @@ import {Pagination} from "@nextui-org/react";
 import Loader from "@/Components/Loader.jsx";
 import {  usePage } from '@inertiajs/react';
 import LinkIcon from '@mui/icons-material/Link';
+import MailIcon from '@mui/icons-material/Mail';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -182,8 +183,19 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             selector: row => row.memo_number,
             sortable: true,
             center: 'true',
-            width: '140px',
-            cell: row => highlightText(row.memo_number),
+            width: '200px',
+            cell: row => (
+                <Link
+                    isExternal
+                    color={'foreground'}
+                    isBlock
+                    showAnchorIcon
+                    href={row.letter_link || `/letters/${row.memo_number}.pdf`}
+                    anchorIcon={<MailIcon />}
+                >
+                    {row.memo_number || 'N/A'}
+                </Link>
+            ),
         },
         {
             name: 'Subject',
@@ -258,6 +270,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             cell: row => (
                 <Link
                     isExternal
+                    color={'primary'}
                     isBlock
                     showAnchorIcon
                     href={row.handling_link || '#'}
