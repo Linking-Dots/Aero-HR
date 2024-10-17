@@ -9,6 +9,7 @@ use App\Models\DailyWorkSummary;
 use App\Models\Jurisdiction;
 use App\Models\Report;
 use App\Models\User;
+use Carbon\Carbon;
 use ErrorException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -115,30 +116,196 @@ class DailyWorkController extends Controller
         return response()->json($paginatedDailyWorks);
     }
 
+//    public function import(Request $request)
+//    {
+//        try {
+//            $request->validate([
+//                        'file' => 'required|file|mimes:xlsx,csv',
+//                    ]);
+//
+//            $path = $request->file('file')->store('temp'); // Store uploaded file temporarily
+//
+//            $importedDailyWorks = Excel::toArray(new DailyWorkImport, $path)[0];
+//
+//            $date = $importedDailyWorks[0][0];
+//
+//            // Initialize summary variables
+//            $inChargeSummary = [];// Import data using TaskImport
+//
+//            // Validate imported tasks with custom messages
+//            $validator = Validator::make($importedDailyWorks, [
+//                '*.0' => 'required|date_format:Y-m-d',
+//                '*.1' => 'required|string',
+//                '*.2' => 'required|string|in:Embankment,Structure,Pavement',
+//                '*.3' => 'required|string',
+//                '*.4' => 'required|string|custom_location',
+//            ], [
+//                '*.0.required' => 'DailyWork number :taskNumber must have a valid date.',
+//                '*.0.date_format' => 'DailyWork number :taskNumber must be a date in the format Y-m-d.',
+//                '*.1.required' => 'DailyWork number :taskNumber must have a value for field 1.',
+//                '*.2.required' => 'DailyWork number :taskNumber must have a value for field 2.',
+//                '*.2.in' => 'DailyWork number :taskNumber must have a value for field 2 that is either Embankment, Structure, or Pavement.',
+//                '*.3.required' => 'DailyWork number :taskNumber must have a value for field 3.',
+//                '*.4.required' => 'DailyWork number :taskNumber must have a value for field 4.',
+//                '*.4.custom_location' => 'DailyWork number :taskNumber has an invalid custom location: :value',
+//            ]);
+//
+//            // Validate the data
+//            $validator->validate();
+//
+//
+//
+//
+//            foreach ($importedDailyWorks as $importedDailyWork) {
+//
+//                $k = intval(substr($importedDailyWork[4], 1)); // Extracting the numeric part after 'K'
+//
+//                $jurisdiction = Jurisdiction::where('start_chainage', '<=', $k)
+//                    ->where('end_chainage', '>=', $k)
+//                    ->first();
+//
+//                $inCharge = $jurisdiction->incharge;
+//                $inChargeName = User::find($inCharge)->user_name;
+//
+//                // Initialize incharge summary if not exists
+//                if (!isset($inChargeSummary[$inChargeName])) {
+//                    $inChargeSummary[$inChargeName] = [
+//                        'totalDailyWorks' => 0,
+//                        'resubmissions' => 0,
+//                        'embankment' => 0,
+//                        'structure' => 0,
+//                        'pavement' => 0,
+//                    ];
+//                }
+//                $inChargeSummary[$inChargeName]['totalDailyWorks']++;
+//
+//                $existingDailyWork = DailyWork::where('number', $importedDailyWork[1])->first();
+//
+//                // Update incharge summary variables based on task type
+//                switch ($importedDailyWork[2]) {
+//                    case 'Embankment':
+//                        $inChargeSummary[$inChargeName]['embankment']++;
+//                        break;
+//                    case 'Structure':
+//                        $inChargeSummary[$inChargeName]['structure']++;
+//                        break;
+//                    case 'Pavement':
+//                        $inChargeSummary[$inChargeName]['pavement']++;
+//                        break;
+//                }
+//
+//                if ($existingDailyWork) {
+//                    $inChargeSummary[$inChargeName]['resubmissions']++;
+//
+//                     // Get resubmission count (handling potential null value)
+//                    $resubmissionCount = $existingDailyWork->resubmission_count ?? 0;
+//
+//                    // Update imported task data with incremented resubmission
+//                    $resubmissionCount = $resubmissionCount + 1;
+//                    $resubmissionDate = ($existingDailyWork->resubmission_date ? $existingDailyWork->resubmission_date . "\n" : '') . $this->getOrdinalNumber($resubmissionCount) . " Submission date: " . $existingDailyWork->date;
+//
+//                    // Create a new task record with updated data
+//                    $createdDailyWork = DailyWork::create([
+//                        'date' => ($existingDailyWork->status === 'completed' ? $existingDailyWork->date : $importedDailyWork[0]),
+//                        'number' => $importedDailyWork[1],
+//                        'status' => ($existingDailyWork->status === 'completed' ? 'completed' : 'resubmission'),
+//                        'type' => $importedDailyWork[2],
+//                        'description' => $importedDailyWork[3],
+//                        'location' => $importedDailyWork[4],
+//                        'side' => $importedDailyWork[5],
+//                        'qty_layer' => $importedDailyWork[6],
+//                        'planned_time' => $importedDailyWork[7],
+//                        'incharge' => $inCharge,
+//                        'resubmission_count' => $resubmissionCount,
+//                        'resubmission_date' => $resubmissionDate,
+//                    ]);
+//
+//
+//                    // Delete the existing task
+//                    $existingDailyWork->delete();
+//                } else {
+//                    // Create a new task for non-duplicates
+//                    $createdDailyWork = DailyWork::create([
+//                        'date' => $importedDailyWork[0],
+//                        'number' => $importedDailyWork[1],
+//                        'status' => 'new',
+//                        'type' => $importedDailyWork[2],
+//                        'description' => $importedDailyWork[3],
+//                        'location' => $importedDailyWork[4],
+//                        'side' => $importedDailyWork[5],
+//                        'qty_layer' => $importedDailyWork[6],
+//                        'planned_time' => $importedDailyWork[7],
+//                        'incharge' => $inCharge,
+//                    ]);
+//
+//                }
+//            }
+//
+//
+//            // Store summary data in DailySummary model for each incharge
+//            foreach ($inChargeSummary as $inChargeName => $summaryData) {
+//                $user = User::where('user_name', $inChargeName)->first();
+//
+//                 DailyWorkSummary::create([
+//                    'date' => $date,
+//                    'incharge' => $user->id,
+//                    'totalDailyWorks' => $summaryData['totalDailyWorks'],
+//                    'resubmissions' => $summaryData['resubmissions'],
+//                    'embankment' => $summaryData['embankment'],
+//                    'structure' => $summaryData['structure'],
+//                    'pavement' => $summaryData['pavement'],
+//                ]);
+//
+//
+//            }
+//
+//
+//            $user = Auth::user();
+//            $perPage = $request->get('perPage', 30); // Default to 10 items per page
+//            $page = $request->get('page', 1);
+//
+//            // Base query depending on user's role
+//            $query = $user->hasRole('Supervision Engineer')
+//                ? DailyWork::with('reports')->where('incharge', $user->id)
+//                : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
+//                    ? DailyWork::with('reports')->where('assigned', $user->id)
+//                    : ($user->hasRole('Administrator')
+//                        ? DailyWork::with('reports')
+//                        : DailyWork::query()
+//                    )
+//                );
+//            $paginatedDailyWorks = $query->orderBy('date', 'desc')->paginate($perPage, ['*'], 'page', $page);
+//
+//
+//            // Redirect to tasks route with success message
+//            return response()->json($paginatedDailyWorks);
+//        } catch (ValidationException $e) {
+//
+//            return response()->json(['errors' => $e->errors()], 422);
+//        } catch (ErrorException $e) {
+//            return response()->json(['message' => 'An error occurred while processing your request.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile()], 500);
+//        } catch (\Exception $e) {
+//            return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile() ], 500);
+//        }
+//    }
 
     public function import(Request $request)
     {
         try {
             $request->validate([
-                        'file' => 'required|file|mimes:xlsx,csv',
-                    ]);
+                'file' => 'required|file|mimes:xlsx,csv',
+            ]);
 
             $path = $request->file('file')->store('temp'); // Store uploaded file temporarily
-
             $importedDailyWorks = Excel::toArray(new DailyWorkImport, $path)[0];
-            $newlyCreatedDailyWorks = [];
-            $date = $importedDailyWorks[0][0];
 
-            // Initialize summary variables
-            $inChargeSummary = [];// Import data using TaskImport
 
-            // Validate imported tasks with custom messages
             $validator = Validator::make($importedDailyWorks, [
                 '*.0' => 'required|date_format:Y-m-d',
                 '*.1' => 'required|string',
                 '*.2' => 'required|string|in:Embankment,Structure,Pavement',
                 '*.3' => 'required|string',
-                '*.4' => 'required|string|custom_location',
+                '*.4' => 'required|string|custom_location', // Assuming custom validation rule exists for location
             ], [
                 '*.0.required' => 'DailyWork number :taskNumber must have a valid date.',
                 '*.0.date_format' => 'DailyWork number :taskNumber must be a date in the format Y-m-d.',
@@ -147,118 +314,146 @@ class DailyWorkController extends Controller
                 '*.2.in' => 'DailyWork number :taskNumber must have a value for field 2 that is either Embankment, Structure, or Pavement.',
                 '*.3.required' => 'DailyWork number :taskNumber must have a value for field 3.',
                 '*.4.required' => 'DailyWork number :taskNumber must have a value for field 4.',
-                '*.4.custom_location' => 'DailyWork number :taskNumber has an invalid custom location: :value',
             ]);
 
-            // Validate the data
-            $validator->validate();
+// Validate the data
+            if ($validator->fails()) {
+
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
 
 
 
+            $date = $importedDailyWorks[0][0];
+
+            // Initialize summary variables
+            $inChargeSummary = [];
+
+
+
+            // Regex for extracting start and end chainages
+            $chainageRegex = '/([A-Z]*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)-([A-Z]*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)|([A-Z]*K[0-9]+)(.*)/';
 
             foreach ($importedDailyWorks as $importedDailyWork) {
+                // Extract chainages from location field
+                if (preg_match($chainageRegex, $importedDailyWork[4], $matches)) {
+                    // Extract start and end chainages, if available
+                    $startChainage = $matches[1] === "" ? $matches[0] : $matches[1]; // e.g., K05+900 or K30
+                    $endChainage = $matches[2] === "" ? null : $matches[2]; // e.g., K06+400 (optional)
 
-                $k = intval(substr($importedDailyWork[4], 1)); // Extracting the numeric part after 'K'
+                    // Convert chainages to a comparable string format for jurisdiction check
+                    $startChainageFormatted = $this->formatChainage($startChainage);
+                    $endChainageFormatted = $endChainage ? $this->formatChainage($endChainage) : null;
 
-                $jurisdiction = Jurisdiction::where('start_chainage', '<=', $k)
-                    ->where('end_chainage', '>=', $k)
-                    ->first();
-
-                $inCharge = $jurisdiction->incharge;
-                $inChargeName = User::find($inCharge)->user_name;
-
-                // Initialize incharge summary if not exists
-                if (!isset($inChargeSummary[$inChargeName])) {
-                    $inChargeSummary[$inChargeName] = [
-                        'totalDailyWorks' => 0,
-                        'resubmissions' => 0,
-                        'embankment' => 0,
-                        'structure' => 0,
-                        'pavement' => 0,
-                    ];
-                }
-                $inChargeSummary[$inChargeName]['totalDailyWorks']++;
-
-                $existingDailyWork = DailyWork::where('number', $importedDailyWork[1])->first();
-
-                // Update incharge summary variables based on task type
-                switch ($importedDailyWork[2]) {
-                    case 'Embankment':
-                        $inChargeSummary[$inChargeName]['embankment']++;
-                        break;
-                    case 'Structure':
-                        $inChargeSummary[$inChargeName]['structure']++;
-                        break;
-                    case 'Pavement':
-                        $inChargeSummary[$inChargeName]['pavement']++;
-                        break;
-                }
-
-                if ($existingDailyWork) {
-                    $inChargeSummary[$inChargeName]['resubmissions']++;
-
-                     // Get resubmission count (handling potential null value)
-                    $resubmissionCount = $existingDailyWork->resubmission_count ?? 0;
-
-                    // Update imported task data with incremented resubmission
-                    $resubmissionCount = $resubmissionCount + 1;
-                    $resubmissionDate = ($existingDailyWork->resubmission_date ? $existingDailyWork->resubmission_date . "\n" : '') . $this->getOrdinalNumber($resubmissionCount) . " Submission date: " . $existingDailyWork->date;
-
-                    // Create a new task record with updated data
-                    $createdDailyWork = DailyWork::create([
-                        'date' => ($existingDailyWork->status === 'completed' ? $existingDailyWork->date : $importedDailyWork[0]),
-                        'number' => $importedDailyWork[1],
-                        'status' => ($existingDailyWork->status === 'completed' ? 'completed' : 'resubmission'),
-                        'type' => $importedDailyWork[2],
-                        'description' => $importedDailyWork[3],
-                        'location' => $importedDailyWork[4],
-                        'side' => $importedDailyWork[5],
-                        'qty_layer' => $importedDailyWork[6],
-                        'planned_time' => $importedDailyWork[7],
-                        'incharge' => $inCharge,
-                        'resubmission_count' => $resubmissionCount,
-                        'resubmission_date' => $resubmissionDate,
-                    ]);
+                    // Retrieve all jurisdictions and compare chainages as strings
+                    $jurisdictions = Jurisdiction::all();
 
 
-                    // Delete the existing task
-                    $existingDailyWork->delete();
+                    $jurisdictionFound = false; // Set to false initially
+
+                    foreach ($jurisdictions as $jurisdiction) {
+                        $formattedStartJurisdiction = $this->formatChainage($jurisdiction->start_chainage);
+                        $formattedEndJurisdiction = $this->formatChainage($jurisdiction->end_chainage);
+
+                        // Check if the start chainage is within the jurisdiction's range
+                        if ($startChainageFormatted >= $formattedStartJurisdiction && $startChainageFormatted <= $formattedEndJurisdiction) {
+                            Log::info('Jurisdiction Match Found: ' . $formattedStartJurisdiction . "-" . $formattedEndJurisdiction);
+                            $jurisdictionFound = $jurisdiction; // Set the found jurisdiction
+                            break; // Stop checking once a match is found
+                        }
+
+                        // If an end chainage exists, check if it's within the jurisdiction's range
+                        if ($endChainageFormatted &&
+                            $endChainageFormatted >= $formattedStartJurisdiction &&
+                            $endChainageFormatted <= $formattedEndJurisdiction) {
+                            Log::info('Jurisdiction Match Found for End Chainage: ' . $formattedStartJurisdiction . "-" . $formattedEndJurisdiction);
+                            $jurisdictionFound = $jurisdiction; // Set the found jurisdiction
+                            break; // Stop checking once a match is found
+                        }
+                    }
+
+// After loop, check if a jurisdiction was found
+                    if ($jurisdictionFound) {
+                        $inCharge = $jurisdictionFound->incharge;
+                        $inChargeName = User::find($inCharge)->user_name;
+
+                        // Initialize incharge summary if not exists
+                        if (!isset($inChargeSummary[$inChargeName])) {
+                            $inChargeSummary[$inChargeName] = [
+                                'totalDailyWorks' => 0,
+                                'resubmissions' => 0,
+                                'embankment' => 0,
+                                'structure' => 0,
+                                'pavement' => 0,
+                            ];
+                        }
+
+                        // Update incharge summary
+                        $inChargeSummary[$inChargeName]['totalDailyWorks']++;
+
+                        // Handle task type
+                        switch ($importedDailyWork[2]) {
+                            case 'Embankment':
+                                $inChargeSummary[$inChargeName]['embankment']++;
+                                break;
+                            case 'Structure':
+                                $inChargeSummary[$inChargeName]['structure']++;
+                                break;
+                            case 'Pavement':
+                                $inChargeSummary[$inChargeName]['pavement']++;
+                                break;
+                        }
+
+                        // Handle resubmissions and new tasks as you have done previously
+//                        $this->handleTaskSubmission($importedDailyWork, $inChargeSummary, $inChargeName, $jurisdiction);
+                        $existingDailyWork = DailyWork::where('number', $importedDailyWork[1])->first();
+                        if ($existingDailyWork) {
+                            $inChargeSummary[$inChargeName]['resubmissions']++;
+                            $resubmissionCount = $existingDailyWork->resubmission_count ?? 0;
+                            $resubmissionCount++;
+                            $resubmissionDate = $this->getResubmissionDate($existingDailyWork, $resubmissionCount);
+
+                            // Create updated resubmission record
+                            DailyWork::create([
+                                'date' => ($existingDailyWork->status === 'completed' ? $existingDailyWork->date : $importedDailyWork[0]),
+                                'number' => $importedDailyWork[1],
+                                'status' => ($existingDailyWork->status === 'completed' ? 'completed' : 'resubmission'),
+                                'type' => $importedDailyWork[2],
+                                'description' => $importedDailyWork[3],
+                                'location' => $importedDailyWork[4],
+                                'side' => $importedDailyWork[5],
+                                'qty_layer' => $importedDailyWork[6],
+                                'planned_time' => $importedDailyWork[7],
+                                'incharge' => $jurisdictionFound->incharge,
+                                'resubmission_count' => $resubmissionCount,
+                                'resubmission_date' => $resubmissionDate,
+                            ]);
+
+                            // Delete old record
+                            $existingDailyWork->delete();
+                        } else {
+                            // Create new task
+                            DailyWork::create([
+                                'date' => $importedDailyWork[0],
+                                'number' => $importedDailyWork[1],
+                                'status' => 'new',
+                                'type' => $importedDailyWork[2],
+                                'description' => $importedDailyWork[3],
+                                'location' => $importedDailyWork[4],
+                                'side' => $importedDailyWork[5],
+                                'qty_layer' => $importedDailyWork[6],
+                                'planned_time' => $importedDailyWork[7],
+                                'incharge' => $jurisdictionFound->incharge,
+                            ]);
+                        }
+                    }
                 } else {
-                    // Create a new task for non-duplicates
-                    $createdDailyWork = DailyWork::create([
-                        'date' => $importedDailyWork[0],
-                        'number' => $importedDailyWork[1],
-                        'status' => 'new',
-                        'type' => $importedDailyWork[2],
-                        'description' => $importedDailyWork[3],
-                        'location' => $importedDailyWork[4],
-                        'side' => $importedDailyWork[5],
-                        'qty_layer' => $importedDailyWork[6],
-                        'planned_time' => $importedDailyWork[7],
-                        'incharge' => $inCharge,
-                    ]);
-
+                    return response()->json(['error' => 'Invalid chainage format for location: ' . $importedDailyWork[4]]);
                 }
             }
-
 
             // Store summary data in DailySummary model for each incharge
-            foreach ($inChargeSummary as $inChargeName => $summaryData) {
-                $user = User::where('user_name', $inChargeName)->first();
-
-                 DailyWorkSummary::create([
-                    'date' => $date,
-                    'incharge' => $user->id,
-                    'totalDailyWorks' => $summaryData['totalDailyWorks'],
-                    'resubmissions' => $summaryData['resubmissions'],
-                    'embankment' => $summaryData['embankment'],
-                    'structure' => $summaryData['structure'],
-                    'pavement' => $summaryData['pavement'],
-                ]);
-
-
-            }
-
+            $this->storeSummaryData($inChargeSummary, $date);
 
             $user = Auth::user();
             $perPage = $request->get('perPage', 30); // Default to 10 items per page
@@ -276,16 +471,69 @@ class DailyWorkController extends Controller
                 );
             $paginatedDailyWorks = $query->orderBy('date', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
-
-            // Redirect to tasks route with success message
             return response()->json($paginatedDailyWorks);
-        } catch (ValidationException $e) {
 
+        } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (ErrorException $e) {
-            return response()->json(['message' => 'An error occurred while processing your request.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile()], 500);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage(). ' on line '.$e->getLine(). ' at '.$e->getFile() ], 500);
+            return response()->json(['message' => 'An error occurred.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+// Convert chainage like K05+900 to a comparable format (e.g., K005.900)
+    private function formatChainage($chainage)
+    {
+        // Extract the prefix (K, ZK, etc.) and the numeric part (e.g., 05+900 or 14+883.4)
+        if (preg_match('/([A-Z]*K)([0-9]+)\+([0-9]+(?:\.[0-9]+)?)/', $chainage, $matches)) {
+            $prefix = $matches[1]; // e.g., 'K' or 'ZK'
+            $kilometers = str_pad($matches[2], 3, '0', STR_PAD_LEFT); // e.g., '005' from '05'
+
+            // Meters can have decimals, so we leave it as it is after the '+' sign
+            $meters = $matches[3]; // Keep the meters part as-is, with decimals if present
+
+            // Return a string formatted for sorting: prefix, kilometers, and meters (with decimal if present)
+            return $prefix . $kilometers . '.' . str_replace('.', '', $meters); // Remove decimal for sorting
+        }
+        return $chainage; // Return the chainage unchanged if it doesn't match the expected format
+    }
+
+
+    // Calculate the resubmission date based on resubmission count
+    private function getResubmissionDate($existingDailyWork, $resubmissionCount)
+    {
+        // Assuming that each resubmission happens one day after the previous one.
+        // You can adjust the logic to calculate the resubmission date in a different way if needed.
+
+        // If there's an existing date, calculate the next resubmission date
+        $initialDate = Carbon::parse($existingDailyWork->date);
+
+        // Add the resubmission count as days to the initial date
+        $resubmissionDate = $initialDate->addDays($resubmissionCount);
+
+        return $resubmissionDate->format('Y-m-d');
+    }
+
+
+// Handle task submissions (new or resubmission)
+    private function handleTaskSubmission($importedDailyWork, &$inChargeSummary, $inChargeName, $jurisdiction)
+    {
+
+    }
+
+// Store summary data in the DailySummary model
+    private function storeSummaryData($inChargeSummary, $date)
+    {
+        foreach ($inChargeSummary as $inChargeName => $summaryData) {
+            $user = User::where('user_name', $inChargeName)->first();
+            DailyWorkSummary::create([
+                'date' => $date,
+                'incharge' => $user->id,
+                'totalDailyWorks' => $summaryData['totalDailyWorks'],
+                'resubmissions' => $summaryData['resubmissions'],
+                'embankment' => $summaryData['embankment'],
+                'structure' => $summaryData['structure'],
+                'pavement' => $summaryData['pavement'],
+            ]);
         }
     }
 

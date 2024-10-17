@@ -65,26 +65,19 @@ const DailyWorkUploadForm = ({ open, closeModal, setTotalRows, setData }) => {
 
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await fetch(route('dailyWorks.import'), {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                    },
-                });
+                const response = await axios.post(route('dailyWorks.import'), formData);
 
-                const data = await response.json();
+                console.log(response)
 
-                if (response.ok) {
-                    setData(data.data);
-                    setTotalRows(data.total);
-                    resolve('Daily works imported successfully.');
-                    closeModal(); // Close the modal after successful upload
-                } else {
-                    console.error(data.errors || data.error);
-                    reject('Failed to import data.');
+                if (response.status === 200) {
+                    setData(response.data.data); // Set the imported data
+                    setTotalRows(response.data.total); // Set the total rows if needed
+                    resolve(response.data.message || 'Daily works imported successfully.');
+                    closeModal(); // Close the modal after a successful upload
                 }
             } catch (error) {
+                console.log(error.response)
+                console.log(error.response.data.errors)
                 reject(`Error: ${error.message || 'An unexpected error occurred.'}`);
             } finally {
                 setProcessing(false);
