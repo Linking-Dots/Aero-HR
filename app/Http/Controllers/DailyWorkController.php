@@ -483,17 +483,21 @@ class DailyWorkController extends Controller
 // Convert chainage like K05+900 to a comparable format (e.g., K005.900)
     private function formatChainage($chainage)
     {
-        // Extract the prefix (K, ZK, etc.) and the numeric part (e.g., 05+900 or 14+883.4)
-        if (preg_match('/([A-Z]*K)([0-9]+)\+([0-9]+(?:\.[0-9]+)?)/', $chainage, $matches)) {
-            $prefix = $matches[1]; // e.g., 'K' or 'ZK'
-            $kilometers = str_pad($matches[2], 3, '0', STR_PAD_LEFT); // e.g., '005' from '05'
+        // Check if the chainage includes a range or just a single chainage
+        if (preg_match('/([A-Z]*K)([0-9]+)(?:\+([0-9]+(?:\.[0-9]+)?))?/', $chainage, $matches)) {
+            $kilometers = $matches[2]; // e.g., '14' from 'K14'
+            $meters = $matches[3] ?? '000'; // Default to '0' if no meters are provided
 
-            // Meters can have decimals, so we leave it as it is after the '+' sign
-            $meters = $matches[3]; // Keep the meters part as-is, with decimals if present
-
-            // Return a string formatted for sorting: prefix, kilometers, and meters (with decimal if present)
-            return $prefix . $kilometers . '.' . str_replace('.', '', $meters); // Remove decimal for sorting
+            // Return a numeric format: kilometers and meters (with decimal if present)
+            return $kilometers . $meters; // Remove decimal for sorting
         }
+
+        // If the chainage is just a single K and number (e.g., 'K30'), format accordingly
+        if (preg_match('/([A-Z]*K)([0-9]+)/', $chainage, $matches)) {
+            $kilometers = $matches[2]; // e.g., '30'
+            return $kilometers . '000'; // Assume no meters are present
+        }
+
         return $chainage; // Return the chainage unchanged if it doesn't match the expected format
     }
 
