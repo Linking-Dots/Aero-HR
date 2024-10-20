@@ -153,11 +153,9 @@ function App({ children }) {
                         {auth.user &&
                             <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
                                     sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                        <ScrollShadow  hideScrollBar>
-                            {auth.user && <Breadcrumb/>}
-                            {children}
-                            {/*{!isMobile && <Footer/>}*/}
-                        </ScrollShadow>
+
+                        {auth.user && <Breadcrumb/>}
+                        {children}
                         {auth.user && isMobile &&
                             <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
                     </Box>
