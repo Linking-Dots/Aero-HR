@@ -33,7 +33,7 @@ const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) =
             aria-labelledby="draggable-dialog-title"
             PaperProps={{
                 sx: {
-                    backdropFilter: 'blur(16px) saturate(150%)',
+                    backdropFilter: theme.glassCard.backdropFilter,
                     backgroundColor: theme.glassCard.backgroundColor,
                     border: theme.glassCard.border,
                     display: 'flex',

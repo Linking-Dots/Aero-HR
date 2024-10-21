@@ -8,7 +8,7 @@ const GlassDropdown = forwardRef(({ children, ...props }, ref) => {
     return (
 
         <Dropdown ref={ref} {...props} css={{
-            backdropFilter: 'blur(16px) saturate(150%)',
+            backdropFilter: theme.glassCard.backdropFilter,
             backgroundColor: theme.glassCard.backgroundColor,
             border: theme.glassCard.border,
             boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',

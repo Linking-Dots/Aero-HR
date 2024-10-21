@@ -77,9 +77,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                 backgroundColor: theme.glassCard.backgroundColor,
                                 border: theme.glassCard.border,
                             }}
-                            isBlurred
                             shouldHideOnScroll
-                            isBordered
                             isMenuOpen={isMenuOpen}
                             onMenuOpenChange={setIsMenuOpen}
                         >
