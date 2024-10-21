@@ -32,8 +32,9 @@ const useTheme = (darkMode) => {
                     disabled: 'rgba(0,0,0,.12)',
                 },
                 glassCard: {
-                    backgroundColor: darkMode ? 'rgba(24, 32, 45, 0.75)' : 'rgba(245, 255, 250, 0.75)',
-                    border: darkMode ? '3px solid rgba(0,0,0,0.2)'  : '3px solid rgba(255, 255, 255, 0.5)',
+                    backdropFilter: 'blur(40px) saturate(200%)',
+                    backgroundColor: darkMode ? 'rgba(31, 38, 59, 0.55)' : 'rgba(255, 255, 255, 0.60)',
+                    border: darkMode ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.5)',
                 },
             }),
         [darkMode]

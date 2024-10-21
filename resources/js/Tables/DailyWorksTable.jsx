@@ -7,7 +7,6 @@ import {
     Grid,
     IconButton,
     MenuItem,
-    Select,
     TextField, Typography,
 } from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
@@ -21,7 +20,7 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination} from "@nextui-org/react";
+import {Pagination, SelectItem, Select, User} from "@nextui-org/react";
 import Loader from "@/Components/Loader.jsx";
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
@@ -101,43 +100,24 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             width: '220px',
             cell: row => (
                 <Select
-                    variant="outlined"
-                    size="small"
                     fullWidth
+                    aria-label={'Status'}
+                    placeholder="Select Status"
+                    name="status"
+                    color={getStatusColor(row.status)}
                     value={row.status}
                     onChange={(e) => handleChange(row.id, 'status', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
+                    selectedKeys={[row.status]}
+                    popoverProps={{
+                        classNames: {
+                            content: "bg-transparent backdrop-blur-lg border-inherit",
                         },
                     }}
                 >
-                    <MenuItem value="new">
-                        <Box sx={{display: 'flex'}}>
-                            <NewIcon style={{ marginRight: 8, color: getStatusColor('new') }} /> New
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="resubmission">
-                        <Box sx={{display: 'flex'}}>
-                            <ResubmissionIcon style={{ marginRight: 8, color: getStatusColor("resubmission") }} /> Resubmission
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="completed">
-                        <Box sx={{display: 'flex'}}>
-                            <CompletedIcon style={{ marginRight: 8, color: getStatusColor("completed") }} /> Completed
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="emergency">
-                        <Box sx={{display: 'flex'}}>
-                            <EmergencyIcon style={{ marginRight: 8, color: getStatusColor("emergency") }} /> Emergency
-                        </Box>
-                    </MenuItem>
+                    <SelectItem key="new" value="new" startContent={<NewIcon style={{ marginRight: 8, color: getStatusColor('new') }} />}>New</SelectItem>
+                    <SelectItem key="resubmission" value="resubmission" startContent={<ResubmissionIcon style={{ marginRight: 8, color: getStatusColor('resubmission') }} />}>Resubmission</SelectItem>
+                    <SelectItem key="completed" value="completed" startContent={<CompletedIcon style={{ marginRight: 8, color: getStatusColor('completed') }} />}>Completed</SelectItem>
+                    <SelectItem key="emergency" value="emergency" startContent={<EmergencyIcon style={{ marginRight: 8, color: getStatusColor('emergency') }} />}>Emergency</SelectItem>
                 </Select>
             ),
         },
@@ -148,11 +128,12 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             center: 'true',
             cell: row => (
                 <Select
+                    items={juniors}
                     variant="outlined"
                     fullWidth
                     size="small"
                     value={row.assigned || 'na'}
-                    onChange={(e) => handleChange(row.id,'assigned', e.target.value)}
+                    onChange={(e) => handleChange(row.id, 'assigned', e.target.value)}
                     MenuProps={{
                         PaperProps: {
                             sx: {
@@ -164,27 +145,47 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                             },
                         },
                     }}
+                    placeholder="Select a junior"
+                    renderValue={(selectedJuniors) => {
+                        // Handle display of selected value(s)
+                        return selectedJuniors.map((selectedJunior) => (
+                            <div key={selectedJunior.key} className="flex items-center gap-2 m-1">
+                                <User
+                                    style={{
+                                        whiteSpace: 'nowrap',  // Ensure content wraps
+                                    }}
+                                    size="sm"
+                                    name={selectedJunior.data.name}
+                                    avatarProps={{
+                                        radius: "sm",
+                                        size: "sm",
+                                        src: selectedJunior.data.profile_image,
+                                    }}
+                                />
+                            </div>
+                        ));
+                    }}
                 >
-                    <MenuItem value="na" disabled>Please select</MenuItem>
-                    {juniors.map(junior => (
-                        <MenuItem key={junior.id} value={junior.id}>
-                            <Box sx={{display: 'flex'}}>
+                    {(junior) => (
+                        <SelectItem key={junior.id} textValue={junior.id}>
+                            <Box sx={{ display: 'flex' }}>
                                 <Avatar
-                                    src={`/assets/images/users/${junior.user_name || 'user-dummy-img'}.jpg`}
+                                    src={junior.profile_image}
                                     alt={junior.name || 'Not assigned'}
                                     sx={{
                                         borderRadius: '50%',
                                         width: 23,
                                         height: 23,
                                         display: 'flex',
-                                        mr: 1,
+                                        marginRight: 1,
                                     }}
                                 />
                                 {junior.name}
                             </Box>
-                        </MenuItem>
-                    ))}
+                        </SelectItem>
+                    )}
                 </Select>
+
             ),
         }] : []),
         {
@@ -314,43 +315,65 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             center: 'true',
             cell: row => (
                 <Select
-                    variant="outlined"
+                    items={allInCharges}
+                    variant="underlined"
+                    aria-label="Incharge"
                     fullWidth
-                    size="small"
-                    value={row.incharge || 'na'}
-                    onChange={(e) => handleChange(row.id,'incharge', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
+                    value={row.incharge || 'na'}  // Set the value to 'na' if no incharge is assigned
+                    onChange={(e) => handleChange(row.id, 'incharge', e.target.value)}
+                    selectedKeys={[String(row.incharge)]}
+                    style={{
+                        minWidth: '260px',  // Optionally set a minimum width
+                    }}
+                    popoverProps={{
+                        classNames: {
+                            content: 'bg-transparent backdrop-blur-lg border-inherit',
+                        },
+                        style: {
+                            whiteSpace: 'nowrap', // Ensure content wraps
+                            minWidth: 'fit-content',  // Optionally set a minimum width
                         },
                     }}
-                >
-                    <MenuItem value="na" disabled>Please select</MenuItem>
-                    {allInCharges.map(incharge => (
-                        <MenuItem key={incharge.id} value={incharge.id}>
-                            <Box sx={{display: 'flex'}}>
-                                <Avatar
-                                    src={incharge.profile_image}
-                                    alt={incharge.name || 'Not assigned'}
-                                    sx={{
-                                        borderRadius: '50%',
-                                        width: 23,
-                                        height: 23,
-                                        display: 'flex',
-                                        mr: 1,
+                    placeholder="Select Incharge"
+                    renderValue={(selectedIncharges) => {
+                        // Handle display of selected value(s)
+                        return selectedIncharges.map((selectedIncharge) => (
+                            <div key={selectedIncharge.key} className="flex items-center gap-2 m-1">
+                                <User
+                                    style={{
+                                        whiteSpace: 'nowrap',  // Ensure content wraps
+                                    }}
+                                    size="sm"
+                                    name={selectedIncharge.data.name}
+                                    avatarProps={{
+                                        radius: "sm",
+                                        size: "sm",
+                                        src: selectedIncharge.data.profile_image,
                                     }}
                                 />
-                                {incharge.name}
-                            </Box>
-                        </MenuItem>
-                    ))}
+                            </div>
+                        ));
+                    }}
+                >
+                    {(incharge) => (
+                        <SelectItem key={incharge.id} textValue={incharge.id}>
+                            <User
+                                style={{
+                                    whiteSpace: 'nowrap',  // Ensure content wraps
+                                }}
+                                size="sm"
+                                name={incharge.name}
+                                description={incharge.designation?.title || 'Incharge'}
+                                avatarProps={{
+                                    radius: "sm",
+                                    size: "sm",
+                                    src: incharge.profile_image,
+                                }}
+                            />
+                        </SelectItem>
+                    )}
                 </Select>
+
             ),
         }] : []),
         {
@@ -451,13 +474,13 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
     const getStatusColor = (status) => {
         switch (status) {
             case 'new':
-                return 'blue';
+                return 'primary';
             case 'resubmission':
-                return 'orange';
+                return 'warning';
             case 'completed':
-                return 'green';
+                return 'success';
             case 'emergency':
-                return 'red';
+                return 'danger';
             default:
                 return '';
         }

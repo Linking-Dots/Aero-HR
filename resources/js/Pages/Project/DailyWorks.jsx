@@ -10,7 +10,6 @@ import {
     InputAdornment,
     InputLabel,
     MenuItem,
-    Select,
     TextField,
     useMediaQuery,
 } from '@mui/material';
@@ -34,7 +33,7 @@ import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import {Pagination} from "@nextui-org/react";
+import {Pagination, SelectItem, Select} from "@nextui-org/react";
 dayjs.extend(minMax);
 
 
@@ -236,6 +235,21 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
         setCurrentPage(page);
     };
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'new':
+                return 'primary';
+            case 'resubmission':
+                return 'warning';
+            case 'completed':
+                return 'success';
+            case 'emergency':
+                return 'danger';
+            default:
+                return '';
+        }
+    };
+
 
     return (
         <>
@@ -356,98 +370,82 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                         </LocalizationProvider>
                                     </Grid>
                                     <Grid item xs={6} sm={4} md={3}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="status-label">Status</InputLabel>
-                                            <Select
-                                                variant="outlined"
-                                                labelId="status-label"
-                                                label="Status"
-                                                name="status"
-                                                value={filterData.status}
-                                                onChange={(e) => handleFilterChange('status', e.target.value)}
-                                                MenuProps={{
-                                                    PaperProps: {
-                                                        sx: {
-                                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                                            backgroundColor: theme.glassCard.backgroundColor,
-                                                            border: theme.glassCard.border,
-                                                            borderRadius: 2,
-                                                            boxShadow:
-                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                <MenuItem value="all">All</MenuItem>
-                                                <MenuItem value="completed">Completed</MenuItem>
-                                                <MenuItem value="new">New</MenuItem>
-                                                <MenuItem value="resubmission">Resubmission</MenuItem>
-                                                <MenuItem value="emergency">Emergency</MenuItem>
-                                            </Select>
-                                        </FormControl>
+                                        <Select
+                                            fullWidth
+                                            variant={'bordered'}
+                                            aria-label={'Status'}
+                                            color={getStatusColor(filterData.status)}
+                                            placeholder="Select Status"
+                                            value={filterData.status}
+                                            onChange={(e) => handleFilterChange('status', e.target.value)}
+                                            selectedKeys={[filterData.status]}
+                                            popoverProps={{
+                                                classNames: {
+                                                    content: "bg-transparent backdrop-blur-lg border-inherit",
+                                                },
+                                            }}
+                                        >
+                                            <SelectItem key='all' value='all'>All</SelectItem>
+                                            <SelectItem key="completed" value="completed">Completed</SelectItem>
+                                            <SelectItem key="new" value="new">New</SelectItem>
+                                            <SelectItem key="resubmission" value="resubmission">Resubmission</SelectItem>
+                                            <SelectItem key="emergency" value="emergency">Emergency</SelectItem>
+                                        </Select>
                                     </Grid>
                                     {auth.roles.includes('Administrator') && (
                                         <Grid item xs={6} sm={4} md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel id="incharge-label">Incharge</InputLabel>
-                                                <Select
-                                                    variant="outlined"
-                                                    labelId="incharge-label"
-                                                    label="Incharge"
-                                                    name="incharge"
-                                                    value={filterData.incharge}
-                                                    onChange={(e) => handleFilterChange('incharge', e.target.value)}
-                                                    MenuProps={{
-                                                        PaperProps: {
-                                                            sx: {
-                                                                backdropFilter: 'blur(16px) saturate(200%)',
-                                                                backgroundColor: theme.glassCard.backgroundColor,
-                                                                border: theme.glassCard.border,
-                                                                borderRadius: 2,
-                                                                boxShadow:
-                                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                            },
-                                                        },
-                                                    }}
-                                                >
-                                                    <MenuItem value="all">All</MenuItem>
-                                                    {allData.allInCharges.map(inCharge => (
-                                                        <MenuItem key={inCharge.id} value={inCharge.id}>
-                                                            {inCharge.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                    )}
-                                    <Grid item xs={6} sm={4} md={3}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="report-label">Report</InputLabel>
                                             <Select
-                                                variant="outlined"
-                                                labelId="report-label"
-                                                label="Report"
-                                                name="report"
-                                                value={filterData.report}
-                                                onChange={(e) => handleFilterChange('report', e.target.value)}
-                                                MenuProps={{
-                                                    PaperProps: {
-                                                        sx: {
-                                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                                            backgroundColor: theme.glassCard.backgroundColor,
-                                                            border: theme.glassCard.border,
-                                                            borderRadius: 2,
-                                                            boxShadow:
-                                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                                        },
+                                                fullWidth
+                                                aria-label={'Incharge'}
+                                                variant={'bordered'}
+                                                placeholder="Select Status"
+                                                name="incharge"
+                                                value={filterData.incharge}
+                                                onChange={(e) => handleFilterChange('incharge', e.target.value)}
+                                                selectedKeys={[filterData.status]}
+                                                popoverProps={{
+                                                    classNames: {
+                                                        content: "bg-transparent backdrop-blur-lg border-inherit",
                                                     },
                                                 }}
                                             >
-                                                <MenuItem value="" disabled>Select Report</MenuItem>
-                                                {/* Add your report options here */}
+                                                <SelectItem key='all' value='all'>All</SelectItem>
+                                                {allData.allInCharges.map(inCharge => (
+                                                    <SelectItem key={inCharge.id} value={inCharge.id}>
+                                                        {inCharge.name}
+                                                    </SelectItem>
+                                                ))}
                                             </Select>
-                                        </FormControl>
-                                    </Grid>
+                                        </Grid>
+                                    )}
+                                    {/*<Grid item xs={6} sm={4} md={3}>*/}
+                                    {/*    <FormControl fullWidth>*/}
+                                    {/*        <InputLabel id="report-label">Report</InputLabel>*/}
+                                    {/*        <Select*/}
+                                    {/*            variant="outlined"*/}
+                                    {/*            labelId="report-label"*/}
+                                    {/*            label="Report"*/}
+                                    {/*            name="report"*/}
+                                    {/*            value={filterData.report}*/}
+                                    {/*            onChange={(e) => handleFilterChange('report', e.target.value)}*/}
+                                    {/*            MenuProps={{*/}
+                                    {/*                PaperProps: {*/}
+                                    {/*                    sx: {*/}
+                                    {/*                        backdropFilter: 'blur(16px) saturate(200%)',*/}
+                                    {/*                        backgroundColor: theme.glassCard.backgroundColor,*/}
+                                    {/*                        border: theme.glassCard.border,*/}
+                                    {/*                        borderRadius: 2,*/}
+                                    {/*                        boxShadow:*/}
+                                    {/*                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',*/}
+                                    {/*                    },*/}
+                                    {/*                },*/}
+                                    {/*            }}*/}
+                                    {/*        >*/}
+                                    {/*            <MenuItem value="" disabled>Select Report</MenuItem>*/}
+                                    {/*            /!* Add your report options here *!/*/}
+                                    {/*        </Select>*/}
+                                    {/*    </FormControl>*/}
+                                    {/*</Grid>*/}
                                 </Grid>
                             </Box>
                         </CardContent>

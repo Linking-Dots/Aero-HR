@@ -7,7 +7,7 @@
     },
     "devDependencies": {
         "@headlessui/react": "^2.1.8",
-        "@inertiajs/react": "^1.0.0",
+        "@inertiajs/react": "^2.0.0-beta.2",
         "@vitejs/plugin-react": "^4.2.0",
         "autoprefixer": "^10.4.20",
         "axios": "^1.6.4",
@@ -22,6 +22,7 @@
     },
     "dependencies": {
         "@adobe/react-spectrum": "^3.36.1",
+        "@arwes/react": "^1.0.0-alpha.23",
         "@auth0/auth0-react": "^2.2.4",
         "@capacitor/android": "^6.1.2",
         "@capacitor/cli": "^6.1.2",

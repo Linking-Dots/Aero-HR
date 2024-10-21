@@ -1,30 +1,20 @@
 import * as React from 'react';
-import {useState, useCallback, useEffect} from 'react';
-import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Tooltip from '@mui/material/Tooltip';
-import Grow from '@mui/material/Grow';
-import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
+import { Link, usePage, router  } from '@inertiajs/react';
+import { useState, useCallback, useEffect } from 'react';
+import {Box, IconButton, Typography, Container, Avatar, Tooltip, Grow, Collapse, Grid, Slide, Switch, useScrollTrigger} from '@mui/material';
+import {AccountCircle, ExitToApp, Settings} from '@mui/icons-material';
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import {Collapse, Grid, Slide, Switch, useScrollTrigger} from "@mui/material";
-import {Dropdown, DropdownTrigger, DropdownMenu, Button, DropdownItem, NavbarItem, Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, Accordion, AccordionItem} from "@nextui-org/react";
-import logo from '../../../public/assets/images/logo.png';
-import { Link, usePage } from '@inertiajs/react';
-import GlassCard from "@/Components/GlassCard.jsx"
-import GlassDropdown from "@/Components/GlassDropdown.jsx"
-import useTheme from "@/theme.jsx";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import {DropdownTrigger, DropdownMenu, Button, DropdownItem, NavbarItem, Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, Accordion, AccordionItem} from '@nextui-org/react';
+
+
+import logo from '../../../public/assets/images/logo.png';
+import GlassCard from '@/Components/GlassCard.jsx';
+import GlassDropdown from '@/Components/GlassDropdown.jsx';
+import useTheme from '@/theme.jsx';
 
 const useDeviceType = () => {
     const [isMobile, setIsMobile] = useState(false);
@@ -57,6 +47,7 @@ const useDeviceType = () => {
 };
 
 const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, url, pages }) => {
+
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
     const [activePage, setActivePage] = useState();
@@ -84,6 +75,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                 <Box sx={{mb: 2}}>
                     <Grow in>
                         <Navbar
+                            isBlurred
                             shouldHideOnScroll
                             isBordered
                             isMenuOpen={isMenuOpen}
@@ -129,6 +121,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                     `}
                                                     href={route(page.route)}
                                                     method={page.method || undefined}
+                                                    preserveState
+                                                    preserveScroll
                                                     size="sm"
                                                     color="foreground"
                                                     onClick={() => setIsMenuOpen(false)}
@@ -168,6 +162,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                 `}
                                                                 href={route(subPage.route)}
                                                                 method={page.method || undefined}
+                                                                preserveState
+                                                                preserveScroll
                                                                 size="sm"
                                                                 color="foreground"
                                                                 onClick={() => setIsMenuOpen(false)}
@@ -205,6 +201,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         as={Link}
                                                         href={route('profile', { user: auth.user.id })}
                                                         method="get"
+                                                        preserveState
+                                                        preserveScroll
                                                         key={'profile'}
                                                         // description="ACME scales apps to meet user demand, automagically, based on load."
                                                         startContent={<AccountCircle />}
@@ -344,6 +342,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                                     as={Link}
                                                                                     href={route(subPage.route)}
                                                                                     method={subPage.method || undefined}
+                                                                                    preserveState
+                                                                                    preserveScroll
                                                                                     key={subPage.name}
                                                                                     // description="ACME scales apps to meet user demand, automagically, based on load."
                                                                                     startContent={subPage.icon}
@@ -371,6 +371,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                                         as={Link}
                                                                         href={route(page.route)}
                                                                         method={page.method || undefined}
+                                                                        preserveState
+                                                                        preserveScroll
                                                                         css={{
                                                                             color: theme.palette.text.primary,
                                                                         }}
@@ -409,6 +411,8 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                             as={Link}
                                                             href={route('profile', { user: auth.user.id })}
                                                             method="get"
+                                                            preserveState
+                                                            preserveScroll
                                                             key={'profile'}
                                                             // description="ACME scales apps to meet user demand, automagically, based on load."
                                                             startContent={<AccountCircle />}

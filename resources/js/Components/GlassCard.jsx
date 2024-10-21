@@ -10,7 +10,7 @@ const GlassCard = forwardRef(({ children, ...props }, ref) => {
             <Card ref={ref} {...props} sx={{
                 height: '100%',
                 width: '100%',
-                backdropFilter: 'blur(16px) saturate(150%)',
+                backdropFilter: theme.glassCard.backdropFilter,
                 backgroundColor: theme.glassCard.backgroundColor,
                 border: theme.glassCard.border,
                 display: 'flex',

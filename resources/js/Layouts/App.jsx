@@ -116,7 +116,7 @@ function App({ children }) {
                     theme="colored"
                 />
                 <CssBaseline/>
-                {loading && <Loader/>}
+                {/*{loading && <Loader/>}*/}
                 <Box
                     sx={{
                         display: 'flex',
@@ -153,11 +153,9 @@ function App({ children }) {
                         {auth.user &&
                             <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
                                     sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                        <ScrollShadow  hideScrollBar>
-                            {auth.user && <Breadcrumb/>}
-                            {children}
-                            {/*{!isMobile && <Footer/>}*/}
-                        </ScrollShadow>
+                        {auth.user && <Breadcrumb/>}
+                        {children}
+                        {/*{!isMobile && <Footer/>}*/}
                         {auth.user && isMobile &&
                             <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
                     </Box>

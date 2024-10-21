@@ -19,10 +19,14 @@ const appName =  'DBEDC ERP';
 
 
 createInertiaApp({
-    progress: false,
+    progress: {
+        // Custom progress component configuration
+        color: '#29d', // Example color
+        // You can add more custom configurations here
+    },
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
-    setup({ el, App, props }) {
+    setup({el, App, props}) {
         const root = createRoot(el);
 
         // If the page defines a layout, use it; otherwise, use the default App layout
@@ -32,5 +36,6 @@ createInertiaApp({
 
         root.render(renderPage);
     },
+}).then(r => {
+    console.log('Inertia app created');
 });
-

@@ -38,9 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
     Route::get('/get-current-user-attendance-for-date', [AttendanceController::class, 'getCurrentUserAttendanceForDate'])->name('getCurrentUserAttendanceForDate');
 
-    Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('dailyWorks');
+    Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('daily-works');
     Route::get('/daily-works-paginate', [DailyWorkController::class, 'paginate'])->name('dailyWorks.paginate');
-    Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('dailyWorkSummary');
+    Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('daily-works-summary');
     Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
 
 
