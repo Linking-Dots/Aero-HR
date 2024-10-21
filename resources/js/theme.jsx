@@ -10,7 +10,7 @@ const useTheme = (darkMode) => {
                     mode: darkMode ? 'dark' : 'light' ,
                 },
                 typography: {
-                    fontFamily: 'Aptos, Arial, sans-serif',  // Set your default font here
+                    fontFamily: 'Exo',  // Set your default font here
                 },
                 text: {
                     primary: '#268bd2',

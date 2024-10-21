@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Box, CssBaseline, ThemeProvider, useMediaQuery,} from '@mui/material';
+import {Box, Button, CssBaseline, Fab, ThemeProvider, useMediaQuery,} from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
 import BottomNav from "@/Layouts/BottomNav.jsx";
@@ -15,6 +15,7 @@ import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
 import { NextUIProvider, ScrollShadow } from '@nextui-org/react';
 import {onMessageListener, requestNotificationPermission} from "@/firebase-config.js";
+import AddIcon from "@mui/icons-material/Add";
 function App({ children }) {
 
     const [loading, setLoading] = useState();
@@ -103,70 +104,90 @@ function App({ children }) {
         <ThemeProvider theme={theme}>
             <NextUIProvider>
                 <main className={darkMode ? "dark" : "light"}>
-                <ToastContainer
-                    position="top-center"
-                    autoClose={5000}
-                    hideProgressBar={false}
-                    newestOnTop={false}
-                    closeOnClick
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="colored"
-                />
-                <CssBaseline/>
-                {/*{loading && <Loader/>}*/}
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        height: '100vh',
-                    }}
-                >
-                    {/* Sidebar Area */}
+                    <ToastContainer
+                        position="top-center"
+                        autoClose={5000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="colored"
+                    />
+                    <CssBaseline/>
+                    {/*{loading && <Loader/>}*/}
                     <Box
                         sx={{
-                            display: {xs: 'none', md: 'block'},
-                            height: '100vh', // Full height
-                            width: sideBarOpen ? 280 : 0,
-                            transition: 'width 0.3s ease-in-out',
-                            flexDirection: 'column',
-                            overflow: 'hidden', // Avoid overflow on the sidebar
+                            display: 'flex',
+                            flexDirection: 'row',
+                            height: '100vh',
                         }}
                     >
-                        <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar}/>
+                        {/* Sidebar Area */}
+                        <Box
+                            sx={{
+                                display: {xs: 'none', md: 'block'},
+                                height: '100vh', // Full height
+                                width: sideBarOpen ? 280 : 0,
+                                transition: 'width 0.3s ease-in-out',
+                                flexDirection: 'column',
+                                overflow: 'hidden', // Avoid overflow on the sidebar
+                            }}
+                        >
+                            <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar}/>
+                        </Box>
+
+                        {/* Main Content Area */}
+                        <Box
+                            ref={contentRef}
+                            sx={{
+                                pb: `${bottomNavHeight}px`,
+                                display: 'flex',
+                                flex: 1,
+                                flexDirection: 'column',
+                                height: '100vh', // Full height for content area
+                                overflow: 'auto', // Enable vertical scrolling
+                            }}
+                        >
+                            {auth.user &&
+                                <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
+                                        sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                            {auth.user && <Breadcrumb/>}
+                            {children}
+                            {/*{!isMobile && <Footer/>}*/}
+                            {auth.user && isMobile &&
+                                <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef}
+                                           auth={auth}/>}
+
+
+                        </Box>
+
+
                     </Box>
 
-                    {/* Main Content Area */}
-                    <Box
-                        ref={contentRef}
-                        sx={{
-                            pb: `${bottomNavHeight}px`,
-                            display: 'flex',
-                            flex: 1,
-                            flexDirection: 'column',
-                            height: '100vh', // Full height for content area
-                            overflow: 'auto', // Enable vertical scrolling
+                    <Button
+                        style={{
+                            position: 'fixed',
+                            bottom: '1.5rem',
+                            right: '1.5rem',
+                            zIndex: 100, // Ensure it stays above other content
                         }}
+                        isIconOnly
+                        color="primary"
+                        variant="shadow"
                     >
-                        {auth.user &&
-                            <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
-                                    sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
-                        {auth.user && <Breadcrumb/>}
-                        {children}
-                        {/*{!isMobile && <Footer/>}*/}
-                        {auth.user && isMobile &&
-                            <BottomNav setBottomNavHeight={setBottomNavHeight} contentRef={contentRef} auth={auth}/>}
-                    </Box>
-                </Box>
+                        <AddIcon/>
+                    </Button>
+
+
                 </main>
             </NextUIProvider>
         </ThemeProvider>
 
 
-
-);
+    );
 }
 
 export default App;

@@ -1,1 +1,0 @@
-import{v as o,w as r}from"./vendor-BVrsz1zL.js";import{a}from"./app-Bi027Ot0.js";import{b as s}from"./App-DRWxthgw.js";const i=o(r.jsx("path",{d:"M5 20h14v-2H5zm0-10h4v6h6v-6h4l-7-7z"}),"Upload"),m=()=>a("div",{className:"spinner-container",children:a(s.Dots,{animation:"fade",background:"rgba(0, 0, 0, 0.5)",color:"#3498db",size:60})});export{m as L,i as U};
