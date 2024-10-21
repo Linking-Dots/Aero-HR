@@ -60,10 +60,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
 
 
 
-    const settings = [
-        { name: 'Settings', route: 'dashboard', icon: <Settings /> },
-        { name: 'Logout', route: 'logout', method: 'post', icon: <ExitToApp /> }
-    ];
+
 
 
     const trigger = useScrollTrigger();
@@ -75,6 +72,11 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                 <Box sx={{mb: 2}}>
                     <Grow in>
                         <Navbar
+                            style={{
+                                backdropFilter: theme.glassCard.backdropFilter,
+                                backgroundColor: theme.glassCard.backgroundColor,
+                                border: theme.glassCard.border,
+                            }}
                             isBlurred
                             shouldHideOnScroll
                             isBordered
@@ -105,6 +107,11 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
 
                             {/* Menu items for mobile */}
                             <NavbarMenu
+                                style={{
+                                    backdropFilter: theme.glassCard.backdropFilter,
+                                    backgroundColor: theme.glassCard.backgroundColor,
+                                    border: theme.glassCard.border,
+                                }}
                                 className={darkMode ? 'dark' : 'light' }
                             >
                                 {pages.map((page, index) => (
@@ -204,7 +211,6 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         preserveState
                                                         preserveScroll
                                                         key={'profile'}
-                                                        // description="ACME scales apps to meet user demand, automagically, based on load."
                                                         startContent={<AccountCircle />}
                                                         style={{
                                                             color: theme.palette.text.primary,
@@ -212,21 +218,27 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                     >
                                                         Profile
                                                     </DropdownItem>
-                                                    {settings.map((setting) => (
-                                                        <DropdownItem
-                                                            as={Link}
-                                                            href={route(setting.route)}
-                                                            method={setting.method || undefined}
-                                                            key={setting.name}
-                                                            // description="ACME scales apps to meet user demand, automagically, based on load."
-                                                            startContent={setting.icon}
-                                                            style={{
-                                                                color: theme.palette.text.primary,
-                                                            }}
-                                                        >
-                                                            {setting.name}
-                                                        </DropdownItem>
-                                                    ))}
+                                                    <DropdownItem
+                                                        as={Link}
+                                                        href={route('dashboard')}
+                                                        key={'Settings'}
+                                                        startContent={<Settings />}
+                                                        style={{
+                                                            color: theme.palette.text.primary,
+                                                        }}
+                                                    >
+                                                        Settings
+                                                    </DropdownItem>
+                                                    <DropdownItem
+                                                        onClick={() => router.post('/logout')}
+                                                        key={'Logout'}
+                                                        startContent={<ExitToApp />}
+                                                        style={{
+                                                            color: theme.palette.text.primary,
+                                                        }}
+                                                    >
+                                                        Logout
+                                                    </DropdownItem>
                                                     <DropdownItem
                                                         style={{ color: theme.palette.text.primary }}>
                                                         {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
@@ -414,7 +426,6 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                             preserveState
                                                             preserveScroll
                                                             key={'profile'}
-                                                            // description="ACME scales apps to meet user demand, automagically, based on load."
                                                             startContent={<AccountCircle />}
                                                             style={{
                                                                 color: theme.palette.text.primary,
@@ -422,21 +433,27 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         >
                                                             Profile
                                                         </DropdownItem>
-                                                        {settings.map((setting) => (
-                                                            <DropdownItem
-                                                                as={Link}
-                                                                href={route(setting.route)}
-                                                                method={setting.method || undefined}
-                                                                key={setting.name}
-                                                                // description="ACME scales apps to meet user demand, automagically, based on load."
-                                                                startContent={setting.icon}
-                                                                style={{
-                                                                    color: theme.palette.text.primary,
-                                                                }}
-                                                            >
-                                                                {setting.name}
-                                                            </DropdownItem>
-                                                        ))}
+                                                        <DropdownItem
+                                                            as={Link}
+                                                            href={route('dashboard')}
+                                                            key={'Settings'}
+                                                            startContent={<Settings />}
+                                                            style={{
+                                                                color: theme.palette.text.primary,
+                                                            }}
+                                                        >
+                                                            Settings
+                                                        </DropdownItem>
+                                                        <DropdownItem
+                                                            onClick={() => router.post('/logout')}
+                                                            key={'Logout'}
+                                                            startContent={<ExitToApp />}
+                                                            style={{
+                                                                color: theme.palette.text.primary,
+                                                            }}
+                                                        >
+                                                            Logout
+                                                        </DropdownItem>
                                                         <DropdownItem
                                                             style={{ color: theme.palette.text.primary }}>
                                                             {darkMode ? <Brightness4Icon /> : <Brightness7Icon />}
