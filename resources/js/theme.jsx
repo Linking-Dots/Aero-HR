@@ -2,7 +2,7 @@ import {createTheme} from '@mui/material/styles';
 import {useMemo} from "react";
 
 
-const useTheme = (darkMode) => {
+const useTheme = (darkMode, themeColor={ name: "DEFAULT", className: "bg-blue-600/25 text-white-600 font-bold" }) => {
     return useMemo(
         () =>
             createTheme({
@@ -33,11 +33,27 @@ const useTheme = (darkMode) => {
                 },
                 glassCard: {
                     backdropFilter: 'blur(40px) saturate(200%)',
-                    backgroundColor: darkMode ? 'rgba(31, 38, 59, 0.55)' : 'rgba(255, 255, 255, 0.60)',
+                    backgroundColor: (() => {
+                        switch (themeColor.name) {
+                            case "TEAL":
+                                return darkMode ? 'rgba(80, 227, 194, 0.55)' : 'rgba(80, 227, 194, 0.30)';
+                            case "GREEN":
+                                return darkMode ? 'rgba(0, 100, 0, 0.55)' : 'rgba(0, 255, 0, 0.20)';
+                            case "PURPLE":
+                                return darkMode ? 'rgba(128, 0, 128, 0.55)' : 'rgba(255, 0, 255, 0.20)';
+                            case "RED":
+                                return darkMode ? 'rgba(139, 0, 0, 0.55)' : 'rgba(255, 0, 0, 0.20)';
+                            case "ORANGE":
+                                return darkMode ? 'rgba(255, 140, 0, 0.55)' : 'rgba(255, 165, 0, 0.20)';
+                            case "DEFAULT":
+                            default:
+                                return darkMode ? 'rgba(31, 38, 59, 0.55)' : 'rgba(255, 255, 255, 0.60)';
+                        }
+                    })(),
                     border: darkMode ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.5)',
                 },
             }),
-        [darkMode]
+        [darkMode, themeColor]
     );
 };
 

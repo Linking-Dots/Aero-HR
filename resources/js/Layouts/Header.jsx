@@ -15,7 +15,7 @@ import logo from '../../../public/assets/images/logo.png';
 import GlassCard from '@/Components/GlassCard.jsx';
 import GlassDropdown from '@/Components/GlassDropdown.jsx';
 import useTheme from '@/theme.jsx';
-
+import ColorLensIcon from '@mui/icons-material/ColorLens';
 const useDeviceType = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
@@ -46,7 +46,7 @@ const useDeviceType = () => {
     return { isMobile, isDesktop };
 };
 
-const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBar, url, pages }) => {
+const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleThemeDrawer, sideBarOpen, toggleSideBar, url, pages }) => {
 
     const theme = useTheme(darkMode);
     const { auth } = usePage().props;
@@ -228,6 +228,16 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                         }}
                                                     >
                                                         Settings
+                                                    </DropdownItem>
+                                                    <DropdownItem
+                                                        onClick={toggleThemeDrawer}
+                                                        key={'Themes'}
+                                                        startContent={<ColorLensIcon />}
+                                                        style={{
+                                                            color: theme.palette.text.primary,
+                                                        }}
+                                                    >
+                                                        Themes
                                                     </DropdownItem>
                                                     <DropdownItem
                                                         onClick={() => router.post('/logout')}
@@ -443,6 +453,16 @@ const Header = React.memo(({ darkMode, toggleDarkMode, sideBarOpen, toggleSideBa
                                                             }}
                                                         >
                                                             Settings
+                                                        </DropdownItem>
+                                                        <DropdownItem
+                                                            onClick={toggleThemeDrawer}
+                                                            key={'Themes'}
+                                                            startContent={<ColorLensIcon />}
+                                                            style={{
+                                                                color: theme.palette.text.primary,
+                                                            }}
+                                                        >
+                                                            Themes
                                                         </DropdownItem>
                                                         <DropdownItem
                                                             onClick={() => router.post('/logout')}

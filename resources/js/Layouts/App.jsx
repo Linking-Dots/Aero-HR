@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Box, Button, CssBaseline, Fab, ThemeProvider, useMediaQuery,} from '@mui/material';
+import {Box, CssBaseline, ThemeProvider, useMediaQuery,} from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
 import BottomNav from "@/Layouts/BottomNav.jsx";
@@ -8,14 +8,13 @@ import useTheme from "@/theme.jsx";
 import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
-import Footer from "@/Layouts/Footer.jsx";
-import { Inertia } from '@inertiajs/inertia'
-import Loader from '@/Components/Loader.jsx'
-import { getPages } from '@/Props/pages.jsx';
-import { getSettingsPages } from '@/Props/settings.jsx';
-import { NextUIProvider, ScrollShadow } from '@nextui-org/react';
+import {Inertia} from '@inertiajs/inertia'
+import {getPages} from '@/Props/pages.jsx';
+import {getSettingsPages} from '@/Props/settings.jsx';
+import {NextUIProvider} from '@nextui-org/react';
 import {onMessageListener, requestNotificationPermission} from "@/firebase-config.js";
-import AddIcon from "@mui/icons-material/Add";
+import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
+
 function App({ children }) {
 
     const [loading, setLoading] = useState();
@@ -23,9 +22,14 @@ function App({ children }) {
     const permissions = auth.permissions;
 
     const [sideBarOpen, setSideBarOpen] = useState(false);
+    const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         const savedDarkMode = localStorage.getItem('darkMode');
         return savedDarkMode === 'true';
+    });
+    const [themeColor, setThemeColor] = useState(() => {
+        const storedThemeColor = localStorage.getItem('themeColor');
+        return storedThemeColor ? JSON.parse(storedThemeColor) : { name: "DEFAULT", className: "bg-blue-600/25 text-blue-600 font-bold", backgroundColor: darkMode ? 'rgba(31, 38, 59, 0.55)' : 'rgba(255, 255, 255, 0.60)' }; // Provide a default value
     });
     const contentRef = useRef(null);   // Ref to the main content container
     const [bottomNavHeight, setBottomNavHeight] = useState(0); // State to store the bottom nav height
@@ -48,16 +52,27 @@ function App({ children }) {
 
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode);
-    }, [darkMode]);
+        localStorage.setItem('themeColor', JSON.stringify(themeColor));
+    }, [darkMode, themeColor]);
 
     const toggleDarkMode = () => {
         setDarkMode(!darkMode);
+        localStorage.setItem('darkMode', darkMode);
+    };
+
+    const toggleThemeColor = (color) => {
+        setThemeColor(color);
+        localStorage.setItem('themeColor', JSON.stringify(color)); // Persist the new theme color as a string
+    };
+
+    const toggleThemeDrawer = () => {
+        setThemeDrawerOpen(!themeDrawerOpen);
     };
     const toggleSideBar = () => {
         setSideBarOpen(!sideBarOpen);
     };
 
-    const theme = useTheme(darkMode);
+    const theme = useTheme(darkMode, themeColor);
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
 
@@ -102,6 +117,7 @@ function App({ children }) {
     return (
 
         <ThemeProvider theme={theme}>
+            <ThemeSettingDrawer toggleThemeColor={toggleThemeColor} themeColor={themeColor} darkMode={darkMode} toggleDarkMode={toggleDarkMode} toggleThemeDrawer={toggleThemeDrawer} themeDrawerOpen={themeDrawerOpen}/>
             <NextUIProvider>
                 <main className={darkMode ? "dark" : "light"}>
                     <ToastContainer
@@ -152,8 +168,8 @@ function App({ children }) {
                             }}
                         >
                             {auth.user &&
-                                <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode}
-                                        sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar}/>}
+                                <Header url={url} pages={pages} darkMode={darkMode} toggleDarkMode={toggleDarkMode} toggleThemeDrawer={toggleThemeDrawer}
+                                        sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar} themeDrawerOpen={themeDrawerOpen}/>}
                             {auth.user && <Breadcrumb/>}
                             {children}
                             {/*{!isMobile && <Footer/>}*/}
@@ -162,28 +178,15 @@ function App({ children }) {
                                            auth={auth}/>}
 
 
+
                         </Box>
-
-
                     </Box>
 
-                    <Button
-                        style={{
-                            position: 'fixed',
-                            bottom: '1.5rem',
-                            right: '1.5rem',
-                            zIndex: 100, // Ensure it stays above other content
-                        }}
-                        isIconOnly
-                        color="primary"
-                        variant="shadow"
-                    >
-                        <AddIcon/>
-                    </Button>
-
-
                 </main>
+
+
             </NextUIProvider>
+
         </ThemeProvider>
 
 
