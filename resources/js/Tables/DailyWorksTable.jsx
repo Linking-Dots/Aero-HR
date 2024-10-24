@@ -20,7 +20,7 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination, SelectItem, Select, User} from "@nextui-org/react";
+import {Pagination, SelectItem, Select, User, Input} from "@nextui-org/react";
 import Loader from "@/Components/Loader.jsx";
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
@@ -65,13 +65,20 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
 
+    const allStatuses = [
+        { value: 'new', label: 'New', icon: <NewIcon /> },
+        { value: 'resubmission', label: 'Resubmission', icon: <ResubmissionIcon /> },
+        { value: 'completed', label: 'Completed', icon: <CompletedIcon /> },
+        { value: 'emergency', label: 'Emergency', icon: <EmergencyIcon /> },
+    ];
+
     const columns = [
         {
             name: 'Date',
             selector: row => row.date,
             sortable: 'true',
             center: "true",
-            width: '100px'
+            width: '110px'
         },
         {
             name: 'RFI NO',
@@ -98,26 +105,50 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             sortable: 'true',
             center: 'true',
             width: '220px',
+            style: { padding: '0px 10px 0px 10px' },
             cell: row => (
                 <Select
+                    items={allStatuses}
+                    aria-label="Status"
                     fullWidth
-                    aria-label={'Status'}
-                    placeholder="Select Status"
-                    name="status"
-                    color={getStatusColor(row.status)}
-                    value={row.status}
+                    value={row.status || 'na'} // Set the value to 'na' if no status is assigned
                     onChange={(e) => handleChange(row.id, 'status', e.target.value)}
-                    selectedKeys={[row.status]}
+                    selectedKeys={[String(row.status)]}
+                    style={{
+                        minWidth: '220px',  // Optionally set a minimum width
+                    }}
+                    color={getStatusColor(row.status)}
                     popoverProps={{
                         classNames: {
-                            content: "bg-transparent backdrop-blur-lg border-inherit",
+                            content: 'bg-transparent backdrop-blur-lg border-inherit',
+                        },
+                        style: {
+                            whiteSpace: 'nowrap', // Ensure content wraps
+                            minWidth: 'fit-content',  // Optionally set a minimum width
                         },
                     }}
+                    placeholder="Select Status"
+                    renderValue={(selectedStatuses) => {
+                        return selectedStatuses.map((selectedStatus) => (
+                            <div key={selectedStatus.key} className="flex items-center gap-2 m-1">
+                                {allStatuses.find(status => status.value === selectedStatus.data.value)?.icon} {/* Get the icon */}
+                                <span>
+                                    {selectedStatus.data.label}
+                                </span>
+                            </div>
+                        ));
+                    }}
                 >
-                    <SelectItem key="new" value="new" startContent={<NewIcon style={{ marginRight: 8, color: getStatusColor('new') }} />}>New</SelectItem>
-                    <SelectItem key="resubmission" value="resubmission" startContent={<ResubmissionIcon style={{ marginRight: 8, color: getStatusColor('resubmission') }} />}>Resubmission</SelectItem>
-                    <SelectItem key="completed" value="completed" startContent={<CompletedIcon style={{ marginRight: 8, color: getStatusColor('completed') }} />}>Completed</SelectItem>
-                    <SelectItem key="emergency" value="emergency" startContent={<EmergencyIcon style={{ marginRight: 8, color: getStatusColor('emergency') }} />}>Emergency</SelectItem>
+                    {(status) => (
+                        <SelectItem key={status.value} textValue={status.value}>
+                            <div className="flex items-center gap-2">
+                                {status.icon} {/* Directly display the icon */}
+                                <span style={{ color: getStatusColor(status.value) }}>
+                                {status.label} {/* Display status label */}
+                            </span>
+                            </div>
+                        </SelectItem>
+                    )}
                 </Select>
             ),
         },
@@ -130,19 +161,21 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 <Select
                     items={juniors}
                     variant="outlined"
+                    aria-label="Assigned"
                     fullWidth
                     size="small"
                     value={row.assigned || 'na'}
+                    style={{
+                        minWidth: '260px',  // Optionally set a minimum width
+                    }}
                     onChange={(e) => handleChange(row.id, 'assigned', e.target.value)}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: theme.glassCard.backgroundColor,
-                                border: theme.glassCard.border,
-                                borderRadius: 2,
-                                boxShadow: theme.glassCard.boxShadow,
-                            },
+                    popoverProps={{
+                        classNames: {
+                            content: 'bg-transparent backdrop-blur-lg border-inherit',
+                        },
+                        style: {
+                            whiteSpace: 'nowrap', // Ensure content wraps
+                            minWidth: 'fit-content',  // Optionally set a minimum width
                         },
                     }}
                     placeholder="Select a junior"
@@ -390,13 +423,13 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             center: 'true',
             width: '250px',
             cell: row => (
-                <TextField
+                <Input
                     fullWidth
-                    size="small"
-                    type="datetime-local"
+                    size="sm"
+                    variant={'underlined'}
+                    type={'datetime-local'}
                     value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
                     onChange={(e) => handleChange(row.id, 'completion_time', e.target.value)}
-                    style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
                     inputProps={{
                         placeholder: 'YYYY-MM-DDTHH:MM'
                     }}
@@ -426,10 +459,11 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             center: 'true',
             width: '180px',
             cell: row => (
-                <TextField
+                <Input
                     fullWidth
-                    size="small"
+                    size="sm"
                     type="date"
+                    variant={'underlined'}
                     onChange={(e) => handleChange(row.id, 'rfi_submission_date', e.target.value)}
                     value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
@@ -539,7 +573,6 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
 
     return (
         <div>
-            {loading && <Loader/>}
             <GlobalStyles
                 styles={{
                     '& .cgTKyH': {

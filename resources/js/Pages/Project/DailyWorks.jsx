@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
     Box,
-    Button,
     CardContent,
     CardHeader, CircularProgress,
     FormControl,
@@ -19,7 +18,6 @@ import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";
 import DailyWorksTable from '@/Tables/DailyWorksTable.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import minMax from 'dayjs/plugin/minMax';
@@ -32,12 +30,14 @@ import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
-import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import {Pagination, SelectItem, Select} from "@nextui-org/react";
+import { DatePicker } from '@nextui-org/react';
+
+import {Pagination, SelectItem, Select, Input, Button} from "@nextui-org/react";
 dayjs.extend(minMax);
+import {getLocalTimeZone, parseDate, today} from "@internationalized/date";
 
 
-const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works }) => {
+const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, reports, reports_with_daily_works, overallEndDate, overallStartDate }) => {
     const theme = useTheme();
 
     // const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
@@ -64,10 +64,11 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     search: search, // Assuming 'report' is the search field
                     status: filterData.status !== 'all' ? filterData.status : '',
                     inCharge: filterData.incharge !== 'all' ? filterData.incharge : '',
-                    startDate: filterData.startDate?.format('YYYY-MM-DD'), // Send startDate in proper format
-                    endDate: filterData.endDate?.format('YYYY-MM-DD'),
+                    startDate: filterData.startDate, // Send startDate in proper format
+                    endDate: filterData.endDate,
                 }
             });
+            console.log(response);
 
             setData(response.data.data);
             setTotalRows(response.data.total);
@@ -202,21 +203,28 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     });
 
     const handleFilterChange = useCallback((key, value) => {
-        if (key === 'dates') {
-            const [startDate, endDate] = value; // Destructure the new values
+        console.log(key, value);
+
+        // Handle date range changes
+        if (key === 'startDate' || key === 'endDate') {
+            handlePageChange(1); // Reset to the first page on filter change
+            const startDate = key === 'startDate' ? value : filterData.startDate;
+            const endDate = key === 'endDate' ? value : filterData.endDate;
+
             setFilterData(prevState => ({
                 ...prevState,
-                startDate, // Update startDate
-                endDate,   // Update endDate
+                startDate,
+                endDate: key === 'endDate' ? (endDate < startDate ? '' : endDate) : prevState.endDate,
             }));
+
+
         } else {
             setFilterData(prevState => ({
                 ...prevState,
                 [key]: value,
             }));
         }
-
-    }, []);
+    }, [filterData]);
 
     const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
@@ -249,6 +257,9 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                 return '';
         }
     };
+
+
+    console.log(overallStartDate, overallEndDate);
 
 
     return (
@@ -297,46 +308,50 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                             action={
                                 <Box display="flex" gap={2}>
                                     {auth.permissions.includes('addTask'||'addTaskSE') && (
-                                        <IconButton title="Add Task" color="primary" id="showAddModalBtn">
+                                        <Button isIconOnly variant={'faded'} title="Add Task" color="primary" id="showAddModalBtn">
                                             <AddBox />
-                                        </IconButton>
+                                        </Button>
                                     )}
                                     {auth.roles.includes('Administrator') && (
                                         <>
                                             {isMobile ? (
                                                 <>
-                                                    <IconButton
+                                                    <Button
+                                                        variant={'faded'}
+                                                        isIconOnly
                                                         title="Import Daily Works"
                                                         color="warning"
                                                         onClick={() => openModal('importDailyWorks')} // Handle opening the modal
                                                     >
                                                         <Upload />
-                                                    </IconButton>
-                                                    <IconButton
+                                                    </Button>
+                                                    <Button
+                                                        variant={'faded'}
+                                                        isIconOnly
                                                         title="Export Daily Works"
                                                         color="success"
                                                         onClick={() => openModal('exportDailyWorks')}
                                                     >
                                                         <Download />
-                                                    </IconButton>
+                                                    </Button>
                                                 </>
 
                                             ) : (
                                                 <>
                                                     <Button
                                                         title="Import Daily Works"
-                                                        variant="outlined"
+                                                        variant="bordered"
                                                         color="warning"
-                                                        startIcon={<Upload />}
+                                                        startContent={<Upload />}
                                                         onClick={() => openModal('importDailyWorks')} // Handle opening the modal
                                                     >
                                                         Import
                                                     </Button>
                                                     <Button
                                                         title="Export Daily Works"
-                                                        variant="outlined"
+                                                        variant="bordered"
                                                         color="success"
-                                                        startIcon={<Download />}
+                                                        startContent={<Download />}
                                                         onClick={() => openModal('exportDailyWorks')}
                                                     >
                                                         Export
@@ -351,26 +366,45 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                         <CardContent>
                             <Box>
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <Box display="flex" alignItems="center">
-                                                <DateRangePicker
-                                                    value={[filterData.startDate, filterData.endDate]}
-                                                    onChange={(newValue) => handleFilterChange('dates', newValue)}
-                                                    localeText={{ start: 'Start date', end: 'End date' }}
-                                                    renderInput={(startProps, endProps) => (
-                                                        <>
-                                                            <TextField {...startProps} fullWidth size="small" />
-                                                            <Box sx={{ mx: 1 }}> to </Box>
-                                                            <TextField {...endProps} fullWidth size="small" />
-                                                        </>
-                                                    )}
-                                                />
-                                            </Box>
-                                        </LocalizationProvider>
+                                    <Grid item xs={12} sm={6} md={6}>
+                                        <Box display="flex" alignItems="center">
+                                            {/* Start Date Picker */}
+                                            <Input
+                                                isLoading={loading}
+                                                label={'Start Date'}
+                                                type={'text'}
+                                                onFocus={(e) => e.target.type = 'date'}
+                                                onBlur={(e) => e.target.type = 'text'}
+                                                aria-label={'Start Date'}
+                                                variant="bordered" // Next UI style
+                                                value={filterData.startDate || ''}
+                                                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                                                placeholder="Select Start Date" // Add placeholder
+                                                min={overallStartDate} // Set min date for End Date picker to Start Date
+                                                max={filterData.endDate || overallEndDate} // Set max date for Start Date picker
+                                            />
+                                            <Box mx={1}>to</Box>
+                                            {/* End Date Picker */}
+                                            <Input
+                                                isLoading={loading}
+                                                label={'End Date'}
+                                                disabled={!filterData.startDate}
+                                                type={'text'}
+                                                onFocus={(e) => e.target.type = 'date'}
+                                                onBlur={(e) => e.target.type = 'text'}
+                                                variant="bordered" // Next UI style
+                                                value={filterData.endDate || ''}
+                                                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                                                placeholder="Select End Date" // Add placeholder
+                                                min={filterData.startDate || overallStartDate} // Set min date for End Date picker to Start Date
+                                                max={overallEndDate} // Set max date for Start Date picker
+                                            />
+                                        </Box>
                                     </Grid>
                                     <Grid item xs={6} sm={4} md={3}>
                                         <Select
+                                            isLoading={loading}
+                                            label={'Status'}
                                             fullWidth
                                             variant={'bordered'}
                                             aria-label={'Status'}
@@ -395,6 +429,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     {auth.roles.includes('Administrator') && (
                                         <Grid item xs={6} sm={4} md={3}>
                                             <Select
+                                                isLoading={loading}
+                                                label={'Incharge'}
                                                 fullWidth
                                                 aria-label={'Incharge'}
                                                 variant={'bordered'}
@@ -446,27 +482,24 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     {/*        </Select>*/}
                                     {/*    </FormControl>*/}
                                     {/*</Grid>*/}
+                                    <Grid item xs={12} sm={12} md={12}>
+                                        <Input
+                                            isLoading={loading}
+                                            size={'lg'}
+                                            aria-label="Search"
+                                            fullWidth
+                                            variant="bordered"
+                                            placeholder="Search..."
+                                            value={search}
+                                            onChange={handleSearch}
+                                            startContent={<SearchIcon />}
+                                        />
+                                    </Grid>
                                 </Grid>
                             </Box>
                         </CardContent>
 
                         <CardContent >
-
-                            <TextField
-                                label="Search"
-                                fullWidth
-                                variant="outlined"
-                                placeholder="Search..."
-                                value={search}
-                                onChange={handleSearch}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
                             <DailyWorksTable
                                 setData={setData}
                                 filteredData={filteredData}
