@@ -5,6 +5,7 @@ import {toast} from "react-toastify";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
+import L from "leaflet";
 
 
 
@@ -20,10 +21,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const [elapsedTime, setElapsedTime] = useState(null);
 
     const { todayLeaves } = usePage().props;
-
-
     const isUserOnLeave = todayLeaves.find(leave => String(leave.user_id) === String(auth.user.id));
-
     const fetchData = async () => {
         const endpoint = route('getCurrentUserPunch');
         try {
@@ -70,7 +68,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
-
     const handleLocationError = (error, reject) => {
         console.log('Location error:', error);
         if (error.code === error.PERMISSION_DENIED) {
@@ -95,37 +92,61 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
             });
         }
     };
-
     const processPunch = async (action) => {
         const promise = new Promise(async (resolve, reject) => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     async (pos) => {
-                        const position = {
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude,
-                        };
-                        console.log(`Location retrieved: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`);
+                        const position = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                        console.log(`Location retrieved: ${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}`);
 
                         const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
+                        const startLocation = { lat: 23.987057, lng: 90.361908 };
+                        const endLocation = { lat: 23.690618, lng: 90.546729 };
 
-                        try {
-                            const response = await axios.post(endpoint, {
-                                user_id: auth.user.id,
-                                location: `${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`,
-                            });
+                        // Use L.Routing.OSRMv1 to calculate the route without displaying it
+                        const router = new L.Routing.OSRMv1();
+                        router.route(
+                            [
+                                L.Routing.waypoint(L.latLng(startLocation)),
+                                L.Routing.waypoint(L.latLng(endLocation))
+                            ],
+                            async (error, routes) => {
+                                if (error || routes.length === 0) {
+                                    console.error("Routing error:", error);
+                                    reject(["Failed to calculate route."]);
+                                    return;
+                                }
 
-                            if (response.status === 200) {
-                                await fetchData();
-                                handlePunchSuccess();
-                                resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
-                            } else {
-                                reject(['Failed to set attendance. Please try again.']);
+                                const routeCoordinates = routes[0].coordinates;
+
+                                // Check if the user's location is within 500 meters of any point on the route
+                                const tolerance = 500;  // 500 meters
+                                if (!isPointOnRoute(routeCoordinates, position, tolerance)) {
+                                    reject(['You are out of the project area.']);
+                                    return;
+                                }
+
+                                // Send the punch request
+                                try {
+                                    const response = await axios.post(endpoint, {
+                                        user_id: auth.user.id,
+                                        location: `${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}`,
+                                    });
+
+                                    if (response.status === 200) {
+                                        await fetchData();
+                                        handlePunchSuccess();
+                                        resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
+                                    } else {
+                                        reject(['Failed to set attendance. Please try again.']);
+                                    }
+                                } catch (error) {
+                                    console.log(error);
+                                    reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
+                                }
                             }
-                        } catch (error) {
-                            console.log(error);
-                            reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
-                        }
+                        );
                     },
                     (error) => {
                         handleLocationError(error);
@@ -208,6 +229,17 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
             }
         );
     };
+
+// Utility function to check if the user's position is within the route
+    function isPointOnRoute(routeCoordinates, targetPoint, tolerance) {
+        for (let coord of routeCoordinates) {
+            let routeLatLng = L.latLng(coord.lat, coord.lng);
+            if (targetPoint.distanceTo(routeLatLng) < tolerance) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     useEffect(() => {
         fetchData();
