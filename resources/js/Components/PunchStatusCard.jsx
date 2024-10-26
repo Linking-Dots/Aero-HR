@@ -121,7 +121,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                 const routeCoordinates = routes[0].coordinates;
 
                                 // Check if the user's location is within 500 meters of any point on the route
-                                const tolerance = 500;  // 500 meters
+                                const tolerance = 100;  // 500 meters
                                 if (!isPointOnRoute(routeCoordinates, position, tolerance)) {
                                     reject(['You are out of the project area.']);
                                     return;
