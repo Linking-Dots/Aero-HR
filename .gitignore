@@ -4,3 +4,6 @@
 /vendor/
 public/hot
 .env
+/resources/css/
+/resources/js/
+/resources/lotties/
