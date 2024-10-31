@@ -6,6 +6,7 @@ use App\Http\Controllers\DailyWorkSummaryController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EducationController;
+use App\Http\Controllers\EmailController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\JurisdictionController;
@@ -68,6 +69,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Experience Routes:
     Route::post('/experience/update', [ExperienceController::class, 'update'])->name('experience.update');
     Route::delete('/experience/delete', [ExperienceController::class, 'delete'])->name('experience.delete');
+
+    Route::get('/emails', [EmailController::class, 'index'])->name('emails');
 
 
 
