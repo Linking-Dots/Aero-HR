@@ -3,7 +3,4 @@
 /node_modules/
 /vendor/
 public/hot
-.env
-/resources/css/
-/resources/js/
-/resources/lotties/
+
