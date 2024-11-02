@@ -588,26 +588,87 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
 
 
     const uploadImage = async (taskId, imageFile) => {
-        try {
-            const formData = new FormData();
-            formData.append("taskId", taskId);
-            formData.append("file", imageFile);
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                const formData = new FormData();
+                formData.append("taskId", taskId);
+                formData.append("file", imageFile);
 
-            const response = await axios.post(route('dailyWorks.uploadRFI'), formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+                const response = await axios.post(route('dailyWorks.uploadRFI'), formData, {
+                    headers: {"Content-Type": "multipart/form-data"},
+                });
 
-            if (response.status === 200) {
-                setData(prevTasks =>
-                    prevTasks.map(task =>
-                        task.id === taskId ? { ...task, file: response.data.url } : task
-                    )
-                );
-                console.log(response.data.message ? [response.data.message] : response.data.messages);
+                if (response.status === 200) {
+                    setData(prevTasks =>
+                        prevTasks.map(task =>
+                            task.id === taskId ? {...task, file: response.data.url} : task
+                        )
+                    );
+                    resolve([response.data.message || 'RFI file uploaded successfully']);
+                    console.log(response.data.message ? [response.data.message] : response.data.messages);
+                }
+            } catch (error) {
+
+                console.error(error)
+                reject(error.response.statusText || 'Failed to upload RFI file');
             }
-        } catch (error) {
-            console.error(error)
-        }
+        });
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>Uploading RFI file...</span>
+                            </div>
+                        );
+                    },
+                    icon: false,
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data}
+                            </>
+                        );
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                },
+            }
+        );
     };
 
     const handleChange = async (taskId, key, value) => {
