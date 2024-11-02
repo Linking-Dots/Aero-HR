@@ -568,23 +568,56 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             document.body.appendChild(fileInput);
 
             // Handle the file selection
-            fileInput.onchange = () => {
+            fileInput.onchange = async () => {
                 const file = fileInput.files[0];
                 if (file) {
-                    // Resolve the promise with the captured file
-                    resolve(file);
+                    // Create an Image object to load the selected image
+                    const img = new Image();
+                    img.src = URL.createObjectURL(file);
+
+                    img.onload = () => {
+                        // Calculate the new dimensions
+                        const targetHeight = 1024;
+                        const aspectRatio = img.width / img.height;
+                        const targetWidth = targetHeight * aspectRatio;
+
+                        // Create a canvas to resize the image
+                        const canvas = document.createElement("canvas");
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        // Convert the canvas to a Blob (or File)
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                const resizedFile = new File([blob], "resized_task_completion.jpg", { type: "image/jpeg" });
+                                resolve(resizedFile);
+                            } else {
+                                reject(new Error("Image resizing failed"));
+                            }
+
+                            // Clean up
+                            URL.revokeObjectURL(img.src);
+                            document.body.removeChild(fileInput);
+                        }, "image/jpeg");
+                    };
+
+                    img.onerror = () => {
+                        reject(new Error("Failed to load image"));
+                        document.body.removeChild(fileInput);
+                    };
                 } else {
                     reject(new Error("No file selected"));
+                    document.body.removeChild(fileInput);
                 }
-
-                // Clean up
-                document.body.removeChild(fileInput);
             };
 
             // Trigger the file input click to open the camera
             fileInput.click();
         });
     };
+
 
 
     const uploadImage = async (taskId, imageFile) => {
