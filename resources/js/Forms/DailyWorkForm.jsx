@@ -10,7 +10,6 @@ import {
     IconButton,
     InputLabel,
     MenuItem,
-    Select,
     TextField,
     Typography,
 } from '@mui/material';
@@ -19,19 +18,20 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import {toast} from 'react-toastify';
 import GlassDialog from '@/Components/GlassDialog.jsx';
 import {useTheme} from "@mui/material/styles";
+import {Button, Input, Select, SelectItem} from "@nextui-org/react";
 
-const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
+const DailyWorkForm = ({ open, closeModal, currentRow, setData, modalType}) => {
     const theme = useTheme();
     const [dailyWorkData, setDailyWorkData] = useState({
-        id: currentRow.id || '',
-        date: currentRow.date || '',
-        number: currentRow.number || '',
-        planned_time: currentRow.planned_time || '',
-        type: currentRow.type || 'Structure',
-        location: currentRow.location || '',
-        description: currentRow.description || '',
-        side: currentRow.side || 'SR-R',
-        qty_layer: currentRow.qty_layer || '',
+        id: currentRow?.id || '',
+        date: currentRow?.date || new Date().toISOString().split('T')[0],
+        number: currentRow?.number || '',
+        planned_time: currentRow?.planned_time || '',
+        type: currentRow?.type || 'Structure',
+        location: currentRow?.location || '',
+        description: currentRow?.description || '',
+        side: currentRow?.side || 'SR-R',
+        qty_layer: currentRow?.qty_layer || '',
     });
 
     const [errors, setErrors] = useState({});
@@ -50,6 +50,7 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
             ...prevData,
             [name]: value,
         }));
+        setDataChanged(true);
     };
 
     async function handleSubmit(event) {
@@ -58,41 +59,28 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
         const promise = new Promise(async (resolve, reject) => {
             try {
 
-                const response = await fetch(route('dailyWorks.update'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({
-                        ruleSet: 'details',
-                        ...dailyWorkData
-                    }),
+                const response = await axios.post(route(`dailyWorks.${modalType}`),{
+                    ruleSet: 'details',
+                    ...dailyWorkData
                 });
 
-                const data = await response.json();
+                console.log(response)
 
-                if (response.ok) {
+                if (response.status === 200) {
                     setData(prevWorks => prevWorks.map(work =>
-                        work.id === dailyWorkData.id ? { ...work, ...dailyWorkData } : work
+                        work.id === dailyWorkData.id ? {...work, ...dailyWorkData} : work
                     ));
 
-
                     closeModal();
-                    resolve(data.message ? [data.message] : data.messages);
+                    resolve(response.data.message ? [response.data.message] : response.data.messages);
                     setProcessing(false);
                     closeModal();
-                    console.log(data.message ? [data.message] : data.messages);
-                } else {
-                    setProcessing(false);
-                    setErrors(data.errors);
-                    reject(data.errors);
-                    console.error(data.errors);
+                    console.log(response.data.message ? [response.data.message] : response.data.messages);
                 }
             } catch (error) {
                 setProcessing(false);
-                closeModal();
-                console.log(error)
+                // setErrors(error.response.data.errors);
+                console.error(error)
                 reject(['An unexpected error occurred.']);
             }
         });
@@ -174,122 +162,122 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="RFI Date"
                                 type="date"
                                 name="date"
                                 fullWidth
-                                InputLabelProps={{ shrink: true }}
                                 value={dailyWorkData.date}
                                 onChange={handleChange}
-                                error={Boolean(errors.date)}
-                                helperText={errors.date}
+                                isInvalid={Boolean(errors.date)}
+                                errorMessage={errors.date}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="RFI Number"
                                 name="number"
                                 fullWidth
                                 value={dailyWorkData.number}
                                 onChange={handleChange}
-                                error={Boolean(errors.number)}
-                                helperText={errors.number}
+                                isInvalid={Boolean(errors.number)}
+                                errorMessage={errors.number}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="Planned Time"
                                 name="planned_time"
                                 fullWidth
-                                InputLabelProps={{ shrink: true }}
                                 value={dailyWorkData.planned_time}
                                 onChange={handleChange}
-                                error={Boolean(errors.planned_time)}
-                                helperText={errors.planned_time}
+                                isInvalid={Boolean(errors.planned_time)}
+                                errorMessage={errors.planned_time}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel id="type-label">Type</InputLabel>
-                                <Select
-                                    select
-                                    label="Type"
-                                    name="type"
-                                    fullWidth
-                                    value={dailyWorkData.type}
-                                    onChange={handleChange}
-                                    error={Boolean(errors.type)}
-                                    helperText={errors.type}
-                                    labelId="type-label"
-                                    MenuProps={{
-                                        PaperProps: {
-                                            sx: {
-                                                backdropFilter: 'blur(16px) saturate(200%)',
-                                                backgroundColor: theme.glassCard.backgroundColor,
-                                                border: theme.glassCard.border,
-                                                borderRadius: 2,
-                                                boxShadow:
-                                                    'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                            },
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value="Structure">Structure</MenuItem>
-                                    <MenuItem value="Embankment">Embankment</MenuItem>
-                                    <MenuItem value="Pavement">Pavement</MenuItem>
-                                </Select>
-                                <FormHelperText>{errors.type}</FormHelperText>
-                            </FormControl>
+                            <Select
+                                variant={'underlined'}
+                                label="Type"
+                                name="type"
+                                fullWidth
+                                value={dailyWorkData.type}
+                                isInvalid={Boolean(errors.type)}
+                                errorMessage={errors.type}
+                                labelId="type-label"
+                                selectedKeys={[dailyWorkData.type]}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg border-inherit",
+                                    },
+                                }}
+                            >
+                                <SelectItem key="Structure" value="Structure">Structure</SelectItem>
+                                <SelectItem key="Embankment" value="Embankment">Embankment</SelectItem>
+                                <SelectItem key="Pavement" value="Pavement">Pavement</SelectItem>
+                            </Select>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="Location"
                                 name="location"
                                 fullWidth
                                 value={dailyWorkData.location}
                                 onChange={handleChange}
-                                error={Boolean(errors.location)}
-                                helperText={errors.location}
+                                isInvalid={Boolean(errors.location)}
+                                errorMessage={errors.location}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="Description"
                                 name="description"
                                 fullWidth
                                 value={dailyWorkData.description}
                                 onChange={handleChange}
-                                error={Boolean(errors.description)}
-                                helperText={errors.description}
+                                isInvalid={Boolean(errors.description)}
+                                errorMessage={errors.description}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                select
+                            <Select
+                                variant={'underlined'}
+                                select="true"
                                 label="Road Type"
                                 name="side"
                                 fullWidth
                                 value={dailyWorkData.side}
                                 onChange={handleChange}
-                                error={Boolean(errors.side)}
-                                helperText={errors.side}
+                                isInvalid={Boolean(errors.side)}
+                                errorMessage={errors.side}
+                                selectedKeys={[dailyWorkData.side]}
+                                popoverProps={{
+                                    classNames: {
+                                        content: "bg-transparent backdrop-blur-lg border-inherit",
+                                    },
+                                }}
                             >
-                                <MenuItem value="SR-R">SR-R</MenuItem>
-                                <MenuItem value="SR-L">SR-L</MenuItem>
-                                <MenuItem value="TR-R">TR-R</MenuItem>
-                                <MenuItem value="TR-L">TR-L</MenuItem>
-                            </TextField>
+                                <SelectItem key="SR-R" value="SR-R">SR-R</SelectItem>
+                                <SelectItem key="SR-L" value="SR-L">SR-L</SelectItem>
+                                <SelectItem key="TR-R" value="TR-R">TR-R</SelectItem>
+                                <SelectItem key="TR-L" value="TR-L">TR-L</SelectItem>
+                            </Select>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <TextField
+                            <Input
+                                variant={"underlined"}
                                 label="Quantity/Layer No."
                                 name="qty_layer"
                                 fullWidth
                                 value={dailyWorkData.qty_layer}
                                 onChange={handleChange}
-                                error={Boolean(errors.qty_layer)}
-                                helperText={errors.qty_layer}
+                                isInvalid={Boolean(errors.qty_layer)}
+                                errorMessage={errors.qty_layer}
                             />
                         </Grid>
                     </Grid>
@@ -302,19 +290,16 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData}) => {
                         padding: '16px',
                     }}
                 >
-                    <LoadingButton
+                    <Button
                         disabled={!dataChanged}
-                        sx={{
-                            borderRadius: '50px',
-                            padding: '6px 16px',
-                        }}
-                        variant="outlined"
+                        radius={'lg'}
+                        variant="bordered"
                         color="primary"
                         type="submit"
-                        loading={processing}
+                        isLoading={processing}
                     >
                         Submit
-                    </LoadingButton>
+                    </Button>
                 </DialogActions>
             </form>
         </GlassDialog>

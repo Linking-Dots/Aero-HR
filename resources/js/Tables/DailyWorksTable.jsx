@@ -10,7 +10,7 @@ import {
     TextField, Typography,
 } from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
-import {usePage} from "@inertiajs/react";
+import { usePage} from "@inertiajs/react";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
@@ -20,8 +20,11 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination, SelectItem, Select, User, Input} from "@nextui-org/react";
+import {Pagination, SelectItem, Select, User, Input, Link} from "@nextui-org/react";
 import Loader from "@/Components/Loader.jsx";
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import CloseIcon from "@mui/icons-material/Close";
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -87,8 +90,39 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             center: 'true',
             width: '140px',
             cell: row => (
+
                 <>
-                    {row.number}
+                    {row.status === 'completed' && row.file ? (
+                        <Link
+                            isBlock
+                            showAnchorIcon
+                            anchorIcon={<AssignmentTurnedInIcon />}
+                            href={row.file}
+                            color="success"
+                            size={'sm'}
+                        >
+                            {row.number}
+                        </Link>
+                    ) : row.status === 'completed' && !row.file ? (
+                        <Link
+                            isBlock
+                            showAnchorIcon
+                            anchorIcon={<CloseIcon />}
+                            href="#"
+                            color="danger"
+                            size={'sm'}
+                            onClick={async (e) => {
+                                e.preventDefault(); // Prevent default link behavior
+                                const imageFile = await captureImage();
+                                if (imageFile) {
+                                    await uploadImage(row.id, imageFile); // Use row.id to get the taskId
+                                }
+                            }}
+                        >
+                            {row.number}
+                        </Link>
+                    ) : (row.number)}
+
                     {row.reports && row.reports.map(report => (
                         <div key={report.ref_no}>
                         <span>
@@ -431,7 +465,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
                     onChange={(e) => handleChange(row.id, 'completion_time', e.target.value)}
                     inputProps={{
-                        placeholder: 'YYYY-MM-DDTHH:MM'
+                        placeholder: 'YYYY-MM-DDTHH:MM',
                     }}
                 />
             ),
@@ -519,8 +553,80 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 return '';
         }
     };
+
+    const captureImage = () => {
+        return new Promise((resolve, reject) => {
+            // Create a video element to display the camera feed
+            const video = document.createElement("video");
+            const canvas = document.createElement("canvas");
+            document.body.appendChild(video);
+
+            // Start the camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    video.srcObject = stream;
+                    video.play();
+
+                    // Display a button for capturing the image
+                    const captureButton = document.createElement("button");
+                    captureButton.innerText = "Capture";
+                    document.body.appendChild(captureButton);
+
+                    // Handle image capture
+                    captureButton.onclick = () => {
+                        // Draw the video frame onto a canvas
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext("2d").drawImage(video, 0, 0);
+
+                        // Convert the canvas image to a Blob (or file)
+                        canvas.toBlob((blob) => {
+                            const file = new File([blob], "task_completion.jpg", { type: "image/jpeg" });
+                            resolve(file);
+
+                            // Clean up
+                            video.pause();
+                            stream.getTracks().forEach(track => track.stop());
+                            document.body.removeChild(video);
+                            document.body.removeChild(captureButton);
+                        }, "image/jpeg");
+                    };
+                })
+                .catch(reject);
+        });
+    };
+
+
+    const uploadImage = async (taskId, imageFile) => {
+        try {
+            const formData = new FormData();
+            formData.append("taskId", taskId);
+            formData.append("file", imageFile);
+
+            const response = await axios.post(route('dailyWorks.uploadRFI'), formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            if (response.status === 200) {
+                console.log(response.data.message ? [response.data.message] : response.data.messages);
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    };
+
     const handleChange = async (taskId, key, value) => {
         try {
+            if (key === 'status' && value === 'completed') {
+                // Open camera and capture image
+                const imageFile = await captureImage();
+                if (imageFile) {
+                    // Send image to the backend
+                    await uploadImage(taskId, imageFile);
+                }
+            }
+
+
             const response = await axios.post(route('dailyWorks.update'), {
                 id: taskId,
                 [key]: value,
@@ -578,7 +684,6 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     '& .cgTKyH': {
                         backgroundColor: 'transparent !important',
                         color: theme.palette.text.primary
-
                     },
                 }}
             />

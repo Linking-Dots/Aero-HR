@@ -265,8 +265,17 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     return (
         <>
             <Head title={title}/>
+            {openModalType === 'addDailyWork' && (
+                <DailyWorkForm
+                    modalType="add"
+                    open={openModalType === 'addDailyWork'}
+                    setData={setData}
+                    closeModal={closeModal}
+                />
+            )}
             {openModalType === 'editDailyWork' && (
                 <DailyWorkForm
+                    modalType="update"
                     open={openModalType === 'editDailyWork'}
                     currentRow={currentRow}
                     setData={setData}
@@ -307,10 +316,30 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                             sx={{padding: '24px'}}
                             action={
                                 <Box display="flex" gap={2}>
-                                    {auth.permissions.includes('addTask'||'addTaskSE') && (
-                                        <Button isIconOnly variant={'faded'} title="Add Task" color="primary" id="showAddModalBtn">
-                                            <AddBox />
-                                        </Button>
+                                    {auth.roles.includes('Administrator' || 'Supervision Engineer') && (
+                                        <>
+                                            {isMobile ? (
+                                                <Button
+                                                    variant={'faded'}
+                                                    isIconOnly
+                                                    title="Add Daily Work"
+                                                    color="primary"
+                                                    onClick={() => openModal('addDailyWork')} // Handle opening the modal
+                                                >
+                                                    <AddBox />
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    title="Add Daily Work"
+                                                    variant="bordered"
+                                                    color="primary"
+                                                    startContent={<AddBox />}
+                                                    onClick={() => openModal('addDailyWork')} // Handle opening the modal
+                                                >
+                                                    Add
+                                                </Button>
+                                            )}
+                                        </>
                                     )}
                                     {auth.roles.includes('Administrator') && (
                                         <>
