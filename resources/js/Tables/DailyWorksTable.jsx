@@ -88,7 +88,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             selector: row => row.number,
             sortable: 'true',
             center: 'true',
-            width: '140px',
+            width: '160px',
             cell: row => (
 
                 <>
@@ -214,6 +214,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                         },
                     }}
                     placeholder="Select a junior"
+                    selectedKeys={[String(row.assigned || '')]}
                     renderValue={(selectedJuniors) => {
                         // Handle display of selected value(s)
                         return selectedJuniors.map((selectedJunior) => (
