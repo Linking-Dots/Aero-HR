@@ -94,6 +94,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 <>
                     {row.status === 'completed' && row.file ? (
                         <Link
+                            isExternal
                             isBlock
                             showAnchorIcon
                             anchorIcon={<AssignmentTurnedInIcon />}
@@ -194,7 +195,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             cell: row => (
                 <Select
                     items={juniors}
-                    variant="outlined"
+                    variant="underlined"
                     aria-label="Assigned"
                     fullWidth
                     size="small"
@@ -596,6 +597,11 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             });
 
             if (response.status === 200) {
+                setData(prevTasks =>
+                    prevTasks.map(task =>
+                        task.id === taskId ? { ...task, file: response.data.url } : task
+                    )
+                );
                 console.log(response.data.message ? [response.data.message] : response.data.messages);
             }
         } catch (error) {

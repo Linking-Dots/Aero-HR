@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('daily-works-summary');
     Route::post('/add-daily-work', [DailyWorkController::class, 'add'])->name('dailyWorks.add');
     Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
-    Route::post('/update-rfi-file', [DailyWorkController::class, 'update'])->name('dailyWorks.uploadRFI');
+    Route::post('/update-rfi-file', [DailyWorkController::class, 'uploadRFIFile'])->name('dailyWorks.uploadRFI');
 
 
     //Employees Routes:
