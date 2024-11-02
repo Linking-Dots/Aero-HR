@@ -556,43 +556,31 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
 
     const captureImage = () => {
         return new Promise((resolve, reject) => {
-            // Create a video element to display the camera feed
-            const video = document.createElement("video");
-            const canvas = document.createElement("canvas");
-            document.body.appendChild(video);
+            // Create a file input element
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "image/*";
+            fileInput.capture = "camera"; // Open the camera directly
 
-            // Start the camera
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then((stream) => {
-                    video.srcObject = stream;
-                    video.play();
+            // Append the file input to the body (it won't be visible)
+            document.body.appendChild(fileInput);
 
-                    // Display a button for capturing the image
-                    const captureButton = document.createElement("button");
-                    captureButton.innerText = "Capture";
-                    document.body.appendChild(captureButton);
+            // Handle the file selection
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    // Resolve the promise with the captured file
+                    resolve(file);
+                } else {
+                    reject(new Error("No file selected"));
+                }
 
-                    // Handle image capture
-                    captureButton.onclick = () => {
-                        // Draw the video frame onto a canvas
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext("2d").drawImage(video, 0, 0);
+                // Clean up
+                document.body.removeChild(fileInput);
+            };
 
-                        // Convert the canvas image to a Blob (or file)
-                        canvas.toBlob((blob) => {
-                            const file = new File([blob], "task_completion.jpg", { type: "image/jpeg" });
-                            resolve(file);
-
-                            // Clean up
-                            video.pause();
-                            stream.getTracks().forEach(track => track.stop());
-                            document.body.removeChild(video);
-                            document.body.removeChild(captureButton);
-                        }, "image/jpeg");
-                    };
-                })
-                .catch(reject);
+            // Trigger the file input click to open the camera
+            fileInput.click();
         });
     };
 
