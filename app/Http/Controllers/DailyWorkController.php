@@ -584,7 +584,7 @@ class DailyWorkController extends Controller
         // Validate the input data
         $request->validate([
             'taskId' => 'required|exists:daily_works,id',
-            'file' => 'required|image|max:2048', // Validates an image file up to 2 MB
+            'file' => 'required|image|max:5120', // Validates an image file up to 2 MB
         ]);
 
         $task = DailyWork::find($request->taskId);
