@@ -25,6 +25,7 @@ import Loader from "@/Components/Loader.jsx";
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloseIcon from "@mui/icons-material/Close";
+import { jsPDF } from "jspdf";
 
 const CustomDataTable = styled(DataTable)(({ theme }) => ({
 
@@ -556,59 +557,47 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         }
     };
 
-    const captureImage = () => {
+    const captureDocument = () => {
         return new Promise((resolve, reject) => {
             // Create a file input element
             const fileInput = document.createElement("input");
             fileInput.type = "file";
             fileInput.accept = "image/*";
             fileInput.capture = "camera"; // Open the camera directly
+            fileInput.multiple = true; // Allow multiple image selection
 
             // Append the file input to the body (it won't be visible)
             document.body.appendChild(fileInput);
 
             // Handle the file selection
             fileInput.onchange = async () => {
-                const file = fileInput.files[0];
-                if (file) {
-                    // Create an Image object to load the selected image
-                    const img = new Image();
-                    img.src = URL.createObjectURL(file);
+                const files = Array.from(fileInput.files);
+                if (files.length > 0) {
+                    try {
+                        const images = [];
 
-                    img.onload = () => {
-                        // Calculate the new dimensions
-                        const targetHeight = 1024;
-                        const aspectRatio = img.width / img.height;
-                        const targetWidth = targetHeight * aspectRatio;
+                        // Load each selected file into an Image object and resize it
+                        for (let file of files) {
+                            const img = await loadImage(file);
+                            const resizedCanvas = resizeImage(img, 1024); // Resize to a consistent height
+                            images.push(resizedCanvas);
+                        }
 
-                        // Create a canvas to resize the image
-                        const canvas = document.createElement("canvas");
-                        canvas.width = targetWidth;
-                        canvas.height = targetHeight;
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        // Combine images into a single PDF document
+                        const pdfBlob = await combineImagesToPDF(images);
 
-                        // Convert the canvas to a Blob (or File)
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                const resizedFile = new File([blob], "resized_task_completion.jpg", { type: "image/jpeg" });
-                                resolve(resizedFile);
-                            } else {
-                                reject(new Error("Image resizing failed"));
-                            }
+                        // Resolve the final PDF file
+                        const pdfFile = new File([pdfBlob], "scanned_document.pdf", { type: "application/pdf" });
+                        resolve(pdfFile);
 
-                            // Clean up
-                            URL.revokeObjectURL(img.src);
-                            document.body.removeChild(fileInput);
-                        }, "image/jpeg");
-                    };
-
-                    img.onerror = () => {
-                        reject(new Error("Failed to load image"));
+                        // Clean up
                         document.body.removeChild(fileInput);
-                    };
+                    } catch (error) {
+                        reject(error);
+                        document.body.removeChild(fileInput);
+                    }
                 } else {
-                    reject(new Error("No file selected"));
+                    reject(new Error("No files selected"));
                     document.body.removeChild(fileInput);
                 }
             };
@@ -617,6 +606,52 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             fileInput.click();
         });
     };
+
+// Helper function to load image from file
+    const loadImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                resolve(img);
+                URL.revokeObjectURL(img.src);
+            };
+            img.onerror = () => reject(new Error("Failed to load image"));
+        });
+    };
+
+// Helper function to resize an image and return a canvas
+    const resizeImage = (img, targetHeight) => {
+        const aspectRatio = img.width / img.height;
+        const targetWidth = targetHeight * aspectRatio;
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        return canvas;
+    };
+
+// Helper function to combine images into a PDF using jsPDF
+    const combineImagesToPDF = (images) => {
+        return new Promise((resolve, reject) => {
+
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "px",
+                format: [images[0].width, images[0].height],
+            });
+
+            images.forEach((canvas, index) => {
+                if (index > 0) pdf.addPage(); // Add a new page for each image
+                const imgData = canvas.toDataURL("image/jpeg", 1.0);
+                pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
+            });
+
+            pdf.output("blob").then(resolve).catch(reject);
+        });
+    };
+
 
 
 
@@ -708,10 +743,10 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         try {
             if (key === 'status' && value === 'completed') {
                 // Open camera and capture image
-                const imageFile = await captureImage();
-                if (imageFile) {
+                const pdfFile = await captureDocument();
+                if (pdfFile) {
                     // Send image to the backend
-                    await uploadImage(taskId, imageFile);
+                    await uploadImage(taskId, pdfFile);
                 }
             }
 
