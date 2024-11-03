@@ -600,34 +600,40 @@ class DailyWorkController extends Controller
 
     public function uploadRFIFile(Request $request)
     {
-        // Validate the input data
-        $request->validate([
-            'taskId' => 'required|exists:daily_works,id',
-            'file' => 'required|mimes:pdf|max:5120', // Validates a PDF file up to 5 MB
-        ]);
+        try {
+            // Validate the input data
+            $request->validate([
+                'taskId' => 'required|exists:daily_works,id',
+                'file' => 'required|mimes:pdf|max:5120', // Validates a PDF file up to 5 MB
+            ]);
 
-        $task = DailyWork::find($request->taskId);
+            $task = DailyWork::find($request->taskId);
 
-        if ($request->hasFile('file')) {
-            $newRfiFile = $request->file('file');
+            if ($request->hasFile('file')) {
+                $newRfiFile = $request->file('file');
 
-            // Clear old file from 'rfi_files' collection if it exists
-            $task->clearMediaCollection('rfi_files');
+                // Clear old file from 'rfi_files' collection if it exists
+                $task->clearMediaCollection('rfi_files');
 
-            // Add the new RFI file to the 'rfi_files' collection
-            $task->addMediaFromRequest('file')->toMediaCollection('rfi_files');
+                // Add the new RFI file to the 'rfi_files' collection
+                $task->addMediaFromRequest('file')->toMediaCollection('rfi_files');
 
-            // Get the new file URL
-            $newRfiFileUrl = $task->getFirstMediaUrl('rfi_files');
+                // Get the new file URL
+                $newRfiFileUrl = $task->getFirstMediaUrl('rfi_files');
 
-            // Optionally, you can store this URL in a specific field if needed
-            $task->file = $newRfiFileUrl;
-            $task->save();
+                // Optionally, you can store this URL in a specific field if needed
+                $task->file = $newRfiFileUrl;
+                $task->save();
 
-            return response()->json(['message' => 'RFI file uploaded successfully', 'url' => $newRfiFileUrl]);
+                return response()->json(['message' => 'RFI file uploaded successfully', 'url' => $newRfiFileUrl]);
+            }
+
+            return response()->json(['message' => 'No file uploaded'], 400);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while uploading the RFI file.'], 500);
         }
-
-        return response()->json(['message' => 'No file uploaded'], 400);
     }
 
 

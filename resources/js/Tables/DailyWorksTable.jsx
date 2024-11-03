@@ -648,12 +648,14 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
             });
 
-            pdf.output("blob").then(resolve).catch(reject);
+            try {
+                const pdfBlob = pdf.output("blob");
+                resolve(pdfBlob);
+            } catch (error) {
+                reject(error);
+            }
         });
     };
-
-
-
 
     const uploadImage = async (taskId, imageFile) => {
         const promise = new Promise(async (resolve, reject) => {
@@ -785,6 +787,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 });
             }
         } catch (error) {
+            console.log(error);
             toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
                 icon: '🔴',
                 style: {
