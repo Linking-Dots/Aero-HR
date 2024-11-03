@@ -743,8 +743,6 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
 
     const handleChange = async (taskId, key, value) => {
         try {
-
-            console.log(key, value);
             if (key === 'status' && value === 'completed') {
                 // Open camera and capture image
                 const pdfFile = await captureDocument();
