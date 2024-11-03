@@ -563,7 +563,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             const fileInput = document.createElement("input");
             fileInput.type = "file";
             fileInput.accept = "image/*";
-            fileInput.capture = "camera"; // Open the camera directly
+            // fileInput.capture = "camera"; // Open the camera directly
             fileInput.multiple = true; // Allow multiple image selection
 
             // Append the file input to the body (it won't be visible)
