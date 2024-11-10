@@ -319,7 +319,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
                                                 </TableBody>
                                             </Table>
                                         </ScrollShadow>
-                                        {totalRows >= 10 && (
+                                        {totalRows > 10 && (
                                             <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
                                                 <Pagination
                                                     initialPage={1}
