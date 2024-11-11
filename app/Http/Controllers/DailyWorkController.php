@@ -391,14 +391,18 @@ class DailyWorkController extends Controller
                 $dailyWork->status = $request->status;
                 $messages[] = 'Daily work status updated to ' . $dailyWork->status;
             }
-            if ($request->has('assigned') && !empty($request->assigned)) {
-                $request->validate(['assigned' => 'required|exists:users,id']);
-                $dailyWork->assigned = $request->assigned;
-                $messages[] = 'Daily work assigned to ' . User::find($request->assigned)->name;
-            } else {
-                $dailyWork->assigned = null;
-                $messages[] = 'Daily work assignee removed';
+            if ($request->has('assigned')) {
+                if (!empty($request->assigned)) {
+                    $request->validate(['assigned' => 'required|exists:users,id']);
+                    $dailyWork->assigned = $request->assigned;
+                    $messages[] = 'Daily work assigned to ' . User::find($request->assigned)->name;
+                } else {
+                    $dailyWork->assigned = null;
+                    $messages[] = 'Daily work assignee removed';
+                }
+
             }
+
             if ($request->has('incharge')) {
                 $request->validate(['incharge' => 'required|exists:users,id']);
                 $dailyWork->incharge = $request->incharge;
