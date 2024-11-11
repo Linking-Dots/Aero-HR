@@ -19,7 +19,10 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 // Function to create pages array
 export const getPages = (permissions) => [
     { name: 'Dashboard', icon: <DashboardIcon/>, route: 'dashboard'},
-    { name: 'Emails', icon: <MailOutlineIcon/>, route: 'emails'},
+    ...(permissions.includes('read employee') ? [
+        { name: 'Emails', icon: <MailOutlineIcon/>, route: 'emails'},
+    ] : []),
+
     { name: 'Leaves', icon: <LogoutIcon/>, route: 'leaves-employee'},
     { name: 'Attendances', icon: <CalendarTodayIcon/>, route: 'attendance-employee'},
     ...(permissions.includes('read employee') ? [
