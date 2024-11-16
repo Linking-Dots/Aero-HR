@@ -115,9 +115,10 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                             size={'sm'}
                             onClick={async (e) => {
                                 e.preventDefault(); // Prevent default link behavior
-                                const imageFile = await captureImage();
-                                if (imageFile) {
-                                    await uploadImage(row.id, imageFile); // Use row.id to get the taskId
+                                const pdfFile = await captureDocument();
+                                if (pdfFile) {
+                                    // Send image to the backend
+                                    await uploadImage(row.id, pdfFile);
                                 }
                             }}
                         >
@@ -148,7 +149,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     aria-label="Status"
                     fullWidth
                     value={row.status || 'na'} // Set the value to 'na' if no status is assigned
-                    onChange={(e) => handleChange(row.id, 'status', e.target.value)}
+                    onChange={(e) => handleChange(row.id, 'status', e.target.value, row.type)}
                     selectedKeys={[String(row.status)]}
                     style={{
                         minWidth: '220px',  // Optionally set a minimum width
@@ -741,9 +742,68 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         );
     };
 
-    const handleChange = async (taskId, key, value) => {
+    const handleChange = async (taskId, key, value, type) => {
         try {
-            if (key === 'status' && value === 'completed') {
+            if (key === 'status' && value === 'completed' && type === 'Embankment') {
+                // Open camera and capture image
+                const pdfFile = await captureDocument();
+                if (pdfFile) {
+                    // Send image to the backend
+                    await uploadImage(taskId, pdfFile);
+                }
+            }
+
+
+            const response = await axios.post(route('dailyWorks.update'), {
+                id: taskId,
+                [key]: value,
+            });
+
+
+            if (response.status === 200) {
+                setData(prevTasks =>
+                    prevTasks.map(task =>
+                        task.id === taskId ? { ...task, [key]: value } : task
+                    )
+                );
+
+                toast.success(...response.data.messages || `Task updated successfully`, {
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                });
+            } else {
+                toast.error(response.data.error || `Failed to update task ${[key]}.`, {
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    }
+                });
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    backgroundColor: theme.glassCard.backgroundColor,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                }
+            });
+        }
+    };
+
+    const uploadFile = async (taskId) => {
+        try {
+            if (key === 'status' && value === 'completed' && type === 'Embankment') {
                 // Open camera and capture image
                 const pdfFile = await captureDocument();
                 if (pdfFile) {
