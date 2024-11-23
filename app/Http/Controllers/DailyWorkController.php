@@ -136,6 +136,8 @@ class DailyWorkController extends Controller
             $importedSheets = Excel::toArray(new DailyWorkImport, $path); // Retrieve all sheets
 
             foreach ($importedSheets as $sheetIndex => $importedDailyWorks) {
+
+
                 $index = $sheetIndex++;
                 // Skip empty sheets
                 if (empty($importedDailyWorks)) {
@@ -614,19 +616,24 @@ class DailyWorkController extends Controller
                 'file' => 'required|mimes:pdf|max:5120', // Validates a PDF file up to 5 MB
             ]);
 
-            $task = DailyWork::find($request->taskId);
+            $task = DailyWork::findOrFail($request->taskId);
 
             if ($request->hasFile('file')) {
-                $newRfiFile = $request->file('file');
-
                 // Clear old file from 'rfi_files' collection if it exists
                 $task->clearMediaCollection('rfi_files');
 
-                // Add the new RFI file to the 'rfi_files' collection
-                $task->addMediaFromRequest('file')->toMediaCollection('rfi_files');
+                // Generate custom folder path based on the task number
+                $customPath = 'rfi_attachments/' . $task->number;
 
-                // Get the new file URL
-                $newRfiFileUrl = $task->getFirstMediaUrl('rfi_files');
+                // Add the new RFI file to the 'rfi_files' collection with a custom path
+                $newRfiFile = $task->addMediaFromRequest('file')
+                    ->usingFileName('scanned_document.pdf') // Enforce specific file name
+                    ->storingConversionsOnDisk('public') // Ensure stored on public disk
+                    ->withCustomProperties(['custom_path' => $customPath]) // Optional metadata
+                    ->toMediaCollection('rfi_files', 'public');
+
+                // Generate a custom URL for the stored file
+                $newRfiFileUrl = asset("storage/{$customPath}/scanned_document.pdf");
 
                 // Optionally, you can store this URL in a specific field if needed
                 $task->file = $newRfiFileUrl;
@@ -639,9 +646,12 @@ class DailyWorkController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
+            // Log the exception for debugging
+            \Log::error('RFI File Upload Error: ' . $e->getMessage());
             return response()->json(['error' => 'An error occurred while uploading the RFI file.'], 500);
         }
     }
+
 
 
     /**
