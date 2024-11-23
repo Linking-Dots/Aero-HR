@@ -625,12 +625,19 @@ class DailyWorkController extends Controller
                 // Generate custom folder path based on the task number
                 $customPath = 'rfi_attachments/' . $task->number;
 
+                // Ensure the folder exists by creating it manually
+                $storagePath = storage_path('app/public/' . $customPath);
+                if (!file_exists($storagePath)) {
+                    mkdir($storagePath, 0777, true); // Creates the directory recursively
+                }
+
                 // Add the new RFI file to the 'rfi_files' collection with a custom path
                 $newRfiFile = $task->addMediaFromRequest('file')
                     ->usingFileName('scanned_document.pdf') // Enforce specific file name
-                    ->storingConversionsOnDisk('public') // Ensure stored on public disk
-                    ->withCustomProperties(['custom_path' => $customPath]) // Optional metadata
                     ->toMediaCollection('rfi_files', 'public');
+
+                // Move the file to the custom path
+                $newRfiFile->move(storage_path("app/public/{$customPath}"), 'scanned_document.pdf');
 
                 // Generate a custom URL for the stored file
                 $newRfiFileUrl = asset("storage/{$customPath}/scanned_document.pdf");
@@ -651,6 +658,7 @@ class DailyWorkController extends Controller
             return response()->json(['error' => 'An error occurred while uploading the RFI file.'], 500);
         }
     }
+
 
 
 
