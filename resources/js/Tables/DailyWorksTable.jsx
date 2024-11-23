@@ -115,7 +115,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                             size={'sm'}
                             onClick={async (e) => {
                                 e.preventDefault(); // Prevent default link behavior
-                                const pdfFile = await captureDocument();
+                                const pdfFile = await captureDocument(row.number);
                                 if (pdfFile) {
                                     // Send image to the backend
                                     await uploadImage(row.id, pdfFile);
@@ -149,7 +149,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     aria-label="Status"
                     fullWidth
                     value={row.status || 'na'} // Set the value to 'na' if no status is assigned
-                    onChange={(e) => handleChange(row.id, 'status', e.target.value, row.type)}
+                    onChange={(e) => handleChange(row.id,row.number, 'status', e.target.value, row.type)}
                     selectedKeys={[String(row.status)]}
                     style={{
                         minWidth: '220px',  // Optionally set a minimum width
@@ -205,7 +205,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     style={{
                         minWidth: '260px',  // Optionally set a minimum width
                     }}
-                    onChange={(e) => handleChange(row.id, 'assigned', e.target.value)}
+                    onChange={(e) => handleChange(row.id,row.number, 'assigned', e.target.value)}
                     popoverProps={{
                         classNames: {
                             content: 'bg-transparent backdrop-blur-lg border-inherit',
@@ -323,7 +323,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
 
                 const handleBlur = () => {
                     setIsEditing(false);
-                    handleChange(row.id,'inspection_details', inputValue);
+                    handleChange(row.id,row.number,'inspection_details', inputValue);
                 };
 
                 return (
@@ -391,7 +391,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     aria-label="Incharge"
                     fullWidth
                     value={row.incharge || 'na'}  // Set the value to 'na' if no incharge is assigned
-                    onChange={(e) => handleChange(row.id, 'incharge', e.target.value)}
+                    onChange={(e) => handleChange(row.id,row.number, 'incharge', e.target.value)}
                     selectedKeys={[String(row.incharge)]}
                     style={{
                         minWidth: '260px',  // Optionally set a minimum width
@@ -467,7 +467,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     variant={'underlined'}
                     type={'datetime-local'}
                     value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
-                    onChange={(e) => handleChange(row.id, 'completion_time', e.target.value)}
+                    onChange={(e) => handleChange(row.id,row.number, 'completion_time', e.target.value)}
                     inputProps={{
                         placeholder: 'YYYY-MM-DDTHH:MM',
                     }}
@@ -502,7 +502,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     size="sm"
                     type="date"
                     variant={'underlined'}
-                    onChange={(e) => handleChange(row.id, 'rfi_submission_date', e.target.value)}
+                    onChange={(e) => handleChange(row.id,row.number, 'rfi_submission_date', e.target.value)}
                     value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
                     inputProps={{
@@ -558,7 +558,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         }
     };
 
-    const captureDocument = () => {
+    const captureDocument = (taskNumber) => {
         return new Promise((resolve, reject) => {
             // Create a file input element
             const fileInput = document.createElement("input");
@@ -588,7 +588,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                         const pdfBlob = await combineImagesToPDF(images);
 
                         // Resolve the final PDF file
-                        const pdfFile = new File([pdfBlob], "scanned_document.pdf", { type: "application/pdf" });
+                        const pdfFile = new File([pdfBlob], `${taskNumber}_scanned_document.pdf`, { type: "application/pdf" });
                         resolve(pdfFile);
 
                         // Clean up
@@ -742,11 +742,11 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         );
     };
 
-    const handleChange = async (taskId, key, value, type) => {
+    const handleChange = async (taskId,taskNumber, key, value, type) => {
         try {
             if (key === 'status' && value === 'completed' && !(type === 'Structure')) {
                 // Open camera and capture image
-                const pdfFile = await captureDocument();
+                const pdfFile = await captureDocument(taskNumber);
                 if (pdfFile) {
                     // Send image to the backend
                     await uploadImage(taskId, pdfFile);

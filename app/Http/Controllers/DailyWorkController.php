@@ -619,19 +619,13 @@ class DailyWorkController extends Controller
             $task = DailyWork::find($request->taskId);
 
             if ($request->hasFile('file')) {
+                $newRfiFile = $request->file('file');
 
                 // Clear old file from 'rfi_files' collection if it exists
                 $task->clearMediaCollection('rfi_files');
 
                 // Add the new RFI file to the 'rfi_files' collection
-                $customPath = 'rfi_attachments/' . $task->number;
-
-                // Add the new RFI file to the 'rfi_files' collection with a custom path
-                $task->addMediaFromRequest('file')
-                    ->usingFileName('scanned_document.pdf') // Enforce specific file name
-                    ->storingConversionsOnDisk('public') // Ensure stored on public disk
-                    ->withCustomProperties(['custom_path' => $customPath]) // Optional metadata
-                    ->toMediaCollection('rfi_files', 'public');
+                $task->addMediaFromRequest('file')->toMediaCollection('rfi_files');
 
                 // Get the new file URL
                 $newRfiFileUrl = $task->getFirstMediaUrl('rfi_files');
