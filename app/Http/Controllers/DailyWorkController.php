@@ -137,17 +137,23 @@ class DailyWorkController extends Controller
 
             foreach ($importedSheets as $sheetIndex => $importedDailyWorks) {
 
-
-                $index = $sheetIndex++;
                 // Skip empty sheets
                 if (empty($importedDailyWorks)) {
                     continue;
                 }
 
+                $index = $sheetIndex + 1; // Increment index for display
                 $customAttributes = [];
+                $referenceDate = $importedDailyWorks[0][0] ?? null; // First date of the sheet
+
+                if (!$referenceDate) {
+                    return response()->json(["errors" => "Sheet {$index} is missing a reference date."], 422);
+                }
+
                 foreach ($importedDailyWorks as $rowIndex => $importedDailyWork) {
                     $taskNumber = $importedDailyWork[1] ?? 'unknown';
                     $date = $importedDailyWork[0] ?? 'unknown';
+
                     $customAttributes["$rowIndex.0"] = "Sheet {$index} - Daily Work number {$taskNumber}'s date {$date}";
                     $customAttributes["$rowIndex.1"] = "Sheet {$index} - Daily Work number {$taskNumber}'s RFI number";
                     $customAttributes["$rowIndex.2"] = "Sheet {$index} - Daily Work number {$taskNumber}'s type";
@@ -156,7 +162,15 @@ class DailyWorkController extends Controller
                 }
 
                 $validator = Validator::make($importedDailyWorks, [
-                    '*.0' => 'required|date_format:Y-m-d',
+                    '*.0' => [
+                        'required',
+                        'date_format:Y-m-d',
+                        function ($attribute, $value, $fail) use ($referenceDate) {
+                            if ($value !== $referenceDate) {
+                                $fail("The $attribute must match the reference date {$referenceDate}.");
+                            }
+                        },
+                    ],
                     '*.1' => 'required|string',
                     '*.2' => 'required|string|in:Embankment,Structure,Pavement',
                     '*.3' => 'required|string',
@@ -175,6 +189,7 @@ class DailyWorkController extends Controller
                     return response()->json(['errors' => $validator->errors()], 422);
                 }
             }
+
 
             foreach ($importedSheets as $sheetIndex => $importedDailyWorks) {
                 // Skip empty sheets

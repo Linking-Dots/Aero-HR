@@ -43,6 +43,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     // const [dailyWorks, setDailyWorks] = useState(allData.dailyWorks);
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [filteringByStatus, setFilteringByStatus] = useState(false);
+    const [filteringByIncharge, setFilteringByIncharge] = useState(false);
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
     const [filteredData, setFilteredData] = useState([]);
@@ -74,6 +76,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             setTotalRows(response.data.total);
             setLastPage(response.data.last_page);
             setLoading(false);
+            setFilteringByIncharge(false);
+            setFilteringByStatus(false);
         } catch (error) {
             console.log(error)
             toast.error('Failed to fetch data.', {
@@ -86,6 +90,8 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                 }
             });
             setLoading(false);
+            setFilteringByIncharge(false);
+            setFilteringByStatus(false);
         }
     };
 
@@ -203,7 +209,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
     });
 
     const handleFilterChange = useCallback((key, value) => {
-        console.log(key, value);
 
         // Handle date range changes
         if (key === 'startDate' || key === 'endDate') {
@@ -219,6 +224,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
 
         } else {
+            key === 'status' ? setFilteringByStatus(true) : key === 'incharge' ? setFilteringByIncharge(true) : '';
             setFilterData(prevState => ({
                 ...prevState,
                 [key]: value,
@@ -432,7 +438,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     </Grid>
                                     <Grid item xs={6} sm={4} md={3}>
                                         <Select
-                                            isLoading={loading}
+                                            isLoading={filteringByStatus}
                                             label={'Status'}
                                             fullWidth
                                             variant={'bordered'}
@@ -458,16 +464,16 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                                     {auth.roles.includes('Administrator') && (
                                         <Grid item xs={6} sm={4} md={3}>
                                             <Select
-                                                isLoading={loading}
+                                                isLoading={filteringByIncharge}
                                                 label={'Incharge'}
                                                 fullWidth
                                                 aria-label={'Incharge'}
                                                 variant={'bordered'}
-                                                placeholder="Select Status"
+                                                placeholder="Select Incharge"
                                                 name="incharge"
                                                 value={filterData.incharge}
                                                 onChange={(e) => handleFilterChange('incharge', e.target.value)}
-                                                selectedKeys={[filterData.status]}
+                                                selectedKeys={[filterData.incharge]}
                                                 popoverProps={{
                                                     classNames: {
                                                         content: "bg-transparent backdrop-blur-lg border-inherit",
