@@ -69,7 +69,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
     const handleLocationError = (error, reject) => {
-        console.log('Location error:', error);
+        console.error('Location error:', error);
         if (error.code === error.PERMISSION_DENIED) {
             toast.error('Location permission denied. Please enable location services in your browser settings and try again.', {
                 icon: '🔴',
@@ -98,7 +98,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                 navigator.geolocation.getCurrentPosition(
                     async (pos) => {
                         const position = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                        console.log(`Location retrieved: ${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}`);
 
                         const endpoint = action === 'punchin' ? '/punchIn' : '/punchOut';
                         const startLocation = { lat: 23.987057, lng: 90.361908 };
@@ -142,7 +141,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                         reject(['Failed to set attendance. Please try again.']);
                                     }
                                 } catch (error) {
-                                    console.log(error);
+                                    console.error(error);
                                     reject([error.response?.data?.message || 'Failed to set attendance. Please try again.']);
                                 }
                             }

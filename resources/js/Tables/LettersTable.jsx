@@ -122,7 +122,6 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             )
         );
     };
-    console.log(users)
 
     const columns = [
         {
@@ -450,7 +449,6 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
 
 
     const handleChange = async (letterId, key, value) => {
-        console.log(letterId, key, value)
         try {
             const response = await axios.put(route('letters.update'), {
                 id: letterId,

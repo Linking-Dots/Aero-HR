@@ -65,14 +65,13 @@ const Letters = React.memo(({ auth, title, users }) => {
                     search: search, // Assuming 'report' is the search field
                 }
             });
-            console.log(response)
 
             setData(response.data.data);
             setTotalRows(response.data.total);
             setLastPage(response.data.last_page);
             setLoading(false);
         } catch (error) {
-            console.log(error)
+            console.error(error)
             toast.error('Failed to fetch data.', {
                 icon: '🔴',
                 style: {

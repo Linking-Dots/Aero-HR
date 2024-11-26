@@ -76,7 +76,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             setLeaveCounts(response.data.leaveCounts);
 
         } catch (error) {
-            console.log(error)
+            console.error(error)
             toast.error('Failed to fetch data.', {
                 icon: '🔴',
                 style: {

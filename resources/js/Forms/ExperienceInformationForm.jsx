@@ -188,7 +188,7 @@ const ExperienceInformationForm = ({ user, open, closeModal, setUser }) => {
                 } else {
                     setProcessing(false);
                     setErrors(data.errors);
-                    console.log(data.errors);
+                    console.error(data.errors);
                     reject(data.error || 'Failed to update experience records.');
                 }
             } catch (error) {

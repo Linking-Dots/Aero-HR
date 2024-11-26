@@ -676,7 +676,6 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                         )
                     );
                     resolve([response.data.message || 'RFI file uploaded successfully']);
-                    console.log(response.data.message ? [response.data.message] : response.data.messages);
                 }
             } catch (error) {
 
@@ -788,7 +787,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 });
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
             toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
                 icon: '🔴',
                 style: {

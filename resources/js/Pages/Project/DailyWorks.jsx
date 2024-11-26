@@ -70,7 +70,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     endDate: filterData.endDate,
                 }
             });
-            console.log(response);
 
             setData(response.data.data);
             setTotalRows(response.data.total);
@@ -79,7 +78,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             setFilteringByIncharge(false);
             setFilteringByStatus(false);
         } catch (error) {
-            console.log(error)
+            console.error(error)
             toast.error('Failed to fetch data.', {
                 icon: '🔴',
                 style: {
@@ -263,9 +262,6 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                 return '';
         }
     };
-
-
-    console.log(overallStartDate, overallEndDate);
 
 
     return (

@@ -108,7 +108,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     }
                 } catch (error) {
                     setProcessing(false);
-                    console.log(error);
+                    console.error(error);
                     reject(error.message || 'An unexpected error occurred.');
                 }
             });

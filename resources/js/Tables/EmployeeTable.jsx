@@ -56,7 +56,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     console.error(data.errors);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 reject(['An unexpected error occurred.']);
             }
         });

@@ -155,10 +155,6 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
         setFilteredData(Object.values(merged));
     }, [filterData, dailyWorkSummary]);
 
-
-
-    console.log(filteredData)
-
     return (
         <>
             <Head title={title}/>

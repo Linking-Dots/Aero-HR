@@ -183,7 +183,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
 
 
     const handleChange = (key, value) => {
-        console.log(key, value)
         setInitialUserData((prevUser) => {
             const updatedData = { ...prevUser, [key]: value };
 
@@ -248,7 +247,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
         setDataChanged(hasChanges);
 
     }, [initialUserData, changedUserData]);
-    console.log(initialUserData)
     return (
         <GlassDialog
             open={open}
@@ -416,7 +414,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 placeholder="Select Gender"
                                 value={changedUserData.gender || initialUserData.gender || 'na'}
                                 onChange={(e) => {
-                                    console.log(e); // Log the event or value
                                     handleChange('gender', e.target ? e.target.value : e); // Check if it's an event object or a value
                                 }}
                                 errorMessage={Boolean(errors.gender)}
@@ -491,7 +488,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 placeholder="Select Department"
                                 value={changedUserData.department || initialUserData.department || 'na'}
                                 onChange={(e) => {
-                                    console.log(e); // Log the event or value
                                     handleChange('department', e.target ? e.target.value : e); // Check if it's an event object or a value
                                 }}
                                 errorMessage={Boolean(errors.department)}
@@ -519,7 +515,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 placeholder="Select Designation"
                                 value={changedUserData.designation || initialUserData.designation || 'na'}
                                 onChange={(e) => {
-                                    console.log(e); // Log the event or value
                                     handleChange('designation', e.target ? e.target.value : e); // Check if it's an event object or a value
                                 }}
                                 errorMessage={Boolean(errors.designation) ? 'This field is required' : ''}
@@ -548,7 +543,6 @@ const AddUserForm = ({user, allUsers, departments, designations,setUser, open, c
                                 placeholder="Select Reports To"
                                 value={changedUserData.report_to || initialUserData.report_to}
                                 onChange={(e) => {
-                                    console.log(e); // Log the event or value
                                     handleChange('report_to', e.target ? e.target.value : e); // Check if it's an event object or a value
                                 }}
                                 errorMessage={Boolean(errors.report_to) ? 'This field is required' : ''}

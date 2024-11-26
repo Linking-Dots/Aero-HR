@@ -64,8 +64,6 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData, modalType}) => {
                     ...dailyWorkData
                 });
 
-                console.log(response)
-
                 if (response.status === 200) {
                     setData(prevWorks => prevWorks.map(work =>
                         work.id === dailyWorkData.id ? {...work, ...dailyWorkData} : work
@@ -75,7 +73,6 @@ const DailyWorkForm = ({ open, closeModal, currentRow, setData, modalType}) => {
                     resolve(response.data.message ? [response.data.message] : response.data.messages);
                     setProcessing(false);
                     closeModal();
-                    console.log(response.data.message ? [response.data.message] : response.data.messages);
                 }
             } catch (error) {
                 setProcessing(false);

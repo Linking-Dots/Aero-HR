@@ -8,7 +8,6 @@ import Grow from "@mui/material/Grow";
 import GlassCard from "@/Components/GlassCard.jsx";
 
 export default function ResetPassword({ status }) {
-    console.log(status)
     const [data, setData] = useState({
         oldPassword: '',
         newPassword: '',

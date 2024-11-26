@@ -64,7 +64,7 @@ const LeaveSettings = ({title}) => {
                     reject(['Failed to add leave type. Please try again.']);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 reject([error.response?.data?.message || 'Failed to add leave type. Please try again.']);
             }
         });
@@ -154,7 +154,7 @@ const LeaveSettings = ({title}) => {
                     reject(['Failed to update leave type. Please try again.']);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 reject([error.response?.data?.message || 'Failed to update leave type. Please try again.']);
             }
         });

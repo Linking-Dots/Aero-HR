@@ -97,8 +97,6 @@ const Emails = () => {
         }
     };
 
-    console.log(emails)
-
     const getHeader = (headers, name) => {
         const header = headers.find((header) => header.name === name);
         return header ? header.value : 'No Information';

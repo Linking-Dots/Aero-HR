@@ -67,8 +67,6 @@ const DailyWorkUploadForm = ({ open, closeModal, setTotalRows, setData }) => {
             try {
                 const response = await axios.post(route('dailyWorks.import'), formData);
 
-                console.log(response)
-
                 if (response.status === 200) {
                     setData(response.data.data); // Set the imported data
                     setTotalRows(response.data.total); // Set the total rows if needed
@@ -76,8 +74,8 @@ const DailyWorkUploadForm = ({ open, closeModal, setTotalRows, setData }) => {
                     closeModal(); // Close the modal after a successful upload
                 }
             } catch (error) {
-                console.log(error.response)
-                console.log(error.response.data.errors)
+                console.error(error.response)
+                console.error(error.response.data.errors)
                 reject(`Error: ${error.message || 'An unexpected error occurred.'}`);
             } finally {
                 setProcessing(false);

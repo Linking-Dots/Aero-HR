@@ -168,7 +168,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                     color: theme.palette.text.primary,
                 }
             });
-            console.log(error);
+            console.error(error);
         }
     };
 
