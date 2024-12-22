@@ -126,7 +126,7 @@ class DailyWorkController extends Controller
     }
 
 
-    public function all(Request $request)
+    public function all(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = Auth::user();
         $search = $request->get('search'); // Search query
@@ -146,6 +146,15 @@ class DailyWorkController extends Controller
                 )
             );
 
+        // Apply search if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%{$search}%")
+                    ->orWhere('location', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('date', 'LIKE', "%{$search}%");
+            });
+        }
 
         // Apply status filter if provided
         if ($statusFilter) {
