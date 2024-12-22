@@ -303,6 +303,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                     open={openModalType === 'exportDailyWorks'}
                     closeModal={closeModal}
                     filterData={filterData}
+                    search={search}
                     users={users}
                 />
             )}
