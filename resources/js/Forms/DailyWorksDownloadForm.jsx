@@ -39,8 +39,7 @@ const DailyWorksDownloadForm = ({ open, closeModal, search, filterData, users })
                         endDate: filterData.endDate,
                     }
                 });
-                setData(response.data.data);
-                console.log(response.data);
+                setData(response.data);
             } catch (error) {
                 console.error(error);
                 toast.error('Failed to fetch data.', {
