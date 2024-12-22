@@ -125,6 +125,53 @@ class DailyWorkController extends Controller
         return response()->json($paginatedDailyWorks);
     }
 
+
+    public function all(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->get('search'); // Search query
+        $statusFilter = $request->get('status'); // Filter by status
+        $inChargeFilter = $request->get('inCharge'); // Filter by inCharge
+        $startDate = $request->get('startDate'); // Filter by start date
+        $endDate = $request->get('endDate'); // Filter by end date
+
+        // Base query depending on user's role
+        $query = $user->hasRole('Supervision Engineer')
+            ? DailyWork::with('reports')->where('incharge', $user->id)
+            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
+                ? DailyWork::with('reports')->where('assigned', $user->id)
+                : ($user->hasRole('Administrator')
+                    ? DailyWork::with('reports')
+                    : DailyWork::query()
+                )
+            );
+
+
+        // Apply status filter if provided
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        // Apply in-charge filter if provided
+        if ($inChargeFilter) {
+            $query->where('incharge', $inChargeFilter);
+        }
+
+        // Apply date range filter if provided
+        if ($startDate && $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->where('date', '>=', $startDate);
+        }
+
+        // Order by 'date' in descending order
+        $allDailyWorks = $query->orderBy('date', 'desc');
+
+
+        // Return the paginated response as JSON
+        return response()->json($allDailyWorks);
+    }
+
     public function import(Request $request)
     {
         try {

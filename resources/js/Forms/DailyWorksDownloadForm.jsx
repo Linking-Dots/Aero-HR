@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
     Checkbox,
     CircularProgress,
@@ -21,9 +21,41 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import {Download} from '@mui/icons-material';
 
 import * as XLSX from 'xlsx';
+import axios from "axios";
 
 
-const DailyWorksDownloadForm = ({ open, closeModal,  data, users }) => {
+const DailyWorksDownloadForm = ({ open, closeModal, search, filterData, users }) => {
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(route('dailyWorks.all'), {
+                    params: {
+                        search,
+                        status: filterData.status !== 'all' ? filterData.status : '',
+                        inCharge: filterData.incharge !== 'all' ? filterData.incharge : '',
+                        startDate: filterData.startDate,
+                        endDate: filterData.endDate,
+                    }
+                });
+                setData(response.data.data);
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to fetch data.', {
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        backgroundColor: theme.glassCard.backgroundColor,
+                        border: theme.glassCard.border,
+                        color: theme.palette.text.primary,
+                    },
+                });
+            }
+        };
+
+        fetchData();
+    }, [filterData, search]);
 
     const [processing, setProcessing] = useState(false);
     const theme = useTheme();

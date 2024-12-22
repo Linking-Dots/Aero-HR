@@ -230,12 +230,10 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
             }));
         }
     }, [filterData]);
-
     const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setSearch(value);
     };
-
 
 
     useEffect(() => {
@@ -304,7 +302,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
                 <DailyWorksDownloadForm
                     open={openModalType === 'exportDailyWorks'}
                     closeModal={closeModal}
-                    data={data}
+                    filterData={filterData}
                     users={users}
                 />
             )}
