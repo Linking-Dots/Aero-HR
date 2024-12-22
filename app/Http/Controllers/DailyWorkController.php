@@ -165,7 +165,7 @@ class DailyWorkController extends Controller
         }
 
         // Order by 'date' in descending order
-        $allDailyWorks = $query->orderBy('date', 'desc');
+        $allDailyWorks = $query->orderBy('date', 'desc')->get();
 
 
         // Return the paginated response as JSON
