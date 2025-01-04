@@ -36,4 +36,11 @@ class Leave extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    // In the Leave model
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

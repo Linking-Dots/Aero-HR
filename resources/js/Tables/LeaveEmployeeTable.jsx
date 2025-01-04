@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
     Avatar,
     Typography,
@@ -6,45 +7,72 @@ import {
     InputLabel,
     MenuItem,
     IconButton,
-    Button, Box, CircularProgress, FormHelperText
-} from '@mui/material';
-import { AccountCircle, Edit, Delete } from '@mui/icons-material';
-import {useTheme} from "@mui/material/styles";
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
-import EditIcon from "@mui/icons-material/Edit.js";
-import DeleteIcon from "@mui/icons-material/Delete.js";
-import React, {useState} from "react";
-import {usePage} from "@inertiajs/react";
-import Menu from "@mui/material/Menu";
+    Button,
+    Box,
+    CircularProgress,
+    FormHelperText,
+    Menu
+} from "@mui/material";
+import {
+    AccountCircle,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    RadioButtonChecked as RadioButtonCheckedIcon,
+    FiberNew as NewIcon
+} from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
+import { usePage } from "@inertiajs/react";
 import { toast } from "react-toastify";
-import NewIcon from "@mui/icons-material/FiberNew.js";
+import {
+    Select,
+    SelectItem,
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
+    User,
+    Tooltip,
+    Pagination
+} from "@nextui-org/react";
 
-import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@nextui-org/react";
-const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLeave, openModal, setLeavesData}) => {
-    const {auth} = usePage().props;
+const LeaveEmployeeTable = ({
+                                allLeaves,
+                                allUsers,
+                                handleClickOpen,
+                                setCurrentLeave,
+                                openModal,
+                                setLeavesData,
+                                setCurrentPage,
+                                setPerPage,
+                                perPage,
+                                currentPage,
+                                totalRows,
+                                lastPage
+                            }) => {
+    const { auth } = usePage().props;
     const [anchorEl, setAnchorEl] = useState(null);
     const theme = useTheme();
 
-    const userIsAdmin = auth.roles.includes('Administrator');
-    const userIsSe = auth.roles.includes('Supervision Engineer');
+    const userIsAdmin = auth.roles.includes("Administrator");
+    const userIsSe = auth.roles.includes("Supervision Engineer");
 
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
+    const handlePageChange = (page) => setCurrentPage(page);
 
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
+    const handleClick = (event) => setAnchorEl(event.currentTarget);
+
+    const handleClose = () => setAnchorEl(null);
 
     const handleMenuItemClick = async (leaveId, newStatus) => {
         handleClose();
-        await updateLeaveStatus(leaveId, 'status', newStatus);
+        await updateLeaveStatus(leaveId, "status", newStatus);
     };
 
     const updateLeaveStatus = async (leave, key, value) => {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.post(route('leave-add'), {
+                const response = await axios.post(route("leave-add"), {
                     route: route().current(),
                     user_id: leave.user_id,
                     id: leave.id,
@@ -53,112 +81,72 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                     toDate: leave.to_date,
                     daysCount: leave.no_of_days,
                     leaveReason: leave.reason,
-                    [key]: value,
+                    [key]: value
                 });
 
                 if (response.status === 200) {
-                    // Assume `setLeaves` is a state setter for your leaves list
                     setLeavesData(response.data.leavesData);
-                    resolve([response.data.message || 'Leave status updated successfully']);
+                    resolve([response.data.message || "Leave status updated successfully"]);
                 }
             } catch (error) {
-                if (error.response) {
-                    if (error.response.status === 422) {
-                        reject(error.response.statusText || 'Failed to update leave status');
-                    } else {
-                        reject('An unexpected error occurred. Please try again later.');
-                    }
-                    console.error(error.response);
-                } else if (error.request) {
-                    // The request was made but no response was received
-                    reject('No response received from the server. Please check your internet connection.');
-                    console.error(error.request);
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    reject('An error occurred while setting up the request.');
-                    console.error('Error', error.message);
-                }
+                const errorMsg = error.response
+                    ? error.response.status === 422
+                        ? error.response.statusText || "Failed to update leave status"
+                        : "An unexpected error occurred. Please try again later."
+                    : error.request
+                        ? "No response received from the server. Please check your internet connection."
+                        : "An error occurred while setting up the request.";
+                reject(errorMsg);
+                console.error(error);
             }
         });
-        toast.promise(
-            promise,
-            {
-                pending: {
-                    render() {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <CircularProgress />
-                                <span style={{ marginLeft: '8px' }}>Updating leave status...</span>
-                            </div>
-                        );
-                    },
-                    icon: false,
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
-                },
-                success: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
-                            </>
-                        );
-                    },
-                    icon: '🟢',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
-                },
-                error: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data}
-                            </>
-                        );
-                    },
-                    icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
-                },
+
+        toast.promise(promise, {
+            pending: {
+                render: () => (
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                        <CircularProgress />
+                        <span style={{ marginLeft: "8px" }}>Updating leave status...</span>
+                    </div>
+                ),
+                icon: false,
+                style: getToastStyle(theme)
+            },
+            success: {
+                render: ({ data }) => <>{data.map((msg, index) => <div key={index}>{msg}</div>)}</>,
+                icon: "🟢",
+                style: getToastStyle(theme)
+            },
+            error: {
+                render: ({ data }) => <>{data}</>,
+                icon: "🔴",
+                style: getToastStyle(theme)
             }
-        );
+        });
     };
 
+    const getToastStyle = (theme) => ({
+        backdropFilter: "blur(16px) saturate(200%)",
+        backgroundColor: theme.glassCard.backgroundColor,
+        border: theme.glassCard.border,
+        color: theme.palette.text.primary
+    });
+
     const getMenuItemColor = (option) => {
-        switch (option) {
-            case 'New':
-                return "primary"; // Blue for 'New'
-            case 'Pending':
-                return "secondary"; // Yellow for 'Pending'
-            case 'Approved':
-                return "success"; // Green for 'Approved'
-            case 'Declined':
-                return "danger"; // Red for 'Declined'
-            default:
-                return "primary"; // Default color
-        }
+        const colors = {
+            New: "primary",
+            Pending: "secondary",
+            Approved: "success",
+            Declined: "danger"
+        };
+        return colors[option] || "primary";
     };
 
     const renderCell = (leave, columnKey) => {
         const cellValue = leave[columnKey];
-
         switch (columnKey) {
             case "employee":
-                const user = allUsers.find(u => String(u.id) === String(leave.user_id));
+                const user = allUsers.find((u) => String(u.id) === String(leave.user_id));
                 return (
                     <User
                         avatarProps={{ radius: "lg", src: user?.profile_image }}
@@ -168,28 +156,27 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                         {user?.email}
                     </User>
                 );
-            case "leave_type":
-                return cellValue;
             case "from_date":
-                return new Date(cellValue).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
             case "to_date":
-                return new Date(cellValue).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                return new Date(cellValue).toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                });
             case "status":
                 return (
                     <Select
-                        isDisabled={!auth.roles.includes('Administrator') && route().current() !== 'leaves'}
+                        isDisabled={!userIsAdmin && route().current() !== "leaves"}
                         aria-label="Leave Status"
                         color={getMenuItemColor(leave.status)}
                         placeholder="Select status"
                         size="sm"
                         selectedKeys={[leave.status]}
                         onChange={(e) => handleMenuItemClick(leave, e.target.value)}
-                        css={{
-                            width: '110px',
-                        }}
+                        css={{ width: "110px" }}
                     >
-                        {['New', 'Pending', 'Approved', 'Declined'].map(option => (
-                            <SelectItem key={option} value={leave.status}>
+                        {["New", "Pending", "Approved", "Declined"].map((option) => (
+                            <SelectItem key={option} value={option}>
                                 {option}
                             </SelectItem>
                         ))}
@@ -199,23 +186,23 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                 return (
                     <div className="relative flex items-center gap-2">
                         <Tooltip content="Edit Leave">
-              <span
-                  className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                  onClick={() => {
-                      setCurrentLeave(leave);
-                      openModal('edit_leave');
-                  }}
-              >
-                <EditIcon />
-              </span>
+                            <span
+                                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                                onClick={() => {
+                                    setCurrentLeave(leave);
+                                    openModal("edit_leave");
+                                }}
+                            >
+                                <EditIcon />
+                            </span>
                         </Tooltip>
                         <Tooltip content="Delete Leave" color="danger">
-              <span
-                  className="text-lg text-danger cursor-pointer active:opacity-50"
-                  onClick={() => handleClickOpen(leave.id, 'delete_leave')}
-              >
-                <DeleteIcon />
-              </span>
+                            <span
+                                className="text-lg text-danger cursor-pointer active:opacity-50"
+                                onClick={() => handleClickOpen(leave.id, "delete_leave")}
+                            >
+                                <DeleteIcon />
+                            </span>
                         </Tooltip>
                     </div>
                 );
@@ -231,15 +218,15 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
         { name: "To Date", uid: "to_date" },
         { name: "Status", uid: "status" },
         { name: "Reason", uid: "reason" },
-        ...(userIsAdmin ? [{ name: "Actions", uid: "actions" }] : []),
+        ...(userIsAdmin ? [{ name: "Actions", uid: "actions" }] : [])
     ];
 
     return (
-        <div style={{maxHeight: '84vh', overflowY: 'auto'}}>
+        <div style={{ maxHeight: "84vh", overflowY: "auto" }}>
             <Table
                 isStriped
                 selectionMode="multiple"
-                selectionBehavior={'toggle'}
+                selectionBehavior="toggle"
                 isCompact
                 isHeaderSticky
                 removeWrapper
@@ -255,13 +242,31 @@ const LeaveEmployeeTable = ({ allLeaves, allUsers, handleClickOpen, setCurrentLe
                 <TableBody items={allLeaves}>
                     {(leave) => (
                         <TableRow key={leave.id}>
-                            {(columnKey) => <TableCell style={{whiteSpace: 'nowrap'}}>{renderCell(leave, columnKey)}</TableCell>}
+                            {(columnKey) => (
+                                <TableCell style={{ whiteSpace: "nowrap" }}>
+                                    {renderCell(leave, columnKey)}
+                                </TableCell>
+                            )}
                         </TableRow>
                     )}
                 </TableBody>
             </Table>
+            {totalRows > 30 && (
+                <div className="py-2 px-2 flex justify-center items-end" style={{ height: "100%" }}>
+                    <Pagination
+                        initialPage={1}
+                        isCompact
+                        showControls
+                        showShadow
+                        color="primary"
+                        variant="bordered"
+                        page={currentPage}
+                        total={lastPage}
+                        onChange={handlePageChange}
+                    />
+                </div>
+            )}
         </div>
-
     );
 };
 

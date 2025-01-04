@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Leave;
 use App\Models\LeaveSetting;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
@@ -158,6 +160,73 @@ class LeaveController extends Controller
             'allUsers' => User::all()
         ]);
     }
+
+    public function paginate(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Get the date from the query parameter, defaulting to today's date if none is provided
+        $selectedMonth = Carbon::createFromFormat('Y-m', $request->query('month'))->startOfMonth();
+        $endOfMonth = $selectedMonth->copy()->endOfMonth();
+        $perPage = $request->get('perPage', 30); // Default to 30 items per page
+        $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+        $employee = $request->get('employee', '');
+
+        Log::info($selectedMonth);
+        Log::info($endOfMonth);
+
+        try {
+            // Retrieve all users with the "Employee" role
+            $users = User::role('Employee')->get();
+            $user = Auth::user();
+
+            // Build the query using Eloquent
+            $leavesQuery = Leave::with('employee') // Ensure 'user' relationship is loaded
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
+                ->when(!$user->hasRole('Administrator'), function ($query) {
+                    // Restrict to the current user if not an admin
+                    return $query->where('leaves.user_id', auth()->id());
+                })
+                ->whereBetween('leaves.from_date', [$selectedMonth, $endOfMonth])
+                ->orderBy('leaves.from_date', 'desc');
+
+            if ($employee !== '') {
+                // Use relationship to filter by employee name
+                $leavesQuery->whereHas('user', function ($query) use ($employee) {
+                    $query->where('name', 'like', '%' . $employee . '%');
+                });
+            }
+
+            // Paginate the query
+            $leaveRecords = $leavesQuery->paginate($perPage, ['*'], 'page', $page);
+
+            if ($leaveRecords->isEmpty()) {
+                return response()->json([
+                    'message' => 'No leave records found for the selected date.',
+                    'absent_users' => $users // All users are absent if no attendance is recorded
+                ], 404);
+            }
+
+            // Log the leave records for debugging
+            Log::info($leaveRecords);
+
+            // Return paginated data for leaves
+            return response()->json([
+                'leaves' => $leaveRecords,
+                'current_page' => $leaveRecords->currentPage(),
+                'last_page' => $leaveRecords->lastPage(),
+                'total' => $leaveRecords->total(),
+            ]);
+
+        } catch (Throwable $exception) {
+            // Handle unexpected exceptions during data retrieval
+            report($exception); // Report the exception for debugging or logging
+            return response()->json([
+                'error' => 'An error occurred while retrieving attendance data.',
+                'details' => $exception->getMessage() // Return the error message for debugging
+            ], 500);
+        }
+    }
+
 
     public function create(Request $request)
     {

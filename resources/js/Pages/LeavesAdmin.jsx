@@ -1,32 +1,41 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {Head, usePage} from '@inertiajs/react';
-import {Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar} from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Head, usePage } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    CardContent,
+    CardHeader,
+    Grid, Typography,
+} from '@mui/material';
 import { Add } from '@mui/icons-material';
-import GlassCard from '@/Components/GlassCard.jsx'; // Ensure this component is imported if you have custom styles
-import App from "@/Layouts/App.jsx";
+import Grow from '@mui/material/Grow';
+import { Input } from '@nextui-org/react';
+import SearchIcon from '@mui/icons-material/Search';
+import GlassCard from '@/Components/GlassCard.jsx';
+import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
-import LeaveForm from "@/Forms/LeaveForm.jsx";
-import Grow from "@mui/material/Grow";
-import DeleteLeaveForm from "@/Forms/DeleteLeaveForm.jsx";
+import LeaveForm from '@/Forms/LeaveForm.jsx';
+import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
+import dayjs from 'dayjs';
 
 const LeavesAdmin = ({ title, allUsers }) => {
-    const {auth} = usePage().props;
+    const { auth, props } = usePage();
     const [openModalType, setOpenModalType] = useState(null);
-    const [leavesData, setLeavesData] = useState(usePage().props.leavesData);
-
-    const [allLeaves, setAllLeaves] = useState(leavesData.allLeaves);
+    const [leavesData, setLeavesData] = useState(props.leavesData);
+    const [leaves, setLeaves] = useState();
+    const [totalRows, setTotalRows] = useState(0);
+    const [lastPage, setLastPage] = useState(0);
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
-
+    const [employee, setEmployee] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState(
+        dayjs().format('YYYY-MM')
+    );
+    const [perPage, setPerPage] = useState(30);
+    const [currentPage, setCurrentPage] = useState(1);
     const [currentLeave, setCurrentLeave] = useState();
+    const [error, setError] = useState('');
 
-    useEffect(() => {
-        setAllLeaves(leavesData.allLeaves);
-    }, [leavesData]);
-
-
-    const openModal = (modalType) => {
-        setOpenModalType(modalType);
-    };
+    const openModal = (modalType) => setOpenModalType(modalType);
 
     const handleClickOpen = useCallback((leaveId, modalType) => {
         setLeaveIdToDelete(leaveId);
@@ -38,86 +47,131 @@ const LeavesAdmin = ({ title, allUsers }) => {
         setLeaveIdToDelete(null);
     }, []);
 
-    const closeModal = () => {
-        setOpenModalType(null);
+    const handleSearch = (event) => setEmployee(event.target.value.toLowerCase());
+
+    const handleMonthChange = (event) => setSelectedMonth(event.target.value);
+
+    const fetchLeavesData = async () => {
+
+        try {
+            const response = await axios.get(route('leaves.paginate'), {
+                params: {
+                    page: currentPage,
+                    perPage,
+                    employee,
+                    month: selectedMonth,
+                },
+            });
+
+            console.log(selectedMonth, );
+
+            if (response.status === 200) {
+                const { data, total, last_page } = response.data.leaves;
+                setLeaves(data);
+                setTotalRows(total);
+                setLastPage(last_page);
+            }
+        } catch (error) {
+            console.error('Error fetching leaves data:', error);
+            setError(error.response?.data?.message || 'Error retrieving data.');
+        }
     };
+
+    useEffect(() => {
+        fetchLeavesData();
+    }, [selectedMonth, currentPage, perPage, employee]);
 
     return (
         <>
             <Head title={title} />
-            {openModalType === 'add_leave' && (
+
+            {['add_leave', 'edit_leave'].includes(openModalType) && (
                 <LeaveForm
                     allUsers={allUsers}
-                    open={openModalType === 'add_leave'}
+                    open={true}
                     setLeavesData={setLeavesData}
-                    closeModal={closeModal}
+                    closeModal={() => setOpenModalType(null)}
                     leavesData={leavesData}
+                    currentLeave={openModalType === 'edit_leave' ? currentLeave : null}
                 />
             )}
-            {openModalType === 'edit_leave' && (
-                <LeaveForm
-                    allUsers={allUsers}
-                    open={openModalType === 'edit_leave'}
-                    setLeavesData={setLeavesData}
-                    closeModal={closeModal}
-                    leavesData={leavesData}
-                    currentLeave={currentLeave}
-                />
-            )}
+
             {openModalType === 'delete_leave' && (
                 <DeleteLeaveForm
-                    open={openModalType === 'delete_leave'}
+                    open={true}
                     handleClose={handleClose}
                     leaveIdToDelete={leaveIdToDelete}
                     setLeavesData={setLeavesData}
                 />
             )}
+
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
                         <CardHeader
                             title="Leaves"
-                            sx={{padding: '24px'}}
+                            sx={{ padding: '24px' }}
                             action={
-                                <Box display="flex" gap={2}>
-                                    <Button
-                                        title="Add Leave"
-                                        variant="outlined"
-                                        color="success"
-                                        startIcon={<Add />}
-                                        onClick={() => openModal('add_leave')}
-                                    >
-                                        Add Leave
-                                    </Button>
-                                </Box>
+                                <Button
+                                    title="Add Leave"
+                                    variant="outlined"
+                                    color="success"
+                                    startIcon={<Add />}
+                                    onClick={() => openModal('add_leave')}
+                                >
+                                    Add Leave
+                                </Button>
                             }
                         />
                         <CardContent>
-                            {/*<Grid container spacing={2}>*/}
-                            {/*    {leavesData.leaveCounts.map((leave) => (*/}
-                            {/*        <Grid item xs={6} sm={6} md={3} key={leave.leave_type}>*/}
-                            {/*            <GlassCard>*/}
-                            {/*                <CardContent>*/}
-                            {/*                    <Box*/}
-                            {/*                        display="flex"*/}
-                            {/*                        justifyContent="center"*/}
-                            {/*                        alignItems="center"*/}
-                            {/*                        height="100%"*/}
-                            {/*                        textAlign="center"*/}
-                            {/*                    >*/}
-                            {/*                        <Box>*/}
-                            {/*                            <Typography variant="h6">{leave.leave_type}</Typography>*/}
-                            {/*                            <Typography variant="h4">{leave.days_used}</Typography>*/}
-                            {/*                        </Box>*/}
-                            {/*                    </Box>*/}
-                            {/*                </CardContent>*/}
-                            {/*            </GlassCard>*/}
-                            {/*        </Grid>*/}
-                            {/*    ))}*/}
-                            {/*</Grid>*/}
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6} md={4}>
+                                    <Input
+                                        label="Search"
+                                        fullWidth
+                                        variant="bordered"
+                                        placeholder="Employee..."
+                                        value={employee}
+                                        onChange={handleSearch}
+                                        endContent={<SearchIcon />}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={4}>
+                                    <Input
+                                        label="Select Month"
+                                        type="month"
+                                        variant="bordered"
+                                        onChange={handleMonthChange}
+                                        value={selectedMonth}
+                                    />
+                                </Grid>
+                            </Grid>
                         </CardContent>
                         <CardContent>
-                            <LeaveEmployeeTable handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} allLeaves={allLeaves} allUsers={allUsers} setLeavesData={setLeavesData}/>
+                            {leaves ? (
+                                <LeaveEmployeeTable
+                                    totalRows={totalRows}
+                                    lastPage={lastPage}
+                                    setCurrentPage={setCurrentPage}
+                                    setPerPage={setPerPage}
+                                    perPage={perPage}
+                                    currentPage={currentPage}
+                                    handleClickOpen={handleClickOpen}
+                                    setCurrentLeave={setCurrentLeave}
+                                    openModal={openModal}
+                                    allLeaves={leaves}
+                                    allUsers={allUsers}
+                                    setLeavesData={setLeavesData}
+                                />
+                            ) : error ? (
+                                <Typography variant="body1" align="center">
+                                    {error}
+                                </Typography>
+                            ) : (
+                                <Typography variant="body1" align="center">
+                                    Loading leaves data...
+                                </Typography>
+                            )}
                         </CardContent>
                     </GlassCard>
                 </Grow>
@@ -125,6 +179,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         </>
     );
 };
+
 LeavesAdmin.layout = (page) => <App>{page}</App>;
 
 export default LeavesAdmin;
