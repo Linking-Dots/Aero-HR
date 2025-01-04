@@ -26,7 +26,8 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import {router, usePage} from "@inertiajs/react";
 import { Inertia } from '@inertiajs/inertia';
 
-const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, allUsers }) => {
+const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, allUsers, setTotalRows, setLastPage, setLeaves, handleMonthChange }) => {
+    console.log(leavesData)
     const {auth} = usePage().props;
     const theme = useTheme();
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
@@ -113,8 +114,13 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
                 const response = await axios.post(route('leave-add'), data);
 
                 if (response.status === 200) {
-                    setLeavesData(response.data.leavesData);
+                    const { data, total, last_page } = response.data.leaves;
+                    setLeavesData(data.leavesData);
+                    setTotalRows(total);
+                    setLastPage(last_page);
+                    setLeaves(data);
                     resolve([response.data.message || 'Leave application submitted successfully']);
+                    handleMonthChange({target: {value: fromDate.slice(0, 7)}});
                     closeModal();
                 }
             } catch (error) {

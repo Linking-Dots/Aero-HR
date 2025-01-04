@@ -38,19 +38,22 @@ import {
 } from "@nextui-org/react";
 
 const LeaveEmployeeTable = ({
-                                allLeaves,
+                                leaves,
                                 allUsers,
                                 handleClickOpen,
                                 setCurrentLeave,
                                 openModal,
-                                setLeavesData,
+                                setLeaves,
                                 setCurrentPage,
-                                setPerPage,
-                                perPage,
                                 currentPage,
                                 totalRows,
-                                lastPage
+                                lastPage,
+                                perPage,
+                                selectedMonth,
+                                employee
                             }) => {
+
+    console.log(leaves)
     const { auth } = usePage().props;
     const [anchorEl, setAnchorEl] = useState(null);
     const theme = useTheme();
@@ -73,6 +76,10 @@ const LeaveEmployeeTable = ({
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.post(route("leave-add"), {
+                    page: currentPage,
+                    perPage,
+                    employee,
+                    month: selectedMonth,
                     route: route().current(),
                     user_id: leave.user_id,
                     id: leave.id,
@@ -85,7 +92,13 @@ const LeaveEmployeeTable = ({
                 });
 
                 if (response.status === 200) {
-                    setLeavesData(response.data.leavesData);
+
+                    // Update the specific leave in the local allLeaves state
+                    setLeaves((prevLeaves) => {
+                        return prevLeaves.map((l) =>
+                            l.id === leave.id ? { ...l, [key]: value } : l
+                        );
+                    });
                     resolve([response.data.message || "Leave status updated successfully"]);
                 }
             } catch (error) {
@@ -124,6 +137,7 @@ const LeaveEmployeeTable = ({
             }
         });
     };
+
 
     const getToastStyle = (theme) => ({
         backdropFilter: "blur(16px) saturate(200%)",
@@ -239,7 +253,7 @@ const LeaveEmployeeTable = ({
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody items={allLeaves}>
+                <TableBody items={leaves}>
                     {(leave) => (
                         <TableRow key={leave.id}>
                             {(columnKey) => (
@@ -251,7 +265,7 @@ const LeaveEmployeeTable = ({
                     )}
                 </TableBody>
             </Table>
-            {totalRows > 30 && (
+            {totalRows > 10 && (
                 <div className="py-2 px-2 flex justify-center items-end" style={{ height: "100%" }}>
                     <Pagination
                         initialPage={1}

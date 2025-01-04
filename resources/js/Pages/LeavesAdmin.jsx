@@ -49,7 +49,10 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     const handleSearch = (event) => setEmployee(event.target.value.toLowerCase());
 
-    const handleMonthChange = (event) => setSelectedMonth(event.target.value);
+    const handleMonthChange = (event) => {
+        console.log(event.target.value);
+        setSelectedMonth(event.target.value);
+    };
 
     const fetchLeavesData = async () => {
 
@@ -87,12 +90,20 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             {['add_leave', 'edit_leave'].includes(openModalType) && (
                 <LeaveForm
+                    setTotalRows={setTotalRows}
+                    setLastPage={setLastPage}
+                    setLeaves={setLeaves}
+                    perPage={perPage}
+                    employee={employee}
+                    currentPage={currentPage}
+                    selectedMonth={selectedMonth}
                     allUsers={allUsers}
                     open={true}
                     setLeavesData={setLeavesData}
                     closeModal={() => setOpenModalType(null)}
                     leavesData={leavesData}
                     currentLeave={openModalType === 'edit_leave' ? currentLeave : null}
+                    handleMonthChange={handleMonthChange}
                 />
             )}
 
@@ -159,9 +170,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                     handleClickOpen={handleClickOpen}
                                     setCurrentLeave={setCurrentLeave}
                                     openModal={openModal}
-                                    allLeaves={leaves}
+                                    leaves={leaves}
                                     allUsers={allUsers}
-                                    setLeavesData={setLeavesData}
+                                    setLeaves={setLeaves}
+                                    employee={employee}
+                                    selectedMonth={selectedMonth}
                                 />
                             ) : error ? (
                                 <Typography variant="body1" align="center">
