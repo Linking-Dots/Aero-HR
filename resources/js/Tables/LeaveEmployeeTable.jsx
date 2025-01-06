@@ -52,6 +52,7 @@ const LeaveEmployeeTable = ({
                                 selectedMonth,
                                 employee
                             }) => {
+    console.log(leaves)
 
 
     const { auth } = usePage().props;
@@ -68,6 +69,7 @@ const LeaveEmployeeTable = ({
     const handleClose = () => setAnchorEl(null);
 
     const handleMenuItemClick = async (leave, newStatus) => {
+        console.error(leave)
         handleClose();
         await updateLeaveStatus(leave, "status", newStatus);
     };

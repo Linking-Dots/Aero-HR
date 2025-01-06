@@ -96,6 +96,12 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
         setProcessing(true);
 
         const promise = new Promise(async (resolve, reject) => {
+            console.log(user_id,
+                leaveType,
+                fromDate,
+                toDate,
+                daysCount,
+                leaveReason);
             try {
                 const data = {
                     route: route().current(),
