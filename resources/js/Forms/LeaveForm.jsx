@@ -27,7 +27,7 @@ import {router, usePage} from "@inertiajs/react";
 import { Inertia } from '@inertiajs/inertia';
 
 const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, allUsers, setTotalRows, setLastPage, setLeaves, handleMonthChange }) => {
-    console.log(leavesData)
+
     const {auth} = usePage().props;
     const theme = useTheme();
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
@@ -114,14 +114,14 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
                 const response = await axios.post(route('leave-add'), data);
 
                 if (response.status === 200) {
-                    const { data, total, last_page } = response.data.leaves;
-                    setLeavesData(data.leavesData);
-                    setTotalRows(total);
-                    setLastPage(last_page);
-                    setLeaves(data);
-                    resolve([response.data.message || 'Leave application submitted successfully']);
+
+                    setLeavesData(response.data.leavesData);
+                    setTotalRows(response.data.total);
+                    setLastPage(response.data.last_page);
+                    setLeaves(response.data.leaves.data);
                     handleMonthChange({target: {value: fromDate.slice(0, 7)}});
                     closeModal();
+                    resolve([response.data.message || 'Leave application submitted successfully']);
                 }
             } catch (error) {
                 setProcessing(false);
@@ -132,12 +132,12 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
                     if (error.response.status === 422) {
                         // Handle validation errors
                         setErrors(error.response.data.errors || {});
-                        reject(error.response.statusText || 'Failed to submit leave application');
+                        reject(error.response.data.error || 'Failed to submit leave application');
                     } else {
                         // Handle other HTTP errors
                         reject('An unexpected error occurred. Please try again later.');
                     }
-                    console.error(error.response);
+                    console.error(error.response.data.error);
                 } else if (error.request) {
                     // The request was made but no response was received
                     reject('No response received from the server. Please check your internet connection.');

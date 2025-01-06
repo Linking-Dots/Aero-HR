@@ -50,7 +50,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const handleSearch = (event) => setEmployee(event.target.value.toLowerCase());
 
     const handleMonthChange = (event) => {
-        console.log(event.target.value);
         setSelectedMonth(event.target.value);
     };
 
@@ -65,8 +64,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     month: selectedMonth,
                 },
             });
-
-            console.log(selectedMonth, );
 
             if (response.status === 200) {
                 const { data, total, last_page } = response.data.leaves;

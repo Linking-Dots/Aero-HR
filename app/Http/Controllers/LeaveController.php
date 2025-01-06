@@ -246,6 +246,36 @@ class LeaveController extends Controller
 
         try {
             $user = Auth::user();
+            $fromDate = Carbon::parse($request->input('fromDate'));
+            $toDate = Carbon::parse($request->input('toDate'));
+
+            // Check for overlapping leaves
+            $overlappingLeaves = Leave::where('user_id', $user->id)
+                ->where(function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('from_date', [$fromDate, $toDate])
+                        ->orWhereBetween('to_date', [$fromDate, $toDate])
+                        ->orWhere(function ($query) use ($fromDate, $toDate) {
+                            $query->where('from_date', '<=', $fromDate)
+                                ->where('to_date', '>=', $toDate);
+                        });
+                })
+                ->get();
+
+            if ($overlappingLeaves->isNotEmpty()) {
+                $dates = $overlappingLeaves->map(function ($leave) {
+                    if ($leave->from_date->equalTo($leave->to_date)) {
+                        return 'Leave already exists for the following date: ' . $leave->from_date->format('Y-m-d');
+                    } else {
+                        return 'Leave already exists for the following dates: ' . $leave->from_date->format('Y-m-d') . ' to ' . $leave->to_date->format('Y-m-d');
+                    }
+                })->join(', ');
+
+                return response()->json([
+                    'error' => $dates,
+                ], 422);
+            }
+
+
             $data = [
                 'user_id' => $request->input('user_id'),
                 'leave_type' => LeaveSetting::where('type', $request->input('leaveType'))->first()->id,

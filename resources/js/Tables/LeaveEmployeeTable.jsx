@@ -53,7 +53,7 @@ const LeaveEmployeeTable = ({
                                 employee
                             }) => {
 
-    console.log(leaves)
+
     const { auth } = usePage().props;
     const [anchorEl, setAnchorEl] = useState(null);
     const theme = useTheme();
