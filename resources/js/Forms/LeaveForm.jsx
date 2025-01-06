@@ -33,7 +33,7 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
     // Initialize state variables
     const [leaveTypes, setLeaveTypes] = useState(leavesData.leaveTypes || []);
-    const [leaveCounts, setLeaveCounts] = useState([]);
+    const [leaveCounts, setLeaveCounts] = useState(leavesData.leaveCounts || []);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
     const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
     const [toDate, setToDate] = useState(currentLeave?.to_date || '');
@@ -120,16 +120,16 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
                 const response = await axios.post(route('leave-add'), data);
 
                 if (response.status === 200) {
-
                     setLeavesData(response.data.leavesData);
-                    setTotalRows(response.data.total);
-                    setLastPage(response.data.last_page);
-                    setLeaves(response.data.leaves.data);
+                    setTotalRows(response.data.leavesData.leaveRecords.total);
+                    setLastPage(response.data.leavesData.leaveRecords.last_page);
+                    setLeaves(response.data.leavesData.leaveRecords.data);
                     handleMonthChange({target: {value: fromDate.slice(0, 7)}});
                     closeModal();
                     resolve([response.data.message || 'Leave application submitted successfully']);
                 }
             } catch (error) {
+                console.error(error)
                 setProcessing(false);
 
                 if (error.response) {

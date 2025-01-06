@@ -78,19 +78,8 @@ const LeaveEmployeeTable = ({
         console.log(leave)
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.post(route("leave-add"), {
-                    page: currentPage,
-                    perPage,
-                    employee,
-                    month: selectedMonth,
-                    route: route().current(),
-                    user_id: leave.user_id,
+                const response = await axios.post(route("leave-update-status"), {
                     id: leave.id,
-                    leaveType: leave.leave_type,
-                    fromDate: leave.from_date,
-                    toDate: leave.to_date,
-                    daysCount: leave.no_of_days,
-                    leaveReason: leave.reason,
                     [key]: value
                 });
 

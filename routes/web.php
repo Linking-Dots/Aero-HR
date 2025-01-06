@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/leaves-employee', [LeaveController::class, 'index1'])->name('leaves-employee');
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');
+    Route::post('/leave-update', [LeaveController::class, 'update'])->name('leave-update');
+    Route::post('/leave-update-status', [LeaveController::class, 'updateStatus'])->name('leave-update-status');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
 
     Route::get('/attendance-employee', [AttendanceController::class, 'index2'])->name('attendance-employee');
