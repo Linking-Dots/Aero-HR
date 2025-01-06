@@ -67,12 +67,13 @@ const LeaveEmployeeTable = ({
 
     const handleClose = () => setAnchorEl(null);
 
-    const handleMenuItemClick = async (leaveId, newStatus) => {
+    const handleMenuItemClick = async (leave, newStatus) => {
         handleClose();
-        await updateLeaveStatus(leaveId, "status", newStatus);
+        await updateLeaveStatus(leave, "status", newStatus);
     };
 
     const updateLeaveStatus = async (leave, key, value) => {
+        console.log(leave)
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.post(route("leave-add"), {

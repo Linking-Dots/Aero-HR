@@ -246,35 +246,6 @@ class LeaveController extends Controller
 
         try {
             $user = Auth::user();
-            $fromDate = Carbon::parse($request->input('fromDate'));
-            $toDate = Carbon::parse($request->input('toDate'));
-
-            // Check for overlapping leaves
-            $overlappingLeaves = Leave::where('user_id', $user->id)
-                ->where(function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('from_date', [$fromDate, $toDate])
-                        ->orWhereBetween('to_date', [$fromDate, $toDate])
-                        ->orWhere(function ($query) use ($fromDate, $toDate) {
-                            $query->where('from_date', '<=', $fromDate)
-                                ->where('to_date', '>=', $toDate);
-                        });
-                })
-                ->get();
-
-            if ($overlappingLeaves->isNotEmpty()) {
-                $dates = $overlappingLeaves->map(function ($leave) {
-                    if ($leave->from_date->equalTo($leave->to_date)) {
-                        return 'Leave already exists for the following date: ' . $leave->from_date->format('Y-m-d');
-                    } else {
-                        return 'Leave already exists for the following dates: ' . $leave->from_date->format('Y-m-d') . ' to ' . $leave->to_date->format('Y-m-d');
-                    }
-                })->join(', ');
-
-                return response()->json([
-                    'error' => $dates,
-                ], 422);
-            }
-
 
             $data = [
                 'user_id' => $request->input('user_id'),
@@ -286,22 +257,19 @@ class LeaveController extends Controller
                 'status' => $request->input('status', 'New'), // Default to 'New' if not provided
             ];
 
+            // Update existing leave record
+            $leave = Leave::find($request->input('id'));
+
+
             if ($request->has('id')) {
-                Log::info($request->query('month'));
+
                 $selectedMonth = Carbon::createFromFormat('Y-m', $request->input('month'))->startOfMonth();
                 $endOfMonth = $selectedMonth->copy()->endOfMonth();
                 $perPage = $request->get('perPage', 30); // Default to 30 items per page
                 $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
                 $employee = $request->get('employee', '');
-                // Update existing leave record
-                $leave = Leave::find($request->input('id'));
-                $statusUpdated = null;
 
-                if ($request->has('status') && $leave->status !== $request->input('status')) {
-                    $statusUpdated = true;
-                    $leave->approved_by = Auth::user()->id;
-                    $leave->save();
-                }
+
 
                 $leave->update($data);
 
@@ -323,14 +291,70 @@ class LeaveController extends Controller
                     });
                 }
 
-                $message = $statusUpdated
-                    ? 'Leave application status updated to ' . $request->input('status')
-                    : 'Leave application updated successfully';
+                $message = 'Leave application updated successfully';
+            } elseif ($request->has('status') && $request->has('id') && $leave->status !== $request->input('status')) {
+                $selectedMonth = Carbon::createFromFormat('Y-m', $request->input('month'))->startOfMonth();
+                $endOfMonth = $selectedMonth->copy()->endOfMonth();
+                $perPage = $request->get('perPage', 30); // Default to 30 items per page
+                $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+                $employee = $request->get('employee', '');
+
+
+                $leave->update($data);
+
+                // Build the query using Eloquent
+                $leavesQuery = Leave::with('employee') // Ensure 'user' relationship is loaded
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                    ->select('leaves.*', 'leave_settings.type as leave_type')
+                    ->when(!$user->hasRole('Administrator'), function ($query) {
+                        // Restrict to the current user if not an admin
+                        return $query->where('leaves.user_id', auth()->id());
+                    })
+                    ->whereBetween('leaves.from_date', [$selectedMonth, $endOfMonth])
+                    ->orderBy('leaves.from_date', 'desc');
+
+                if ($employee !== '') {
+                    // Use relationship to filter by employee name
+                    $leavesQuery->whereHas('user', function ($query) use ($employee) {
+                        $query->where('name', 'like', '%' . $employee . '%');
+                    });
+                }
+                $leave->approved_by = Auth::user()->id;
+                $leave->save();
+                $message = 'Leave application status updated to ' . $request->input('status');
             } else {
                 $selectedMonth = Carbon::createFromFormat('Y-m-d', $request->input('fromDate'))->startOfMonth();
                 $endOfMonth = $selectedMonth->copy()->endOfMonth();
                 $perPage = 30; // Default to 30 items per page
                 $page = 1;
+                $fromDate = Carbon::parse($request->input('fromDate'));
+                $toDate = Carbon::parse($request->input('toDate'));
+
+                // Check for overlapping leaves
+                $overlappingLeaves = Leave::where('user_id', $user->id)
+                    ->where(function ($query) use ($fromDate, $toDate) {
+                        $query->whereBetween('from_date', [$fromDate, $toDate])
+                            ->orWhereBetween('to_date', [$fromDate, $toDate])
+                            ->orWhere(function ($query) use ($fromDate, $toDate) {
+                                $query->where('from_date', '<=', $fromDate)
+                                    ->where('to_date', '>=', $toDate);
+                            });
+                    })
+                    ->get();
+
+                if ($overlappingLeaves->isNotEmpty()) {
+                    $dates = $overlappingLeaves->map(function ($leave) {
+                        if ($leave->from_date->equalTo($leave->to_date)) {
+                            return 'Leave already exists for the following date: ' . $leave->from_date->format('Y-m-d');
+                        } else {
+                            return 'Leave already exists for the following dates: ' . $leave->from_date->format('Y-m-d') . ' to ' . $leave->to_date->format('Y-m-d');
+                        }
+                    })->join(', ');
+
+                    return response()->json([
+                        'error' => $dates,
+                    ], 422);
+                }
                 // Create new leave record
                 Leave::create($data);
 
@@ -347,9 +371,6 @@ class LeaveController extends Controller
 
                 $message = 'Leave application submitted successfully';
             }
-
-
-
 
 
             // Paginate the query
