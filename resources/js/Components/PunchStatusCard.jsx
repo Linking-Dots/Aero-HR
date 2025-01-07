@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {Box, CardContent, CardHeader, Chip, CircularProgress, Collapse, Grid, Typography} from '@mui/material';
+import {Box, CardContent, CardHeader, Chip, CircularProgress, Collapse, Divider, Grid, Typography} from '@mui/material';
 import {usePage} from "@inertiajs/react";
 import {toast} from "react-toastify";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
 import L from "leaflet";
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 
 
@@ -16,8 +17,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const theme = useTheme();
     const { auth } = usePage().props;
     const [attendanceData, setAttendanceData] = useState('');
-    const [punchInTime, setPunchInTime] = useState('');
-    const [punchOutTime, setPunchOutTime] = useState('');
+    const [lastData, setLastData] = useState('');
+    const [lastPunchInTime, setLastPunchInTime] = useState('');
+    const [lastPunchOutTime, setLastPunchOutTime] = useState('');
     const [elapsedTime, setElapsedTime] = useState(null);
 
     const { todayLeaves } = usePage().props;
@@ -25,28 +27,13 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const fetchData = async () => {
         const endpoint = route('getCurrentUserPunch');
         try {
-            const response = await fetch(endpoint);
-            const data = await response.json();
-            setAttendanceData(data);
-            if (data.punchin_time) {
-                setPunchInTime(new Date(`${data.date}T${data.punchin_time}`).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }));
-            } else {
-                setPunchInTime('');
-            }
-
-            if (data.punchout_time) {
-                setPunchOutTime(new Date(`${data.date}T${data.punchout_time}`).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }));
-            } else {
-                setPunchOutTime('');
-            }
+            let response = await fetch(endpoint);
+            response = await response.json();
+            const data = response.punches;
+            setAttendanceData(response.punches);
+            setLastData(data[data.length - 1]);
+            data[data.length - 1].punchin_time ? setLastPunchInTime(data[data.length - 1].punchin_time) : '';
+            data[data.length - 1].punchout_time ? setLastPunchOutTime(data[data.length - 1].punchout_time) : '';
         } catch (error) {
             console.error('Error fetching user attendance:', error);
         }
@@ -58,15 +45,21 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         return date;
     };
     const calculateElapsedTime = () => {
-        if (!punchInTime) return '00:00:00';
-        const punchIn = parseTimeString(attendanceData.punchin_time);
-        const endTime = punchOutTime ? parseTimeString(attendanceData.punchout_time) : new Date();
-        const elapsedTime = Math.abs(endTime - punchIn);
-        const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
-        const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+        return attendanceData.map(record => {
+            const punchinTime = record.punchin_time;
+            const punchoutTime = record.punchout_time;
 
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            if (!punchinTime) return '00:00:00';
+
+            const punchIn = parseTimeString(punchinTime);
+            const endTime = punchoutTime ? parseTimeString(punchoutTime) : new Date();
+            const elapsedTime = Math.abs(endTime - punchIn);
+            const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
+            const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        });
     };
     const handleLocationError = (error, reject) => {
         console.error('Location error:', error);
@@ -240,27 +233,30 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         return false;
     }
 
-    useEffect(() => {
+    useEffect( () => {
         fetchData();
     }, []);
 
 
-    useEffect(() => {
-        setElapsedTime(calculateElapsedTime());
-    }, [elapsedTime,attendanceData, punchInTime, punchOutTime]);
+    // useEffect(() => {
+    //     setElapsedTime(calculateElapsedTime());
+    // }, [elapsedTime,attendanceData, lastPunchInTime, lastPunchOutTime]);
 
     useEffect(() => {
         const interval = setInterval(() => {
             setElapsedTime(calculateElapsedTime());
         }, 1000);
         return () => clearInterval(interval);
-    }, [elapsedTime,attendanceData, punchInTime, punchOutTime]);
+    }, [elapsedTime,attendanceData, lastPunchInTime, lastPunchOutTime]);
 
     useEffect(() => {
         if (punched) {
             processPunch(punched);
         }
     }, [punched]);
+
+
+    console.log(lastPunchInTime, " - ", lastPunchOutTime, attendanceData)
 
     return (
         <Box sx={{ display: 'flex', height: '100%', justifyContent: 'center', p: 2}}>
@@ -290,30 +286,47 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                         }}
                                     >
                                         <Typography variant="body2" id="punch-in">
-                                            {punchInTime ? 'Punched In At' : 'Not Yet Punched In'}
+                                            {attendanceData.length > 0 ? 'Punched In At' : 'Not Yet Punched In'}
                                         </Typography>
-                                        <Collapse in={!!punchInTime} timeout={1000}>
-                                            <Typography variant="h6">
-                                                {punchInTime}
-                                            </Typography>
+                                        <Collapse in={attendanceData.length > 0} timeout={1000}>
+                                            <Grid container spacing={2} alignItems="center">
+                                                {attendanceData.length > 0 && attendanceData.map((data, index) => (
+                                                    <React.Fragment key={index}>
+                                                        <Grid item>
+                                                            <Typography variant="h6">
+                                                                {new Date(`${data?.date}T${data?.punchin_time}`).toLocaleTimeString('en-US', {
+                                                                    hour: 'numeric',
+                                                                    minute: '2-digit',
+                                                                    hour12: true
+                                                                })}
+                                                            </Typography>
+                                                        </Grid>
+                                                        {index < attendanceData.length - 1 && (
+                                                            <Grid item>
+                                                                <KeyboardArrowRightIcon />
+                                                            </Grid>
+                                                        )}
+                                                    </React.Fragment>
+                                                ))}
+                                            </Grid>
                                         </Collapse>
                                     </Box>
                                     <Box  sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                         <Grow in timeout={1000}>
                                             <Box
                                                 onClick={() => {
-                                                    if (!punchInTime) {
+                                                    if (!lastPunchInTime) {
                                                         setPunched('punchin');
-                                                    } else if (punchInTime && !punchOutTime) {
+                                                    } else if (lastPunchInTime && !lastPunchOutTime) {
                                                         setPunched('punchout');
                                                     }
                                                 }}
                                                 sx={{
                                                     m: 4,
                                                     backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: !punchInTime ? 'rgba(0, 128, 0, 0.3)' :
-                                                        punchInTime && !punchOutTime ? 'rgba(255, 0, 0, 0.3)' :
-                                                            punchInTime && punchOutTime ? 'rgba(0, 0, 255, 0.3)' : '', // Color based on punch states
+                                                    backgroundColor: !lastPunchInTime ? 'rgba(0, 128, 0, 0.3)' :
+                                                        lastPunchInTime && !lastPunchOutTime ? 'rgba(255, 0, 0, 0.3)' :
+                                                            lastPunchInTime && lastPunchOutTime ? 'rgba(0, 0, 255, 0.3)' : '',
                                                     border: '5px solid rgba(255, 255, 255, 0.125)',
                                                     width: 100,
                                                     height: 100,
@@ -321,17 +334,17 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                                     justifyContent: 'center',
                                                     alignItems: 'center',
                                                     borderColor: 'inherit',
-                                                    cursor: punchInTime && punchOutTime ? 'not-allowed' : 'pointer',
-                                                    borderRadius: '50%', // Make the box circular
-                                                    pointerEvents: punchInTime && punchOutTime ? 'none' : 'auto',
+                                                    cursor: lastPunchInTime && lastPunchOutTime ? 'not-allowed' : 'pointer',
+                                                    borderRadius: '50%',
+                                                    pointerEvents: lastPunchInTime && lastPunchOutTime ? 'none' : 'auto',
                                                     boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
                                                 }}
                                             >
                                                 <Box sx={{ textAlign: 'center' }}>
                                                     <Typography variant="body1">
-                                                        <span>
-                                                            {!punchInTime ? 'Punch In' : `${elapsedTime}`} {punchInTime && <><br />hrs</>}
-                                                        </span>
+                                                      <span>
+                                                        {!lastPunchInTime ? 'Punch In' : `${elapsedTime}`} {lastPunchInTime && <><br />hrs</>}
+                                                      </span>
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -346,13 +359,48 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                         }}
                                     >
                                         <Typography variant="body2" id="punch-out">
-                                            {punchOutTime ? 'Punched Out At' : 'Not Yet Punched Out'}
+                                            {attendanceData.length > 0 && attendanceData[0].punchout_time ? 'Punched Out At' : 'Not Yet Punched Out'}
                                         </Typography>
-                                        <Collapse in={!!punchOutTime} timeout={1000}>
-                                            <Typography variant="h6" id="punch-out-time">
-                                                {punchOutTime}
-                                            </Typography>
+                                        <Collapse in={attendanceData.length > 0} timeout={1000}>
+                                            <Grid container spacing={2} alignItems="center">
+                                                {attendanceData.length > 0 && attendanceData[0].punchout_time && attendanceData.map((data, index) => {
+                                                    return data.punchout_time ? (
+                                                        <React.Fragment key={index}>
+                                                            <Grid item>
+                                                                <Typography variant="h6">
+                                                                    {new Date(`${data?.date}T${data?.punchout_time}`).toLocaleTimeString('en-US', {
+                                                                        hour: 'numeric',
+                                                                        minute: '2-digit',
+                                                                        hour12: true
+                                                                    })}
+                                                                </Typography>
+                                                            </Grid>
+                                                            {!attendanceData[0].punchout_time && index < attendanceData.length - 1 && (
+                                                                <Grid item>
+                                                                    <KeyboardArrowRightIcon />
+                                                                </Grid>
+                                                            )}
+                                                        </React.Fragment>
+                                                    ) : '';
+                                                })}
+                                            </Grid>
                                         </Collapse>
+                                        {/*<Collapse in timeout={1000}>*/}
+
+                                        {/*        return data.punchout_time ? (*/}
+                                        {/*            <div key={index}>*/}
+                                        {/*                <Typography variant="h6">*/}
+                                        {/*                    {new Date(`${data?.date}T${data?.}`).toLocaleTimeString('en-US', {*/}
+                                        {/*                        hour: 'numeric',*/}
+                                        {/*                        minute: '2-digit',*/}
+                                        {/*                        hour12: true*/}
+                                        {/*                    })}*/}
+                                        {/*                </Typography>*/}
+                                        {/*                { index < attendanceData.length - 1 && <Divider />}*/}
+                                        {/*            </div>*/}
+                                        {/*        ) : '';*/}
+                                        {/*    })}*/}
+                                        {/*</Collapse>*/}
                                     </Box>
                                 </>
                             )

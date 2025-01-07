@@ -321,23 +321,46 @@ class AttendanceController extends Controller
             // Get the currently authenticated user (replace with your authentication method)
             $currentUser = Auth::user();
 
-            $userAttendance = Attendance::with('user:id,name')  // Include user data, specifically the first_name
+            $userAttendances = Attendance::with('user:id,name')  // Include user data
             ->whereNotNull('punchin')
                 ->whereDate('date', $today)
                 ->where('user_id', $currentUser->id)  // Filter for current user
-                ->first();  // Retrieve only the first matching record (assuming there's only one)
+                ->orderBy('id', 'desc')
+                ->get();  // Retrieve all matching records
 
-            if ($userAttendance) {
+            $punches = [];
+            $totalProductionTime = 0;  // Initialize total production time in seconds
+
+            if ($userAttendances->isNotEmpty()) {
+                $punches = $userAttendances->map(function ($attendance) use (&$totalProductionTime) {
+                    $punchInTime = Carbon::parse($attendance->punchin);
+                    $punchOutTime = $attendance->punchout ? Carbon::parse($attendance->punchout) : Carbon::now();
+
+                    // Calculate the duration in seconds and add to total production time
+                    $duration = $punchOutTime->diffInSeconds($punchInTime);
+                    $totalProductionTime += $duration;
+
+                    return [
+                        'date' => $attendance->date,
+                        'punchin_time' => $attendance->punchin,
+                        'punchin_location' => $attendance->punchin_location,
+                        'punchout_time' => $attendance->punchout,
+                        'punchout_location' => $attendance->punchout_location,
+                        'duration' => gmdate('H:i:s', $duration)  // Format duration as H:i:s
+                    ];
+                });
+
+                // Add total production time to the response
                 return response()->json([
-                    'date' => $userAttendance->date,
-                    'punchin_time' => $userAttendance->punchin,
-                    'punchin_location' => $userAttendance->punchin_location,
-                    'punchout_time' => $userAttendance->punchout,
-                    'punchout_location' => $userAttendance->punchout_location,
+                    'punches' => $punches,
+                    'total_production_time' => gmdate('H:i:s', $totalProductionTime)  // Format total time as H:i:s
                 ]);
             } else {
                 // Handle the case where no punch-in data is found for the current user on today's date
-                return response()->json('Not punched in yet'); // Example: Return a 404 Not Found response
+                return response()->json([
+                    'punches' => $punches,
+                    'total_production_time' => gmdate('H:i:s', $totalProductionTime)  // Zero duration in H:i:s format
+                ]);
             }
         } catch (Throwable $exception) {
             // Handle unexpected exceptions during data retrieval
@@ -345,6 +368,7 @@ class AttendanceController extends Controller
             return response()->json('An error occurred while retrieving attendance data.', 500);  // Example: Return a 500 Internal Server Error response
         }
     }
+
     public function getAllUsersAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
     {
         // Get the date from the query parameter, defaulting to today's date if none is provided
