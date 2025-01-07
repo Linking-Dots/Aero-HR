@@ -26,7 +26,19 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import {router, usePage} from "@inertiajs/react";
 import { Inertia } from '@inertiajs/inertia';
 
-const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, allUsers, setTotalRows, setLastPage, setLeaves, handleMonthChange }) => {
+const LeaveForm = ({
+                       open,
+                       closeModal,
+                       leavesData,
+                       setLeavesData,
+                       currentLeave,
+                       allUsers,
+                       setTotalRows,
+                       setLastPage,
+                       setLeaves,
+                       handleMonthChange,
+                       employee
+}) => {
 
     const {auth} = usePage().props;
     const theme = useTheme();
@@ -96,12 +108,7 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
         setProcessing(true);
 
         const promise = new Promise(async (resolve, reject) => {
-            console.log(user_id,
-                leaveType,
-                fromDate,
-                toDate,
-                daysCount,
-                leaveReason);
+
             try {
                 const data = {
                     route: route().current(),
@@ -111,6 +118,7 @@ const LeaveForm = ({ open, closeModal, leavesData, setLeavesData, currentLeave, 
                     toDate,
                     daysCount,
                     leaveReason,
+                    employee
                 };
 
                 if (currentLeave) {
