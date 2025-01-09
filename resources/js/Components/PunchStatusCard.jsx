@@ -17,7 +17,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const theme = useTheme();
     const { auth } = usePage().props;
     const [attendanceData, setAttendanceData] = useState('');
-    const [lastData, setLastData] = useState('');
     const [lastPunchInTime, setLastPunchInTime] = useState('');
     const [lastPunchOutTime, setLastPunchOutTime] = useState('');
     const [elapsedTime, setElapsedTime] = useState(null);
@@ -25,42 +24,37 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const { todayLeaves } = usePage().props;
     const isUserOnLeave = todayLeaves.find(leave => String(leave.user_id) === String(auth.user.id));
     const fetchData = async () => {
+        setLastPunchInTime(null);
+        setLastPunchOutTime(null);
         const endpoint = route('getCurrentUserPunch');
         try {
             let response = await fetch(endpoint);
             response = await response.json();
             const data = response.punches;
             setAttendanceData(response.punches);
-            setLastData(data[data.length - 1]);
+            setElapsedTime(response.total_production_time);
             data[data.length - 1].punchin_time ? setLastPunchInTime(data[data.length - 1].punchin_time) : '';
             data[data.length - 1].punchout_time ? setLastPunchOutTime(data[data.length - 1].punchout_time) : '';
+            console.log(data)
         } catch (error) {
             console.error('Error fetching user attendance:', error);
         }
     };
-    const parseTimeString = (timeString) => {
-        const [hours, minutes, seconds] = timeString.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours, minutes, seconds, 0);
-        return date;
-    };
+
     const calculateElapsedTime = () => {
-        return attendanceData.map(record => {
-            const punchinTime = record.punchin_time;
-            const punchoutTime = record.punchout_time;
 
-            if (!punchinTime) return '00:00:00';
+        let [hours, minutes, seconds] = elapsedTime.split(':').map(Number);
+        const totalMilliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000 + 1000;
 
-            const punchIn = parseTimeString(punchinTime);
-            const endTime = punchoutTime ? parseTimeString(punchoutTime) : new Date();
-            const elapsedTime = Math.abs(endTime - punchIn);
-            const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
-            const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
 
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        });
+        hours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+        minutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+        seconds = Math.floor((totalMilliseconds % (1000 * 60)) / 1000);
+        console.log(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
+
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
+
     const handleLocationError = (error, reject) => {
         console.error('Location error:', error);
         if (error.code === error.PERMISSION_DENIED) {
@@ -130,6 +124,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                         await fetchData();
                                         handlePunchSuccess();
                                         resolve([response.data.success ? response.data.message : 'Punch completed successfully']);
+
                                     } else {
                                         reject(['Failed to set attendance. Please try again.']);
                                     }
@@ -237,17 +232,14 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         fetchData();
     }, []);
 
-
-    // useEffect(() => {
-    //     setElapsedTime(calculateElapsedTime());
-    // }, [elapsedTime,attendanceData, lastPunchInTime, lastPunchOutTime]);
-
     useEffect(() => {
-        const interval = setInterval(() => {
-            setElapsedTime(calculateElapsedTime());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [elapsedTime,attendanceData, lastPunchInTime, lastPunchOutTime]);
+        if (!lastPunchOutTime) {
+            const interval = setInterval(() => {
+                setElapsedTime(calculateElapsedTime());
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [elapsedTime, attendanceData, lastPunchInTime, lastPunchOutTime]);
 
     useEffect(() => {
         if (punched) {
@@ -256,7 +248,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     }, [punched]);
 
 
-    console.log(lastPunchInTime, " - ", lastPunchOutTime, attendanceData)
+    console.log(lastPunchOutTime, elapsedTime, attendanceData)
 
     return (
         <Box sx={{ display: 'flex', height: '100%', justifyContent: 'center', p: 2}}>
@@ -315,7 +307,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                         <Grow in timeout={1000}>
                                             <Box
                                                 onClick={() => {
-                                                    if (!lastPunchInTime) {
+                                                    if (!lastPunchInTime || (lastPunchInTime && lastPunchOutTime)) {
                                                         setPunched('punchin');
                                                     } else if (lastPunchInTime && !lastPunchOutTime) {
                                                         setPunched('punchout');
@@ -326,24 +318,24 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                                     backdropFilter: 'blur(16px) saturate(200%)',
                                                     backgroundColor: !lastPunchInTime ? 'rgba(0, 128, 0, 0.3)' :
                                                         lastPunchInTime && !lastPunchOutTime ? 'rgba(255, 0, 0, 0.3)' :
-                                                            lastPunchInTime && lastPunchOutTime ? 'rgba(0, 0, 255, 0.3)' : '',
+                                                            lastPunchInTime && lastPunchOutTime ? 'rgba(0, 128, 0, 0.3)' : '',
                                                     border: '5px solid rgba(255, 255, 255, 0.125)',
-                                                    width: 100,
-                                                    height: 100,
+                                                    width: 120,
+                                                    height: 120,
                                                     display: 'flex',
                                                     justifyContent: 'center',
                                                     alignItems: 'center',
                                                     borderColor: 'inherit',
-                                                    cursor: lastPunchInTime && lastPunchOutTime ? 'not-allowed' : 'pointer',
+                                                    cursor: 'pointer',
                                                     borderRadius: '50%',
-                                                    pointerEvents: lastPunchInTime && lastPunchOutTime ? 'none' : 'auto',
+                                                    pointerEvents: 'auto',
                                                     boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
                                                 }}
                                             >
                                                 <Box sx={{ textAlign: 'center' }}>
                                                     <Typography variant="body1">
                                                       <span>
-                                                        {!lastPunchInTime ? 'Punch In' : `${elapsedTime}`} {lastPunchInTime && <><br />hrs</>}
+                                                        {!lastPunchInTime ? 'Punch In' : lastPunchInTime && !lastPunchOutTime ? `Punch Out ${elapsedTime}` : lastPunchInTime && lastPunchOutTime ? `Punch In ${elapsedTime}` : ''} {lastPunchInTime && <><br />hrs</>}
                                                       </span>
                                                     </Typography>
                                                 </Box>
@@ -375,7 +367,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                                                     })}
                                                                 </Typography>
                                                             </Grid>
-                                                            {!attendanceData[0].punchout_time && index < attendanceData.length - 1 && (
+                                                            {attendanceData.length > 0 && attendanceData[index+1]?.punchout_time && (
                                                                 <Grid item>
                                                                     <KeyboardArrowRightIcon />
                                                                 </Grid>
@@ -385,22 +377,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
                                                 })}
                                             </Grid>
                                         </Collapse>
-                                        {/*<Collapse in timeout={1000}>*/}
-
-                                        {/*        return data.punchout_time ? (*/}
-                                        {/*            <div key={index}>*/}
-                                        {/*                <Typography variant="h6">*/}
-                                        {/*                    {new Date(`${data?.date}T${data?.}`).toLocaleTimeString('en-US', {*/}
-                                        {/*                        hour: 'numeric',*/}
-                                        {/*                        minute: '2-digit',*/}
-                                        {/*                        hour12: true*/}
-                                        {/*                    })}*/}
-                                        {/*                </Typography>*/}
-                                        {/*                { index < attendanceData.length - 1 && <Divider />}*/}
-                                        {/*            </div>*/}
-                                        {/*        ) : '';*/}
-                                        {/*    })}*/}
-                                        {/*</Collapse>*/}
                                     </Box>
                                 </>
                             )

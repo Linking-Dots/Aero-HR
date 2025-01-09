@@ -222,30 +222,29 @@ class AttendanceController extends Controller
                 'location' => 'required',
             ]);
 
+            // Get the current user
+            $currentUser = Auth::user();
+            $today = Carbon::today();
+
             // Attempt to create or update the attendance record
-            $attendance = Attendance::updateOrCreate(
-                ['user_id' => $request->user_id, 'date' => Carbon::today()],
-                [
-                    'punchin' => Carbon::now(),
-                    'punchin_location' => $request->location
-                ]
-            );
+            Attendance::create([
+                'user_id' => $request->user_id,
+                'date' => Carbon::today(),
+                'punchin' => Carbon::now(),
+                'punchin_location' => $request->location
+            ]);
 
-            // Update punchin and punchin_location in case they were not set during creation
-            $attendance->punchin_location = $request->location;
-            $attendance->save();
-
-            // Return success response
+            // Return success response with no punches if there are none
             return response()->json([
                 'success' => true,
-                'message' => 'Successfully punched in!'
+                'message' => 'Successfully punched in!',
             ]);
         } catch (\Exception $e) {
             // Handle exceptions
-            // You can log the error, return a custom error message, or handle it in any other way you prefer
             return response()->json(['error' => $e->getMessage()]);
         }
     }
+
     public function punchOut(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
@@ -258,6 +257,7 @@ class AttendanceController extends Controller
             // Find the attendance record for the user and date
             $attendance = Attendance::where('user_id', $request->user_id)
                 ->where('date', Carbon::today())
+                ->latest()
                 ->firstOrFail();
 
             // Update punchout and punchout_location fields
@@ -325,19 +325,20 @@ class AttendanceController extends Controller
             ->whereNotNull('punchin')
                 ->whereDate('date', $today)
                 ->where('user_id', $currentUser->id)  // Filter for current user
-                ->orderBy('id', 'desc')
+                ->orderBy('punchin', )
                 ->get();  // Retrieve all matching records
 
             $punches = [];
             $totalProductionTime = 0;  // Initialize total production time in seconds
 
             if ($userAttendances->isNotEmpty()) {
-                $punches = $userAttendances->map(function ($attendance) use (&$totalProductionTime) {
+                $now = Carbon::now();
+                $punches = $userAttendances->map(function ($attendance) use (&$totalProductionTime, $now) {
                     $punchInTime = Carbon::parse($attendance->punchin);
-                    $punchOutTime = $attendance->punchout ? Carbon::parse($attendance->punchout) : Carbon::now();
+                    $punchOutTime = $attendance->punchout ? Carbon::parse($attendance->punchout) : $now;
 
                     // Calculate the duration in seconds and add to total production time
-                    $duration = $punchOutTime->diffInSeconds($punchInTime);
+                    $duration = $punchInTime->diffInSeconds($punchOutTime);
                     $totalProductionTime += $duration;
 
                     return [
