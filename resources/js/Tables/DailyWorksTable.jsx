@@ -466,7 +466,10 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     size="sm"
                     variant={'underlined'}
                     type={'datetime-local'}
-                    value={row.completion_time ? new Date(row.completion_time).toISOString().slice(0, 16) : ''}
+                    value={row.completion_time
+                        ? new Date(row.completion_time).toLocaleString('sv-SE').replace(' ', 'T')
+                        : ''
+                    }
                     onChange={(e) => handleChange(row.id,row.number, 'completion_time', e.target.value)}
                     inputProps={{
                         placeholder: 'YYYY-MM-DDTHH:MM',

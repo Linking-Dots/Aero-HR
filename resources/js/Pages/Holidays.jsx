@@ -1,8 +1,8 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {Head, usePage} from '@inertiajs/react';
-import {Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar, Divider} from '@mui/material';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Head, usePage } from '@inertiajs/react';
+import { Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar, Divider } from '@mui/material';
 import { Add } from '@mui/icons-material';
-import GlassCard from '@/Components/GlassCard.jsx'; // Ensure this component is imported if you have custom styles
+import GlassCard from '@/Components/GlassCard.jsx';
 import App from "@/Layouts/App.jsx";
 import HolidayTable from '@/Tables/HolidayTable.jsx';
 import HolidayForm from "@/Forms/HolidayForm.jsx";
@@ -10,89 +10,88 @@ import Grow from "@mui/material/Grow";
 import DeleteHolidayForm from "@/Forms/DeleteHolidayForm.jsx";
 
 const Holidays = ({ title }) => {
-    const {auth} = usePage().props;
-    const [openModalType, setOpenModalType] = useState(null);
-    const [holidaysData, setHolidaysData] = useState(usePage().props.holidays);
+    const { auth, holidays: initialHolidays } = usePage().props;
+    const [modalState, setModalState] = useState({
+        type: null,
+        holidayId: null,
+        currentHoliday: null
+    });
+    const [holidaysData, setHolidaysData] = useState(initialHolidays);
 
-    const [holidayIdToDelete, setHolidayIdToDelete] = useState(null);
-
-    const [currentHoliday, setCurrentHoliday] = useState();
-
-    const openModal = (modalType) => {
-        setOpenModalType(modalType);
-    };
-
-    const handleClickOpen = useCallback((holidayId, modalType) => {
-        setHolidayIdToDelete(holidayId);
-        setOpenModalType(modalType);
+    const handleModalOpen = useCallback((type, holidayId = null, holiday = null) => {
+        setModalState({
+            type,
+            holidayId,
+            currentHoliday: holiday
+        });
     }, []);
 
-    const handleClose = useCallback(() => {
-        setOpenModalType(null);
-        setHolidayIdToDelete(null);
+    const handleModalClose = useCallback(() => {
+        setModalState({
+            type: null,
+            holidayId: null,
+            currentHoliday: null
+        });
     }, []);
 
-    const closeModal = () => {
-        setOpenModalType(null);
-    };
+    const updateHolidaysData = useCallback((newData) => {
+        setHolidaysData(newData);
+    }, []);
+
+    const modalProps = useMemo(() => ({
+        open: Boolean(modalState.type),
+        closeModal: handleModalClose,
+        setHolidaysData: updateHolidaysData,
+        holidaysData,
+        currentHoliday: modalState.currentHoliday
+    }), [modalState.type, handleModalClose, updateHolidaysData, holidaysData, modalState.currentHoliday]);
 
     return (
         <>
             <Head title={title} />
-            {openModalType === 'add_holiday' && (
-                <HolidayForm
-                    open={openModalType === 'add_holiday'}
-                    setHolidaysData={setHolidaysData}
-                    closeModal={closeModal}
-                    holidaysData={holidaysData}
-                />
-            )}
-            {openModalType === 'edit_holiday' && (
-                <HolidayForm
-                    open={openModalType === 'edit_holiday'}
-                    setHolidaysData={setHolidaysData}
-                    closeModal={closeModal}
-                    holidaysData={holidaysData}
-                    currentHoliday={currentHoliday}
-                />
-            )}
-            {openModalType === 'delete_holiday' && (
+            {modalState.type === 'add_holiday' && <HolidayForm {...modalProps} />}
+            {modalState.type === 'edit_holiday' && <HolidayForm {...modalProps} />}
+            {modalState.type === 'delete_holiday' && (
                 <DeleteHolidayForm
-                    open={openModalType === 'delete_holiday'}
-                    handleClose={handleClose}
-                    holidayIdToDelete={holidayIdToDelete}
-                    setHolidaysData={setHolidaysData}
+                    open={true}
+                    holidayId={modalState.holidayId}
+                    setHolidaysData={updateHolidaysData}
+                    closeModal={handleModalClose}
+                    holidaysData={holidaysData}
                 />
             )}
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <Grow in>
-                    <GlassCard>
-                        <CardHeader
-                            title="Holidays"
-                            sx={{padding: '24px'}}
-                            action={
-                                <Box display="flex" gap={2}>
-                                    <Button
-                                        title="Add Holiday"
-                                        variant="outlined"
-                                        color="success"
-                                        startIcon={<Add />}
-                                        onClick={() => openModal('add_holiday')}
-                                    >
-                                        Add Holiday
-                                    </Button>
-                                </Box>
-                            }
+            <Box sx={{ p: 2 }}>
+                <GlassCard>
+                    <CardHeader
+                        title={
+                            <Typography variant="h6" component="div">
+                                Holidays
+                            </Typography>
+                        }
+                        action={
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={() => handleModalOpen('add_holiday')}
+                            >
+                                Add Holiday
+                            </Button>
+                        }
+                    />
+                    <Divider />
+                    <CardContent>
+                        <HolidayTable
+                            holidays={holidaysData}
+                            onEdit={(holiday) => handleModalOpen('edit_holiday', null, holiday)}
+                            onDelete={(holidayId) => handleModalOpen('delete_holiday', holidayId)}
                         />
-                        <CardContent>
-                            <HolidayTable setHolidaysData={setHolidaysData} handleClickOpen={handleClickOpen} setCurrentHoliday={setCurrentHoliday} openModal={openModal} holidaysData={holidaysData} />
-                        </CardContent>
-                    </GlassCard>
-                </Grow>
+                    </CardContent>
+                </GlassCard>
             </Box>
         </>
     );
 };
+
 Holidays.layout = (page) => <App>{page}</App>;
 
 export default Holidays;

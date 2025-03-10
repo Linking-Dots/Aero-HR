@@ -12,6 +12,7 @@ use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\JurisdictionController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LetterController;
+use App\Http\Controllers\PicnicController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

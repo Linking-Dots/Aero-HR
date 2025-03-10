@@ -1,0 +1,1 @@
+import{b as a,a as e}from"./app-D1RranZH.js";import{r}from"./vendor-CvAEURx2.js";const o=()=>(r.useState(!1),a({email:"",password:"",remember:!1}),e("div",{className:"auth-page-wrapper pt-5"}));export{o as default};
