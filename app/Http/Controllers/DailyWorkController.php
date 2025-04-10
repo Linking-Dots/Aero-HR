@@ -261,8 +261,7 @@ class DailyWorkController extends Controller
 
 
                 // Regex for extracting start and end chainages
-                $chainageRegex = '/([A-Z]*K[A-Z]*(?:\+[0-9]+(?:\.[0-9]+)?)?)-([A-Z]*K[A-Z]*(?:\+[0-9]+(?:\.[0-9]+)?)?)|([A-Z]*K[A-Z]*(?:\+[0-9]+(?:\.[0-9]+)?)?)(.*)/';
-
+                $chainageRegex = '/(.*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)-(.*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)|(.*K[0-9]+)(.*)/';
 
                 foreach ($importedDailyWorks as $importedDailyWork) {
                     // Extract chainages from location field
