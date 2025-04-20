@@ -10,10 +10,13 @@ import Grow from "@mui/material/Grow";
 import DeleteLeaveForm from "@/Forms/DeleteLeaveForm.jsx";
 import dayjs from "dayjs";
 import { Input } from '@nextui-org/react';
+import CircularProgress from "@mui/material/CircularProgress";
+import { Select, SelectItem } from "@nextui-org/react";
 
 const LeavesEmployee = ({ title, allUsers }) => {
     const {auth} = usePage().props;
     const {props} = usePage();
+    const [loading, setLoading] = useState(false);
     const [leaves, setLeaves] = useState([]);
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState({
@@ -30,6 +33,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
+    const currentYear = new Date().getFullYear();
+const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => 1900 + i).reverse();
 
     const openModal = (modalType) => setOpenModalType(modalType);
 
@@ -68,19 +73,24 @@ const LeavesEmployee = ({ title, allUsers }) => {
                 setLeavesData(leavesData);
                 setTotalRows(leaves.total);
                 setLastPage(leaves.last_page);
+                setError(false);
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error fetching leaves data:', error);
             setError(error.response?.data?.message || 'Error retrieving data.');
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        console.log("User Effect Running");
+    
+        setLoading(true);
         fetchLeavesData();
     }, [selectedYear, currentPage, perPage, employee]);
 
   
+    console.log(leavesData)
 
     return (
         <>
@@ -100,64 +110,101 @@ const LeavesEmployee = ({ title, allUsers }) => {
                             <Grid container spacing={2}>
                             
                                 <Grid item xs={12} sm={6} md={4}>
-                                    <Input
+                                    <Select
+                                   
                                         label="Select Year"
-                                        type="year"
                                         variant="bordered"
-                                        onChange={handleYearChange}
-                                        value={selectedYear}
-                                    />
+                                        selectedKeys={[String(selectedYear)]} // selectedKeys must match the key
+                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                        popoverProps={{
+                                            classNames: {
+                                                content: "bg-transparent backdrop-blur-lg border-inherit",
+                                            },
+                                        }}
+                                        >
+                                        {years.map((year) => (
+                                            <SelectItem key={String(year)} value={String(year)}>
+                                            {String(year)}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
                                 </Grid>
                             </Grid>
                         </CardContent>
                         <CardContent>
-                            <Grid container spacing={2}>
-                                {leavesData?.leaveTypes?.map((leaveType) => (
-                                    <Grid item xs={6} sm={6} md={3} key={leaveType.type}>
-                                        <GlassCard>
-                                            <CardContent>
-                                                <Box
-                                                    display="flex"
-                                                    flexDirection="column"
-                                                    justifyContent="center"
-                                                    alignItems="center"
-                                                    height="100%"
-                                                    textAlign="center"
-                                                >
-                                                    {/* Leave Type centered at the top */}
-                                                    <Typography variant="h6" sx={{ mb: 2 }}>{leaveType.type}</Typography> {/* Margin-bottom to separate from the next line */}
+                            {loading ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', py: 4 }}>
+                                    <CircularProgress sx={{ mb: 2 }} />
+                                    <Typography variant="body1" align="center">
+                                        Loading leaves data...
+                                    </Typography>
+                                </Box>
+                            ) : (
+                                <>
+                                    {leavesData?.leaveTypes?.length > 0 && (
+                                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                                            {leavesData.leaveTypes.map((leaveType) => (
+                                                <Grid item xs={6} sm={6} md={3} key={leaveType.type}>
+                                                    <GlassCard>
+                                                        <CardContent>
+                                                            <Box
+                                                                display="flex"
+                                                                flexDirection="column"
+                                                                justifyContent="center"
+                                                                alignItems="center"
+                                                                height="100%"
+                                                                textAlign="center"
+                                                            >
+                                                                <Typography variant="h6" sx={{ mb: 2 }}>{leaveType.type}</Typography>
+                                                                <Box display="flex" alignItems="center">
+                                                                    <Box>
+                                                                        Used:
+                                                                        <Typography variant="h4">
+                                                                            {leavesData.leaveCountsByUser[auth.user.id]?.find(item => item.leave_type === leaveType.type)?.days_used || 0}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                    <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                                                    <Box>
+                                                                        Remaining:
+                                                                        <Typography variant="h4">
+                                                                            {leavesData.leaveCountsByUser[auth.user.id]?.find(item => item.leave_type === leaveType.type)?.remaining_days || 0}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Box>
+                                                            </Box>
+                                                        </CardContent>
+                                                    </GlassCard>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    )}
 
-                                                    {/* Used and Remaining values in a new row */}
-                                                    <Box display="flex" alignItems="center">
-                                                        <Box>
-                                                            Used:
-                                                            <Typography variant="h4">
-                                                                {leavesData.leaveCountsByUser[auth.user.id]
-                                                                    ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.days_used
-                                                                    : 0}
-                                                            </Typography>
-                                                        </Box>
-
-                                                        <Divider orientation="vertical" flexItem sx={{ mx: 2 }} /> {/* Vertical divider with horizontal margin */}
-
-                                                        <Box>
-                                                            Remaining:
-                                                            <Typography variant="h4">
-                                                                {leavesData.leaveCountsByUser[auth.user.id]
-                                                                    ? leavesData.leaveCountsByUser[auth.user.id].find(item => item.leave_type === leaveType.type)?.remaining_days
-                                                                    : 0}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
-                                                </Box>
-                                            </CardContent>
-                                        </GlassCard>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </CardContent>
-                        <CardContent>
-                            <LeaveEmployeeTable setLeavesData={setLeavesData} handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} leaves={leaves} allUsers={allUsers}/>
+                                    {leaves && leaves.length > 0 ? (
+                                        <LeaveEmployeeTable
+                                            totalRows={totalRows}
+                                            lastPage={lastPage}
+                                            setCurrentPage={setCurrentPage}
+                                            setPerPage={setPerPage}
+                                            perPage={perPage}
+                                            currentPage={currentPage}
+                                            setLeavesData={setLeavesData}
+                                            handleClickOpen={handleClickOpen}
+                                            setCurrentLeave={setCurrentLeave}
+                                            openModal={openModal}
+                                            leaves={leaves}
+                                            allUsers={allUsers}
+                                        />
+                                    ) : error ? (
+                                        <Typography variant="body1" align="center">
+                                            {error}
+                                        </Typography>
+                                    ) : (
+                                        <Typography variant="body1" align="center">
+                                            No leaves data found.
+                                        </Typography>
+                                    )}
+                                </>
+                            )}
                         </CardContent>
                     </GlassCard>
                 </Grow>
