@@ -27,76 +27,11 @@ class LeaveController extends Controller
 
     public function index2(): \Inertia\Response
     {
-        $user = Auth::user();
-        $currentYear = now()->year;
-
-        // Fetch all leaves for the current year and their leave types
-        $allLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->when(!$user->hasRole('Administrator'), function ($query) {
-                // Restrict to the current user if not an admin
-                return $query->where('leaves.user_id', auth()->id());
-            })
-            ->whereYear('leaves.from_date', $currentYear) // Filter by current year
-            ->orderBy('leaves.from_date', 'desc')
-            ->get();
-
-        // Fetch all leave types
-        $leaveTypes = LeaveSetting::all();
-
-        // Initialize arrays to store leave counts by user and by leave type
-        $leaveCountsByUser = [];
-
-        // Process leaves to aggregate totals by user and leave type for the current year
-        foreach ($allLeaves as $leave) {
-            $userId = $leave->user_id;
-            $type = $leave->leave_type;
-            $days = $leave->no_of_days;
-
-            // Initialize arrays if they don't exist
-            if (!isset($leaveCountsByUser[$userId])) {
-                $leaveCountsByUser[$userId] = [];
-            }
-            if (!isset($leaveCountsByUser[$userId][$type])) {
-                $leaveCountsByUser[$userId][$type] = 0;
-            }
-
-            // Add the number of days to the total for this user and leave type
-            $leaveCountsByUser[$userId][$type] += $days;
-        }
-
-        // Prepare leave counts with remaining days for the current year
-        $leaveCountsWithRemainingByUser = [];
-
-        foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
-            $leaveCountsWithRemaining = [];
-            foreach ($leaveTypes as $leaveType) {
-                $type = $leaveType->type;
-                $totalDaysAvailable = $leaveType->days;
-                $daysUsed = $userLeaveCounts[$type] ?? 0;
-                $remainingDays = $totalDaysAvailable - $daysUsed;
-
-                $leaveCountsWithRemaining[] = [
-                    'leave_type' => $type,
-                    'total_days' => $totalDaysAvailable,
-                    'days_used' => $daysUsed,
-                    'remaining_days' => $remainingDays,
-                ];
-            }
-            $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
-        }
-
-        // Prepare data for the view
-        $leavesData = [
-            'leaveTypes' => $leaveTypes,
-            'allLeaves' => $allLeaves,
-            'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-        ];
+        
 
         return Inertia::render('LeavesAdmin', [
             'title' => 'Leaves',
-            'leavesData' => $leavesData,
+        
             'allUsers' => User::all()
         ]);
     }
@@ -109,47 +44,52 @@ class LeaveController extends Controller
         $employee = $request->get('employee', '');
         $year = $request->get('year', null);
         $month = $request->get('month', null);
-        
-        // If year is not provided but month is, extract the year from the month
-        
 
         try {
             $user = Auth::user();
             $isAdmin = $user->hasRole('Administrator');
 
-            // Build the query using Eloquent
+            // Base query
             $leavesQuery = Leave::with('employee')
                 ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                 ->select('leaves.*', 'leave_settings.type as leave_type');
 
-            // If year is provided, filter by year and current user
-            if ($year) {
-                $leavesQuery->where('leaves.user_id', auth()->id())
-                    ->whereYear('leaves.from_date', $year);
-            } else if ($isAdmin && $month) {
-                // For admin users, filter by month if provided
-                $selectedMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-                $endOfMonth = $selectedMonth->copy()->endOfMonth();
-                $leavesQuery->whereBetween('leaves.from_date', [$selectedMonth, $endOfMonth]);
-            } else if (!$isAdmin) {
-                // For non-admin users without year, show only their leaves
-                $leavesQuery->where('leaves.user_id', auth()->id());
+            $baseQuery = clone $leavesQuery; // Save original for allLeaves later
+
+            if (!$year && $month) {
+                $year = Carbon::createFromFormat('Y-m', $month)->year;
             }
 
-            // Add employee search filter if provided
+            // Apply filters
+            if ($year) {
+                $leavesQuery->whereYear('leaves.from_date', $year);
+                if (!$isAdmin) {
+                    $leavesQuery->where('leaves.user_id', auth()->id());
+                }
+                $allLeaves = (clone $leavesQuery)->get();
+            } 
+            
+            if ($isAdmin && $month) {
+                $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+                $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+            
+                $leavesQuery->whereBetween('leaves.from_date', [$startOfMonth, $endOfMonth]);
+            
+                if (!$isAdmin) {
+                    $leavesQuery->where('leaves.user_id', auth()->id());
+                }
+            
+            }
+
+            // Filter by employee name (if provided)
             if ($employee !== '') {
                 $leavesQuery->whereHas('user', function ($query) use ($employee) {
                     $query->where('name', 'like', '%' . $employee . '%');
                 });
             }
 
-            // Order by date
+            // Order and paginate
             $leavesQuery->orderBy('leaves.from_date', 'desc');
-
-            // Fetch all leaves and their leave types
-            $allLeaves = $leavesQuery->get();
-
-            // Paginate the query
             $leaveRecords = $leavesQuery->paginate($perPage, ['*'], 'page', $page);
 
             if ($leaveRecords->isEmpty()) {
@@ -158,39 +98,27 @@ class LeaveController extends Controller
                 ], 404);
             }
 
-            // If year is not provided but month is, extract the year from the month
-            if (!$year && $month) {
-                $year = Carbon::createFromFormat('Y-m', $month)->year;
-            }
-            
-
-            // Fetch all leave types
+            // Fetch leave types
             $leaveTypes = LeaveSetting::all();
 
-            // Initialize arrays to store leave counts by user and by leave type
+            // Aggregate leave counts
             $leaveCountsByUser = [];
-
-            // Process leaves to aggregate totals by user and leave type
             foreach ($allLeaves as $leave) {
                 $userId = $leave->user_id;
                 $type = $leave->leave_type;
                 $days = $leave->no_of_days;
 
-                // Initialize arrays if they don't exist
                 if (!isset($leaveCountsByUser[$userId])) {
                     $leaveCountsByUser[$userId] = [];
                 }
                 if (!isset($leaveCountsByUser[$userId][$type])) {
                     $leaveCountsByUser[$userId][$type] = 0;
                 }
-
-                // Add the number of days to the total for this user and leave type
                 $leaveCountsByUser[$userId][$type] += $days;
             }
 
-            // Prepare leave counts with remaining days
+            // Prepare detailed leave info
             $leaveCountsWithRemainingByUser = [];
-
             foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
                 $leaveCountsWithRemaining = [];
                 foreach ($leaveTypes as $leaveType) {
@@ -209,16 +137,12 @@ class LeaveController extends Controller
                 $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
             }
 
-            // Prepare data for the view
-            $leavesData = [
-                'leaveTypes' => $leaveTypes,
-                'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-            ];
-
-            // Return paginated data for leaves
             return response()->json([
                 'leaves' => $leaveRecords,
-                'leavesData' => $leavesData,
+                'leavesData' => [
+                    'leaveTypes' => $leaveTypes,
+                    'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
+                ],
                 'current_page' => $leaveRecords->currentPage(),
                 'last_page' => $leaveRecords->lastPage(),
                 'total' => $leaveRecords->total(),
@@ -231,6 +155,7 @@ class LeaveController extends Controller
             ], 500);
         }
     }
+
 
     public function create(Request $request)
     {

@@ -29,7 +29,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
     const [employee, setEmployee] = useState('');
     const [selectedYear, setSelectedYear] = useState(dayjs().year());
-    const [perPage, setPerPage] = useState(10);
+    const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
