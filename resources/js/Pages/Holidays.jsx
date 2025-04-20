@@ -63,14 +63,12 @@ const Holidays = ({ title }) => {
             <Box sx={{ p: 2 }}>
                 <GlassCard>
                     <CardHeader
-                        title={
-                            <Typography variant="h6" component="div">
-                                Holidays
-                            </Typography>
-                        }
+                        title="Leaves"
+                        sx={{ padding: '24px' }}
                         action={
                             <Button
-                                variant="contained"
+                                title="Add Leave"
+                                variant="outlined"
                                 startIcon={<Add />}
                                 onClick={() => handleModalOpen('add_holiday')}
                             >
@@ -81,7 +79,7 @@ const Holidays = ({ title }) => {
                     <Divider />
                     <CardContent>
                         <HolidayTable
-                            holidays={holidaysData}
+                            holidaysData={holidaysData}
                             onEdit={(holiday) => handleModalOpen('edit_holiday', null, holiday)}
                             onDelete={(holidayId) => handleModalOpen('delete_holiday', holidayId)}
                         />

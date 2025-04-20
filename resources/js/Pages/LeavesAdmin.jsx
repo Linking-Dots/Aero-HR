@@ -17,9 +17,11 @@ import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
 import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
 import dayjs from 'dayjs';
+import CircularProgress  from '@mui/material/CircularProgress';
 
 const LeavesAdmin = ({ title, allUsers }) => {
     const { auth, props } = usePage();
+    const [loading, setLoading] = useState(false);
     const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState(props.leavesData);
     const [leaves, setLeaves] = useState();
@@ -70,14 +72,19 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 setLeaves(data);
                 setTotalRows(total);
                 setLastPage(last_page);
+                setError(false);
+                setLoading(false);
             }
         } catch (error) {
-            console.error('Error fetching leaves data:', error);
+            console.error('Error fetching leaves data:', error.response);
+            setLeaves(false);
             setError(error.response?.data?.message || 'Error retrieving data.');
+            setLoading(false);
         }
     };
 
     useEffect(() => {
+        setLoading(true);
         fetchLeavesData();
     }, [selectedMonth, currentPage, perPage, employee]);
 
@@ -151,12 +158,21 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                         variant="bordered"
                                         onChange={handleMonthChange}
                                         value={selectedMonth}
+                                        isLoading={loading}
                                     />
                                 </Grid>
                             </Grid>
                         </CardContent>
                         <CardContent>
-                            {leaves ? (
+                            { loading ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                    <CircularProgress sx={{ p: 1 }} />
+                                    <Typography variant="body1" align="center">
+                                        Loading leaves data...
+                                    </Typography>
+                    
+                                </Box>
+                            ) : leaves && leaves.length > 0 ? (
                                 <LeaveEmployeeTable
                                     totalRows={totalRows}
                                     lastPage={lastPage}
@@ -179,7 +195,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                 </Typography>
                             ) : (
                                 <Typography variant="body1" align="center">
-                                    Loading leaves data...
+                                    No leaves data found.
                                 </Typography>
                             )}
                         </CardContent>

@@ -167,44 +167,53 @@ class LeaveController extends Controller
 
     public function paginate(Request $request): \Illuminate\Http\JsonResponse
     {
-        // Get the date from the query parameter, defaulting to today's date if none is provided
-        $selectedMonth = Carbon::createFromFormat('Y-m', $request->query('month'))->startOfMonth();
-        $endOfMonth = $selectedMonth->copy()->endOfMonth();
-        $perPage = $request->get('perPage', 30); // Default to 30 items per page
+        $perPage = $request->get('perPage', 30);
         $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
         $employee = $request->get('employee', '');
-
+        $year = $request->get('year', null);
+        $month = $request->get('month', null);
 
         try {
             $user = Auth::user();
+            $isAdmin = $user->hasRole('Administrator');
 
             // Build the query using Eloquent
-            $leavesQuery = Leave::with('employee') // Ensure 'user' relationship is loaded
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-                ->select('leaves.*', 'leave_settings.type as leave_type')
-                ->when(!$user->hasRole('Administrator'), function ($query) {
-                    // Restrict to the current user if not an admin
-                    return $query->where('leaves.user_id', auth()->id());
-                })
-                ->whereBetween('leaves.from_date', [$selectedMonth, $endOfMonth])
-                ->orderBy('leaves.from_date', 'desc');
+            $leavesQuery = Leave::with('employee')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type');
 
+            // If year is provided, filter by year and current user
+            if ($year) {
+                $leavesQuery->where('leaves.user_id', auth()->id())
+                    ->whereYear('leaves.from_date', $year);
+            } else if ($isAdmin && $month) {
+                // For admin users, filter by month if provided
+                $selectedMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+                $endOfMonth = $selectedMonth->copy()->endOfMonth();
+                $leavesQuery->whereBetween('leaves.from_date', [$selectedMonth, $endOfMonth]);
+            } else if (!$isAdmin) {
+                // For non-admin users without year, show only their leaves
+                $leavesQuery->where('leaves.user_id', auth()->id());
+            }
+
+            // Add employee search filter if provided
             if ($employee !== '') {
-                // Use relationship to filter by employee name
                 $leavesQuery->whereHas('user', function ($query) use ($employee) {
                     $query->where('name', 'like', '%' . $employee . '%');
                 });
             }
+
+            // Order by date
+            $leavesQuery->orderBy('leaves.from_date', 'desc');
 
             // Paginate the query
             $leaveRecords = $leavesQuery->paginate($perPage, ['*'], 'page', $page);
 
             if ($leaveRecords->isEmpty()) {
                 return response()->json([
-                    'message' => 'No leave records found for the selected date.',
+                    'message' => 'No leave records found for the selected period.',
                 ], 404);
             }
-
 
             // Return paginated data for leaves
             return response()->json([
@@ -213,13 +222,11 @@ class LeaveController extends Controller
                 'last_page' => $leaveRecords->lastPage(),
                 'total' => $leaveRecords->total(),
             ]);
-
         } catch (Throwable $exception) {
-            // Handle unexpected exceptions during data retrieval
-            report($exception); // Report the exception for debugging or logging
+            report($exception);
             return response()->json([
-                'error' => 'An error occurred while retrieving attendance data.',
-                'details' => $exception->getMessage() // Return the error message for debugging
+                'error' => 'An error occurred while retrieving leave data.',
+                'details' => $exception->getMessage()
             ], 500);
         }
     }

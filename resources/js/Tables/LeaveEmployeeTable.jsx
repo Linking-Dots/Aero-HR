@@ -52,7 +52,7 @@ const LeaveEmployeeTable = ({
                                 selectedMonth,
                                 employee
                             }) => {
-    console.log(leaves)
+
 
 
     const { auth } = usePage().props;

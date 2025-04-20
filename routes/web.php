@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/leave-update', [LeaveController::class, 'update'])->name('leave-update');
     Route::post('/leave-update-status', [LeaveController::class, 'updateStatus'])->name('leave-update-status');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
+    Route::get('/leaves-paginate', [LeaveController::class, 'paginate'])->name('leaves.paginate');
 
     Route::get('/attendance-employee', [AttendanceController::class, 'index2'])->name('attendance-employee');
     Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
@@ -92,7 +93,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::put('/letters-update', [LetterController::class, 'update'])->name('letters.update');
 
     Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
-    Route::get('/leaves-paginate', [LeaveController::class, 'paginate'])->name('leaves.paginate');
+    
     Route::post('/add-leave-type', [LeaveSettingController::class, 'store'])->name('add-leave-type');
     Route::put('/update-leave-type/{id}', [LeaveSettingController::class, 'update'])->name('update-leave-type');
     Route::delete('/delete-leave-type/{id}', [LeaveSettingController::class, 'destroy'])->name('delete-leave-type');

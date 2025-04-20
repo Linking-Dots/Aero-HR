@@ -9,22 +9,24 @@ import LeaveForm from "@/Forms/LeaveForm.jsx";
 import Grow from "@mui/material/Grow";
 import DeleteLeaveForm from "@/Forms/DeleteLeaveForm.jsx";
 import dayjs from "dayjs";
+import { Input } from '@nextui-org/react';
 
 const LeavesEmployee = ({ title, allUsers }) => {
     const {auth} = usePage().props;
     const {props} = usePage();
-    console.log(auth);
+    const [leaves, setLeaves] = useState([]);
     const [openModalType, setOpenModalType] = useState(null);
-    const [leavesData, setLeavesData] = useState(props.leavesData);
-    const [leaves, setLeaves] = useState();
+    const [leavesData, setLeavesData] = useState({
+        leaveTypes: [],
+        leaveCountsByUser: {}
+    });
+    
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
     const [employee, setEmployee] = useState('');
-    const [selectedMonth, setSelectedMonth] = useState(
-        dayjs().format('YYYY-MM')
-    );
-    const [perPage, setPerPage] = useState(30);
+    const [selectedYear, setSelectedYear] = useState(dayjs().year());
+    const [perPage, setPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
@@ -43,30 +45,29 @@ const LeavesEmployee = ({ title, allUsers }) => {
 
     const handleSearch = (event) => setEmployee(event.target.value.toLowerCase());
 
-    const handleMonthChange = (event) => {
-        console.log(event.target.value);
-        setSelectedMonth(event.target.value);
+    const handleYearChange = (event) => {
+        setSelectedYear(event.target.value);
     };
 
     const fetchLeavesData = async () => {
-
         try {
             const response = await axios.get(route('leaves.paginate'), {
                 params: {
                     page: currentPage,
                     perPage,
                     employee,
-                    month: selectedMonth,
+                    year: selectedYear
                 },
             });
-
-            console.log(selectedMonth, );
+            console.log(response);
 
             if (response.status === 200) {
-                const { data, total, last_page } = response.data.leaves;
-                setLeaves(data);
-                setTotalRows(total);
-                setLastPage(last_page);
+                
+                const { leaves, leavesData } = response.data;
+                setLeaves(leaves.data);
+                setLeavesData(leavesData);
+                setTotalRows(leaves.total);
+                setLastPage(leaves.last_page);
             }
         } catch (error) {
             console.error('Error fetching leaves data:', error);
@@ -75,62 +76,43 @@ const LeavesEmployee = ({ title, allUsers }) => {
     };
 
     useEffect(() => {
+        console.log("User Effect Running");
         fetchLeavesData();
-    }, [selectedMonth, currentPage, perPage, employee]);
+    }, [selectedYear, currentPage, perPage, employee]);
+
+  
 
     return (
         <>
             <Head title={title} />
-            {['add_leave', 'edit_leave'].includes(openModalType) && (
-                <LeaveForm
-                    setTotalRows={setTotalRows}
-                    setLastPage={setLastPage}
-                    setLeaves={setLeaves}
-                    perPage={perPage}
-                    employee={employee}
-                    currentPage={currentPage}
-                    selectedMonth={selectedMonth}
-                    allUsers={allUsers}
-                    open={true}
-                    setLeavesData={setLeavesData}
-                    closeModal={() => setOpenModalType(null)}
-                    leavesData={leavesData}
-                    currentLeave={openModalType === 'edit_leave' ? currentLeave : null}
-                    handleMonthChange={handleMonthChange}
-                />
-            )}
+            
 
-            {openModalType === 'delete_leave' && (
-                <DeleteLeaveForm
-                    open={true}
-                    handleClose={handleClose}
-                    leaveIdToDelete={leaveIdToDelete}
-                    setLeavesData={setLeavesData}
-                />
-            )}
+        
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
                         <CardHeader
                             title="Leaves"
                             sx={{padding: '24px'}}
-                            action={
-                                <Box display="flex" gap={2}>
-                                    <Button
-                                        title="Add Leave"
-                                        variant="outlined"
-                                        color="success"
-                                        startIcon={<Add />}
-                                        onClick={() => openModal('add_leave')}
-                                    >
-                                        Add Leave
-                                    </Button>
-                                </Box>
-                            }
+                            
                         />
                         <CardContent>
                             <Grid container spacing={2}>
-                                {leavesData.leaveTypes.map((leaveType) => (
+                            
+                                <Grid item xs={12} sm={6} md={4}>
+                                    <Input
+                                        label="Select Year"
+                                        type="year"
+                                        variant="bordered"
+                                        onChange={handleYearChange}
+                                        value={selectedYear}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                        <CardContent>
+                            <Grid container spacing={2}>
+                                {leavesData?.leaveTypes?.map((leaveType) => (
                                     <Grid item xs={6} sm={6} md={3} key={leaveType.type}>
                                         <GlassCard>
                                             <CardContent>
@@ -175,7 +157,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                             </Grid>
                         </CardContent>
                         <CardContent>
-                            <LeaveEmployeeTable setLeavesData={setLeavesData} handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} allLeaves={leaves} allUsers={allUsers}/>
+                            <LeaveEmployeeTable setLeavesData={setLeavesData} handleClickOpen={handleClickOpen} setCurrentLeave={setCurrentLeave} openModal={openModal} leaves={leaves} allUsers={allUsers}/>
                         </CardContent>
                     </GlassCard>
                 </Grow>

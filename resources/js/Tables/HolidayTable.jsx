@@ -8,22 +8,16 @@ import {
     IconButton,
     Button, Box, CircularProgress, FormHelperText
 } from '@mui/material';
-import { AccountCircle, Edit, Delete } from '@mui/icons-material';
+
 import {useTheme} from "@mui/material/styles";
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import EditIcon from "@mui/icons-material/Edit.js";
 import DeleteIcon from "@mui/icons-material/Delete.js";
 import React, {useState} from "react";
 import {usePage} from "@inertiajs/react";
-import Menu from "@mui/material/Menu";
-import { toast } from "react-toastify";
-import NewIcon from "@mui/icons-material/FiberNew.js";
 
 import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@nextui-org/react";
 const HolidayTable = ({ holidaysData, handleClickOpen, setCurrentHoliday, openModal, setHolidaysData}) => {
-    const {auth} = usePage().props;
-    const [anchorEl, setAnchorEl] = useState(null);
-    const theme = useTheme();
+    console.log(holidaysData)
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);

@@ -35,7 +35,7 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
             setElapsedTime(response.total_production_time);
             data[data.length - 1].punchin_time ? setLastPunchInTime(data[data.length - 1].punchin_time) : '';
             data[data.length - 1].punchout_time ? setLastPunchOutTime(data[data.length - 1].punchout_time) : '';
-            console.log(data)
+    
         } catch (error) {
             console.error('Error fetching user attendance:', error);
         }
@@ -50,7 +50,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         hours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
         minutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
         seconds = Math.floor((totalMilliseconds % (1000 * 60)) / 1000);
-        console.log(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
@@ -247,8 +246,6 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
         }
     }, [punched]);
 
-
-    console.log(lastPunchOutTime, elapsedTime, attendanceData)
 
     return (
         <Box sx={{ display: 'flex', height: '100%', justifyContent: 'center', p: 2}}>
