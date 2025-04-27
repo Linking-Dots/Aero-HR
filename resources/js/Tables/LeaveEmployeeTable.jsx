@@ -257,7 +257,7 @@ const LeaveEmployeeTable = ({
                     )}
                 </TableBody>
             </Table>
-            {totalRows > 10 && (
+            {totalRows > 30 && (
                 <div className="py-2 px-2 flex justify-center items-end" style={{ height: "100%" }}>
                     <Pagination
                         initialPage={1}
