@@ -21,7 +21,7 @@ import {PhotoCamera} from "@mui/icons-material";
 import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {toast} from "react-toastify";
-import {Input, SelectItem, Select} from "@nextui-org/react";
+import {Input, SelectItem, Select} from "@heroui/react";
 import PasswordIcon from "@mui/icons-material/Password.js";
 import VisibilityOff from "@mui/icons-material/VisibilityOff.js";
 import Visibility from "@mui/icons-material/Visibility.js";

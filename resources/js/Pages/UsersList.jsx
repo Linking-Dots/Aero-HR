@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Head, usePage} from "@inertiajs/react";
 import {Box, CardContent, CardHeader, IconButton, useMediaQuery} from '@mui/material';
-import {Button} from '@nextui-org/react';
+import {Button} from "@heroui/react";
 
 import App from "@/Layouts/App.jsx";
 import Grow from "@mui/material/Grow";

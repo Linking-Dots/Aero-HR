@@ -24,7 +24,7 @@ import { Head, usePage } from "@inertiajs/react";
 import App from "@/Layouts/App.jsx";
 import GlassCard from '@/Components/GlassCard.jsx'
 import { useTheme } from "@mui/material/styles";
-import { Switch } from "@nextui-org/react";
+import { Switch } from "@heroui/react";
 import { toast } from "react-toastify";
 import axios from 'axios';
 

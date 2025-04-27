@@ -17,7 +17,7 @@ import Grow from "@mui/material/Grow";
 import axios from "axios";
 import {toast} from "react-toastify";
 import SearchIcon from "@mui/icons-material/Search.js";
-import {Pagination, Input} from "@nextui-org/react";
+import {Pagination, Input} from "@heroui/react";
 import {useTheme} from "@mui/material/styles";
 import dayjs from "dayjs";
 import * as XLSX from 'xlsx';

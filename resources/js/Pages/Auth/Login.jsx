@@ -14,12 +14,12 @@ import logo from '../../../../public/assets/images/logo.png';
 import App from '@/Layouts/App.jsx'
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
-import {Input, Button, Checkbox} from '@nextui-org/react';
+import {Input, Button, Checkbox} from "@heroui/react";
 import EmailIcon from '@mui/icons-material/Email';
 import {useTheme} from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import PasswordIcon from '@mui/icons-material/Password';
-import { Link as NextLink } from "@nextui-org/react";
+import { Link as NextLink } from "@heroui/react";
 
 
 const Login = () => {

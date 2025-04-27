@@ -27,75 +27,8 @@ class LeaveController extends Controller
 
     public function index2(): \Inertia\Response
     {
-        $user = Auth::user();
-        $currentYear = now()->year;
-
-        // Fetch all leaves for the current year and their leave types
-        $allLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->when(!$user->hasRole('Administrator'), function ($query) {
-                // Restrict to the current user if not an admin
-                return $query->where('leaves.user_id', auth()->id());
-            })
-            ->whereYear('leaves.from_date', $currentYear) // Filter by current year
-            ->orderBy('leaves.from_date', 'desc')
-            ->get();
-
-        // Fetch all leave types
-        $leaveTypes = LeaveSetting::all();
-
-        // Initialize arrays to store leave counts by user and by leave type
-        $leaveCountsByUser = [];
-
-        // Process leaves to aggregate totals by user and leave type for the current year
-        foreach ($allLeaves as $leave) {
-            $userId = $leave->user_id;
-            $type = $leave->leave_type;
-            $days = $leave->no_of_days;
-
-            // Initialize arrays if they don't exist
-            if (!isset($leaveCountsByUser[$userId])) {
-                $leaveCountsByUser[$userId] = [];
-            }
-            if (!isset($leaveCountsByUser[$userId][$type])) {
-                $leaveCountsByUser[$userId][$type] = 0;
-            }
-
-            // Add the number of days to the total for this user and leave type
-            $leaveCountsByUser[$userId][$type] += $days;
-        }
-
-        // Prepare leave counts with remaining days for the current year
-        $leaveCountsWithRemainingByUser = [];
-
-        foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
-            $leaveCountsWithRemaining = [];
-            foreach ($leaveTypes as $leaveType) {
-                $type = $leaveType->type;
-                $totalDaysAvailable = $leaveType->days;
-                $daysUsed = $userLeaveCounts[$type] ?? 0;
-                $remainingDays = $totalDaysAvailable - $daysUsed;
-
-                $leaveCountsWithRemaining[] = [
-                    'leave_type' => $type,
-                    'total_days' => $totalDaysAvailable,
-                    'days_used' => $daysUsed,
-                    'remaining_days' => $remainingDays,
-                ];
-            }
-            $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
-        }
-
-        // Prepare data for the view
-        $leavesData = [
-            'leaveTypes' => $leaveTypes,
-            'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-        ];
-
         return Inertia::render('LeavesAdmin', [
             'title' => 'Leaves',
-        
             'allUsers' => User::all()
         ]);
     }
@@ -545,6 +478,93 @@ class LeaveController extends Controller
             'leaveRecords' => $leaveRecords,
         ];
     }
+
+ 
+
+    public function leaveSummary(Request $request)
+    {
+        $year = $request->input('year', now()->year);
+        $users = User::all();
+    
+        // Exclude 'Weekend' leave types
+        $leaveTypes = LeaveSetting::where('type', '!=', 'Weekend')->get();
+    
+        // Get all leaves for the specified year
+        $leaves = Leave::with('leaveSetting')
+            ->whereYear('from_date', $year)
+            ->whereHas('leaveSetting', function($query) {
+                $query->where('type', '!=', 'Weekend');
+            })
+            ->get();
+    
+        $months = [
+            1 => 'JAN', 2 => 'FEB', 3 => 'MAR', 4 => 'APR', 5 => 'MAY', 6 => 'JUN',
+            7 => 'JULY', 8 => 'AUG', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DEC'
+        ];
+    
+        // Prepare dynamic leave type columns
+        $leaveTypeColumns = $leaveTypes->pluck('type')->toArray();
+    
+        $result = [];
+        $sl_no = 1; // Start SL NO from 1
+    
+        foreach ($users as $user) {
+            $row = [
+                'SL NO' => $sl_no++, // Add Serial Number
+                'Name' => $user->name,
+            ];
+    
+            $total = 0;
+            $leaveTypeTotals = array_fill_keys($leaveTypeColumns, 0);
+    
+            foreach ($months as $num => $label) {
+                $monthLeaves = $leaves->where('user_id', $user->id)
+                    ->filter(function ($leave) use ($num) {
+                        return \Carbon\Carbon::parse($leave->from_date)->month == $num;
+                    });
+    
+                $days = $monthLeaves->sum('no_of_days');
+                $row[$label] = $days > 0 ? $days : ''; // Show empty string if 0
+                $total += $days;
+            }
+    
+            // Leave type breakdown
+            $userLeaves = $leaves->where('user_id', $user->id);
+            foreach ($userLeaves as $leave) {
+                $type = $leave->leaveSetting->type ?? '';
+                if (isset($leaveTypeTotals[$type])) {
+                    $leaveTypeTotals[$type] += $leave->no_of_days;
+                }
+            }
+    
+            $row['Total'] = $total;
+            foreach ($leaveTypeColumns as $type) {
+                $row[$type] = $leaveTypeTotals[$type];
+            }
+    
+            $row['Remarks'] = ''; // Optional: You can add automatic remarks based on rules here
+    
+            $result[] = $row;
+        }
+    
+        // Build final columns for frontend
+        $columns = array_merge(
+            ['SL NO', 'Name'],
+            array_values($months),
+            ['Total'],
+            $leaveTypeColumns,
+            ['Remarks']
+        );
+    
+        return Inertia::render('LeaveSummary', [
+            'title' => 'Leave Summary',
+            'allUsers' => $users,
+            'columns' => $columns,
+            'data' => $result,
+            'year' => $year, // Pass the selected year for initial filter
+        ]);
+    }
+    
 
 
 }

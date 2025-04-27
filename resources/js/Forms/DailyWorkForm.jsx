@@ -18,7 +18,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import {toast} from 'react-toastify';
 import GlassDialog from '@/Components/GlassDialog.jsx';
 import {useTheme} from "@mui/material/styles";
-import {Button, Input, Select, SelectItem} from "@nextui-org/react";
+import {Button, Input, Select, SelectItem} from "@heroui/react";
 
 const DailyWorkForm = ({ open, closeModal, currentRow, setData, modalType}) => {
     const theme = useTheme();

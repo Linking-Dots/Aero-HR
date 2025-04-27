@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, Tooltip, Box, CircularProgress } from '@mui/material';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User } from '@nextui-org/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User } from "@heroui/react";
 import CloseIcon from '@mui/icons-material/Close';
 import DoneIcon from '@mui/icons-material/Done';
 import dayjs from 'dayjs';

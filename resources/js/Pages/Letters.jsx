@@ -34,7 +34,7 @@ import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import {Input, Pagination} from "@nextui-org/react";
+import {Input, Pagination} from "@heroui/react";
 dayjs.extend(minMax);
 
 

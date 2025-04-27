@@ -1,7 +1,7 @@
 import React, {forwardRef} from 'react';
 import { Fade} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import {Dropdown} from '@nextui-org/react'
+import {Dropdown} from "@heroui/react"
 
 const GlassDropdown = forwardRef(({ children, ...props }, ref) => {
     const theme = useTheme();

@@ -8,7 +8,7 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import MenuIcon from '@mui/icons-material/Menu';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import {DropdownTrigger, DropdownMenu, Button, DropdownItem, NavbarItem, Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, Accordion, AccordionItem} from '@nextui-org/react';
+import {DropdownTrigger, DropdownMenu, Button, DropdownItem, NavbarItem, Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, Accordion, AccordionItem} from "@heroui/react";
 
 
 import logo from '../../../public/assets/images/logo.png';
@@ -138,7 +138,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                             </NavbarMenuItem>
                                         ) : (
                                             // Accordion for submenu
-                                            <Accordion
+                                            (<Accordion
                                                 itemClasses={{
                                                     trigger: `
                                                         px-2 py-0
@@ -179,7 +179,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                         </NavbarMenuItem>
                                                     ))}
                                                 </AccordionItem>
-                                            </Accordion>
+                                            </Accordion>)
                                         )}
                                     </React.Fragment>
                                 ))}

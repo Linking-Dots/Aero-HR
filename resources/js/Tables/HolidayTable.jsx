@@ -15,7 +15,7 @@ import DeleteIcon from "@mui/icons-material/Delete.js";
 import React, {useState} from "react";
 import {usePage} from "@inertiajs/react";
 
-import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@nextui-org/react";
+import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@heroui/react";
 const HolidayTable = ({ holidaysData, handleClickOpen, setCurrentHoliday, openModal, setHolidaysData}) => {
     console.log(holidaysData)
 

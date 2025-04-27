@@ -20,7 +20,7 @@ import {
     Avatar,
     Input,
     ScrollShadow, Pagination
-} from "@nextui-org/react";
+} from "@heroui/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";

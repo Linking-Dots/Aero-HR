@@ -16,7 +16,7 @@ import {
     Tooltip,
     Avatar,
     User
-} from '@nextui-org/react';
+} from "@heroui/react";
 import {styled, useTheme} from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -27,7 +27,7 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination} from "@nextui-org/react";
+import {Pagination} from "@heroui/react";
 import Loader from "@/Components/Loader.jsx";
 import {  usePage } from '@inertiajs/react';
 import LinkIcon from '@mui/icons-material/Link';
@@ -463,7 +463,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                     )
                 );
 
-                toast.success(...response.data.messages || `Letter updated successfully`, {
+                toast.success(...(response.data.messages || `Letter updated successfully`), {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',

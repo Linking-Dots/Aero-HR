@@ -20,7 +20,7 @@ import EmergencyIcon from '@mui/icons-material/Error';
 import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination, SelectItem, Select, User, Input, Link} from "@nextui-org/react";
+import {Pagination, SelectItem, Select, User, Input, Link} from "@heroui/react";
 import Loader from "@/Components/Loader.jsx";
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -769,7 +769,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     )
                 );
 
-                toast.success(...response.data.messages || `Task updated successfully`, {
+                toast.success(...(response.data.messages || `Task updated successfully`), {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',

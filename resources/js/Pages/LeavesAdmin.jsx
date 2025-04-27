@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import Grow from '@mui/material/Grow';
-import { Input } from '@nextui-org/react';
+import { Input } from "@heroui/react";
 import SearchIcon from '@mui/icons-material/Search';
 import GlassCard from '@/Components/GlassCard.jsx';
 import App from '@/Layouts/App.jsx';

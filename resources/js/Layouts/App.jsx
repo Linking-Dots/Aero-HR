@@ -11,7 +11,7 @@ import Sidebar from "@/Layouts/Sidebar.jsx";
 import {Inertia} from '@inertiajs/inertia'
 import {getPages} from '@/Props/pages.jsx';
 import {getSettingsPages} from '@/Props/settings.jsx';
-import {NextUIProvider} from '@nextui-org/react';
+import {HeroUIProvider} from "@heroui/react";
 import {onMessageListener, requestNotificationPermission} from "@/firebase-config.js";
 import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 
@@ -118,7 +118,7 @@ function App({ children }) {
 
         <ThemeProvider theme={theme}>
             <ThemeSettingDrawer toggleThemeColor={toggleThemeColor} themeColor={themeColor} darkMode={darkMode} toggleDarkMode={toggleDarkMode} toggleThemeDrawer={toggleThemeDrawer} themeDrawerOpen={themeDrawerOpen}/>
-            <NextUIProvider>
+            <HeroUIProvider>
                 <main className={darkMode ? "dark" : "light"}>
                     <ToastContainer
                         position="top-center"
@@ -185,7 +185,7 @@ function App({ children }) {
                 </main>
 
 
-            </NextUIProvider>
+            </HeroUIProvider>
 
         </ThemeProvider>
 

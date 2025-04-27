@@ -3,7 +3,7 @@ import { Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton } from '
 import SettingsIcon from '@mui/icons-material/Settings';
 import CheckIcon from '@mui/icons-material/Check';
 import {useTheme} from "@mui/material/styles";
-import {Button} from "@nextui-org/react";
+import {Button} from "@heroui/react";
 import CloseIcon from "@mui/icons-material/Close";
 import {Circle} from "@mui/icons-material";
 

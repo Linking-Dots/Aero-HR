@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, CardContent, CardHeader, Divider, Grid, Grow, Popover, Typography} from '@mui/material';
-import {Avatar, AvatarGroup} from "@nextui-org/react";
+import {Avatar, AvatarGroup} from "@heroui/react";
 import GlassCard from "@/Components/GlassCard.jsx";
 import {usePage} from "@inertiajs/react";
 import { useState } from 'react';

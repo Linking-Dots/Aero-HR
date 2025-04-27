@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {Head, Link, router} from '@inertiajs/react';
 import { Box, CardContent, Container, Grid, Typography } from '@mui/material';
 import GlassCard from "@/Components/GlassCard.jsx";
-import { Button, Input } from "@nextui-org/react";
+import { Button, Input } from "@heroui/react";
 import EmailIcon from "@mui/icons-material/Email";
 import KeyIcon from "@mui/icons-material/VpnKey"; // Icon for OTP field
 import LockIcon from "@mui/icons-material/Lock"; // Icon for password field

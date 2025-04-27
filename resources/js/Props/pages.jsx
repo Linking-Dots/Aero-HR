@@ -15,6 +15,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import SummarizeIcon from '@mui/icons-material/Summarize';
 
 // Function to create pages array
 export const getPages = (permissions) => [
@@ -31,6 +32,7 @@ export const getPages = (permissions) => [
                 ...(permissions.includes('read employee') ? [{ name: 'All Employees', icon: <PeopleIcon sx={{ ml: 2 }}/>, route: 'employees'}] : []),
                 ...(permissions.includes('read holidays') ? [{ name: 'Holidays', icon: <EventNoteIcon sx={{ ml: 2 }}/>, route: 'holidays'}] : []),
                 ...(permissions.includes('read leaves') ? [{ name: 'Leaves (Admin)', icon: <LogoutIcon sx={{ ml: 2 }}/>, route: 'leaves', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } }] : []),
+                ...(permissions.includes('read leaves') ? [{ name: 'Leaves Summary(Admin)', icon: <SummarizeIcon sx={{ ml: 2 }}/>, route: 'leave-summary', badge: { content: '1', className: 'badge rounded-pill bg-primary float-end' } }] : []),
                 ...(permissions.includes('read leaves') ? [{ name: 'Leave Settings', icon: <SettingsIcon sx={{ ml: 2 }}/>, route: 'leave-settings'}] : []),
                 ...(permissions.includes('read attendances') ? [{ name: 'Attendances (Admin)', icon: <CalendarTodayIcon sx={{ ml: 2 }}/>, route: 'attendances'}] : []),
                 ...(permissions.includes('read departments') ? [{ name: 'Departments', icon: <HomeIcon sx={{ ml: 2 }}/>, route: 'departments'}] : []),

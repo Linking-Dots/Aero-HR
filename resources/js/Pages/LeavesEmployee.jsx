@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Grow,
 } from '@mui/material';
-import { Select, SelectItem } from '@nextui-org/react';
+import { Select, SelectItem } from "@heroui/react";
 import GlassCard from '@/Components/GlassCard.jsx';
 import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
@@ -23,8 +23,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   const [leavesData, setLeavesData] = useState({ leaveTypes: [], leaveCountsByUser: {} });
   const [pagination, setPagination] = useState({ page: 1, perPage: 30, total: 0, lastPage: 0 });
   const [filters, setFilters] = useState({ employee: '', year: new Date().getFullYear() });
-  const [openModalType, setOpenModalType] = useState(null);
-  const [deleteLeaveId, setDeleteLeaveId] = useState(null);
+
   
   // Memoize year options
   const years = useMemo(() => {

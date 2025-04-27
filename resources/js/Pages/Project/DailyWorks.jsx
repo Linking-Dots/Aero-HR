@@ -30,9 +30,9 @@ import DailyWorksUploadForm from "@/Forms/DailyWorksUploadForm.jsx";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {toast} from "react-toastify";
-import { DatePicker } from '@nextui-org/react';
+import { DatePicker } from "@heroui/react";
 
-import {Pagination, SelectItem, Select, Input, Button} from "@nextui-org/react";
+import {Pagination, SelectItem, Select, Input, Button} from "@heroui/react";
 dayjs.extend(minMax);
 import {getLocalTimeZone, parseDate, today} from "@internationalized/date";
 

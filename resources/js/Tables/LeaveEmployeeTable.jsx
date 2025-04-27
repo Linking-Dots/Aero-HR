@@ -35,7 +35,7 @@ import {
     User,
     Tooltip,
     Pagination
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const LeaveEmployeeTable = ({
                                 leaves,

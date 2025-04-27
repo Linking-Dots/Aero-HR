@@ -5,7 +5,7 @@ import React, {useState} from "react";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
 import CircularProgress from "@mui/material/CircularProgress";
-import {Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip, User} from "@nextui-org/react";
+import {Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip, User} from "@heroui/react";
 
 const UsersTable = ({allUsers, roles}) => {
     const [users, setUsers] = useState(allUsers);
