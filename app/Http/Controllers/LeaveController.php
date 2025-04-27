@@ -27,7 +27,6 @@ class LeaveController extends Controller
 
     public function index2(): \Inertia\Response
     {
-<<<<<<< HEAD
         $user = Auth::user();
         $currentYear = now()->year;
 
@@ -93,9 +92,6 @@ class LeaveController extends Controller
             'leaveTypes' => $leaveTypes,
             'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
         ];
-=======
-        
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
 
         return Inertia::render('LeavesAdmin', [
             'title' => 'Leaves',
@@ -117,7 +113,6 @@ class LeaveController extends Controller
             $user = Auth::user();
             $isAdmin = $user->hasRole('Administrator');
 
-<<<<<<< HEAD
             // Determine the year
             if ($year) {
                 $currentYear = $year;
@@ -128,9 +123,6 @@ class LeaveController extends Controller
             }
 
             // Paginated leaves query
-=======
-            // Base query
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
             $leavesQuery = Leave::with('employee')
                 ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
                 ->select('leaves.*', 'leave_settings.type as leave_type')
@@ -140,7 +132,6 @@ class LeaveController extends Controller
 
                  
 
-<<<<<<< HEAD
             if ($year) {
                 $leavesQuery->where('leaves.user_id', auth()->id())
                             ->whereYear('leaves.from_date', $year);
@@ -152,46 +143,12 @@ class LeaveController extends Controller
                 $leavesQuery->where('leaves.user_id', auth()->id());
             }
 
-=======
-            $baseQuery = clone $leavesQuery; // Save original for allLeaves later
-
-            if (!$year && $month) {
-                $year = Carbon::createFromFormat('Y-m', $month)->year;
-            }
-
-            // Apply filters
-            if ($year) {
-                $leavesQuery->whereYear('leaves.from_date', $year);
-                if (!$isAdmin) {
-                    $leavesQuery->where('leaves.user_id', auth()->id());
-                }
-                $allLeaves = (clone $leavesQuery)->get();
-            } 
-            
-            if ($isAdmin && $month) {
-                $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-                $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
-            
-                $leavesQuery->whereBetween('leaves.from_date', [$startOfMonth, $endOfMonth]);
-            
-                if (!$isAdmin) {
-                    $leavesQuery->where('leaves.user_id', auth()->id());
-                }
-            
-            }
-
-            // Filter by employee name (if provided)
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
             if ($employee !== '') {
                 $leavesQuery->whereHas('employee', function ($query) use ($employee) {
                     $query->where('name', 'like', '%' . $employee . '%');
                 });
             }
 
-<<<<<<< HEAD
-=======
-            // Order and paginate
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
             $leavesQuery->orderBy('leaves.from_date', 'desc');
             $leaveRecords = $leavesQuery->paginate($perPage, ['*'], 'page', $page);
 
@@ -256,48 +213,6 @@ class LeaveController extends Controller
                 ], 404);
             }
 
-<<<<<<< HEAD
-=======
-            // Fetch leave types
-            $leaveTypes = LeaveSetting::all();
-
-            // Aggregate leave counts
-            $leaveCountsByUser = [];
-            foreach ($allLeaves as $leave) {
-                $userId = $leave->user_id;
-                $type = $leave->leave_type;
-                $days = $leave->no_of_days;
-
-                if (!isset($leaveCountsByUser[$userId])) {
-                    $leaveCountsByUser[$userId] = [];
-                }
-                if (!isset($leaveCountsByUser[$userId][$type])) {
-                    $leaveCountsByUser[$userId][$type] = 0;
-                }
-                $leaveCountsByUser[$userId][$type] += $days;
-            }
-
-            // Prepare detailed leave info
-            $leaveCountsWithRemainingByUser = [];
-            foreach ($leaveCountsByUser as $userId => $userLeaveCounts) {
-                $leaveCountsWithRemaining = [];
-                foreach ($leaveTypes as $leaveType) {
-                    $type = $leaveType->type;
-                    $totalDaysAvailable = $leaveType->days;
-                    $daysUsed = $userLeaveCounts[$type] ?? 0;
-                    $remainingDays = $totalDaysAvailable - $daysUsed;
-
-                    $leaveCountsWithRemaining[] = [
-                        'leave_type' => $type,
-                        'total_days' => $totalDaysAvailable,
-                        'days_used' => $daysUsed,
-                        'remaining_days' => $remainingDays,
-                    ];
-                }
-                $leaveCountsWithRemainingByUser[$userId] = $leaveCountsWithRemaining;
-            }
-
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
             return response()->json([
                 'leaves' => $leaveRecords,
                 'leavesData' => [
@@ -320,10 +235,6 @@ class LeaveController extends Controller
     }
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
     public function create(Request $request)
     {
         // Validate incoming request

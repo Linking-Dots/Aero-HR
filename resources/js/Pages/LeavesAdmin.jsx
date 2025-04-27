@@ -23,14 +23,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const { auth, props } = usePage();
     const [loading, setLoading] = useState(false);
     const [openModalType, setOpenModalType] = useState(null);
-<<<<<<< HEAD
     const [leavesData, setLeavesData] = useState([]);
-=======
-    const [leavesData, setLeavesData] = useState({
-            leaveTypes: [],
-            leaveCountsByUser: {}
-        });
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
     const [leaves, setLeaves] = useState();
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
@@ -77,11 +70,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
             if (response.status === 200) {
                 const { leaves, leavesData } = response.data;
                 setLeaves(leaves.data);
-<<<<<<< HEAD
                 setLeavesData(leavesData)
-=======
-                setLeavesData(leavesData);
->>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042
                 setTotalRows(leaves.total);
                 setLastPage(leaves.last_page);
                 setError(false);

@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/PhotoCamera-Cwhk4goa.js
-import{v as o,w as c}from"./vendor-CTZgMKHz.js";const r=o([c.jsx("circle",{cx:"12",cy:"12",r:"3.2"},"0"),c.jsx("path",{d:"M9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5"},"1")],"PhotoCamera");export{r as P};
-========
-import{v as o,w as c}from"./vendor-B2Sl_-DV.js";const r=o([c.jsx("circle",{cx:"12",cy:"12",r:"3.2"},"0"),c.jsx("path",{d:"M9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5"},"1")],"PhotoCamera");export{r as P};
->>>>>>>> 12dbb76250fd5e370218201bc62f8d4e7a245042:public/build/assets/PhotoCamera-B-bjGT1d.js
