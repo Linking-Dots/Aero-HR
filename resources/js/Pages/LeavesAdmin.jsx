@@ -23,7 +23,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const { auth, props } = usePage();
     const [loading, setLoading] = useState(false);
     const [openModalType, setOpenModalType] = useState(null);
-    const [leavesData, setLeavesData] = useState(props.leavesData);
+    const [leavesData, setLeavesData] = useState([]);
     const [leaves, setLeaves] = useState();
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
@@ -68,10 +68,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
             });
 
             if (response.status === 200) {
-                const { data, total, last_page } = response.data.leaves;
-                setLeaves(data);
-                setTotalRows(total);
-                setLastPage(last_page);
+                const { leaves, leavesData } = response.data;
+                setLeaves(leaves.data);
+                setLeavesData(leavesData)
+                setTotalRows(leaves.total);
+                setLastPage(leaves.last_page);
                 setError(false);
                 setLoading(false);
             }

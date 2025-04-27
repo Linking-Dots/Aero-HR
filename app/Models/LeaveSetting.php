@@ -29,4 +29,10 @@ class LeaveSetting extends Model
 
     ];
 
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class, 'leave_type');
+    }
+
+
 }

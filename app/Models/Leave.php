@@ -43,4 +43,11 @@ class Leave extends Model
         return $this->belongsTo(User::class);
     }
 
+
+    public function leaveSetting()
+    {
+        return $this->belongsTo(LeaveSetting::class, 'leave_type');
+    }
+
+
 }
