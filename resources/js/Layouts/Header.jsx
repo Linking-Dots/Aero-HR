@@ -228,7 +228,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                         Settings
                                                     </DropdownItem>
                                                     <DropdownItem
-                                                        onClick={toggleThemeDrawer}
+                                                        onPress={toggleThemeDrawer}
                                                         key={'Themes'}
                                                         startContent={<ColorLensIcon />}
                                                         style={{
@@ -238,7 +238,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                         Themes
                                                     </DropdownItem>
                                                     <DropdownItem
-                                                        onClick={() => router.post('/logout')}
+                                                        onPress={() => router.post('/logout')}
                                                         key={'Logout'}
                                                         startContent={<ExitToApp />}
                                                         style={{
@@ -365,13 +365,20 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                                                     preserveState
                                                                                     preserveScroll
                                                                                     key={subPage.name}
-                                                                                    // description="ACME scales apps to meet user demand, automagically, based on load."
                                                                                     startContent={subPage.icon}
                                                                                     style={{
                                                                                         color: theme.palette.text.primary,
                                                                                         backgroundColor: activePage === "/"+subPage.route ? theme.palette.action.selected : 'transparent',
                                                                                     }}
                                                                                     variant={'faded'}
+                                                                                    onPress={(e) => {
+                                                                                        
+                                                                                        router.visit(route(subPage.route), {
+                                                                                            method: subPage.method || 'get',
+                                                                                            preserveState: true,
+                                                                                            preserveScroll: true
+                                                                                        });
+                                                                                    }}
                                                                                 >
                                                                                     {subPage.name}
                                                                                 </DropdownItem>
@@ -453,7 +460,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                             Settings
                                                         </DropdownItem>
                                                         <DropdownItem
-                                                            onClick={toggleThemeDrawer}
+                                                            onPress={toggleThemeDrawer}
                                                             key={'Themes'}
                                                             startContent={<ColorLensIcon />}
                                                             style={{
@@ -463,7 +470,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                                                             Themes
                                                         </DropdownItem>
                                                         <DropdownItem
-                                                            onClick={() => router.post('/logout')}
+                                                            onPress={() => router.post('/logout')}
                                                             key={'Logout'}
                                                             startContent={<ExitToApp />}
                                                             style={{
