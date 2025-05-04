@@ -122,10 +122,16 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             {openModalType === 'delete_leave' && (
                 <DeleteLeaveForm
+                    setTotalRows={setTotalRows}
+                    setLastPage={setLastPage}
+                    setLeaves={setLeaves}
+                    perPage={perPage}
                     open={true}
                     handleClose={handleClose}
                     leaveIdToDelete={leaveIdToDelete}
                     setLeavesData={setLeavesData}
+                    setError={setError}
+                    setLoading={setLoading}
                 />
             )}
 

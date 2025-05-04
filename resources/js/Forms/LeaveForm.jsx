@@ -47,8 +47,13 @@ const LeaveForm = ({
     const [leaveTypes, setLeaveTypes] = useState(leavesData.leaveTypes || []);
     const [leaveCounts, setLeaveCounts] = useState(leavesData.leaveCounts || []);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
-    const [fromDate, setFromDate] = useState(currentLeave?.from_date || '');
-    const [toDate, setToDate] = useState(currentLeave?.to_date || '');
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? new Date().toISOString().split('T')[0] : date.toISOString().split('T')[0];
+    };
+    
+    const [fromDate, setFromDate] = useState(formatDate(currentLeave?.from_date));
+    const [toDate, setToDate] = useState(formatDate(currentLeave?.to_date));
     const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');
     const [remainingLeaves, setRemainingLeaves] = useState(''); // Default remaining leaves
     const [leaveReason, setLeaveReason] = useState(currentLeave?.reason ||'');
@@ -66,7 +71,6 @@ const LeaveForm = ({
         }
     }, [leavesData, user_id]);
 
-
     useEffect(() => {
         // Find the days used for the selected leave type
         const daysUsed = leaveCounts?.find((found) => found.leave_type === leaveType)?.days_used || 0;
@@ -78,9 +82,6 @@ const LeaveForm = ({
             setRemainingLeaves(selectedLeaveType.days - daysUsed);
         }
     }, [leaveType, leaveCounts, leaveTypes]);
-
-
-
 
     useEffect(() => {
         // Function to calculate the number of days between two dates, inclusive of both start and end date
@@ -102,7 +103,6 @@ const LeaveForm = ({
         setDaysCount(calculateDaysBetweenDates(fromDate, toDate));
     }, [fromDate, toDate]);
 
-
     const handleSubmit = async (event) => {
         event.preventDefault();
         setProcessing(true);
@@ -121,12 +121,14 @@ const LeaveForm = ({
                     employee
                 };
 
+                const apiRoute = currentLeave ? route('leave-update') : route('leave-add');
+
                 if (currentLeave) {
                     data.id = currentLeave.id;
                 }
 
-                const response = await axios.post(route('leave-add'), data);
-                console.log(response)
+                const response = await axios.post(apiRoute, data);
+    
 
                 if (response.status === 200) {
                     setLeavesData(response.data.leavesData);
@@ -224,8 +226,6 @@ const LeaveForm = ({
             }
         );
     };
-
-
 
     return (
         <GlassDialog open={open} onClose={closeModal} fullWidth maxWidth="sm">

@@ -5,20 +5,35 @@ import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 
 
-const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData }) => {
+const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, setLeaves, setTotalRows, setLastPage, setError }) => {
     const theme = useTheme();
+ 
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.delete(route('leave-delete', { id: leaveIdToDelete, route: route().current() }));
 
+                console.log(response);
+
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
+                    
+                    
                     setLeavesData(response.data.leavesData);
+                    setTotalRows(response.data.leaves.total);
+                    setLastPage(response.data.leaves.last_page);
+                    setLeaves(response.data.leaves.data);
+                    setError(false);
                     resolve('Leave application deleted successfully');
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
+                if (error.response.status === 404) {
+                    const { leavesData } = error.response.data;
+                    setLeavesData(leavesData)
+                    setError(error.response?.data?.message || 'Error retrieving data.');
+                 
+                }
                 reject(error.response.data.error || 'Failed to delete leave application');
             } finally {
                 handleClose();
