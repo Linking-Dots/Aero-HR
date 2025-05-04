@@ -126,12 +126,13 @@ const LeaveForm = ({
                 }
 
                 const response = await axios.post(route('leave-add'), data);
+                console.log(response)
 
                 if (response.status === 200) {
                     setLeavesData(response.data.leavesData);
-                    setTotalRows(response.data.leavesData.leaveRecords.total);
-                    setLastPage(response.data.leavesData.leaveRecords.last_page);
-                    setLeaves(response.data.leavesData.leaveRecords.data);
+                    setTotalRows(response.data.leaves.total);
+                    setLastPage(response.data.leaves.last_page);
+                    setLeaves(response.data.leaves.data);
                     handleMonthChange({target: {value: fromDate.slice(0, 7)}});
                     closeModal();
                     resolve([response.data.message || 'Leave application submitted successfully']);

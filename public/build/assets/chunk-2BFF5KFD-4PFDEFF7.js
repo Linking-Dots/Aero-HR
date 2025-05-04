@@ -1,0 +1,1 @@
+import{u as r}from"./App-CPe1nS65.js";import{r as u}from"./vendor-CAwIk-m4.js";function i(e){const l=r(),t=l==null?void 0:l.labelPlacement;return u.useMemo(()=>{var a,n;const o=(n=(a=e.labelPlacement)!=null?a:t)!=null?n:"inside";return o==="inside"&&!e.label?"outside":o},[e.labelPlacement,t,e.label])}export{i as u};
