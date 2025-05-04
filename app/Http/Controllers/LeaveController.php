@@ -148,10 +148,7 @@ class LeaveController extends Controller
 
             return response()->json([
                 'leaves' => $leaveRecords,
-                'leavesData' => [
-                    'leaveTypes' => $leaveTypes,
-                    'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-                ],
+        
                 'current_page' => $leaveRecords->currentPage(),
                 'last_page' => $leaveRecords->lastPage(),
                 'total' => $leaveRecords->total(),
