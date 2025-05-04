@@ -80,7 +80,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         } catch (error) {
             console.error('Error fetching leaves data:', error.response);
             if (error.response.status === 404) {
-                const { leavesData } = response.data;
+                const { leavesData } = error.response.data;
                 setLeavesData(leavesData)
                 setError(error.response?.data?.message || 'Error retrieving data.');
              
