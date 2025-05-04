@@ -76,6 +76,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 setError(false);
                 setLoading(false);
             }
+            if (response.status === 404) {
+                const { leavesData } = response.data;
+                setLeavesData(leavesData)
+                setError(error.response?.data?.message || 'Error retrieving data.');
+                setLoading(false);
+            }
         } catch (error) {
             console.error('Error fetching leaves data:', error.response);
             setLeaves(false);
