@@ -178,7 +178,13 @@ class LeaveController extends Controller
 
         // Initialize arrays to store leave counts by user and by leave type
         $leaveCountsByUser = [];
-        $allLeaves = $leavesQuery->get();
+        $allLeaves = Leave::with('leaveSetting')
+                ->when($request->has('year'), function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
+                ->whereYear('from_date', $currentYear)
+                ->orderBy('from_date', 'desc')
+                ->get();
 
         // Process leaves to aggregate totals by user and leave type
         foreach ($allLeaves as $leave) {
