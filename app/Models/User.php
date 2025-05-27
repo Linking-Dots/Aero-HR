@@ -11,10 +11,11 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements HasMedia
 {
-    use HasFactory, Notifiable, HasRoles, HasPushSubscriptions, InteractsWithMedia, SoftDeletes;
+    use HasFactory, Notifiable, HasRoles, HasPushSubscriptions, InteractsWithMedia, SoftDeletes, TwoFactorAuthenticatable;
 
 
 
