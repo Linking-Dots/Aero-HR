@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box,
     CardContent,
@@ -7,7 +7,8 @@ import {
     Button,
     Grid,
     Chip,
-    Collapse, TextField, useMediaQuery
+    Collapse,
+    useMediaQuery
 } from '@mui/material';
 import {
     Table,
@@ -19,103 +20,134 @@ import {
     User,
     Avatar,
     Input,
-    ScrollShadow, Pagination
+    ScrollShadow,
+    Pagination,
+    Skeleton
 } from "@heroui/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
-import {usePage} from "@inertiajs/react";
+import { usePage } from "@inertiajs/react";
 import dayjs from "dayjs";
 import SearchIcon from "@mui/icons-material/Search";
-import PeopleIcon from "@mui/icons-material/People.js";
-import { Skeleton } from '@heroui/react';
 
-const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
-
-    const {auth} = usePage().props;
+const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => {
+    const { auth } = usePage().props;
     const { url } = usePage();
-    const isSmallScreen = useMediaQuery('(max-width: 640px)'); // equivalent to 'sm'
-    const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)'); // equivalent to 'md'
-    const isLargeScreen = useMediaQuery('(min-width: 1025px)'); // equivalent to 'lg'
+    const isLargeScreen = useMediaQuery('(min-width: 1025px)');
+    const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
 
     const [attendances, setAttendances] = useState([]);
     const [leaves, setLeaves] = useState([]);
     const [absentUsers, setAbsentUsers] = useState([]);
     const [error, setError] = useState('');
-
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
     const [perPage, setPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [employee, setEmployee] = useState('');
     const [isLoaded, setIsLoaded] = useState(false);
-
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
     });
 
+    // For absent users card
+    const [visibleUsersCount, setVisibleUsersCount] = useState(2);
+    const cardRef = useRef(null);
+    const userItemRef = useRef(null);
 
-
-
-    const handleSearch = (event) => {
-        const value = event.target.value.toLowerCase();
-        setEmployee(value);
-    };
-
-
-    const [visibleUsersCount, setVisibleUsersCount] = useState(2); // Default to 2 initially
-    const cardRef = useRef(null); // Ref to the GlassCard
-    const userItemRef = useRef(null); // Ref to measure the user item height
-
-    // Function to dynamically calculate visible users based on available space
-    const calculateVisibleUsers = () => {
-        if (cardRef.current && userItemRef.current) {
-            const cardHeight = cardRef.current.clientHeight;
-            const userItemHeight = userItemRef.current.clientHeight;
-            const availableHeight = cardHeight - 150; // Subtract padding/margins from available height
-            const calculatedVisibleUsers = Math.floor(availableHeight / userItemHeight);
-            setVisibleUsersCount(calculatedVisibleUsers);
+    // Fetch attendance and absent users
+    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData) => {
+        const attendanceRoute = (url !== '/attendance-employee')
+            ? route('getAllUsersAttendanceForDate')
+            : route('getCurrentUserAttendanceForDate');
+        try {
+            const response = await axios.get(attendanceRoute, {
+                params: {
+                    page,
+                    perPage,
+                    employee,
+                    date: selectedDate,
+                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
+                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
+                }
+            });
+            if (response.status === 200) {
+                console.log(response.data);
+                setAttendances(response.data.attendances);
+                setLeaves(response.data.leaves);
+                setAbsentUsers(response.data.absent_users);
+                setTotalRows(response.data.total);
+                setLastPage(response.data.last_page);
+                setError('');
+                setIsLoaded(true);
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
+            setAbsentUsers(error.response?.data?.absent_users || []);
         }
     };
 
-    // Handle the load more click
+    // Calculate how many absent users to show based on card height
+    const calculateVisibleUsers = useCallback(() => {
+        if (cardRef.current && userItemRef.current) {
+            const cardHeight = cardRef.current.clientHeight;
+            const userItemHeight = userItemRef.current.clientHeight;
+            const availableHeight = cardHeight - 150; // adjust as needed
+            const calculatedVisibleUsers = Math.max(1, Math.floor(availableHeight / userItemHeight));
+            setVisibleUsersCount(calculatedVisibleUsers);
+        }
+    }, []);
+
+    // Recalculate visible users when absentUsers or updateTimeSheet changes
+    useEffect(() => {
+        setVisibleUsersCount(2); // Reset to default
+        // Wait for DOM update
+        const timer = setTimeout(() => {
+            calculateVisibleUsers();
+        }, 100);
+        window.addEventListener('resize', calculateVisibleUsers);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', calculateVisibleUsers);
+        };
+    }, [absentUsers, updateTimeSheet, calculateVisibleUsers]);
+
+    // Fetch attendance data when filters change
+    useEffect(() => {
+        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
+        // eslint-disable-next-line
+    }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet]);
+
+    const handleSearch = (event) => {
+        setEmployee(event.target.value.toLowerCase());
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handleFilterChange = useCallback((key, value) => {
+        setFilterData(prevState => ({
+            ...prevState,
+            [key]: value,
+        }));
+    }, []);
+
     const handleLoadMore = () => {
-        setVisibleUsersCount((prevCount) => prevCount + 2);
+        setVisibleUsersCount((prev) => prev + 2);
     };
 
     const getUserLeave = (userId) => {
         return leaves.find((leave) => String(leave.user_id) === String(userId));
     };
 
-    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData) => {
-        const attendanceRoute = (url !== '/attendance-employee') ? route('getAllUsersAttendanceForDate') : route('getCurrentUserAttendanceForDate');
-
-        try {
-            const response = await axios.get(attendanceRoute, {
-                params: {
-                    page,
-                    perPage,
-                    employee: employee,
-                    date: selectedDate,
-                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
-                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
-                }
-            });
-
-            if (response.status === 200) {
-                setAttendances(response.data.attendances);  // Set the attendance data
-                setLeaves(response.data.leaves);
-                setAbsentUsers(response.data.absent_users);
-                setTotalRows(response.data.total);
-                setLastPage(response.data.last_page);
-                setError(''); // Clear any previous errors
-                setIsLoaded(true); // Set loaded state to true
-            }
-        } catch (error) {
-            console.error('Error fetching attendance data:', error);
-            setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
-            setAbsentUsers(error.response?.data?.absent_users);
-        }
-    };
+    const columns = [
+        { name: "Date", uid: "date" },
+        ...((auth.roles.includes('Administrator')) && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee" }] : []),
+        { name: "Clockin Time", uid: "clockin_time" },
+        { name: "Clockout Time", uid: "clockout_time" },
+        { name: "Production Time", uid: "production_time" }
+    ];
 
     const renderCell = (attendance, columnKey) => {
         switch (columnKey) {
@@ -132,9 +164,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
             case "employee":
                 const avatarSize = isLargeScreen ? 'md' : isMediumScreen ? 'md' : 'sm';
                 return (
-                    <TableCell
-                        className="whitespace-nowrap text-xs sm:text-sm md:text-base lg:text-lg"
-                    >
+                    <TableCell className="whitespace-nowrap text-xs sm:text-sm md:text-base lg:text-lg">
                         <User
                             avatarProps={{
                                 radius: "lg",
@@ -189,47 +219,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
         }
     };
 
-
-    const columns = [
-        { name: "Date", uid: "date" },
-        ...((auth.roles.includes('Administrator')) && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee" }] : []),
-        { name: "Clockin Time", uid: "clockin_time" },
-        { name: "Clockout Time", uid: "clockout_time" },
-        { name: "Production Time", uid: "production_time" }
-    ];
-
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-    };
-
-    const handleFilterChange = useCallback((key, value) => {
-        setFilterData(prevState => ({
-            ...prevState,
-            [key]: value,
-        }));
-    }, []);
-
-    // Call the function when component mounts or the window resizes
-    useEffect(() => {
-        setTimeout(() => {
-            calculateVisibleUsers();
-        }, 500);
-        window.addEventListener('resize', calculateVisibleUsers);
-        return () => window.removeEventListener('resize', calculateVisibleUsers);
-    }, []);
-
-    useEffect(() => {
-        // Only refetch or update the data that needs to be updated
-        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
-        // eslint-disable-next-line
-    }, [updateTimeSheet]);
-
-
-
     return (
-        <Box  sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Grid container spacing={2}>
-                {/* Existing Attendance Table */}
+                {/* Main Attendance Table */}
                 <Grid item xs={12} md={(url !== '/attendance-employee') ? 9 : 12}>
                     <Grow in>
                         <GlassCard>
@@ -247,7 +240,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                         }
                                     </Typography>
                                 }
-                                sx={{padding: '24px'}}
+                                sx={{ padding: '24px' }}
                             />
                             <CardContent>
                                 <Box>
@@ -290,7 +283,6 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                                 />
                                             </Grid>
                                         )}
-
                                     </Grid>
                                 </Box>
                             </CardContent>
@@ -298,14 +290,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                 {error ? (
                                     <Typography color="error">{error}</Typography>
                                 ) : (
-                                    <div style={{maxHeight: '84vh'}}>
+                                    <div style={{ maxHeight: '84vh' }}>
                                         <ScrollShadow
                                             orientation={'horizontal'}
                                             className={'overflow-y-hidden'}
                                         >
                                             <Skeleton className="rounded-lg" isLoaded={isLoaded}>
                                                 <Table
-                                                    key={updateTimeSheet}
                                                     isStriped
                                                     selectionMode="multiple"
                                                     selectionBehavior={'toggle'}
@@ -330,7 +321,6 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                                     </TableBody>
                                                 </Table>
                                             </Skeleton>
-                                            
                                         </ScrollShadow>
                                         {totalRows > 10 && (
                                             <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
@@ -352,8 +342,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                             </CardContent>
                         </GlassCard>
                     </Grow>
-
                 </Grid>
+                {/* Absent Users Card */}
                 {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && absentUsers.length > 0 && (
                     <Grid item xs={12} md={3}>
                         <Grow in>
@@ -378,10 +368,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                     <Box>
                                         {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
                                             const userLeave = getUserLeave(user.id);
+                                            const ref = index === 0 ? userItemRef : null;
                                             return (
-                                                <Collapse in={index < visibleUsersCount} key={index} timeout="auto" unmountOnExit>
+                                                <Collapse in={index < visibleUsersCount} key={user.id} timeout="auto" unmountOnExit>
                                                     <Box
-                                                        ref={userItemRef} // Use this ref to measure the height of each user item
+                                                        key={user.id}
+                                                        ref={ref}
                                                         sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}
                                                     >
                                                         <Grid container alignItems="center">
@@ -415,8 +407,6 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                                 </Collapse>
                                             );
                                         })}
-
-                                        {/* Only show the load more button if there are more users to load */}
                                         {visibleUsersCount < absentUsers.length && (
                                             <Box textAlign="center">
                                                 <Button variant="outlined" onClick={handleLoadMore}>
@@ -430,7 +420,6 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                         </Grow>
                     </Grid>
                 )}
-
             </Grid>
         </Box>
     );

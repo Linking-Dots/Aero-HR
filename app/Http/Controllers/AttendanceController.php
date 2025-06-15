@@ -445,7 +445,7 @@ class AttendanceController extends Controller
             // Return paginated data for attendances, absent users, and leave data
             return response()->json([
                 'attendances' => $formattedRecords,
-                'absent_users' => $users, // Return absent users in array format
+                'absent_users' => $absentUsers->values(), // <-- Only absent users
                 'leaves' => $todayLeaves,
                 'current_page' => $attendanceRecords->currentPage(),
                 'last_page' => $attendanceRecords->lastPage(),
