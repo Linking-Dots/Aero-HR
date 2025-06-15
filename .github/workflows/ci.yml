@@ -13,8 +13,8 @@ on:
       - develop
 
 jobs:
-  laravel-tests:
-    name: Run Laravel Tests
+  laravel-tests-mysql:
+    name: Run Laravel Tests (MySQL)
     runs-on: ubuntu-latest
 
     services:
@@ -54,7 +54,7 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install 
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Copy .env
         run: cp .env.example .env
@@ -68,9 +68,59 @@ jobs:
       - name: Run tests
         run: php artisan test --verbose
 
+  laravel-tests-sqlite:
+    name: Run Laravel Tests (SQLite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, bcmath, sqlite, xml
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env
+        run: cp .env.example .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Set directory permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Prepare SQLite DB
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      - name: Run tests (SQLite)
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+          CACHE_DRIVER: array
+          SESSION_DRIVER: array
+          QUEUE_DRIVER: sync
+        run: php artisan test --verbose
+
   react-tests:
     name: Run React Tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test -- --watchAll=false
