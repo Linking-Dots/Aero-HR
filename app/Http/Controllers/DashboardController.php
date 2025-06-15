@@ -12,46 +12,20 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
+    
     public function index () {
         $user = Auth::user();
-        $users = User::with('roles:name') // Load only the name from roles
-        ->whereHas('roles', function ($query) {
-            $query->where('name', 'Employee'); // Filter for the Employee role
-        })
-            ->get()
-            ->map(function ($user) {
-                // Convert the user object to an array and replace roles with plucked names
-                $userData = $user->toArray();
-                $userData['roles'] = $user->roles->pluck('name')->toArray(); // Replace roles with names
+        
 
-                return $userData;
-            });
-        $tasks = $user->hasRole('Supervision Engineer')
-            ? DailyWork::where('incharge', $user->id)->get()
-            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
-                ? DailyWork::where('assigned', $user->id)->get()
-                : DailyWork::all()
-            );
+        
 
-        $total = $tasks->count();
-        $completed = $tasks->where('status', 'completed')->count();
-        $pending = $total - $completed;
-        $rfi_submissions = $tasks->whereNotNull('rfi_submission_date')->count();
-
-        $statistics = [
-            'total' => $total,
-            'completed' => $completed,
-            'pending' => $pending,
-            'rfi_submissions' => $rfi_submissions
-        ];
-
-        $today = now()->toDateString(); // Get today's date in 'Y-m-d' format
+        $today = now()->toDateString();
 
         $todayLeaves = DB::table('leaves')
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
             ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->whereDate('leaves.from_date', '<=', $today)  // Check that today's date is after or on the start date
-            ->whereDate('leaves.to_date', '>=', $today)    // Check that today's date is before or on the end date
+            ->whereDate('leaves.from_date', '<=', $today)
+            ->whereDate('leaves.to_date', '>=', $today)
             ->get();
 
         $upcomingLeaves = DB::table('leaves')
@@ -69,20 +43,49 @@ class DashboardController extends Controller
             ->get();
 
         $upcomingHoliday = DB::table('holidays')
-    ->whereDate('holidays.from_date', '>=', now())
-    ->orderBy('holidays.from_date', 'asc')
-    ->first();
+            ->whereDate('holidays.from_date', '>=', now())
+            ->orderBy('holidays.from_date', 'asc')
+            ->first();
 
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,
-            'users' => $users,
-            'todayLeaves' => $todayLeaves, // Updated to pass today's leaves
-            'upcomingLeaves' => $upcomingLeaves, // Updated to pass today's leaves
-            'upcomingHoliday' => $upcomingHoliday, // Updated to pass today's leaves
-            'statistics' => $statistics,
+            
+            'todayLeaves' => $todayLeaves,
+            'upcomingLeaves' => $upcomingLeaves,
+            'upcomingHoliday' => $upcomingHoliday,
+            
             'status' => session('status')
         ]);
-
     }
+
+    public function stats() {
+        $user = Auth::user();
+        // Optimize: Use query builder for counts instead of loading all tasks
+        if ($user->hasRole('Supervision Engineer')) {
+            $taskQuery = DailyWork::where('incharge', $user->id);
+        } elseif ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')) {
+            $taskQuery = DailyWork::where('assigned', $user->id);
+        } else {
+            $taskQuery = DailyWork::query();
+        }
+
+        $total = (clone $taskQuery)->count();
+        $completed = (clone $taskQuery)->where('status', 'completed')->count();
+        $pending = $total - $completed;
+        $rfi_submissions = (clone $taskQuery)->whereNotNull('rfi_submission_date')->count();
+
+        $statistics = [
+            'total' => $total,
+            'completed' => $completed,
+            'pending' => $pending,
+            'rfi_submissions' => $rfi_submissions
+        ];
+
+        return response()->json([
+            'statistics' => $statistics
+        ]);
+    }
+
+    
 }

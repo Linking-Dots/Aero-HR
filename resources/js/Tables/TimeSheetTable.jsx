@@ -27,7 +27,7 @@ import {usePage} from "@inertiajs/react";
 import dayjs from "dayjs";
 import SearchIcon from "@mui/icons-material/Search";
 import PeopleIcon from "@mui/icons-material/People.js";
-const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
+const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const {auth} = usePage().props;
     const { url } = usePage();
@@ -104,6 +104,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
                 setAbsentUsers(response.data.absent_users);
                 setTotalRows(response.data.total);
                 setLastPage(response.data.last_page);
+                setError(''); // Clear any previous errors
             }
         } catch (error) {
             console.error('Error fetching attendance data:', error);
@@ -214,8 +215,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
     }, []);
 
     useEffect(() => {
+        // Only refetch or update the data that needs to be updated
         getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
-    }, [selectedDate, currentPage, perPage, employee, filterData]);
+        // eslint-disable-next-line
+    }, [updateTimeSheet]);
 
 
 
@@ -297,6 +300,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate}) => {
                                             className={'overflow-y-hidden'}
                                         >
                                             <Table
+                                                key={updateTimeSheet}
                                                 isStriped
                                                 selectionMode="multiple"
                                                 selectionBehavior={'toggle'}

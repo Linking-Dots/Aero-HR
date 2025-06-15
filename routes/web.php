@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
 
     Route::get('/leaves-employee', [LeaveController::class, 'index1'])->name('leaves-employee');
     Route::post('/leave-add', [LeaveController::class, 'create'])->name('leave-add');

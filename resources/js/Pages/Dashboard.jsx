@@ -10,7 +10,7 @@ import NoticeBoard from '@/Components/NoticeBoard.jsx'
 import App from "@/Layouts/App.jsx";
 import {Grid, Box} from "@mui/material";
 
-export default function Dashboard({auth,users}) {
+export default function Dashboard({auth}) {
 
     const [updateMap, setUpdateMap] = useState(false);
     const [updateTimeSheet, setUpdateTimeSheet] = useState(false);
@@ -55,7 +55,7 @@ export default function Dashboard({auth,users}) {
                         <StatisticCard />
                     </Grid>
                 </Grid>
-                {auth.roles.includes('Administrator') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} users={users} key={updateTimeSheet}/>}
+                {auth.roles.includes('Administrator') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} updateTimeSheet={updateTimeSheet}/>}
                 {auth.roles.includes('Administrator') && <UserLocationsCard selectedDate={selectedDate} updateMap={updateMap}/>}
                 <UpdatesCards/>
                 <LeaveCard/>
