@@ -37,7 +37,8 @@ const LeaveForm = ({
                        setLastPage,
                        setLeaves,
                        handleMonthChange,
-                       employee
+                       employee,
+                       selectedMonth
 }) => {
 
     const {auth} = usePage().props;
@@ -118,7 +119,8 @@ const LeaveForm = ({
                     toDate,
                     daysCount,
                     leaveReason,
-                    employee
+                    employee,
+                    month: selectedMonth,
                 };
 
                 const apiRoute = currentLeave ? route('leave-update') : route('leave-add');
