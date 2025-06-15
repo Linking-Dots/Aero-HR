@@ -53,19 +53,20 @@ jobs:
           ini-values: post_max_size=256M, upload_max_filesize=256M
           coverage: none
 
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Copy .env
-        run: cp .env.example .env
-
-      - name: Generate app key
+      - name: Install Dependencies
+        run: composer install
+      - name: Generate key
         run: php artisan key:generate
-
-      - name: Run migrations
-        run: php artisan migrate --force
-
-      - name: Run tests
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+      - name: Create Database
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+      - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
         run: php artisan test
 
   laravel-tests-sqlite:
@@ -105,7 +106,7 @@ jobs:
           CACHE_DRIVER: array
           SESSION_DRIVER: array
           QUEUE_DRIVER: sync
-        run: php artisan test --v
+        run: php artisan test
 
   react-tests:
     name: Run React Tests
