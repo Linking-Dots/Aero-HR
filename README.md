@@ -52,7 +52,7 @@ A modern ERP solution designed specifically for infrastructure and expressway de
 - Node.js & npm
 - MySQL or MariaDB
 
-### 1. Clone the Repo
+## 1. Clone the Repo
 
 ```bash
 git clone https://github.com/Linking-Dots/Aero-HR.git
