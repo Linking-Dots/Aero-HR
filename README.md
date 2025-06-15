@@ -1,6 +1,3 @@
-Thanks, Emam! Based on your input, here’s a well-structured `README.md` you can use for your ERP system’s GitHub repository.
-
----
 
 ````markdown
 # 🏗️ Centralized ERP for Expressway Development Company
@@ -120,16 +117,3 @@ php artisan test
 This project is for educational and demonstration purposes only. All rights reserved © 2025 by Emam Hosen.
 
 ````
-
----
-
-## ✅ Next Steps:
-
-- Replace `https://github.com/your-username/erp-project.git` with your actual repo URL.
-- Add real or dummy demo credentials in a `Demo Credentials` section once finalized.
-- When ready, add screenshots under the `## 🖼️ Screenshots` section using:
-  ```markdown
-  ![Dashboard Screenshot](path/to/screenshot.png)
-````
-
-Would you like me to help with a `.docx` or `.pptx` version of your **presentation** next, or move on to the **final project report**?
