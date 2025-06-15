@@ -27,6 +27,8 @@ import {usePage} from "@inertiajs/react";
 import dayjs from "dayjs";
 import SearchIcon from "@mui/icons-material/Search";
 import PeopleIcon from "@mui/icons-material/People.js";
+import { Skeleton } from '@heroui/react';
+
 const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
 
     const {auth} = usePage().props;
@@ -45,6 +47,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
     const [perPage, setPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [employee, setEmployee] = useState('');
+    const [isLoaded, setIsLoaded] = useState(false);
 
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
@@ -105,6 +108,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                 setTotalRows(response.data.total);
                 setLastPage(response.data.last_page);
                 setError(''); // Clear any previous errors
+                setIsLoaded(true); // Set loaded state to true
             }
         } catch (error) {
             console.error('Error fetching attendance data:', error);
@@ -299,31 +303,34 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet}) => {
                                             orientation={'horizontal'}
                                             className={'overflow-y-hidden'}
                                         >
-                                            <Table
-                                                key={updateTimeSheet}
-                                                isStriped
-                                                selectionMode="multiple"
-                                                selectionBehavior={'toggle'}
-                                                isCompact
-                                                removeWrapper
-                                                aria-label="Attendance Table"
-                                                isHeaderSticky
-                                            >
-                                                <TableHeader columns={columns}>
-                                                    {(column) => (
-                                                        <TableColumn key={column.uid} align="start">
-                                                            {column.name}
-                                                        </TableColumn>
-                                                    )}
-                                                </TableHeader>
-                                                <TableBody items={attendances}>
-                                                    {(attendance) => (
-                                                        <TableRow key={attendance.id}>
-                                                            {(columnKey) => renderCell(attendance, columnKey)}
-                                                        </TableRow>
-                                                    )}
-                                                </TableBody>
-                                            </Table>
+                                            <Skeleton className="rounded-lg" isLoaded={isLoaded}>
+                                                <Table
+                                                    key={updateTimeSheet}
+                                                    isStriped
+                                                    selectionMode="multiple"
+                                                    selectionBehavior={'toggle'}
+                                                    isCompact
+                                                    removeWrapper
+                                                    aria-label="Attendance Table"
+                                                    isHeaderSticky
+                                                >
+                                                    <TableHeader columns={columns}>
+                                                        {(column) => (
+                                                            <TableColumn key={column.uid} align="start">
+                                                                {column.name}
+                                                            </TableColumn>
+                                                        )}
+                                                    </TableHeader>
+                                                    <TableBody items={attendances}>
+                                                        {(attendance) => (
+                                                            <TableRow key={attendance.id}>
+                                                                {(columnKey) => renderCell(attendance, columnKey)}
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </Skeleton>
+                                            
                                         </ScrollShadow>
                                         {totalRows > 10 && (
                                             <div className="py-2 px-2 flex justify-center items-end" style={{ height: '100%' }}>
