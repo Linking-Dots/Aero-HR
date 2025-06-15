@@ -66,7 +66,7 @@ jobs:
         run: php artisan migrate --force
 
       - name: Run tests
-        run: php artisan test --v
+        run: php artisan test
 
   laravel-tests-sqlite:
     name: Run Laravel Tests (SQLite)
