@@ -1,1 +1,0 @@
-import{b as a,a as e}from"./app-Cd8DeGGd.js";import{r}from"./vendor-COEImg3x.js";const o=()=>(r.useState(!1),a({email:"",password:"",remember:!1}),e("div",{className:"auth-page-wrapper pt-5"}));export{o as default};

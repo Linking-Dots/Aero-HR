@@ -10,7 +10,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 
 
-const PunchStatusCard = ({handlePunchSuccess }) => {
+const PunchStatusCard = ({ handlePunchSuccess }) => {
     const [position, setPosition] = useState(null);
     const [punched, setPunched] = useState(null);
 
@@ -20,9 +20,9 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
     const [lastPunchInTime, setLastPunchInTime] = useState('');
     const [lastPunchOutTime, setLastPunchOutTime] = useState('');
     const [elapsedTime, setElapsedTime] = useState(null);
+    const [isUserOnLeave, setIsUserOnLeave] = useState(null);
 
-    const { todayLeaves } = usePage().props;
-    const isUserOnLeave = todayLeaves.find(leave => String(leave.user_id) === String(auth.user.id));
+
     const fetchData = async () => {
         setLastPunchInTime(null);
         setLastPunchOutTime(null);
@@ -33,11 +33,14 @@ const PunchStatusCard = ({handlePunchSuccess }) => {
             const data = response.punches;
             setAttendanceData(response.punches);
             setElapsedTime(response.total_production_time);
-            data[data.length - 1].punchin_time ? setLastPunchInTime(data[data.length - 1].punchin_time) : '';
-            data[data.length - 1].punchout_time ? setLastPunchOutTime(data[data.length - 1].punchout_time) : '';
-    
+            setIsUserOnLeave(response.isUserOnLeave); // Set leave info from backend
+            if (data && data.length > 0) {
+                data[data.length - 1].punchin_time ? setLastPunchInTime(data[data.length - 1].punchin_time) : '';
+                data[data.length - 1].punchout_time ? setLastPunchOutTime(data[data.length - 1].punchout_time) : '';
+            }
         } catch (error) {
             console.error('Error fetching user attendance:', error);
+            setIsUserOnLeave(null);
         }
     };
 

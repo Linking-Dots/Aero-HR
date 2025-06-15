@@ -16,45 +16,9 @@ class DashboardController extends Controller
     public function index () {
         $user = Auth::user();
         
-
-        
-
-        $today = now()->toDateString();
-
-        $todayLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->whereDate('leaves.from_date', '<=', $today)
-            ->whereDate('leaves.to_date', '>=', $today)
-            ->get();
-
-        $upcomingLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->where(function($query) {
-                $query->whereDate('leaves.from_date', '>=', now())
-                    ->orWhereDate('leaves.to_date', '>=', now());
-            })
-            ->where(function($query) {
-                $query->whereDate('leaves.from_date', '<=', now()->addDays(7))
-                    ->orWhereDate('leaves.to_date', '<=', now()->addDays(7));
-            })
-            ->orderBy('leaves.from_date', 'desc')
-            ->get();
-
-        $upcomingHoliday = DB::table('holidays')
-            ->whereDate('holidays.from_date', '>=', now())
-            ->orderBy('holidays.from_date', 'asc')
-            ->first();
-
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,
-            
-            'todayLeaves' => $todayLeaves,
-            'upcomingLeaves' => $upcomingLeaves,
-            'upcomingHoliday' => $upcomingHoliday,
-            
             'status' => session('status')
         ]);
     }
@@ -87,5 +51,51 @@ class DashboardController extends Controller
         ]);
     }
 
-    
+    public function updates() {
+        $users = User::with('roles:name')
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'Employee');
+            })
+            ->get()
+            ->map(function ($user) {
+                $userData = $user->toArray();
+                $userData['roles'] = $user->roles->pluck('name')->toArray();
+                return $userData;
+            });
+        
+        $today = now()->toDateString();
+
+        $todayLeaves = DB::table('leaves')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
+            ->whereDate('leaves.from_date', '<=', $today)
+            ->whereDate('leaves.to_date', '>=', $today)
+            ->get();
+
+        $upcomingLeaves = DB::table('leaves')
+            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type')
+            ->where(function($query) {
+                $query->whereDate('leaves.from_date', '>=', now())
+                    ->orWhereDate('leaves.to_date', '>=', now());
+            })
+            ->where(function($query) {
+                $query->whereDate('leaves.from_date', '<=', now()->addDays(7))
+                    ->orWhereDate('leaves.to_date', '<=', now()->addDays(7));
+            })
+            ->orderBy('leaves.from_date', 'desc')
+            ->get();
+
+        $upcomingHoliday = DB::table('holidays')
+            ->whereDate('holidays.from_date', '>=', now())
+            ->orderBy('holidays.from_date', 'asc')
+            ->first();
+
+        return response()->json([
+            'users' => $users,
+            'todayLeaves' => $todayLeaves,
+            'upcomingLeaves' => $upcomingLeaves,
+            'upcomingHoliday' => $upcomingHoliday,
+        ]);
+    }
 }

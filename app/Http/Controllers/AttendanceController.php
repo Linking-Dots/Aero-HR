@@ -317,26 +317,32 @@ class AttendanceController extends Controller
         $today = Carbon::today();
 
         try {
-            // Get the currently authenticated user (replace with your authentication method)
             $currentUser = Auth::user();
 
-            $userAttendances = Attendance::with('user:id,name')  // Include user data
-            ->whereNotNull('punchin')
+            // Efficiently check if the user is on leave today
+            $userLeave = DB::table('leaves')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type')
+                ->where('leaves.user_id', $currentUser->id)
+                ->whereDate('leaves.from_date', '<=', $today)
+                ->whereDate('leaves.to_date', '>=', $today)
+                ->first();
+
+            $userAttendances = Attendance::with('user:id,name')
+                ->whereNotNull('punchin')
                 ->whereDate('date', $today)
-                ->where('user_id', $currentUser->id)  // Filter for current user
-                ->orderBy('punchin', )
-                ->get();  // Retrieve all matching records
+                ->where('user_id', $currentUser->id)
+                ->orderBy('punchin')
+                ->get();
 
             $punches = [];
-            $totalProductionTime = 0;  // Initialize total production time in seconds
+            $totalProductionTime = 0;
 
             if ($userAttendances->isNotEmpty()) {
                 $now = Carbon::now();
                 $punches = $userAttendances->map(function ($attendance) use (&$totalProductionTime, $now) {
                     $punchInTime = Carbon::parse($attendance->punchin);
                     $punchOutTime = $attendance->punchout ? Carbon::parse($attendance->punchout) : $now;
-
-                    // Calculate the duration in seconds and add to total production time
                     $duration = $punchInTime->diffInSeconds($punchOutTime);
                     $totalProductionTime += $duration;
 
@@ -346,26 +352,19 @@ class AttendanceController extends Controller
                         'punchin_location' => $attendance->punchin_location,
                         'punchout_time' => $attendance->punchout,
                         'punchout_location' => $attendance->punchout_location,
-                        'duration' => gmdate('H:i:s', $duration)  // Format duration as H:i:s
+                        'duration' => gmdate('H:i:s', $duration)
                     ];
                 });
-
-                // Add total production time to the response
-                return response()->json([
-                    'punches' => $punches,
-                    'total_production_time' => gmdate('H:i:s', $totalProductionTime)  // Format total time as H:i:s
-                ]);
-            } else {
-                // Handle the case where no punch-in data is found for the current user on today's date
-                return response()->json([
-                    'punches' => $punches,
-                    'total_production_time' => gmdate('H:i:s', $totalProductionTime)  // Zero duration in H:i:s format
-                ]);
             }
+
+            return response()->json([
+                'punches' => $punches,
+                'total_production_time' => gmdate('H:i:s', $totalProductionTime),
+                'isUserOnLeave' => $userLeave // null if not on leave, or leave object if on leave
+            ]);
         } catch (Throwable $exception) {
-            // Handle unexpected exceptions during data retrieval
-            report($exception);  // Report the exception for debugging or logging
-            return response()->json('An error occurred while retrieving attendance data.', 500);  // Example: Return a 500 Internal Server Error response
+            report($exception);
+            return response()->json('An error occurred while retrieving attendance data.', 500);
         }
     }
 
@@ -446,7 +445,7 @@ class AttendanceController extends Controller
             // Return paginated data for attendances, absent users, and leave data
             return response()->json([
                 'attendances' => $formattedRecords,
-                'absent_users' => $absentUsers->values(), // Return absent users in array format
+                'absent_users' => $users, // Return absent users in array format
                 'leaves' => $todayLeaves,
                 'current_page' => $attendanceRecords->currentPage(),
                 'last_page' => $attendanceRecords->lastPage(),
