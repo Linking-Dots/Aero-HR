@@ -76,7 +76,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary
                     }
@@ -94,7 +94,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary
                     }
@@ -112,7 +112,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary
                     }
@@ -163,7 +163,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -181,7 +181,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -199,7 +199,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -256,7 +256,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                                 PaperProps: {
                                     sx: {
                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                        backgroundColor: theme.glassCard.backgroundColor,
+                                        background: theme.glassCard.background,
                                         border: theme.glassCard.border,
                                         borderRadius: 2,
                                         boxShadow:
@@ -292,7 +292,7 @@ const EmployeeTable = ({allUsers, departments, designations}) => {
                                 PaperProps: {
                                     sx: {
                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                        backgroundColor: theme.glassCard.backgroundColor,
+                                        background: theme.glassCard.background,
                                         border: theme.glassCard.border,
                                         borderRadius: 2,
                                         boxShadow:

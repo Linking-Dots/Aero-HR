@@ -76,7 +76,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                 icon: '🔴',
                 style: {
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
+                    background: theme.glassCard.background,
                     border: theme.glassCard.border,
                     color: theme.palette.text.primary,
                 }
@@ -139,7 +139,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -151,7 +151,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -163,7 +163,7 @@ const Letters = React.memo(({ auth, title, users }) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },

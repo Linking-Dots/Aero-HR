@@ -7,7 +7,7 @@ const Footer = () => {
     const theme = useTheme();
 
     return (
-        <Box component="footer" py={3} sx={{ backgroundColor: theme.glassCard.backgroundColor, color: theme.palette.text.primary }}>
+        <Box component="footer" py={3} sx={{ background: theme.glassCard.background, color: theme.palette.text.primary }}>
             <Container maxWidth="lg">
                 <Grid container justifyContent="space-between" alignItems="center">
                     <Grid item xs={12} sm={6}>

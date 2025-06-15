@@ -74,7 +74,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                         <Navbar
                             style={{
                                 backdropFilter: theme.glassCard.backdropFilter,
-                                backgroundColor: theme.glassCard.backgroundColor,
+                                background: theme.glassCard.background,
                                 border: theme.glassCard.border,
                             }}
                             shouldHideOnScroll
@@ -107,7 +107,7 @@ const Header = React.memo(({ darkMode, toggleDarkMode, themeDrawerOpen, toggleTh
                             <NavbarMenu
                                 style={{
                                     backdropFilter: theme.glassCard.backdropFilter,
-                                    backgroundColor: theme.glassCard.backgroundColor,
+                                    background: theme.glassCard.background,
                                     border: theme.glassCard.border,
                                 }}
                                 className={darkMode ? 'dark' : 'light' }

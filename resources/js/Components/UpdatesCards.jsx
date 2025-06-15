@@ -77,7 +77,7 @@ const UpdateSection = ({ title, items, users }) => {
                 PaperProps={{
                     sx: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         borderRadius: 2,
                         boxShadow: theme.glassCard.boxShadow,

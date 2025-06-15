@@ -68,7 +68,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -86,7 +86,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -102,7 +102,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -162,7 +162,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -180,7 +180,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -196,7 +196,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -247,7 +247,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -265,7 +265,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -283,7 +283,7 @@ const UsersTable = ({allUsers, roles}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -341,7 +341,7 @@ const UsersTable = ({allUsers, roles}) => {
                                 PaperProps: {
                                     sx: {
                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                        backgroundColor: theme.glassCard.backgroundColor,
+                                        background: theme.glassCard.background,
                                         border: theme.glassCard.border,
                                         borderRadius: 2,
                                         boxShadow:

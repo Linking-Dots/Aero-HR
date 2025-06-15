@@ -701,7 +701,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -719,7 +719,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -735,7 +735,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     },
@@ -773,7 +773,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -783,7 +783,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -795,7 +795,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 icon: '🔴',
                 style: {
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
+                    background: theme.glassCard.background,
                     border: theme.glassCard.border,
                     color: theme.palette.text.primary,
                 }

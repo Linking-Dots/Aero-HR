@@ -34,7 +34,7 @@ dayjs.extend(minMax);
 
 const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
     '& .MuiPaper-root': {
-        backgroundColor: theme.glassCard.backgroundColor,
+        background: theme.glassCard.background,
     },
     '& .MuiInputBase-root': {
         color: theme.palette.text.primary,

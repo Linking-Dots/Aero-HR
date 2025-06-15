@@ -69,7 +69,7 @@ const BottomNav = ({auth, contentRef, setBottomNavHeight}) => {
                     zIndex: 1200, // Ensure it appears above other content
                     display: { xs: 'flex', md: 'none' },
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
+                    background: theme.glassCard.background,
                 }}
                 elevation={3}
                 showLabels

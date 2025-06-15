@@ -139,7 +139,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -151,7 +151,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -163,7 +163,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                 icon: '🔴',
                 style: {
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    backgroundColor: theme.glassCard.backgroundColor,
+                    background: theme.glassCard.background,
                     border: theme.glassCard.border,
                     color: theme.palette.text.primary,
                 }
@@ -198,7 +198,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -245,7 +245,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -288,7 +288,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -332,7 +332,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -364,7 +364,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -421,7 +421,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -465,7 +465,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:
@@ -496,7 +496,7 @@ const SalaryInformationForm = ({user, setUser}) => {
                                                 PaperProps: {
                                                     sx: {
                                                         backdropFilter: 'blur(16px) saturate(200%)',
-                                                        backgroundColor: theme.glassCard.backgroundColor,
+                                                        background: theme.glassCard.background,
                                                         border: theme.glassCard.border,
                                                         borderRadius: 2,
                                                         boxShadow:

@@ -90,7 +90,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -105,7 +105,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                         icon: '🔴',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary,
                         }
@@ -115,7 +115,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                         icon: '🔴',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary,
                         }
@@ -127,7 +127,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -138,7 +138,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -202,7 +202,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                                             PaperProps: {
                                                 sx: {
                                                     backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: theme.glassCard.backgroundColor,
+                                                    background: theme.glassCard.background,
                                                     border: theme.glassCard.border,
                                                     borderRadius: 2,
                                                     boxShadow:
@@ -249,7 +249,7 @@ const CompanyInformationForm = ({settings, setSettings}) => {
                                             PaperProps: {
                                                 sx: {
                                                     backdropFilter: 'blur(16px) saturate(200%)',
-                                                    backgroundColor: theme.glassCard.backgroundColor,
+                                                    background: theme.glassCard.background,
                                                     border: theme.glassCard.border,
                                                     borderRadius: 2,
                                                     boxShadow:

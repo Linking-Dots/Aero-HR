@@ -34,7 +34,7 @@ const GlassDialog = forwardRef(({ open, closeModal, children, ...props }, ref) =
             PaperProps={{
                 sx: {
                     backdropFilter: theme.glassCard.backdropFilter,
-                    backgroundColor: theme.glassCard.backgroundColor,
+                    background: theme.glassCard.background,
                     border: theme.glassCard.border,
                     display: 'flex',
                     flexDirection: 'column',

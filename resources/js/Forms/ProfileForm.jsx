@@ -128,7 +128,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         icon: false,
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary
                         }
@@ -146,7 +146,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         icon: '🟢',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary
                         }
@@ -162,7 +162,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         icon: '🔴',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary
                         }
@@ -256,7 +256,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -276,7 +276,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         icon: '🔴',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary,
                         }
@@ -287,7 +287,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                         icon: '🔴',
                         style: {
                             backdropFilter: 'blur(16px) saturate(200%)',
-                            backgroundColor: theme.glassCard.backgroundColor,
+                            background: theme.glassCard.background,
                             border: theme.glassCard.border,
                             color: theme.palette.text.primary,
                         }
@@ -300,7 +300,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -312,7 +312,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                     icon: '🔴',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        backgroundColor: theme.glassCard.backgroundColor,
+                        background: theme.glassCard.background,
                         border: theme.glassCard.border,
                         color: theme.palette.text.primary,
                     }
@@ -427,7 +427,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                         PaperProps: {
                                             sx: {
                                                 backdropFilter: 'blur(16px) saturate(200%)',
-                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                background: theme.glassCard.background,
                                                 border: theme.glassCard.border,
                                                 borderRadius: 2,
                                                 boxShadow:
@@ -522,7 +522,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                         PaperProps: {
                                             sx: {
                                                 backdropFilter: 'blur(16px) saturate(200%)',
-                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                background: theme.glassCard.background,
                                                 border: theme.glassCard.border,
                                                 borderRadius: 2,
                                                 boxShadow:
@@ -558,7 +558,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                         PaperProps: {
                                             sx: {
                                                 backdropFilter: 'blur(16px) saturate(200%)',
-                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                background: theme.glassCard.background,
                                                 border: theme.glassCard.border,
                                                 borderRadius: 2,
                                                 boxShadow:
@@ -594,7 +594,7 @@ const ProfileForm = ({user, allUsers, departments, designations,setUser, open, c
                                         PaperProps: {
                                             sx: {
                                                 backdropFilter: 'blur(16px) saturate(200%)',
-                                                backgroundColor: theme.glassCard.backgroundColor,
+                                                background: theme.glassCard.background,
                                                 border: theme.glassCard.border,
                                                 borderRadius: 2,
                                                 boxShadow:

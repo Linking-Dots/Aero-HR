@@ -14,7 +14,7 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => {
             : theme.palette.grey[800];
     return {
         backdropFilter: 'blur(16px) saturate(200%)',
-        backgroundColor: theme.glassCard.backgroundColor,
+        background: theme.glassCard.background,
         border: theme.glassCard.color,
         height: theme.spacing(3),
         color: theme.palette.text.primary,
