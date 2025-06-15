@@ -1,16 +1,18 @@
-import {Head} from '@inertiajs/react';
-import React, {useState} from 'react';
-import PunchStatusCard from "@/Components/PunchStatusCard.jsx";
-import StatisticCard from "@/Components/StatisticCard.jsx";
-import UpdatesCards from "@/Components/UpdatesCards.jsx";
-import LeaveCard from "@/Components/LeaveCard.jsx";
-import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
-import UserLocationsCard from "@/Components/UserLocationsCard.jsx";
-import NoticeBoard from '@/Components/NoticeBoard.jsx'
-import App from "@/Layouts/App.jsx";
-import {Grid, Box} from "@mui/material";
+import { Head } from '@inertiajs/react';
+import React, { useState, lazy, Suspense } from 'react';
 
-export default function Dashboard({auth}) {
+// Lazy loaded components
+const TimeSheetTable = lazy(() => import('@/Tables/TimeSheetTable.jsx'));
+const UserLocationsCard = lazy(() => import('@/Components/UserLocationsCard.jsx'));
+const UpdatesCards = lazy(() => import('@/Components/UpdatesCards.jsx'));
+const LeaveCard = lazy(() => import('@/Components/LeaveCard.jsx'));
+const StatisticCard = lazy(() => import('@/Components/StatisticCard.jsx'));
+const PunchStatusCard = lazy(() => import('@/Components/PunchStatusCard.jsx'));
+import App from "@/Layouts/App.jsx";
+import { Grid, Box } from "@mui/material";
+import {Spinner} from "@heroui/react";
+
+export default function Dashboard({ auth }) {
 
     const [updateMap, setUpdateMap] = useState(false);
     const [updateTimeSheet, setUpdateTimeSheet] = useState(false);
@@ -22,43 +24,57 @@ export default function Dashboard({auth}) {
     }).format(new Date()));
 
     const handlePunchSuccess = () => {
-        // Toggle the state to re-render UserLocationsCard
         setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
     };
 
-    // Handle date change from DatePicker
     const handleDateChange = (event) => {
-        const newDate = event.target.value; // Date from the input field
+        const newDate = event.target.value;
         setSelectedDate(new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Dhaka',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
-        }).format(new Date(newDate))); // Set it as a valid Date object
-        setUpdateTimeSheet(prev => !prev);  // Re-render components if necessary
-        setUpdateMap(prev => !prev);        // Re-render components if necessary
+        }).format(new Date(newDate)));
+        setUpdateTimeSheet(prev => !prev);
+        setUpdateMap(prev => !prev);
     };
 
     return (
         <>
-            <Head title="Dashboard"/>
+            <Head title="Dashboard" />
             <Box>
                 {/*<NoticeBoard/>*/}
-                <Grid container >
-                    {auth.roles.includes('Employee') &&
-                        <Grid item xs={12} md={6}>
-                            <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
-                        </Grid>
+                <Suspense
+                    fallback={
+                        <div className="w-full flex justify-center items-center py-12">
+                            <Spinner
+                                classNames={{ label: "text-foreground mt-4" }}
+                                label="Loading..."
+                                variant="dots"
+                            />
+                        </div>
                     }
-                    <Grid item xs={12} md={6}>
-                        <StatisticCard />
+                >
+                    <Grid container>
+                        {auth.roles.includes('Employee') &&
+                            <Grid item xs={12} md={6}>
+                                <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
+                            </Grid>
+                        }
+                            <Grid item xs={12} md={6}>
+                                <StatisticCard />
+                            </Grid>
                     </Grid>
-                </Grid>
-                {auth.roles.includes('Administrator') && <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} updateTimeSheet={updateTimeSheet}/>}
-                {auth.roles.includes('Administrator') && <UserLocationsCard selectedDate={selectedDate} updateMap={updateMap}/>}
-                <UpdatesCards/>
-                <LeaveCard/>
+                    {auth.roles.includes('Administrator') && (
+                        <>
+                            <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} updateTimeSheet={updateTimeSheet} />
+                            <UserLocationsCard selectedDate={selectedDate} updateMap={updateMap} />
+                        </>
+                    )}
+                    <UpdatesCards />
+                    <LeaveCard />
+                </Suspense>
             </Box>
         </>
     );

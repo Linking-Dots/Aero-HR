@@ -1,1 +1,0 @@
-import{u as r}from"./App-CUDkxVUm.js";import{r as u}from"./vendor-aMbn8-Jn.js";function i(e){const l=r(),t=l==null?void 0:l.labelPlacement;return u.useMemo(()=>{var a,n;const o=(n=(a=e.labelPlacement)!=null?a:t)!=null?n:"inside";return o==="inside"&&!e.label?"outside":o},[e.labelPlacement,t,e.label])}export{i as u};
