@@ -105,7 +105,7 @@ jobs:
           CACHE_DRIVER: array
           SESSION_DRIVER: array
           QUEUE_DRIVER: sync
-        run: php artisan test --verbose
+        run: php artisan test --v
 
   react-tests:
     name: Run React Tests
