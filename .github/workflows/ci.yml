@@ -53,8 +53,13 @@ jobs:
           ini-values: post_max_size=256M, upload_max_filesize=256M
           coverage: none
 
-      - name: Install Dependencies
-        run: composer install
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env
+        run: cp .env.example .env
+
+     
       - name: Generate key
         run: php artisan key:generate
       - name: Directory Permissions
@@ -106,7 +111,7 @@ jobs:
           CACHE_DRIVER: array
           SESSION_DRIVER: array
           QUEUE_DRIVER: sync
-        run: php artisan test
+        run: php artisan test --v
 
   react-tests:
     name: Run React Tests
