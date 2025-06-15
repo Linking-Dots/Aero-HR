@@ -54,7 +54,7 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+        run: composer install 
 
       - name: Copy .env
         run: cp .env.example .env
