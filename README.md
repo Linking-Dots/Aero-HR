@@ -1,5 +1,3 @@
-
-````markdown
 # 🏗️ Centralized ERP for Expressway Development Company
 
 A modern ERP solution designed specifically for infrastructure and expressway development companies. This system provides a unified platform to streamline and digitize collaboration across departments like Engineering, HR, Finance, Inventory, and Communication.
@@ -52,7 +50,7 @@ A modern ERP solution designed specifically for infrastructure and expressway de
 - Node.js & npm
 - MySQL or MariaDB
 
-## 1. Clone the Repo
+### 1. Clone the Repo
 
 ```bash
 git clone https://github.com/Linking-Dots/Aero-HR.git
@@ -115,5 +113,3 @@ php artisan test
 ## 📄 License
 
 This project is for educational and demonstration purposes only. All rights reserved © 2025 by Emam Hosen.
-
-````
