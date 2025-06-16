@@ -433,27 +433,7 @@ const PunchStatusCard = () => {
             {/* Compact Hero Status Card */}
             <GlassCard>
                 <CardContent sx={{ p: 2, textAlign: 'center', position: 'relative' }}>
-                    {/* Loading overlay */}
-                    {loading && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backdropFilter: 'blur(4px)',
-                                background: alpha(theme.palette.background.paper, 0.8),
-                                borderRadius: 2,
-                                zIndex: 10
-                            }}
-                        >
-                            <CircularProgress size={40} thickness={4} />
-                        </Box>
-                    )}
+                    
 
                     {/* Compact Header with User & Time */}
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
