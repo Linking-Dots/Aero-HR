@@ -136,8 +136,12 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
     Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
     Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
-    Route::get('/settings/attendance', [AttendanceSettingController::class, 'index'])->name('attendance-settings');
-    Route::post('/settings/attendance', [AttendanceSettingController::class, 'update'])->name('attendance-settings.update');
+    Route::get('/settings/attendance', [AttendanceSettingController::class, 'index'])->name('attendance-settings.index');
+    Route::post('/settings/attendance', [AttendanceSettingController::class, 'updateSettings'])->name('attendance-settings.update');
+    Route::post('settings/attendance-type', [AttendanceSettingController::class, 'storeType'])->name('attendance-types.store');
+    Route::post('settings/attendance-type/{id}', [AttendanceSettingController::class, 'updateType'])->name('attendance-types.update');
+    Route::delete('settings/attendance-type/{id}', [AttendanceSettingController::class, 'destroyType'])->name('attendance-types.destroy');
+
 
     // Routes accessible only to users with the 'admin' role
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');

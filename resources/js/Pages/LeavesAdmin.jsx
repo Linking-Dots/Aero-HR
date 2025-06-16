@@ -95,7 +95,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         fetchLeavesData();
     }, [selectedMonth, currentPage, perPage, employee]);
 
-    console.log(leavesData)
+
 
     return (
         <>

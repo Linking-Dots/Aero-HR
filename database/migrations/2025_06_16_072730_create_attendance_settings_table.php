@@ -19,13 +19,8 @@ return new class extends Migration
             $table->integer('late_mark_after')->default(15); // minutes
             $table->integer('early_leave_before')->default(15); // minutes
             $table->integer('overtime_after')->default(30); // minutes
-            $table->boolean('allow_punch_from_mobile')->default(true);
             $table->boolean('auto_punch_out')->default(false);
             $table->time('auto_punch_out_time')->nullable();
-            $table->enum('attendance_validation_type', ['location', 'ip', 'both'])->default('location');
-            $table->integer('location_radius')->default(200); // meters
-            $table->text('allowed_ips')->nullable();
-            $table->boolean('require_location_services')->default(true);
             $table->json('weekend_days')->nullable(); // Remove the default value
             $table->timestamps();
         });

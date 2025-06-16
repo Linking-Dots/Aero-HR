@@ -22,7 +22,7 @@ import { Squares2X2Icon } from '@heroicons/react/24/outline';
 export const getSettingsPages = () => [
     { name: 'Back to Dashboard', icon: <Squares2X2Icon className="w-5 h-5" />, route: 'dashboard' },
     { name: 'Company Settings', icon: <BuildingOfficeIcon className="w-5 h-5" />, route: 'company-settings' },
-    { name: 'Attendance Settings', icon: <ClockIcon className="w-5 h-5" />, route: 'attendance-settings' },
+    { name: 'Attendance Settings', icon: <ClockIcon className="w-5 h-5" />, route: 'attendance-settings.index' },
     { name: 'Localization', icon: <ClockIcon className="w-5 h-5" />, route: 'employees' },
     { name: 'Theme Settings', icon: <PhotoIcon className="w-5 h-5" />, route: 'employees' },
     { name: 'Roles & Permissions', icon: <KeyIcon className="w-5 h-5" />, route: 'roles-settings' },

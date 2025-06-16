@@ -17,7 +17,7 @@ import {usePage} from "@inertiajs/react";
 
 import {Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, User, Chip, Tooltip, getKeyValue} from "@heroui/react";
 const HolidayTable = ({ holidaysData, handleClickOpen, setCurrentHoliday, openModal, setHolidaysData}) => {
-    console.log(holidaysData)
+
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);

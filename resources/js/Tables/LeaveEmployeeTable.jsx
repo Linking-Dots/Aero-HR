@@ -75,7 +75,7 @@ const LeaveEmployeeTable = ({
     };
 
     const updateLeaveStatus = async (leave, key, value) => {
-        console.log(leave)
+      
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.post(route("leave-update-status"), {

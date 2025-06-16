@@ -13,7 +13,6 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
             try {
                 const response = await axios.delete(route('leave-delete', { id: leaveIdToDelete, route: route().current() }));
 
-                console.log(response);
 
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion

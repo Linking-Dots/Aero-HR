@@ -34,7 +34,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   // Combined handler
   // Update a specific filter and reset page if year changes
   const handleFilterChange = useCallback((key, value) => {
-    console.log(key, value)
+   
     setFilters((prev) => ({ ...prev, [key]: value }));
     if (key === 'year') {
       setPagination((prev) => ({ ...prev, page: 1 }));

@@ -111,18 +111,24 @@ class UserController extends Controller
             ]);
 
             $user = User::findOrFail($id);
-            
-            $user->update([
-                'attendance_type_id' => $request->attendance_type_id,
-                'attendance_config' => $request->attendance_config ?? null,
-            ]);
 
-            $attendanceType = AttendanceType::find($request->attendance_type_id);
+            // Use Eloquent relationship to associate attendance type
+            $attendanceType = AttendanceType::findOrFail($request->attendance_type_id);
+
+            // If you have a belongsTo relationship: $user->attendanceType()
+            $user->attendanceType()->associate($attendanceType);
+
+            // Optionally update config if you have a JSON column for user-specific config
+            if ($request->has('attendance_config')) {
+                $user->attendance_config = $request->attendance_config;
+            }
+
+            $user->save();
 
             return response()->json([
                 'success' => true,
                 'messages' => ["User attendance type updated to {$attendanceType->name} successfully."],
-                'user' => $user->fresh(),
+                'user' => $user->fresh('attendanceType'),
             ]);
 
         } catch (\Exception $e) {

@@ -15,9 +15,26 @@ import { HeroUIProvider } from "@heroui/react";
 import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
 import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 
+
+// Add this hook in your main App component or create a separate component
+const useAppLoader = () => {
+    useEffect(() => {
+        // Signal that React app is ready
+        if (window.AppLoader) {
+            // Small delay to ensure all components are mounted
+            const timer = setTimeout(() => {
+                window.AppLoader.hideLoading();
+            }, 200);
+            
+            return () => clearTimeout(timer);
+        }
+    }, []);
+};
+
 function App({ children }) {
+    useAppLoader();
     const { auth, url } = usePage().props;
-    console.log(usePage().props);
+
     const permissions = auth.permissions;
 
     const [sideBarOpen, setSideBarOpen] = useState(false);

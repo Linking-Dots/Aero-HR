@@ -22,14 +22,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip, User } from "@heroui/react";
 
 const EmployeeTable = ({ allUsers, departments, designations, attendanceTypes }) => {
-    // Temporary debug
-    console.log('EmployeeTable props:', {
-        allUsers: allUsers,
-        departments: departments?.length,
-        designations: designations?.length,
-        attendanceTypes: attendanceTypes?.length,
-        attendanceTypesData: attendanceTypes
-    });
+ 
 
     const [users, setUsers] = useState(allUsers || []);
     const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -393,61 +386,48 @@ const EmployeeTable = ({ allUsers, departments, designations, attendanceTypes })
                 );
             case "attendance_type":
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FormControl size="small" fullWidth sx={{ zIndex: 0 }}>
-                            <InputLabel id="attendance-type">Attendance Type</InputLabel>
-                            <Select
-                                variant={'outlined'}
-                                labelId="attendance-type"
-                                id={`attendance-type-select-${user.id}`}
-                                value={user.attendance_type_id || 'na'}
-                                onChange={(event) => handleChange('attendance_type', user.id, event.target.value)}
-                                label="Attendance Type"
-                                MenuProps={{
-                                    PaperProps: {
-                                        sx: {
-                                            backdropFilter: 'blur(16px) saturate(200%)',
-                                            background: theme.glassCard.background,
-                                            border: theme.glassCard.border,
-                                            borderRadius: 2,
-                                            boxShadow:
-                                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                                        },
+                    <FormControl size="small" fullWidth sx={{ zIndex: 0 }}>
+                        <InputLabel id="attendance-type">Attendance Type</InputLabel>
+                        <Select
+                            variant={'outlined'}
+                            labelId="attendance-type"
+                            id={`attendance-type-select-${user.id}`}
+                            value={user.attendance_type_id || 'na'}
+                            onChange={(event) => handleChange('attendance_type', user.id, event.target.value)}
+                            label="Attendance Type"
+                            MenuProps={{
+                                PaperProps: {
+                                    sx: {
+                                        backdropFilter: 'blur(16px) saturate(200%)',
+                                        background: theme.glassCard.background,
+                                        border: theme.glassCard.border,
+                                        borderRadius: 2,
+                                        boxShadow:
+                                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
                                     },
-                                }}
-                            >
-                                <MenuItem value="na" disabled>
-                                    Select Attendance Type
-                                </MenuItem>
-                                {/* Add safety check for attendanceTypes */}
-                                {attendanceTypes && attendanceTypes.length > 0 ? (
-                                    attendanceTypes.map((type) => (
-                                        <MenuItem key={type.id} value={type.id}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {type.icon && <span>{type.icon}</span>}
-                                                {type.name}
-                                            </div>
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled>
-                                        No attendance types available
+                                },
+                            }}
+                        >
+                            <MenuItem value="na" disabled>
+                                Select Attendance Type
+                            </MenuItem>
+                            {/* Add safety check for attendanceTypes */}
+                            {attendanceTypes && attendanceTypes.length > 0 ? (
+                                attendanceTypes.map((type) => (
+                                    <MenuItem key={type.id} value={type.id}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {type.icon && <span>{type.icon}</span>}
+                                            {type.name}
+                                        </div>
                                     </MenuItem>
-                                )}
-                            </Select>
-                        </FormControl>
-                        {user.attendance_type_id && (
-                            <Tooltip content="Configure Attendance Settings">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleAttendanceConfig(user)}
-                                    sx={{ minWidth: 'auto' }}
-                                >
-                                    <Settings fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                    </div>
+                                ))
+                            ) : (
+                                <MenuItem disabled>
+                                    No attendance types available
+                                </MenuItem>
+                            )}
+                        </Select>
+                    </FormControl>
                 );
             case "actions":
                 return (
