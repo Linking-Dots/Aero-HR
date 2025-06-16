@@ -6,6 +6,7 @@ import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
 import {useTheme} from "@mui/material/styles";
 import L from "leaflet";
+import 'leaflet-routing-machine';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 
@@ -94,6 +95,7 @@ const PunchStatusCard = ({ handlePunchSuccess }) => {
 
                         // Use L.Routing.OSRMv1 to calculate the route without displaying it
                         const router = new L.Routing.OSRMv1();
+                        console.log(router);
                         router.route(
                             [
                                 L.Routing.waypoint(L.latLng(startLocation)),
