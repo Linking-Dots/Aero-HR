@@ -13,7 +13,7 @@ class LeaveSettingController extends Controller
     public function index(): \Inertia\Response
     {
         $leaveSettings = LeaveSetting::all();
-        return Inertia::render('LeaveSettings', [
+        return Inertia::render('Settings/LeaveSettings', [
             'title' => 'Leave Settings',
             'leaveTypes' => $leaveSettings,
         ]);

@@ -84,6 +84,11 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('attendance_type_id')->nullable()->constrained('attendance_types')->after('department');
+            $table->json('attendance_config')->nullable()->after('attendance_type_id');
+        });
     }
 
     /**

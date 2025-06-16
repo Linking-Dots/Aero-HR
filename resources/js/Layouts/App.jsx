@@ -17,6 +17,7 @@ import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 
 function App({ children }) {
     const { auth, url } = usePage().props;
+    console.log(usePage().props);
     const permissions = auth.permissions;
 
     const [sideBarOpen, setSideBarOpen] = useState(false);
@@ -33,10 +34,15 @@ function App({ children }) {
     const [loading, setLoading] = useState(false);
 
     // Memoize pages to avoid unnecessary recalculations
-    const pages = useMemo(
-        () => (/setting/i.test(url) ? getSettingsPages() : getPages(permissions)),
-        [url, permissions]
-    );
+    const pages = useMemo(() => {
+        // Check if the current URL is specifically a settings page
+        // You can adjust this condition based on your actual settings routes
+        const isSettingsPage = url.startsWith('/settings') || 
+                              url.includes('settings') || 
+                              url === '/settings';
+        
+        return isSettingsPage ? getSettingsPages() : getPages(permissions);
+    }, [url, permissions]);
 
     // Theme and media query
     const theme = useTheme(darkMode, themeColor);

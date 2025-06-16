@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'openrouteservice' => [
+        'key' => env('OPENROUTESERVICE_API_KEY'),
+    ],
+
+    'graphhopper' => [
+        'key' => env('GRAPHHOPPER_API_KEY'),
+    ],
+
+    'mapbox' => [
+        'token' => env('MAPBOX_ACCESS_TOKEN'),
+    ],
+
 ];

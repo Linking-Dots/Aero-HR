@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\AttendanceRule;
+use App\Services\Attendance\AttendanceValidatorFactory;
 use App\Models\Attendance;
 use App\Models\Designation;
 use App\Models\Holiday;
@@ -210,6 +211,215 @@ class AttendanceController extends Controller
         } catch (\Exception $e) {
             // Handle exceptions
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function punch(Request $request)
+    {
+        $user = $request->user();
+        $context = [
+            'lat' => $request->input('lat'),
+            'lng' => $request->input('lng'),
+            'ip'  => $request->ip(),
+            'qr_code' => $request->input('qr_code'),
+            'nfc_tag' => $request->input('nfc_tag'),
+            'device_fingerprint' => $request->input('device_fingerprint'),
+            'wifi_ssid' => $request->input('wifi_ssid'),
+            'timestamp' => now(),
+        ];
+
+        // Fix: Get the rules collection properly
+        $rules = AttendanceRule::forUser($user)->get(); // Add ->get() to execute the query
+        $validationResults = [];
+        $mandatoryValidations = [];
+        $optionalValidations = [];
+
+        // Check if user has any attendance rules defined
+        if ($rules->isEmpty()) {
+            // If no rules exist, check if user has a default attendance type
+            if ($user->attendance_type_id) {
+                // Create a temporary rule based on user's attendance type
+                $attendanceType = $user->attendanceType;
+                if ($attendanceType) {
+                    $rules = collect([
+                        (object)[
+                            'id' => null,
+                            'is_mandatory' => true,
+                            'attendanceType' => $attendanceType,
+                            'attendanceLocation' => null,
+                            'isApplicableAtTime' => function() { return true; }
+                        ]
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 'fail',
+                        'message' => 'No attendance validation rules configured for your account. Please contact HR.',
+                        'validation_results' => [],
+                    ], 403);
+                }
+            } else {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'No attendance type assigned to your account. Please contact HR.',
+                    'validation_results' => [],
+                ], 403);
+            }
+        }
+
+        // Separate mandatory and optional validations
+        foreach ($rules as $rule) {
+            // Check if it's a temporary rule (object) or actual model
+            $isApplicable = is_callable($rule->isApplicableAtTime ?? null) 
+                ? call_user_func($rule->isApplicableAtTime)
+                : ($rule instanceof AttendanceRule ? $rule->isApplicableAtTime() : true);
+
+            if (!$isApplicable) {
+                continue;
+            }
+
+            if ($rule->is_mandatory ?? true) {
+                $mandatoryValidations[] = $rule;
+            } else {
+                $optionalValidations[] = $rule;
+            }
+        }
+
+        // Validate all mandatory rules
+        foreach ($mandatoryValidations as $rule) {
+            try {
+                $validator = AttendanceValidatorFactory::make(
+                    $rule->attendanceType->slug,
+                    array_merge(
+                        $rule->attendanceType->config ?? [], 
+                        $rule->attendanceLocation?->toArray() ?? []
+                    )
+                );
+
+                $isValid = $validator->validate($context);
+                $validationResults[] = [
+                    'rule_id' => $rule->id,
+                    'type' => $rule->attendanceType->slug,
+                    'is_mandatory' => true,
+                    'is_valid' => $isValid,
+                    'message' => $validator->getMessage(),
+                ];
+
+                if (!$isValid) {
+                    return response()->json([
+                        'status' => 'fail',
+                        'message' => $validator->getMessage(),
+                        'validation_results' => $validationResults,
+                    ], 403);
+                }
+            } catch (\Exception $e) {
+                Log::error('Validation error for rule ID ' . ($rule->id ?? 'temp') . ': ' . $e->getMessage());
+                
+                $validationResults[] = [
+                    'rule_id' => $rule->id,
+                    'type' => $rule->attendanceType->slug ?? 'unknown',
+                    'is_mandatory' => true,
+                    'is_valid' => false,
+                    'message' => 'Validation service error: ' . $e->getMessage(),
+                ];
+
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'Attendance validation failed due to system error.',
+                    'validation_results' => $validationResults,
+                ], 500);
+            }
+        }
+
+        // At least one optional validation must pass if no mandatory ones exist
+        if (empty($mandatoryValidations) && !empty($optionalValidations)) {
+            $optionalPassed = false;
+            
+            foreach ($optionalValidations as $rule) {
+                try {
+                    $validator = AttendanceValidatorFactory::make(
+                        $rule->attendanceType->slug,
+                        array_merge(
+                            $rule->attendanceType->config ?? [], 
+                            $rule->attendanceLocation?->toArray() ?? []
+                        )
+                    );
+
+                    $isValid = $validator->validate($context);
+                    $validationResults[] = [
+                        'rule_id' => $rule->id,
+                        'type' => $rule->attendanceType->slug,
+                        'is_mandatory' => false,
+                        'is_valid' => $isValid,
+                        'message' => $validator->getMessage(),
+                    ];
+
+                    if ($isValid) {
+                        $optionalPassed = true;
+                        break; // One valid optional validation is enough
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Optional validation error for rule ID ' . ($rule->id ?? 'temp') . ': ' . $e->getMessage());
+                    continue; // Skip this validation and try the next one
+                }
+            }
+
+            if (!$optionalPassed) {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'No valid attendance validation method found.',
+                    'validation_results' => $validationResults,
+                ], 403);
+            }
+        }
+
+        // Check if user already punched in today
+        $today = Carbon::today();
+        $existingAttendance = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->whereNull('punchout')
+            ->first();
+
+        try {
+            if ($existingAttendance) {
+                // Punch out
+                $existingAttendance->update([
+                    'punchout' => Carbon::now(),
+                    'punchout_location' => json_encode($context),
+                ]);
+
+                $message = 'Punched out successfully.';
+                $attendanceId = $existingAttendance->id;
+            } else {
+                // Punch in - create new attendance record
+                $attendance = Attendance::create([
+                    'user_id' => $user->id,
+                    'date' => $today,
+                    'punchin' => Carbon::now(),
+                    'punchin_location' => json_encode($context),
+                    'validation_results' => json_encode($validationResults),
+                ]);
+
+                $message = 'Punched in successfully.';
+                $attendanceId = $attendance->id;
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'attendance_id' => $attendanceId,
+                'validation_results' => $validationResults,
+                'action' => $existingAttendance ? 'punch_out' : 'punch_in',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error saving attendance: ' . $e->getMessage());
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to record attendance due to system error.',
+                'validation_results' => $validationResults,
+            ], 500);
         }
     }
     public function punchIn(Request $request): \Illuminate\Http\JsonResponse

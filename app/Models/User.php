@@ -44,6 +44,7 @@ class User extends Authenticatable implements HasMedia
         'salary_basis', 'salary_amount', 'payment_type', 'pf_contribution', 'pf_no',
         'employee_pf_rate', 'additional_pf_rate', 'total_pf_rate', 'esi_contribution',
         'esi_no', 'employee_esi_rate', 'additional_esi_rate', 'total_esi_rate', 'email_verified_at',
+        'attendance_type_id', 'attendance_config',
     ];
 
     /**
@@ -67,6 +68,8 @@ class User extends Authenticatable implements HasMedia
         'report_to' => 'integer',
         'designation' => 'integer',
         'department' => 'integer',
+        'attendance_type_id' => 'integer',
+        'attendance_config' => 'array',
         'active' => 'boolean',
     ];
 
@@ -118,9 +121,23 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(Attendance::class, 'user_id');
     }
 
+    public function attendanceType()
+    {
+        return $this->belongsTo(AttendanceType::class);
+    }
+
     public function designation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Designation::class, 'designation');
     }
 
+    public function attendanceRules()
+    {
+        return $this->hasMany(AttendanceRule::class);
+    }
+
+    public function activeAttendanceRules()
+    {
+        return $this->hasMany(AttendanceRule::class)->where('is_active', true);
+    }
 }

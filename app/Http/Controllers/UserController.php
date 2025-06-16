@@ -9,17 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use App\Models\AttendanceType;
 
 class UserController extends Controller
 {
     public function index1(): \Inertia\Response
     {
-        $users = User::all();
         return Inertia::render('Employees/EmployeeList', [
-            'title' => 'Employees',
-            'allUsers' => $users,
-            'designations' => Designation::all(),
+            'title' => 'Employee Management',
+            'allUsers' => User::with(['attendanceType'])->role('Employee')->get(),
             'departments' => Department::all(),
+            'designations' => Designation::all(),
+            'attendanceTypes' => AttendanceType::where('is_active', true)->get(), // Make sure this line exists
         ]);
     }
     public function index2(): \Inertia\Response
@@ -101,4 +102,35 @@ class UserController extends Controller
         ]);
     }
 
+    public function updateUserAttendanceType(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'attendance_type_id' => 'required|exists:attendance_types,id',
+                'attendance_config' => 'nullable|array',
+            ]);
+
+            $user = User::findOrFail($id);
+            
+            $user->update([
+                'attendance_type_id' => $request->attendance_type_id,
+                'attendance_config' => $request->attendance_config ?? null,
+            ]);
+
+            $attendanceType = AttendanceType::find($request->attendance_type_id);
+
+            return response()->json([
+                'success' => true,
+                'messages' => ["User attendance type updated to {$attendanceType->name} successfully."],
+                'user' => $user->fresh(),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'messages' => ['Failed to update attendance type.'],
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
+    }
 }

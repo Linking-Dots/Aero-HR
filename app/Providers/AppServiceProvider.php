@@ -6,6 +6,10 @@ use App\Models\Jurisdiction;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\Contracts\CompanySettingRepositoryInterface;
+use App\Repositories\Eloquent\CompanySettingRepository;
+use App\Repositories\Contracts\AttendanceSettingRepositoryInterface;
+use App\Repositories\Eloquent\AttendanceSettingRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +18,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            CompanySettingRepositoryInterface::class,
+            CompanySettingRepository::class
+        );
+        
+        $this->app->bind(
+            AttendanceSettingRepositoryInterface::class,
+            AttendanceSettingRepository::class
+        );
     }
 
     /**

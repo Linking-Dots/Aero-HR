@@ -18,21 +18,18 @@ const appName =  'DBEDC ERP';
 
 createInertiaApp({
     progress: {
-        // Custom progress component configuration
-        color: '#29d', // Example color
-        // You can add more custom configurations here
+        color: '#29d',
     },
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
-    setup({el, App, props}) {
+    resolve: (name) =>
+        resolvePageComponent(
+            // This supports subfolders, e.g. "Admin/Dashboard"
+            `./Pages/${name}.jsx`,
+            import.meta.glob('./Pages/**/*.jsx')
+        ),
+    setup({ el, App, props }) {
         const root = createRoot(el);
-
-        // If the page defines a layout, use it; otherwise, use the default App layout
-        const renderPage = props.initialPage.props.layout
-            ? props.initialPage.props.layout((<App {...props} />))
-            : (<App {...props} />);
-
-        root.render(renderPage);
+        root.render(<App {...props} />);
     },
 }).then(r => {
     console.log('Inertia React.js app created');

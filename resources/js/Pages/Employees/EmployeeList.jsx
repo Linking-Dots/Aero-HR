@@ -8,7 +8,7 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import {Add} from "@mui/icons-material";
 import EmployeeTable from '@/Tables/EmployeeTable.jsx';
 
-const EmployeesList = ({title, allUsers, departments, designations}) => {
+const EmployeesList = ({title, allUsers, departments, designations, attendanceTypes}) => {
     return (
         <>
             <Head title={title}/>
@@ -31,7 +31,12 @@ const EmployeesList = ({title, allUsers, departments, designations}) => {
                             </Box>
                         } />
                         <CardContent>
-                            <EmployeeTable allUsers={allUsers} departments={departments} designations={designations}/>
+                            <EmployeeTable 
+                                allUsers={allUsers} 
+                                departments={departments} 
+                                designations={designations}
+                                attendanceTypes={attendanceTypes}
+                            />
 
                         </CardContent>
                     </GlassCard>

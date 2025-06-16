@@ -37,6 +37,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $request->user() ? $request->user()->roles->pluck('name')->toArray() : [],
                 'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name')->toArray() : [],
             ],
+            
+            'url' => $request->getPathInfo(),
         ];
     }
 }

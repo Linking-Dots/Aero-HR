@@ -21,6 +21,7 @@ use App\Http\Controllers\Settings\CompanySettingController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Settings\AttendanceSettingController;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 
@@ -135,7 +136,8 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
     Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
     Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
-
+    Route::get('/settings/attendance', [AttendanceSettingController::class, 'index'])->name('attendance-settings');
+    Route::post('/settings/attendance', [AttendanceSettingController::class, 'update'])->name('attendance-settings.update');
 
     // Routes accessible only to users with the 'admin' role
     Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');
@@ -145,7 +147,7 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
 
 
     Route::get('/work-location', [JurisdictionController::class, 'showWorkLocations'])->name('showWorkLocations');
-    Route::get('/work-location-json', [JurisdictionController::class, 'allWorkLocations'])->name('allWorkLocations');
+    Route::get('/work-location_json', [JurisdictionController::class, 'allWorkLocations'])->name('allWorkLocations');
     Route::post('/work-locations/add', [JurisdictionController::class, 'addWorkLocation'])->name('addWorkLocation');
     Route::post('/work-locations/delete', [JurisdictionController::class, 'deleteWorkLocation'])->name('deleteWorkLocation');
     Route::post('/work-locations/update', [JurisdictionController::class, 'updateWorkLocation'])->name('updateWorkLocation');
@@ -181,6 +183,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 });
+
+
+// Add these routes to support the punch status component
+
+// Get user's attendance rules
+Route::get('/user/attendance-rules', function () {
+    $user = auth()->user();
+    $rules = \App\Models\AttendanceRule::forUser($user)->with(['attendanceType', 'attendanceLocation'])->get();
+    
+    return response()->json([
+        'rules' => $rules,
+        'user_attendance_type' => $user->attendanceType,
+    ]);
+})->name('user.attendance-rules');
+
+// Main punch endpoint (already exists in your controller)
+Route::post('/attendance/punch', [AttendanceController::class, 'punch'])->name('attendance.punch');
+
+// Get current user punch status (already exists)
+Route::get('/attendance/current-user-punch', [AttendanceController::class, 'getCurrentUserPunch'])->name('attendance.current-user-punch');
+
+
+Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
 
 
 require __DIR__.'/auth.php';
