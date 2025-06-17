@@ -1,102 +1,183 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import {Link, usePage} from "@inertiajs/react";
-import {useTheme} from "@mui/material/styles";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Box } from '@mui/material';
+import { Button, Badge } from "@heroui/react";
+import { 
+  HomeIcon, 
+  DocumentTextIcon, 
+  UserCircleIcon,
+  Bars3Icon 
+} from '@heroicons/react/24/outline';
+import { Link, usePage } from "@inertiajs/react";
+import { useTheme } from "@mui/material/styles";
 
-const BottomNav = ({auth, contentRef, setBottomNavHeight}) => {
+const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBarOpen }) => {
     const theme = useTheme();
+    const { url } = usePage().props;
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const bottomNavRef = useRef(null);
 
-    const { url } = usePage();
-    const [value, setValue] = useState(0);
-    const bottomNavRef = useRef(null); // Ref to BottomNavigation
+    // Navigation items configuration
+    const navItems = [
+        {
+            id: 'dashboard',
+            label: 'Home',
+            icon: HomeIcon,
+            href: '/dashboard',
+            route: 'dashboard'
+        },
+        {
+            id: 'daily-works',
+            label: 'Tasks',
+            icon: DocumentTextIcon,
+            href: '/daily-works',
+            route: 'daily-works',
+        },
+        {
+            id: 'profile',
+            label: 'Profile',
+            icon: UserCircleIcon,
+            href: route('profile', { user: auth.user.id }),
+            route: `profile.${auth.user.id}`
+        }
+    ];
 
-
-
-    // Function to dynamically calculate bottom padding based on BottomNavigation height
-    const calculatePadding = () => {
+    // Calculate bottom navigation height
+    const calculatePadding = useCallback(() => {
         if (bottomNavRef.current) {
             const navHeight = bottomNavRef.current.clientHeight;
             setBottomNavHeight(navHeight);
         }
-    };
+    }, [setBottomNavHeight]);
 
-    // Call the function when component mounts or the window resizes
+    // Update active tab based on current URL
+    useEffect(() => {
+        if (url.includes('/daily-works')) {
+            setActiveTab('daily-works');
+        } else if (url.includes('/dashboard')) {
+            setActiveTab('dashboard');
+        } else if (url.includes(`/profile/${auth.user.id}`)) {
+            setActiveTab('profile');
+        } else {
+            setActiveTab('dashboard'); // Default fallback
+        }
+    }, [url, auth.user.id]);
+
+    // Handle navigation and sidebar toggle
+    const handleItemPress = useCallback((item) => {
+        if (item.action === 'sidebar') {
+            toggleSideBar();
+        } else {
+            setActiveTab(item.id);
+        }
+    }, [toggleSideBar]);
+
+    // Setup resize listener
     useEffect(() => {
         calculatePadding();
         window.addEventListener('resize', calculatePadding);
         return () => window.removeEventListener('resize', calculatePadding);
-    }, []);
-
-    useEffect(() => {
-        // Update the value based on the current URL
-        if (url.includes('/daily-works')) {
-            setValue(1);
-        } else if (url.includes('/dashboard')) {
-            setValue(0);
-        } else if (url.includes(`/profile/${auth.user.id}`)) {
-            setValue(2);
-        }
-    }, [url, auth.user.id]);
-
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
-    };
-
-
+    }, [calculatePadding]);
 
     return (
-        // <Paper
-        //     sx={{
-        //         position: 'fixed',
-        //         bottom: 0,
-        //         left: 0,
-        //         right: 0,
-        //         backgroundColor: 'transparent',
-        //         zIndex: 1200, // Ensure it appears above other content
-        //     }}
-        //
-        // >
-            <BottomNavigation
-                ref={bottomNavRef}
-                sx={{
-                    position: 'fixed',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 1200, // Ensure it appears above other content
-                    display: { xs: 'flex', md: 'none' },
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    background: theme.glassCard.background,
-                }}
-                elevation={3}
-                showLabels
-                value={value}
-                onChange={handleChange}
-            >
-                <BottomNavigationAction
-                    component={Link}
-                    href="/dashboard"
-                    label="Home"
-                    icon={<HomeIcon />}
-                />
-                <BottomNavigationAction
-                    component={Link}
-                    href="/daily-works"
-                    label="Tasks"
-                    icon={<AddBoxIcon />}
-                />
-                <BottomNavigationAction
-                    component={Link}
-                    href={route('profile', { user: auth.user.id })}
-                    label="Profile"
-                    icon={<AccountCircleIcon />}
-                />
-            </BottomNavigation>
-        // </Paper>
+        <Box
+            ref={bottomNavRef}
+            component="nav"
+            role="navigation"
+            aria-label="Bottom navigation"
+            sx={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1200,
+                display: { xs: 'flex', md: 'none' },
+                backdropFilter: 'blur(16px) saturate(200%)',
+                background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
+                borderTop: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)',
+                py: 1,
+                px: 2,
+                minHeight: 64
+            }}
+        >
+            <div className="flex items-center justify-around w-full max-w-md mx-auto">
+                {navItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const IconComponent = item.icon;
+                    
+                    if (item.action === 'sidebar') {
+                        return (
+                            <Button
+                                key={item.id}
+                                isIconOnly
+                                variant={sideBarOpen ? "flat" : "light"}
+                                color={sideBarOpen ? "primary" : "default"}
+                                className={`
+                                    h-12 w-12 transition-all duration-200
+                                    ${sideBarOpen 
+                                        ? 'bg-primary/20 border border-primary/30' 
+                                        : 'bg-transparent hover:bg-white/10'
+                                    }
+                                `}
+                                onPress={() => handleItemPress(item)}
+                                aria-label={item.ariaLabel}
+                            >
+                                <IconComponent className="w-5 h-5" />
+                            </Button>
+                        );
+                    }
 
+                    const ButtonContent = (
+                        <div className="flex flex-col items-center justify-center gap-1 py-1">
+                            <div className="relative">
+                                <IconComponent 
+                                    className={`w-5 h-5 transition-colors duration-200 ${
+                                        isActive ? 'text-primary' : 'text-default-500'
+                                    }`} 
+                                />
+                                {item.badge && (
+                                    <Badge
+                                        content={item.badge}
+                                        color="danger"
+                                        size="sm"
+                                        className="absolute -top-2 -right-2"
+                                    />
+                                )}
+                            </div>
+                            <span className={`
+                                text-xs font-medium transition-colors duration-200 
+                                ${isActive ? 'text-primary' : 'text-default-500'}
+                            `}>
+                                {item.label}
+                            </span>
+                        </div>
+                    );
+
+                    return (
+                        <Button
+                            key={item.id}
+                            as={Link}
+                            href={item.href}
+                            preserveState
+                            preserveScroll
+                            variant="light"
+                            className={`
+                                h-14 min-w-16 px-2 transition-all duration-200
+                                ${isActive 
+                                    ? 'bg-primary/10 border border-primary/20' 
+                                    : 'bg-transparent hover:bg-white/5'
+                                }
+                            `}
+                            onPress={() => handleItemPress(item)}
+                            aria-label={`Navigate to ${item.label}`}
+                            aria-current={isActive ? 'page' : undefined}
+                        >
+                            {ButtonContent}
+                        </Button>
+                    );
+                })}
+            </div>
+        </Box>
     );
 };
 

@@ -35,9 +35,11 @@ function App({ children }) {
     useAppLoader();
     const { auth, url } = usePage().props;
 
-    const permissions = auth.permissions;
-
-    const [sideBarOpen, setSideBarOpen] = useState(false);
+    const permissions = auth.permissions;    const [sideBarOpen, setSideBarOpen] = useState(() => {
+        // Load sidebar state from localStorage
+        const saved = localStorage.getItem('sidebar-open');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
     const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
     const [themeColor, setThemeColor] = useState(() => {
@@ -63,13 +65,12 @@ function App({ children }) {
 
     // Theme and media query
     const theme = useTheme(darkMode, themeColor);
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-    // Persist darkMode and themeColor
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));    // Persist darkMode, themeColor, and sidebar state
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode);
         localStorage.setItem('themeColor', JSON.stringify(themeColor));
-    }, [darkMode, themeColor]);
+        localStorage.setItem('sidebar-open', JSON.stringify(sideBarOpen));
+    }, [darkMode, themeColor, sideBarOpen]);
 
     // Toggle handlers (useCallback for stable references)
     const toggleDarkMode = useCallback(() => setDarkMode(dm => !dm), []);
@@ -135,15 +136,24 @@ function App({ children }) {
                         theme="colored"
                     />
                     <CssBaseline />
-                    {/*{loading && <Loader/>}*/}
-                    <Box
+                    {/*{loading && <Loader/>}*/}                    <Box
                         sx={{
                             display: 'flex',
                             flexDirection: 'row',
                             height: '100vh',
                         }}
                     >
-                        {/* Sidebar Area */}
+                        {/* Mobile Sidebar Overlay */}
+                        {isMobile && sideBarOpen && (
+                            <Sidebar 
+                                url={url} 
+                                pages={pages} 
+                                toggleSideBar={toggleSideBar}
+                                sideBarOpen={sideBarOpen}
+                            />
+                        )}
+
+                        {/* Desktop Sidebar Area */}
                         <Box
                             sx={{
                                 display: { xs: 'none', md: 'block' },
@@ -154,7 +164,12 @@ function App({ children }) {
                                 overflow: 'hidden',
                             }}
                         >
-                            <Sidebar url={url} pages={pages} toggleSideBar={toggleSideBar} />
+                            <Sidebar 
+                                url={url} 
+                                pages={pages} 
+                                toggleSideBar={toggleSideBar}
+                                sideBarOpen={sideBarOpen}
+                            />
                         </Box>
 
                         {/* Main Content Area */}
@@ -183,12 +198,13 @@ function App({ children }) {
                             )}
                             {auth.user && <Breadcrumb />}
                             {children}
-                            {/*{!isMobile && <Footer/>}*/}
                             {auth.user && isMobile && (
                                 <BottomNav
                                     setBottomNavHeight={setBottomNavHeight}
                                     contentRef={contentRef}
                                     auth={auth}
+                                    toggleSideBar={toggleSideBar}
+                                    sideBarOpen={sideBarOpen}
                                 />
                             )}
                         </Box>

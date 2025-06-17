@@ -149,7 +149,7 @@ class AttendanceController extends Controller
     private function getUserAttendanceData($user, $year, $month, $holidays, $leaveTypes)
     {
         $daysInMonth = Carbon::create($year, $month)->daysInMonth;
-        $attendanceData = ['user_id' => $user->id, 'name' => $user->name, 'profile_image' => $user->profile_image];
+        $attendanceData = ['user_id' => $user->id, 'employee_id' => $user->employee_id, 'name' => $user->name, 'profile_image' => $user->profile_image];
 
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $date = Carbon::create($year, $month, $day)->toDateString();

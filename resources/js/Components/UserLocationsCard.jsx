@@ -122,7 +122,7 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
             }
 
             const data = await response.json();
-            console.log(data);
+           
             const locations = Array.isArray(data.locations) ? data.locations : [];
             
             setUsers(locations);
