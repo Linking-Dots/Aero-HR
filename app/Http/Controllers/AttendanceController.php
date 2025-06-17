@@ -659,7 +659,7 @@ class AttendanceController extends Controller
                     $user = User::find($location->user_id);
 
                     return [
-                        'id' => $user->id,
+                        'user_id' => $user->id,
                         'name' => $user->name,
                         'profile_image' => $user->profile_image,
                         'designation' => Designation::find($user->designation)->title,
@@ -742,51 +742,60 @@ class AttendanceController extends Controller
     {
         // Get the date from the query parameter, defaulting to today's date if none is provided
         $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
-        $perPage = $request->get('perPage', 10); // Default to 30 items per page
+        $perPage = $request->get('perPage', 10); // Default to 10 users per page
         $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
         $employee = $request->get('employee', '');
 
 
         try {
-            $users = User::with('roles:name')
-            ->whereHas('roles', function ($query) {
-                $query->where('name', 'Employee');
-            })
-            ->get()
-            ->map(function ($user) {
-                $userData = $user->toArray();
-                $userData['roles'] = $user->roles->pluck('name')->toArray();
-                return $userData;
-            });
-            // Retrieve all users
-            $users = User::role('Employee')->get();
-            // For Administrators, get all attendance records for the selected date
-            $attendanceQuery = Attendance::with('user') // Include user data
-            ->whereNotNull('punchin')
-                ->whereDate('date', $selectedDate);
+            // Get all users with Employee role
+            $allUsers = User::role('Employee')->get();
 
-            // Retrieve all attendance records to identify absent users
-            $allAttendanceRecords = $attendanceQuery->get();
-
-            // Identify absent users: filter out users who don't have a matching attendance record
-            $absentUsers = $users->filter(function ($user) use ($allAttendanceRecords) {
-                return !$allAttendanceRecords->contains('user_id', $user->id);
-            });
-
-            if ($employee !== '') {
-                $attendanceQuery->whereHas('user', function ($query) use ($employee) {
-                    $query->where('name', 'like', '%' . $employee . '%');
+            // Get users who have attendance for the selected date
+            $usersWithAttendanceQuery = User::role('Employee')
+                ->whereHas('attendances', function ($query) use ($selectedDate) {
+                    $query->whereNotNull('punchin')
+                          ->whereDate('date', $selectedDate);
                 });
+
+            // Apply employee search filter if provided
+            if ($employee !== '') {
+                $usersWithAttendanceQuery->where('name', 'like', '%' . $employee . '%');
             }
 
+            // Get users with attendance (for pagination)
+            $usersWithAttendance = $usersWithAttendanceQuery->get();
 
-            $attendanceRecords = $attendanceQuery->paginate($perPage, ['*'], 'page', $page);
+            // Paginate users (not attendance records)
+            $paginatedUsers = $usersWithAttendance->forPage($page, $perPage);
+
+            // Get user IDs for the current page
+            $userIds = $paginatedUsers->pluck('id');
+
+            // Get ALL attendance records for these users on the selected date
+            $attendanceRecords = Attendance::with('user')
+                ->whereNotNull('punchin')
+                ->whereDate('date', $selectedDate)
+                ->whereIn('user_id', $userIds)
+                ->orderBy('user_id')
+                ->orderBy('punchin')
+                ->get();
+
+            // Identify absent users: filter out users who don't have any attendance record
+            $absentUsers = $allUsers->filter(function ($user) use ($usersWithAttendance) {
+                return !$usersWithAttendance->contains('id', $user->id);
+            });
 
             if ($attendanceRecords->isEmpty()) {
                 return response()->json([
                     'message' => 'No attendance records found for the selected date.',
-                    'absent_users' => $users // All users are absent if no attendance is recorded
-                ], 404);
+                    'attendances' => [],
+                    'absent_users' => $allUsers->values(), // All users are absent if no attendance is recorded
+                    'leaves' => [],
+                    'current_page' => $page,
+                    'last_page' => 1,
+                    'total' => 0,
+                ]);
             }
 
             // Transform the attendance records into a response-friendly format
@@ -812,14 +821,18 @@ class AttendanceController extends Controller
                 ->whereDate('leaves.to_date', '>=', $selectedDate)
                 ->get();
 
+            // Calculate pagination info based on users, not attendance records
+            $totalUsers = $usersWithAttendance->count();
+            $lastPage = ceil($totalUsers / $perPage);
+
             // Return paginated data for attendances, absent users, and leave data
             return response()->json([
                 'attendances' => $formattedRecords,
-                'absent_users' => $absentUsers->values(), // <-- Only absent users
+                'absent_users' => $absentUsers->values(),
                 'leaves' => $todayLeaves,
-                'current_page' => $attendanceRecords->currentPage(),
-                'last_page' => $attendanceRecords->lastPage(),
-                'total' => $attendanceRecords->total(),
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'total' => $totalUsers, // Total number of users with attendance, not total records
             ]);
 
         } catch (Throwable $exception) {

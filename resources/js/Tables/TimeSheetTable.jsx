@@ -8,7 +8,10 @@ import {
     Grid,
     Chip,
     Collapse,
-    useMediaQuery
+    useMediaQuery,
+    IconButton,
+    Tooltip,
+    Stack
 } from '@mui/material';
 import {
     Table,
@@ -41,11 +44,127 @@ import {
     ChevronDownIcon,
     UserGroupIcon
 } from '@heroicons/react/24/outline';
+import { Refresh } from '@mui/icons-material'; // Add this import
 import axios from 'axios';
+import { useTheme, alpha } from '@mui/material/styles'; // Add this import
+
+// Function to process and aggregate attendance data
+const processAttendanceData = (rawAttendances) => {
+    if (!Array.isArray(rawAttendances)) return [];
+
+    // Group by user.id (not user_id, since we want one row per user)
+    const groupedData = rawAttendances.reduce((acc, attendance) => {
+        const key = attendance.user?.id; // Use user.id instead of user_id
+        
+        if (!key) return acc; // Skip if no user id found
+        
+        if (!acc[key]) {
+            acc[key] = {
+                id: attendance.id,
+                user_id: attendance.user.id, // Set user_id from user.id
+                user: attendance.user,
+                date: attendance.date, // Keep the first date found
+                punches: []
+            };
+        }
+        
+        // Add punch data for all punch records for this user
+        acc[key].punches.push({
+            punch_in: attendance.punchin_time,
+            punch_out: attendance.punchout_time || null,
+            id: attendance.id,
+            date: attendance.date
+        });
+        
+        return acc;
+    }, {});
+
+    // Process each grouped entry (one per user)
+    const processedData = Object.values(groupedData).map(entry => {
+        if (entry.punches.length === 0) {
+            return {
+                ...entry,
+                punchin_time: null,
+                punchout_time: null,
+                total_work_minutes: 0,
+                punch_count: 0,
+                complete_punches: 0,
+                has_incomplete_punch: false
+            };
+        }
+
+        // Sort all punches by punch_in time to get chronological order
+        entry.punches.sort((a, b) => {
+            if (!a.punch_in) return 1;
+            if (!b.punch_in) return -1;
+            
+            // Create full datetime for comparison
+            const timeA = new Date(`${a.date}T${a.punch_in}`);
+            const timeB = new Date(`${b.date}T${b.punch_in}`);
+            return timeA - timeB;
+        });
+
+        // Get the very first punch in time across all dates
+        const firstPunch = entry.punches[0];
+        
+        // Get the very last punch out time across all dates
+        const punchesWithOut = entry.punches.filter(p => p.punch_out);
+        let lastPunchOut = null;
+        
+        if (punchesWithOut.length > 0) {
+            punchesWithOut.sort((a, b) => {
+                const timeA = new Date(`${a.date}T${a.punch_out}`);
+                const timeB = new Date(`${b.date}T${b.punch_out}`);
+                return timeB - timeA; // Sort descending to get latest
+            });
+            lastPunchOut = punchesWithOut[0];
+        }
+        
+        let totalWorkMinutes = 0;
+        let completePunches = 0;
+        let hasIncompletePunch = false;
+        
+        // Calculate total work time for all complete punch pairs
+        entry.punches.forEach(punch => {
+            if (punch.punch_in && punch.punch_out) {
+                // Parse the date from the punch data
+                const punchDate = punch.date.split('T')[0]; // Get YYYY-MM-DD format
+                const punchIn = new Date(`${punchDate}T${punch.punch_in}`);
+                const punchOut = new Date(`${punchDate}T${punch.punch_out}`);
+                
+                if (!isNaN(punchIn.getTime()) && !isNaN(punchOut.getTime())) {
+                    const diffMs = punchOut - punchIn;
+                    if (diffMs > 0) {
+                        totalWorkMinutes += diffMs / (1000 * 60);
+                        completePunches++;
+                    }
+                }
+            } else if (punch.punch_in && !punch.punch_out) {
+                hasIncompletePunch = true;
+            }
+        });
+
+        return {
+            ...entry,
+            punchin_time: firstPunch?.punch_in || null,
+            punchout_time: lastPunchOut?.punch_out || null,
+            total_work_minutes: Math.round(totalWorkMinutes * 100) / 100, // Round to 2 decimal places
+            punch_count: entry.punches.length,
+            complete_punches: completePunches,
+            has_incomplete_punch: hasIncompletePunch,
+            // Add first and last punch dates for display
+            first_punch_date: firstPunch?.date || entry.date,
+            last_punch_date: lastPunchOut?.date || entry.date
+        };
+    });
+
+    return processedData;
+};
 
 const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => {
     const { auth } = usePage().props;
     const { url } = usePage();
+    const theme = useTheme(); // Add this
     const isLargeScreen = useMediaQuery('(min-width: 1025px)');
     const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
 
@@ -59,6 +178,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     const [currentPage, setCurrentPage] = useState(1);
     const [employee, setEmployee] = useState('');
     const [isLoaded, setIsLoaded] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
     });
@@ -68,91 +188,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     const cardRef = useRef(null);
     const userItemRef = useRef(null);
 
-    // Function to process and aggregate attendance data
-    const processAttendanceData = (rawAttendances) => {
-        if (!Array.isArray(rawAttendances)) return [];
-
-        // Group by user and date
-        const groupedData = rawAttendances.reduce((acc, attendance) => {
-            const key = `${attendance.user_id}_${attendance.date}`;
-            
-            if (!acc[key]) {
-                acc[key] = {
-                    id: attendance.id,
-                    user_id: attendance.user_id,
-                    user: attendance.user,
-                    date: attendance.date,
-                    punches: [],
-                    first_punch_in: null,
-                    last_punch_out: null,
-                    total_work_hours: 0
-                };
-            }
-            
-            // Add punch data
-            if (attendance.punchin_time) {
-                acc[key].punches.push({
-                    punch_in: attendance.punchin_time,
-                    punch_out: attendance.punchout_time || null
-                });
-            }
-            
-            return acc;
-        }, {});
-
-        // Process each grouped entry
-        const processedData = Object.values(groupedData).map(entry => {
-            if (entry.punches.length === 0) {
-                return {
-                    ...entry,
-                    punchin_time: null,
-                    punchout_time: null,
-                    total_work_hours: 0
-                };
-            }
-
-            // Sort punches by time
-            entry.punches.sort((a, b) => {
-                const timeA = new Date(`2024-01-01T${a.punch_in}`);
-                const timeB = new Date(`2024-01-01T${b.punch_in}`);
-                return timeA - timeB;
-            });
-
-            // Get first punch in and last punch out
-            const firstPunch = entry.punches[0];
-            const lastPunch = entry.punches[entry.punches.length - 1];
-            
-            let totalWorkMinutes = 0;
-            
-            // Calculate total work time for all complete punch pairs
-            entry.punches.forEach(punch => {
-                if (punch.punch_in && punch.punch_out) {
-                    const punchIn = new Date(`2024-01-01T${punch.punch_in}`);
-                    const punchOut = new Date(`2024-01-01T${punch.punch_out}`);
-                    const diffMs = punchOut - punchIn;
-                    totalWorkMinutes += Math.max(0, diffMs / (1000 * 60));
-                }
-            });
-
-            return {
-                ...entry,
-                punchin_time: firstPunch.punch_in,
-                punchout_time: lastPunch.punch_out,
-                total_work_minutes: totalWorkMinutes,
-                punch_count: entry.punches.length,
-                complete_punches: entry.punches.filter(p => p.punch_in && p.punch_out).length
-            };
-        });
-
-        return processedData;
-    };
-
     // Fetch attendance and absent users
-    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData) => {
+    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData, forceRefresh = false) => {
         const attendanceRoute = (url !== '/attendance-employee')
             ? route('getAllUsersAttendanceForDate')
             : route('getCurrentUserAttendanceForDate');
         try {
+            setIsLoaded(false); // Set loading state
             const response = await axios.get(attendanceRoute, {
                 params: {
                     page,
@@ -161,20 +203,20 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     date: selectedDate,
                     currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
                     currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
+                    _t: forceRefresh ? Date.now() : undefined // Cache buster for refresh
                 }
             });
+            console.log('Raw attendance data:', response.data.attendances);
             if (response.status === 200) {
-                
-                
-                // Process the attendance data to group by user/date
+                // Process the attendance data to group by user
                 const processedAttendances = processAttendanceData(response.data.attendances);
-              
+                console.log('Processed attendance data:', processedAttendances);
                 
                 setAttendances(processedAttendances);
                 setLeaves(response.data.leaves);
                 setAbsentUsers(response.data.absent_users);
-                setTotalRows(response.data.total);
-                setLastPage(response.data.last_page);
+                setTotalRows(processedAttendances.length); // Use processed data length
+                setLastPage(Math.ceil(processedAttendances.length / perPage)); // Calculate based on processed data
                 setError('');
                 setIsLoaded(true);
             }
@@ -184,6 +226,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             setIsLoaded(true);
         }
     };
+
+    // Add refresh functionality
+    const handleRefresh = useCallback(() => {
+        setRefreshKey(prev => prev + 1);
+        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData, true);
+    }, [selectedDate, currentPage, perPage, employee, filterData]);
 
     // Calculate how many absent users to show based on card height
     const calculateVisibleUsers = useCallback(() => {
@@ -213,7 +261,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     useEffect(() => {
         getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
         // eslint-disable-next-line
-    }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet]);
+    }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet, refreshKey]);
 
     const handleSearch = (event) => {
         setEmployee(event.target.value.toLowerCase());
@@ -276,13 +324,23 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <CalendarDaysIcon className="w-4 h-4 text-primary" />
-                            <span>
-                                {new Date(attendance.date).toLocaleString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                })}
-                            </span>
+                            <Box className="flex flex-col">
+                                <span>
+                                    {new Date(attendance.first_punch_date || attendance.date).toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                    })}
+                                </span>
+                                {attendance.last_punch_date && attendance.last_punch_date !== attendance.first_punch_date && (
+                                    <span className="text-xs text-default-500">
+                                        to {new Date(attendance.last_punch_date).toLocaleString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                        })}
+                                    </span>
+                                )}
+                            </Box>
                         </Box>
                     </TableCell>
                 );
@@ -307,15 +365,22 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-success" />
-                            <span>
-                                {attendance.punchin_time
-                                    ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                                        hour: 'numeric',
-                                        minute: '2-digit',
-                                        hour12: true,
-                                    })
-                                    : 'Not clocked in'}
-                            </span>
+                            <Box className="flex flex-col">
+                                <span>
+                                    {attendance.punchin_time
+                                        ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        })
+                                        : 'Not clocked in'}
+                                </span>
+                                {attendance.punchin_time && (
+                                    <span className="text-xs text-default-500">
+                                        First punch
+                                    </span>
+                                )}
+                            </Box>
                         </Box>
                     </TableCell>
                 );
@@ -324,45 +389,72 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-danger" />
-                            <span>
-                                {attendance.punchout_time
-                                    ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                                        hour: 'numeric',
-                                        minute: '2-digit',
-                                        hour12: true,
-                                    })
-                                    : 'Still working'}
-                            </span>
+                            <Box className="flex flex-col">
+                                <span>
+                                    {attendance.punchout_time
+                                        ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        })
+                                        : attendance.punchin_time ? 'Still working' : 'Not started'}
+                                </span>
+                                {attendance.punchout_time && (
+                                    <span className="text-xs text-default-500">
+                                        Last punch
+                                    </span>
+                                )}
+                            </Box>
                         </Box>
                     </TableCell>
                 );
             case "production_time":
-                if (attendance.total_work_minutes > 0) {
+                const hasWorkTime = attendance.total_work_minutes > 0;
+                const hasIncompletePunch = attendance.has_incomplete_punch;
+                
+                if (hasWorkTime) {
                     const hours = Math.floor(attendance.total_work_minutes / 60);
                     const minutes = Math.floor(attendance.total_work_minutes % 60);
+                    
                     return (
                         <TableCell className="text-xs sm:text-sm md:text-base">
                             <Box className="flex items-center gap-2">
-                                <ClockIcon className="w-4 h-4 text-primary" />
-                                <span className="font-medium">{`${hours}h ${minutes}m`}</span>
+                                <ClockIcon className={`w-4 h-4 ${hasIncompletePunch ? 'text-warning' : 'text-primary'}`} />
+                                <Box className="flex flex-col">
+                                    <span className="font-medium">{`${hours}h ${minutes}m`}</span>
+                                    <span className="text-xs text-default-500">
+                                        {hasIncompletePunch ? 'Partial + In Progress' : 'Total worked'}
+                                    </span>
+                                </Box>
                             </Box>
                         </TableCell>
                     );
-                } else if (attendance.punchin_time && !attendance.punchout_time) {
+                } else if (hasIncompletePunch || (attendance.punchin_time && !attendance.punchout_time)) {
                     return (
                         <TableCell className="text-xs sm:text-sm md:text-base">
                             <Box className="flex items-center gap-2">
                                 <ClockIcon className="w-4 h-4 text-warning" />
-                                <span className="text-warning">In Progress</span>
+                                <Box className="flex flex-col">
+                                    <span className="text-warning">In Progress</span>
+                                    <span className="text-xs text-default-500">
+                                        Currently working
+                                    </span>
+                                </Box>
                             </Box>
                         </TableCell>
                     );
                 }
+                
                 return (
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <ExclamationTriangleIcon className="w-4 h-4 text-warning" />
-                            <span className="text-warning">No punches</span>
+                            <Box className="flex flex-col">
+                                <span className="text-warning">No work time</span>
+                                <span className="text-xs text-default-500">
+                                    Incomplete punches
+                                </span>
+                            </Box>
                         </Box>
                     </TableCell>
                 );
@@ -378,6 +470,11 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                 {attendance.complete_punches !== attendance.punch_count && (
                                     <span className="text-xs text-warning">
                                         {attendance.complete_punches} complete
+                                    </span>
+                                )}
+                                {attendance.complete_punches === attendance.punch_count && attendance.punch_count > 0 && (
+                                    <span className="text-xs text-success">
+                                        All complete
                                     </span>
                                 )}
                             </Box>
@@ -423,6 +520,30 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                             }
                                         </Typography>
                                     </Box>
+                                }
+                                action={
+                                    <Stack direction="row" spacing={1}>
+                                        <Tooltip title="Refresh Timesheet">
+                                            <IconButton 
+                                                onClick={handleRefresh}
+                                                disabled={!isLoaded}
+                                                sx={{
+                                                    background: alpha(theme.palette.primary.main, 0.1),
+                                                    backdropFilter: 'blur(10px)',
+                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                                    '&:hover': {
+                                                        background: alpha(theme.palette.primary.main, 0.2),
+                                                        transform: 'scale(1.05)'
+                                                    },
+                                                    '&:disabled': {
+                                                        opacity: 0.5
+                                                    }
+                                                }}
+                                            >
+                                                <Refresh color="primary" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
                                 }
                                 sx={{ padding: '24px' }}
                             />
@@ -530,7 +651,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                         }
                                                     >
                                                         {(attendance) => (
-                                                            <TableRow key={`${attendance.user_id}_${attendance.date}`}>
+                                                            <TableRow key={attendance.user_id}>
                                                                 {(columnKey) => renderCell(attendance, columnKey)}
                                                             </TableRow>
                                                         )}

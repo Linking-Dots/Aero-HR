@@ -116,11 +116,13 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
             const endpoint = route('getUserLocationsForDate', { date: selectedDate });
             const response = await fetch(endpoint);
             
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: Failed to fetch user locations`);
             }
 
             const data = await response.json();
+            console.log(data);
             const locations = Array.isArray(data.locations) ? data.locations : [];
             
             setUsers(locations);
@@ -390,9 +392,49 @@ const UserLocationsCard = ({ updateMap, selectedDate }) => {
     }, [selectedDate]);
 
     const userStats = useMemo(() => {
-        const checkedIn = users.filter(user => user.punchin_time && !user.punchout_time).length;
-        const completed = users.filter(user => user.punchin_time && user.punchout_time).length;
-        const total = users.length;
+        // Group locations by user_id to get unique users
+        const userGroups = users.reduce((acc, location) => {
+            const userId = location.user_id;
+            if (!acc[userId]) {
+                acc[userId] = [];
+            }
+            acc[userId].push(location);
+            return acc;
+        }, {});
+
+        // Calculate stats based on unique users
+        const uniqueUsers = Object.keys(userGroups);
+        const total = uniqueUsers.length;
+        
+        let checkedIn = 0;
+        let completed = 0;
+
+        uniqueUsers.forEach(userId => {
+            const userLocations = userGroups[userId];
+            
+            // Sort by punch-in time to get the chronological order
+            userLocations.sort((a, b) => {
+                if (!a.punchin_time) return 1;
+                if (!b.punchin_time) return -1;
+                return a.punchin_time.localeCompare(b.punchin_time);
+            });
+
+            // Get the last location entry for this user
+            const lastLocation = userLocations[userLocations.length - 1];
+            
+            // Check if user has any punch-in
+            const hasPunchIn = userLocations.some(loc => loc.punchin_time);
+            
+            if (hasPunchIn) {
+                // If the last location has punchout_time, user is completed
+                // If the last location doesn't have punchout_time, user is still checked in
+                if (lastLocation.punchout_time) {
+                    completed++;
+                } else {
+                    checkedIn++;
+                }
+            }
+        });
 
         return { checkedIn, completed, total };
     }, [users]);
