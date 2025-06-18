@@ -230,356 +230,45 @@ class AttendanceController extends Controller
             ], 422);
         }
 
-        // 2. Switch based on attendance type slug
-        switch ($attendanceType->slug) {
-            case 'geo_polygon':
-                // Example: Check if user's location is inside allowed polygon
-                $polygon = $attendanceType->config['polygon'] ?? [];
-                $lat = $request->input('lat');
-                $lng = $request->input('lng');
-                if (!$this->isPointInPolygon($lat, $lng, $polygon)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'You are not within the allowed location boundary.',
-                    ], 403);
-                }
-                break;
-
-            case 'wifi_ip':
-                // Example: Check if user's IP is allowed
-                $allowedIps = $attendanceType->config['allowed_ips'] ?? [];
-                $ip = $request->ip();
-                if (!in_array($ip, $allowedIps)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Your network is not authorized for attendance.',
-                    ], 403);
-                }
-                break;
-
-            case 'route-waypoint':
-            case 'route_waypoint':
-                $waypoints = $attendanceType->config['waypoints'] ?? [];
-                $tolerance = $attendanceType->config['tolerance'] ?? 100;
-                $userLat = $request->input('lat');
-                $userLng = $request->input('lng');
-
-                if (!$userLat || !$userLng) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Location data is required for route waypoint validation.',
-                    ], 422);
-                }
-
-                if (empty($waypoints)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'No waypoints configured for this attendance type.',
-                    ], 422);
-                }
-
-                // Check if user is within route using OSRM
-                $routeValidation = $this->validateUserLocationWithRoute($userLat, $userLng, $waypoints, $tolerance);
-                
-                if (!$routeValidation['is_valid']) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => $routeValidation['message']
-                        
-                    ], 403);
-                }
-                break;
-
-            case 'qr_code':
-                // Example: Validate QR code (implement as needed)
-                // $maxDistance = $attendanceType->config['max_distance'] ?? 50;
-                // ...custom logic...
-                break;
-
-            default:
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Unknown attendance type.',
-                ], 422);
+        // 2. Validate attendance based on type configuration
+        $validation = $this->validateAttendanceType($attendanceType, $request);
+        if ($validation['status'] === 'error') {
+            return response()->json($validation, $validation['code']);
         }
 
-        // 3. If validation passes, record the punch
-        try {
-            $today = Carbon::today();
-            
-            // Check if user already has a punch in today
-            $existingAttendance = Attendance::where('user_id', $user->id)
-                ->whereDate('date', $today)
-                ->latest()
-                ->first();
+        // 3. Process the punch using the service
+        $punchService = new \App\Services\Attendance\AttendancePunchService();
+        $result = $punchService->processPunch($user, $request);
 
-            if ($existingAttendance && !$existingAttendance->punchout) {
-                // Punch out
-                $existingAttendance->update([
-                    'punchout' => Carbon::now(),
-                    'punchout_location' => $this->formatLocation($request),
-                ]);
-                
-                $message = 'Successfully punched out!';
-            } else {
-                // Punch in - create new attendance record
-                $attendance = Attendance::create([
-                    'user_id' => $user->id,
-                    'date' => $today,
-                    'punchin' => Carbon::now(),
-                    'punchin_location' => $this->formatLocation($request),
-                ]);
-                
-                $message = 'Successfully punched in!';
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Attendance punch error: ' . $e->getMessage());
-            
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to record attendance. Please try again.',
-            ], 500);
+        if ($result['status'] === 'error') {
+            return response()->json($result, $result['code']);
         }
+
+        return response()->json($result);
     }
 
     /**
-     * Validate user location against route waypoints using OSRM
+     * Validate attendance based on type configuration
      */
-    private function validateUserLocationWithRoute($userLat, $userLng, $waypoints, $tolerance)
+    private function validateAttendanceType($attendanceType, Request $request)
     {
         try {
-            // Build coordinates string for OSRM (lng,lat format)
-            $coordinates = [];
-            foreach ($waypoints as $waypoint) {
-                if (isset($waypoint['lat']) && isset($waypoint['lng'])) {
-                    $coordinates[] = $waypoint['lng'] . ',' . $waypoint['lat'];
-                }
-            }
-
-            if (count($coordinates) < 2) {
-                return [
-                    'is_valid' => false,
-                    'message' => 'At least 2 waypoints are required for route validation.',
-                ];
-            }
-
-            // OSRM API endpoint (you can use public demo server or your own)
-            $osrmBaseUrl = config('services.osrm.url', 'http://router.project-osrm.org');
-            $coordinatesString = implode(';', $coordinates);
-            
-            // Get route information
-            $routeUrl = "{$osrmBaseUrl}/route/v1/driving/{$coordinatesString}?overview=full&geometries=geojson";
-            
-            $routeResponse = Http::timeout(10)->get($routeUrl);
-            
-            if (!$routeResponse->successful()) {
-                Log::warning('OSRM route request failed', [
-                    'url' => $routeUrl,
-                    'status' => $routeResponse->status(),
-                    'response' => $routeResponse->body()
-                ]);
-                
-                // Fallback to simple distance checking
-                return $this->fallbackDistanceValidation($userLat, $userLng, $waypoints, $tolerance);
-            }
-
-            $routeData = $routeResponse->json();
-            
-            if (!isset($routeData['routes'][0]['geometry']['coordinates'])) {
-                return $this->fallbackDistanceValidation($userLat, $userLng, $waypoints, $tolerance);
-            }
-
-            // Get route coordinates
-            $routeCoordinates = $routeData['routes'][0]['geometry']['coordinates'];
-            
-            // Check if user is within tolerance distance of the route
-            $minDistance = $this->calculateMinDistanceToRoute($userLat, $userLng, $routeCoordinates);
-            
-            $isValid = $minDistance <= $tolerance;
-            
+            $validator = \App\Services\Attendance\AttendanceValidatorFactory::create($attendanceType, $request);
+            return $validator->validate();
+        } catch (\InvalidArgumentException $e) {
             return [
-                'is_valid' => $isValid,
-                'message' => $isValid 
-                    ? "Location verified within {$tolerance}m of the route (distance: " . round($minDistance, 2) . "m)."
-                    : "You are " . round($minDistance, 2) . "m away from the route. Maximum distance: {$tolerance}m.",
-                'route_data' => [
-                    'distance_to_route' => round($minDistance, 2),
-                    'tolerance' => $tolerance,
-                    'route_distance' => $routeData['routes'][0]['distance'] ?? null,
-                    'route_duration' => $routeData['routes'][0]['duration'] ?? null,
-                ]
+                'status' => 'error',
+                'message' => 'Invalid attendance type configuration: ' . $e->getMessage(),
+                'code' => 422
             ];
-
         } catch (\Exception $e) {
-            Log::error('OSRM validation error: ' . $e->getMessage());
-            
-            // Fallback to simple distance checking
-            return $this->fallbackDistanceValidation($userLat, $userLng, $waypoints, $tolerance);
+            \Illuminate\Support\Facades\Log::error('Attendance validation error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Validation failed. Please try again.',
+                'code' => 500
+            ];
         }
-    }
-
-    /**
-     * Fallback validation using simple distance to waypoints
-     */
-    private function fallbackDistanceValidation($userLat, $userLng, $waypoints, $tolerance)
-    {
-        $minDistance = null;
-        $nearestWaypoint = null;
-
-        foreach ($waypoints as $index => $waypoint) {
-            if (isset($waypoint['lat']) && isset($waypoint['lng'])) {
-                $distance = $this->calculateDistance(
-                    $userLat, 
-                    $userLng, 
-                    $waypoint['lat'], 
-                    $waypoint['lng']
-                );
-                
-                if ($minDistance === null || $distance < $minDistance) {
-                    $minDistance = $distance;
-                    $nearestWaypoint = $index + 1;
-                }
-            }
-        }
-
-        $isValid = $minDistance !== null && $minDistance <= $tolerance;
-
-        return [
-            'is_valid' => $isValid,
-            'message' => $isValid 
-                ? "Location verified within {$tolerance}m of waypoint {$nearestWaypoint} (distance: " . round($minDistance, 2) . "m)."
-                : "You are " . round($minDistance, 2) . "m away from the nearest waypoint. Required distance: {$tolerance}m.",
-            'route_data' => [
-                'distance_to_nearest_waypoint' => round($minDistance, 2),
-                'nearest_waypoint' => $nearestWaypoint,
-                'tolerance' => $tolerance,
-                'validation_method' => 'fallback_waypoint_distance'
-            ]
-        ];
-    }
-
-    /**
-     * Calculate minimum distance from user location to route line
-     */
-    private function calculateMinDistanceToRoute($userLat, $userLng, $routeCoordinates)
-    {
-        $minDistance = null;
-
-        // Check distance to each segment of the route
-        for ($i = 0; $i < count($routeCoordinates) - 1; $i++) {
-            $segmentStart = $routeCoordinates[$i];
-            $segmentEnd = $routeCoordinates[$i + 1];
-            
-            // Calculate distance from point to line segment
-            $distance = $this->distanceFromPointToLineSegment(
-                $userLat, 
-                $userLng,
-                $segmentStart[1], // lat
-                $segmentStart[0], // lng
-                $segmentEnd[1],   // lat
-                $segmentEnd[0]    // lng
-            );
-            
-            if ($minDistance === null || $distance < $minDistance) {
-                $minDistance = $distance;
-            }
-        }
-
-        return $minDistance ?? $this->calculateDistance(
-            $userLat, 
-            $userLng, 
-            $routeCoordinates[0][1], 
-            $routeCoordinates[0][0]
-        );
-    }
-
-    /**
-     * Calculate distance from a point to a line segment
-     */
-    private function distanceFromPointToLineSegment($px, $py, $x1, $y1, $x2, $y2)
-    {
-        // Convert to Cartesian coordinates for easier calculation
-        $A = $px - $x1;
-        $B = $py - $y1;
-        $C = $x2 - $x1;
-        $D = $y2 - $y1;
-
-        $dot = $A * $C + $B * $D;
-        $lenSq = $C * $C + $D * $D;
-        
-        if ($lenSq == 0) {
-            // Point is same as line start
-            return $this->calculateDistance($px, $py, $x1, $y1);
-        }
-
-        $param = $dot / $lenSq;
-
-        if ($param < 0) {
-            // Closest point is line start
-            return $this->calculateDistance($px, $py, $x1, $y1);
-        } elseif ($param > 1) {
-            // Closest point is line end
-            return $this->calculateDistance($px, $py, $x2, $y2);
-        } else {
-            // Closest point is on the line segment
-            $xx = $x1 + $param * $C;
-            $yy = $y1 + $param * $D;
-            return $this->calculateDistance($px, $py, $xx, $yy);
-        }
-    }
-
-    /**
-     * Calculate distance between two geographic points using Haversine formula
-     */
-    private function calculateDistance($lat1, $lng1, $lat2, $lng2)
-    {
-        $earthRadius = 6371000; // Earth's radius in meters
-        
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        
-        $lat1 = deg2rad($lat1);
-        $lat2 = deg2rad($lat2);
-        
-        $a = sin($dLat/2) * sin($dLat/2) +
-             sin($dLng/2) * sin($dLng/2) * cos($lat1) * cos($lat2);
-        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-        
-        return $earthRadius * $c; // Distance in meters
-    }
-
-    /**
-     * Format location string from request data
-     */
-    private function formatLocation($request)
-    {
-        $lat = $request->input('lat');
-        $lng = $request->input('lng');
-        $accuracy = $request->input('accuracy');
-        
-        if ($lat && $lng) {
-            $location = "{$lat}, {$lng}";
-            if ($accuracy) {
-                $location .= " (±{$accuracy}m)";
-            }
-            return $location;
-        }
-        
-        return 'Location not available';
-    }
-
-    // Example helper for geo_polygon
-    protected function isPointInPolygon($lat, $lng, $polygon)
-    {
-        // Implement point-in-polygon algorithm or use a package
-        // For now, always return true for demo
-        return true;
     }
 
     public function punchIn(Request $request): \Illuminate\Http\JsonResponse
