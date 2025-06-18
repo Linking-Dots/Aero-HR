@@ -14,7 +14,7 @@ import {
   ChevronRightIcon,
   ChevronDownIcon
 } from "@heroicons/react/24/outline";
-import GlassCard from "@/Components/GlassCard.jsx";
+import GlassCard from "../components/ui/GlassCard.jsx";
 
 // Custom hook for sidebar state management
 const useSidebarState = () => {

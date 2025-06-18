@@ -13,7 +13,7 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import ClearIcon from "@mui/icons-material/Clear";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify";
-import GlassDialog from "@/Components/GlassDialog.jsx";
+import GlassDialog from "../components/ui/GlassDialog.jsx";
 
 const FamilyMemberForm = ({ user, open, closeModal, handleDelete, setUser }) => {
     const [initialUserData, setInitialUserData] = useState({

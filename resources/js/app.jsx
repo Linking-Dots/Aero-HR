@@ -21,9 +21,7 @@ const appName =  'DBEDC ERP';
 createInertiaApp({
     progress: {
         color: '#29d',
-    },
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
+    },    title: (title) => `${title} - ${appName}`,    resolve: (name) =>
         resolvePageComponent(
             // This supports subfolders, e.g. "Admin/Dashboard"
             `./Pages/${name}.jsx`,

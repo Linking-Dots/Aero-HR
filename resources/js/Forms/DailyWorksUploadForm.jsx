@@ -13,7 +13,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {toast} from "react-toastify";
-import GlassDialog from "@/Components/GlassDialog.jsx";
+import GlassDialog from "../components/ui/GlassDialog.jsx";
 import {Clear, CloudUpload, Description, InsertDriveFile, PictureAsPdf, Upload} from '@mui/icons-material';
 import {useDropzone} from 'react-dropzone';
 

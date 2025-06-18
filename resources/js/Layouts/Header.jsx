@@ -26,8 +26,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 import logo from '../../../public/assets/images/logo.png';
-import GlassCard from '@/Components/GlassCard.jsx';
-import useTheme from '@/theme.jsx';
+import GlassCard from '../components/ui/GlassCard.jsx';
+import useTheme from '../theme.jsx';
 
 const useDeviceType = () => {
   const [isMobile, setIsMobile] = useState(false);

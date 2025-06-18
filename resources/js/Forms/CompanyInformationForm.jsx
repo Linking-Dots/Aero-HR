@@ -14,10 +14,10 @@ import {
     Box, FormHelperText
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
-import GlassCard from '@/Components/GlassCard'; // Assuming GlassCard is a custom component
+import GlassCard from '../components/ui/GlassCard'; // Assuming GlassCard is a custom component
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
-import {getCountries} from '@/Props/countries.jsx'
+import {getCountries} from '../props/countries.jsx'
 const CompanyInformationForm = ({settings, setSettings}) => {
 
     const [countries, setCountries] = useState(getCountries());

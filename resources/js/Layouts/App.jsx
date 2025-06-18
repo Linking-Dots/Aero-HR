@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Box, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
-import Header from "@/Layouts/Header.jsx";
-import Breadcrumb from "@/Components/Breadcrumb.jsx";
-import BottomNav from "@/Layouts/BottomNav.jsx";
+import Header from "./Header.jsx";
+import Breadcrumb from "../components/ui/Breadcrumb.jsx";
+import BottomNav from "./BottomNav.jsx";
 import { usePage } from "@inertiajs/react";
-import useTheme from "@/theme.jsx";
+import useTheme from "../theme.jsx";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Sidebar from "@/Layouts/Sidebar.jsx";
+import Sidebar from "./Sidebar.jsx";
 import { Inertia } from '@inertiajs/inertia';
-import { getPages } from '@/Props/pages.jsx';
-import { getSettingsPages } from '@/Props/settings.jsx';
+import { getPages } from '../props/pages.jsx';
+import { getSettingsPages } from '../props/settings.jsx';
 import { HeroUIProvider } from "@heroui/react";
-import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
-import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
+import { onMessageListener, requestNotificationPermission } from "../firebase-config.js";
+import ThemeSettingDrawer from "../components/ui/ThemeSettingDrawer.jsx";
 
 
 // Add this hook in your main App component or create a separate component

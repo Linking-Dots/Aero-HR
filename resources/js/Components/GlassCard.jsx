@@ -14,12 +14,11 @@ const GlassCard = forwardRef(({ children, ...props }, ref) => {
                     height: '100%',
                     width: '100%',
                     // iOS 26 Liquid Glass look
-                    backdropFilter: theme.glassCard.backdropFilter,
-                    background: theme.glassCard.background,
-                    borderHighlight: theme.glassCard.borderHighlight,
-                    border: theme.glassCard.border,
-                    boxShadow: theme.glassCard.boxShadow,
-                    borderRadius: theme.glassCard.borderRadius,
+                    backdropFilter: theme.glassCard?.backdropFilter || 'blur(16px)',
+                    background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
+                    border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: theme.glassCard?.boxShadow || '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                    borderRadius: theme.glassCard?.borderRadius || '20px',
                     display: 'flex',
                     flexDirection: 'column',
                     position: 'relative',
@@ -27,17 +26,6 @@ const GlassCard = forwardRef(({ children, ...props }, ref) => {
                     wordWrap: 'break-word',
                     backgroundClip: 'border-box',
                     overflow: 'hidden',
-                    // Optional: subtle border highlight for liquid effect
-                    '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        pointerEvents: 'none',
-                        border: '1.5px solid rgba(255,255,255,0.35)',
-                        opacity: 0.7,
-                        zIndex: 1,
-                    },
                 }}
             >
                 {children}
@@ -45,5 +33,7 @@ const GlassCard = forwardRef(({ children, ...props }, ref) => {
         </Fade>
     );
 });
+
+GlassCard.displayName = 'GlassCard';
 
 export default GlassCard;

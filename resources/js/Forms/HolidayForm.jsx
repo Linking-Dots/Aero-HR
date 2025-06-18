@@ -22,7 +22,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
-import GlassDialog from "@/Components/GlassDialog.jsx";
+import GlassDialog from "../components/ui/GlassDialog.jsx";
 import {router, usePage} from "@inertiajs/react";
 import { Inertia } from '@inertiajs/inertia';
 
