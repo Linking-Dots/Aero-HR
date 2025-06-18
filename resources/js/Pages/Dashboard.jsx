@@ -5,7 +5,7 @@ import React, { useState, lazy, Suspense } from 'react';
 const TimeSheetTable = lazy(() => import('@/Tables/TimeSheetTable.jsx'));
 const UserLocationsCard = lazy(() => import('@/Components/UserLocationsCard.jsx'));
 const UpdatesCards = lazy(() => import('@/Components/UpdatesCards.jsx'));
-const LeaveCard = lazy(() => import('@/Components/LeaveCard.jsx'));
+const HolidayCard = lazy(() => import('@/Components/HolidayCard.jsx'));
 const StatisticCard = lazy(() => import('@/Components/StatisticCard.jsx'));
 const PunchStatusCard = lazy(() => import('@/Components/PunchStatusCard.jsx'));
 import App from "@/Layouts/App.jsx";
@@ -73,7 +73,7 @@ export default function Dashboard({ auth }) {
                         </>
                     )}
                     <UpdatesCards />
-                    <LeaveCard />
+                    <HolidayCard />
                 </Suspense>
             </Box>
         </>
