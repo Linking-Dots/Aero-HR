@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import {Add, Clear as ClearIcon} from '@mui/icons-material';
 import {LoadingButton} from '@mui/lab';
-import GlassCard from '../components/ui/GlassCard'; // Ensure this component is correctly imported
-import GlassDialog from '../components/ui/GlassDialog.jsx'; // Ensure this component is correctly imported
+import GlassCard from '@/Components/GlassCard'; // Ensure this component is correctly imported
+import GlassDialog from '@/Components/GlassDialog.jsx'; // Ensure this component is correctly imported
 import {useTheme} from '@mui/material/styles';
 import {toast} from 'react-toastify';
 

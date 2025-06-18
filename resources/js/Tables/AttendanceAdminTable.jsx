@@ -45,7 +45,7 @@ import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import GlassCard from '../components/ui/GlassCard';
+import GlassCard from '@/Components/GlassCard';
 
 const AttendanceAdminTable = ({ 
     loading, 

@@ -8,7 +8,7 @@ import {
   PhoneIcon 
 } from '@heroicons/react/24/outline';
 import { useTheme } from "@mui/material/styles";
-import GlassCard from '../components/ui/GlassCard.jsx';
+import GlassCard from '@/Components/GlassCard.jsx';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();

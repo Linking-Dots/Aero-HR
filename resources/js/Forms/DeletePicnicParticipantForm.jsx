@@ -1,5 +1,5 @@
 import {Button, CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
-import GlassDialog from "../components/ui/GlassDialog.jsx";
+import GlassDialog from "@/Components/GlassDialog.jsx";
 import React from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";

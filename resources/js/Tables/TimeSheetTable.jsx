@@ -30,7 +30,7 @@ import {
     Divider
 } from "@heroui/react";
 import Grow from '@mui/material/Grow';
-import GlassCard from "../components/ui/GlassCard.jsx";
+import GlassCard from "@/Components/GlassCard.jsx";
 import { usePage } from "@inertiajs/react";
 import dayjs from "dayjs";
 import { 

@@ -20,7 +20,7 @@ import {
     Button
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
-import GlassCard from '../components/ui/GlassCard';
+import GlassCard from '@/Components/GlassCard';
 import { toast } from "react-toastify";
 import { useTheme } from "@mui/material/styles";
 import axios from 'axios';

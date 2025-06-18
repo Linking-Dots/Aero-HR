@@ -14,7 +14,7 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import GlassCard from '../components/ui/GlassCard';
+import GlassCard from '@/Components/GlassCard';
 import LoadingButton from "@mui/lab/LoadingButton";
 import {useTheme} from "@mui/material/styles";
 import {toast} from "react-toastify"; // Assuming GlassCard is a custom component

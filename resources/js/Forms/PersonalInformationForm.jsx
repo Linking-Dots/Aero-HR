@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import React, {useEffect, useState} from "react";
 import ClearIcon from '@mui/icons-material/Clear';
-import GlassDialog from "../components/ui/GlassDialog.jsx";
+import GlassDialog from "@/Components/GlassDialog.jsx";
 import {useTheme} from "@mui/material/styles";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {toast} from "react-toastify";

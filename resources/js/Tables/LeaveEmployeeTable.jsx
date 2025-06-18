@@ -58,7 +58,7 @@ import {
     ExclamationTriangleIcon as ExclamationTriangleSolid
 } from '@heroicons/react/24/solid';
 import axios from 'axios';
-import GlassCard from "../components/ui/GlassCard";
+import GlassCard from "@/Components/GlassCard";
 
 const LeaveEmployeeTable = ({
     leaves,

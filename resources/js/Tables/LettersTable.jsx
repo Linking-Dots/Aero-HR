@@ -28,7 +28,7 @@ import {toast} from "react-toastify";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {Pagination} from "@heroui/react";
-import Loader from "../components/ui/Loader.jsx";
+import Loader from "@/Components/Loader.jsx";
 import {  usePage } from '@inertiajs/react';
 import LinkIcon from '@mui/icons-material/Link';
 import MailIcon from '@mui/icons-material/Mail';
