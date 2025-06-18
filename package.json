@@ -4,12 +4,23 @@
      "scripts": {
           "dev": "vite",
           "build": "vite build",
-          "test": "vitest"
+          "test": "vitest",
+          "performance:baseline": "node tools/performance/scripts/establish-baseline.js",
+          "performance:test": "playwright test --config=tools/performance/performance.test.config.js",
+          "performance:report": "node tools/performance/scripts/generate-report.js",
+          "performance:compare": "node tools/performance/scripts/compare-baseline.js",
+          "bundle:analyze": "webpack --config webpack.analyzer.config.js && webpack-bundle-analyzer storage/app/bundle-stats.json",
+          "lighthouse:ci": "lhci autorun",
+          "lighthouse:desktop": "lighthouse http://localhost:8000 --chrome-flags=\"--headless\" --output html --output-path=storage/app/lighthouse-desktop.html",
+          "lighthouse:mobile": "lighthouse http://localhost:8000 --preset=perf --chrome-flags=\"--headless\" --emulated-form-factor=mobile --output html --output-path=storage/app/lighthouse-mobile.html",
+          "performance:full": "npm run performance:baseline && npm run performance:test && npm run performance:report",
+          "quality:audit": "npm run bundle:analyze && npm run lighthouse:ci && axe http://localhost:8000 --save storage/app/accessibility-audit.json"
      },
      "devDependencies": {
           "@axe-core/cli": "^4.10.2",
           "@headlessui/react": "^2.1.8",
           "@inertiajs/react": "^2.0.0-beta.2",
+          "@playwright/test": "^1.53.0",
           "@sentry/react": "^9.30.0",
           "@testing-library/jest-dom": "^6.6.3",
           "@testing-library/react": "^16.3.0",
@@ -19,6 +30,7 @@
           "axios": "^1.6.4",
           "jsdom": "^26.1.0",
           "laravel-vite-plugin": "^1.0",
+          "lighthouse": "^12.6.1",
           "lighthouse-ci": "^1.13.1",
           "postcss": "^8.4.45",
           "react": "^18.2.0",
@@ -29,7 +41,9 @@
           "vite-plugin-minify": "^2.0.0",
           "vitest": "^3.2.3",
           "web-vitals": "^5.0.3",
-          "webpack-bundle-analyzer": "^4.10.2"
+          "webpack": "^5.99.9",
+          "webpack-bundle-analyzer": "^4.10.2",
+          "webpack-cli": "^5.1.4"
      },
      "dependencies": {
           "@adobe/react-spectrum": "^3.36.1",
