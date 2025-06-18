@@ -46,8 +46,8 @@ export {
 // Configuration export
 export { salaryFormConfig } from './config';
 
-// Validation schema export
-export { salaryFormValidationSchema } from './validation';
+// Configuration export
+export { SALARY_INFO_FORM_CONFIG } from './config';
 
 /**
  * Complete module metadata

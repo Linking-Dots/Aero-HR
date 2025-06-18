@@ -48,9 +48,11 @@ import GlassCard from '@/Components/GlassCard.jsx';
 import App from '@/Layouts/App.jsx';
 
 // Feature Components
-import LeaveEmployeeTable from '@/Components/organisms/LeaveEmployeeTable';
-import LeaveForm from '@/Components/molecules/LeaveForm';
-import DeleteLeaveForm from '@/Components/molecules/DeleteLeaveForm';
+
+// Modern Architecture Components
+import { LeaveHistoryTable } from '@organisms/leave-history-table';
+import { LeaveForm } from '@molecules/leave-form';
+import { DeleteLeaveForm } from '@molecules/delete-leave-form';
 
 /**
  * Leave Administration Page Component
@@ -372,22 +374,25 @@ const LeaveAdminPage = ({ title, allUsers }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                                 <CircularProgress />
                             </Box>
-                        ) : (
-                            <LeaveEmployeeTable
-                                leaves={filteredLeaves}
-                                allUsers={allUsers}
+                        ) : (                            <LeaveHistoryTable
+                                data={filteredLeaves}
+                                isEmployeeView={false}
+                                showActions={['view', 'edit', 'approve', 'reject']}
+                                onView={(leave) => {
+                                    setLeaves(leave);
+                                    handleOpenModal('view');
+                                }}
                                 onEdit={(leave) => {
                                     setLeaves(leave);
                                     handleOpenModal('edit');
                                 }}
-                                onDelete={(leaveId) => handleOpenModal('delete', leaveId)}
-                                onApprove={(leaveId) => {
+                                onApprove={(leave) => {
                                     // Handle approval logic
-                                    console.log('Approve leave:', leaveId);
+                                    console.log('Approve leave:', leave.id);
                                 }}
-                                onReject={(leaveId) => {
+                                onReject={(leave) => {
                                     // Handle rejection logic
-                                    console.log('Reject leave:', leaveId);
+                                    console.log('Reject leave:', leave.id);
                                 }}
                             />
                         )}

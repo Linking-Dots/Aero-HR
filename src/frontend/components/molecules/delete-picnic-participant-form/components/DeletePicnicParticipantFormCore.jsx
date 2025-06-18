@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  AlertTriangle, 
-  Trash2, 
-  Shield, 
-  Clock, 
-  CheckCircle2, 
-  XCircle,
-  Eye,
-  EyeOff,
-  Lock,
-  Users,
-  DollarSign,
-  MessageSquare,
-  Calendar
-} from 'lucide-react';
+  ExclamationTriangleIcon, 
+  TrashIcon, 
+  ShieldCheckIcon, 
+  ClockIcon, 
+  CheckCircleIcon, 
+  XCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  LockClosedIcon,
+  UsersIcon,
+  BanknotesIcon,
+  ChatBubbleLeftRightIcon,
+  CalendarIcon
+} from '@heroicons/react/24/outline';
 
 /**
  * Core delete picnic participant form component
@@ -75,28 +75,26 @@ const DeletePicnicParticipantFormCore = ({
       key: 'eventPlanning',
       title: 'Event Planning Impact',
       description: 'Affects seating arrangements, activity groups, and logistics planning',
-      icon: Calendar,
+      icon: CalendarIcon,
       severity: 'medium'
     },
     {
       key: 'financial',
       title: 'Financial Implications',
       description: 'May require refund processing and budget adjustments',
-      icon: DollarSign,
+      icon: BanknotesIcon,
       severity: 'high'
-    },
-    {
+    },    {
       key: 'teamDynamics',
       title: 'Team Dynamics',
       description: 'Could impact team composition and social dynamics',
-      icon: Users,
+      icon: UsersIcon,
       severity: 'medium'
-    },
-    {
+    },    {
       key: 'communication',
       title: 'Communication Requirements',
       description: 'Requires notification to relevant stakeholders and participants',
-      icon: MessageSquare,
+      icon: ChatBubbleLeftRightIcon,
       severity: 'low'
     }
   ];

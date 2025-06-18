@@ -537,13 +537,10 @@ export const MIGRATION_GUIDE = {
   },
   
   newFeatures: [
-    'Auto-save functionality',
-    'Real-time validation',
+    'Auto-save functionality',    'Real-time validation',
     'Analytics tracking',
     'Accessibility improvements',
     'Performance optimizations',
     'Error handling enhancements'
   ]
 };
-
-export default FamilyMemberForm;

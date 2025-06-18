@@ -237,13 +237,10 @@
             <div class="loading-text">Loading DBEDC ERP...</div>
         </div>
     </div>
-    
- 
-    
-    <!-- Inertia & Vite Scripts -->
+         <!-- Inertia & Vite Scripts -->
     @routes
     @viteReactRefresh
-    @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+    @vite(['src/frontend/main.jsx'])
     @inertiaHead
     @inertia
     

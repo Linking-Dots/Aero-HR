@@ -29,12 +29,6 @@ export {
 
 // Configuration exports
 export { PICNIC_PARTICIPANT_CONFIG } from './config';
-export { 
-  picnicParticipantValidationSchema,
-  validateField,
-  validateSection,
-  validateForm 
-} from './validation';
 
 /**
  * =============================================================================

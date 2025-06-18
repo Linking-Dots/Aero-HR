@@ -32,12 +32,6 @@ export {
 
 // Configuration and validation
 export { DELETE_LEAVE_FORM_CONFIG } from './config';
-export {
-  deleteLeaveValidationSchema,
-  validateDeleteLeaveForm,
-  validateDeleteLeaveField,
-  VALIDATION_CONFIG
-} from './validation';
 
 /**
  * Module Information

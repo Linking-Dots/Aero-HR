@@ -146,18 +146,6 @@ export { BankInformationForm };
 
 // Export configuration and utilities
 export { BANK_INFO_FORM_CONFIG, POPULAR_BANKS, BANK_IFSC_PATTERNS } from './config';
-export {
-  bankInfoValidationSchema,
-  validateBankField,
-  validateBankingBusinessRules,
-  validateIfscWithLookup,
-  validateAccountUniqueness,
-  transformBankFormData,
-  validatePanChecksum,
-  validateIfscCode,
-  validateAccountNumber,
-  validateBankName
-} from './validation';
 
 // Export sub-components for direct usage
 export {

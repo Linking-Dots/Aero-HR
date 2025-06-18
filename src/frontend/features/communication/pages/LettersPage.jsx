@@ -61,7 +61,7 @@ import { toast } from "react-toastify";
 
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
-import LettersTable from '@/Components/organisms/letters-table/LettersTable';
+import { LettersTable } from '@organisms/letters-table';
 import { useLettersFiltering, useLettersStats, useLettersExport } from '../hooks';
 
 dayjs.extend(minMax);

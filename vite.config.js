@@ -5,13 +5,11 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteMinifyPlugin } from 'vite-plugin-minify';
 import path from 'path';
 
-// Vite configuration
+// Vite configuration - Phase 6: src/frontend migration
 export default defineConfig({
-    plugins: [
-        laravel({
+    plugins: [          laravel({
             input: [
-                'resources/js/app.jsx',
-                'src/frontend/main.jsx' // New entry point
+                'src/frontend/main.jsx'  // Single modern entry point
             ],
             refresh: true,
         }),
@@ -37,6 +35,20 @@ export default defineConfig({
             '@molecules': path.resolve(__dirname, './src/frontend/components/molecules'),
             '@organisms': path.resolve(__dirname, './src/frontend/components/organisms'),
             '@templates': path.resolve(__dirname, './src/frontend/components/templates'),
+            
+            // Feature-specific aliases
+            '@auth': path.resolve(__dirname, './src/frontend/features/authentication'),
+            '@employee': path.resolve(__dirname, './src/frontend/features/employee-management'),
+            '@attendance': path.resolve(__dirname, './src/frontend/features/attendance'),
+            '@projects': path.resolve(__dirname, './src/frontend/features/project-management'),
+            '@communication': path.resolve(__dirname, './src/frontend/features/communication'),
+            '@events': path.resolve(__dirname, './src/frontend/features/events'),
+            
+            // Utility aliases
+            '@utils': path.resolve(__dirname, './src/frontend/shared/utils'),
+            '@hooks': path.resolve(__dirname, './src/frontend/shared/hooks'),
+            '@types': path.resolve(__dirname, './src/frontend/shared/types'),
+            '@constants': path.resolve(__dirname, './src/frontend/shared/constants'),
         },
     },
     build: {

@@ -61,8 +61,8 @@ import { toast } from "react-toastify";
 
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
-import PicnicParticipantForm from '@/Components/molecules/picnic-participant-form/PicnicParticipantForm';
-import DeletePicnicParticipantForm from '@/Components/molecules/delete-picnic-participant-form/DeletePicnicParticipantForm';
+import { PicnicParticipantForm } from '@molecules/picnic-participant-form';
+import { DeletePicnicParticipantForm } from '@molecules/delete-picnic-participant-form';
 import { usePicnicFiltering, usePicnicStats, useTeamManagement } from '../hooks';
 
 /**

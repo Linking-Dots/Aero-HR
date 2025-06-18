@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  AlertTriangle, 
-  X, 
-  Trash2,
-  Shield,
-  Eye,
-  EyeOff,
-  Clock
-} from 'lucide-react';
+  WarningIcon,
+  XIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 import DeletePicnicParticipantFormCore from './components/DeletePicnicParticipantFormCore.jsx';
 import DeletePicnicParticipantFormValidationSummary from './components/DeletePicnicParticipantFormValidationSummary.jsx';
 import { useCompleteDeletePicnicParticipantForm } from './hooks/useCompleteDeletePicnicParticipantForm.js';

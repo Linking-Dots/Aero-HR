@@ -1,4 +1,4 @@
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
 
 /**
  * Glass ERP - Web Vitals Performance Monitoring
@@ -7,7 +7,8 @@ import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
  * Targets:
  * - FCP (First Contentful Paint): < 1.8s
  * - LCP (Largest Contentful Paint): < 2.5s
- * - FID (First Input Delay): < 100ms
+ * - FID (First Input Delay): < 100ms (deprecated, using INP)
+ * - INP (Interaction to Next Paint): < 200ms (new metric)
  * - CLS (Cumulative Layout Shift): < 0.1
  * - TTFB (Time to First Byte): < 800ms
  */
@@ -43,31 +44,28 @@ class WebVitalsMonitor {
 
     setupCoreWebVitals() {
         // First Contentful Paint (FCP)
-        getFCP((metric) => {
+        onFCP((metric) => {
             this.handleMetric('FCP', metric, {
                 good: 1800,
                 needsImprovement: 3000
             });
-        });
-
-        // Largest Contentful Paint (LCP)
-        getLCP((metric) => {
+        });        // Largest Contentful Paint (LCP)
+        onLCP((metric) => {
             this.handleMetric('LCP', metric, {
                 good: 2500,
                 needsImprovement: 4000
-            });
-        });
+            });        });
 
-        // First Input Delay (FID)
-        getFID((metric) => {
-            this.handleMetric('FID', metric, {
-                good: 100,
-                needsImprovement: 300
+        // Interaction to Next Paint (INP) - New Core Web Vital (replaces FID)
+        onINP((metric) => {
+            this.handleMetric('INP', metric, {
+                good: 200,
+                needsImprovement: 500
             });
         });
 
         // Cumulative Layout Shift (CLS)
-        getCLS((metric) => {
+        onCLS((metric) => {
             this.handleMetric('CLS', metric, {
                 good: 0.1,
                 needsImprovement: 0.25
@@ -75,7 +73,7 @@ class WebVitalsMonitor {
         });
 
         // Time to First Byte (TTFB)
-        getTTFB((metric) => {
+        onTTFB((metric) => {
             this.handleMetric('TTFB', metric, {
                 good: 800,
                 needsImprovement: 1800

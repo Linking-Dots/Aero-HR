@@ -1,15 +1,15 @@
 import React from 'react';
 import { 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  Clock,
-  Shield,
-  Users,
-  FileText,
-  Eye,
-  Lock
-} from 'lucide-react';
+  CheckCircleIcon, 
+  XCircleIcon, 
+  ExclamationTriangleIcon, 
+  ClockIcon,
+  ShieldCheckIcon,
+  UsersIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  LockClosedIcon
+} from '@heroicons/react/24/outline';
 
 /**
  * Validation summary component for delete picnic participant form
@@ -35,7 +35,7 @@ const DeletePicnicParticipantFormValidationSummary = ({
     {
       id: 'form',
       title: 'Form Validation',
-      icon: FileText,
+      icon: DocumentTextIcon,
       description: 'Required fields and data format validation',
       getStatus: () => {
         const hasErrors = Object.keys(validation.errors).length > 0;
@@ -56,7 +56,7 @@ const DeletePicnicParticipantFormValidationSummary = ({
     {
       id: 'security',
       title: 'Security Verification',
-      icon: Shield,
+      icon: ShieldCheckIcon,
       description: 'Password and confirmation validation',
       getStatus: () => {
         const securityValidation = validation.validateSecurity();
@@ -75,7 +75,7 @@ const DeletePicnicParticipantFormValidationSummary = ({
     {
       id: 'business',
       title: 'Business Rules',
-      icon: Users,
+      icon: UsersIcon,
       description: 'Deletion eligibility and business compliance',
       getStatus: () => {
         const eligibility = validation.validateDeletionEligibility();
@@ -93,7 +93,7 @@ const DeletePicnicParticipantFormValidationSummary = ({
     {
       id: 'impact',
       title: 'Impact Assessment',
-      icon: AlertTriangle,
+      icon: ExclamationTriangleIcon,
       description: 'Acknowledgment of deletion consequences',
       getStatus: () => {
         const impactValidation = validation.validateImpactAssessment();

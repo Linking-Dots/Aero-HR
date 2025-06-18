@@ -148,12 +148,6 @@ export {
 
 // Export configuration and validation
 export { ADD_USER_FORM_CONFIG } from './config';
-export { 
-  addUserValidationSchema,
-  editUserValidationSchema,
-  asyncValidationSchemas,
-  businessRuleValidations 
-} from './validation';
 
 // Component metadata for documentation and tooling
 export const componentMetadata = {

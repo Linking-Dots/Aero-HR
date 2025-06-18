@@ -53,8 +53,9 @@ import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
 
 // Feature Components
-import UsersTable from '@/Components/organisms/UsersTable';
-import AddUserForm from "@/Components/molecules/AddUserForm";
+
+// Modern Architecture Components
+import { AddUserForm } from '@molecules/add-user-form';
 
 /**
  * User Management Page Component
@@ -354,12 +355,10 @@ const UserManagementPage = ({ title, roles, departments, designations }) => {
               )}
             </Box>
           </GlassCard>
-        </Grow>
-
-        {/* Users Table */}
+        </Grow>        {/* Users Table */}
         <Grow in timeout={1200}>
           <GlassCard>
-            <UsersTable 
+            <EmployeeTable 
               users={filteredUsers}
               roles={roles}
               departments={departments}

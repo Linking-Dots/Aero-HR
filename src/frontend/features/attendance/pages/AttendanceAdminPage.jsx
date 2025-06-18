@@ -63,8 +63,8 @@ import * as XLSX from 'xlsx';
 import GlassCard from '@/Components/GlassCard.jsx';
 import App from "@/Layouts/App.jsx";
 
-// Feature Components
-import AttendanceAdminTable from '@/Components/organisms/attendance-admin-table/AttendanceAdminTable';
+// Modern Architecture Components
+import { AttendanceHistory } from '@organisms/attendance-history';
 
 /**
  * Attendance Administration Page Component
@@ -458,12 +458,11 @@ const AttendanceAdminPage = ({ title, allUsers }) => {
                         {loading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                                 <CircularProgress />
-                            </Box>
-                        ) : (
+                            </Box>                        ) : (
                             <>
-                                <AttendanceAdminTable
+                                <AttendanceHistory
                                     attendanceData={filteredAttendance}
-                                    allUsers={allUsers}
+                                    users={allUsers}
                                     leaveCounts={leaveCounts}
                                     leaveTypes={leaveTypes}
                                     onEdit={(attendance) => {

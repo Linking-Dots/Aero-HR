@@ -11,13 +11,6 @@ export { default as DeletePicnicParticipantFormValidationSummary } from './compo
 
 // Configuration and validation
 export { deletePicnicParticipantFormConfig } from './config.js';
-export { 
-  deletePicnicParticipantFormValidation,
-  stepValidationSchemas,
-  validateStep,
-  validateBusinessRules,
-  getValidationErrorMessage
-} from './validation.js';
 
 // Hooks
 export {

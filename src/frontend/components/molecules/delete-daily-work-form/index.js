@@ -11,7 +11,6 @@ export { default as DeleteDailyWorkFormValidationSummary } from './components/De
 
 // Configuration and utilities
 export { deleteDailyWorkFormConfig } from './config.js';
-export { deleteDailyWorkFormValidationSchema } from './validation.js';
 
 // Hooks (re-exported for convenience)
 export {

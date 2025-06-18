@@ -15,8 +15,6 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 
 // Internal components
 import { 

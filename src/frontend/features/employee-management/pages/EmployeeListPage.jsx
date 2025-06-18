@@ -51,8 +51,8 @@ import {
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
 
-// Feature Components
-import EmployeeTable from '@/Components/organisms/employee-table/EmployeeTable';
+// Feature Components - Modern Architecture
+import { EmployeeTable } from '@organisms/employee-table';
 
 /**
  * Employee List Page Component

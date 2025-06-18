@@ -9,7 +9,8 @@ import {
   DocumentTextIcon,
   BriefcaseIcon,
   UsersIcon,
-  FolderOpenIcon
+  FolderOpenIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 export const getPages = (permissions) => [
@@ -50,6 +51,16 @@ export const getPages = (permissions) => [
       { name: 'Letters', icon: <EnvelopeIcon className="ml-2 h-5 w-5" />, route: 'letters' },
     ]
   }] : []),
-  ...(permissions.includes('read users') ? [{ name: 'Users', icon: <UsersIcon className="h-6 w-6" />, route: 'users' }] : []),
-  ...(permissions.includes('read settings') ? [{ name: 'Settings', icon: <Cog6ToothIcon className="h-6 w-6" />, route: 'company-settings' }] : []),
+  ...(permissions.includes('admin') || permissions.includes('manage-settings') ? [{
+    name: 'Administration',
+    icon: <Cog6ToothIcon className="h-6 w-6" />,
+    subMenu: [
+      { name: 'Admin Dashboard', icon: <HomeIcon className="ml-2 h-5 w-5" />, route: 'admin-dashboard' },
+      { name: 'Performance Monitor', icon: <ChartBarIcon className="ml-2 h-5 w-5" />, route: 'performance-dashboard' },
+      { name: 'User Management', icon: <UsersIcon className="ml-2 h-5 w-5" />, route: 'users' },
+      { name: 'System Settings', icon: <Cog6ToothIcon className="ml-2 h-5 w-5" />, route: 'company-settings' },
+    ]
+  }] : []),
+  ...(permissions.includes('read users') && !permissions.includes('admin') ? [{ name: 'Users', icon: <UsersIcon className="h-6 w-6" />, route: 'users' }] : []),
+  ...(permissions.includes('read settings') && !permissions.includes('admin') ? [{ name: 'Settings', icon: <Cog6ToothIcon className="h-6 w-6" />, route: 'company-settings' }] : []),
 ];

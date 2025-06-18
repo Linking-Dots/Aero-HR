@@ -123,13 +123,6 @@ export { CompanyInformationForm };
 
 // Export configuration and utilities
 export { COMPANY_INFO_FORM_CONFIG } from './config';
-export {
-  companyInfoValidationSchema,
-  validateCompanyField,
-  validateBusinessRules,
-  validateCompanyNameUniqueness,
-  transformCompanyFormData
-} from './validation';
 
 // Export sub-components for direct usage
 export {

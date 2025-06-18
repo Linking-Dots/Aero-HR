@@ -56,8 +56,8 @@ import GlassCard from "@/Components/GlassCard.jsx";
 
 // Feature Components
 import DailyWorksTable from '@/Components/organisms/DailyWorksTable';
-import DailyWorkForm from "@/Components/molecules/DailyWorkForm";
-import DeleteDailyWorkForm from "@/Components/molecules/DeleteDailyWorkForm";
+import { DailyWorkForm } from '@molecules/daily-work-form';
+import { DeleteDailyWorkForm } from '@molecules/delete-daily-work-form';
 import DailyWorksDownloadForm from "@/Components/molecules/DailyWorksDownloadForm";
 import DailyWorksUploadForm from "@/Components/molecules/DailyWorksUploadForm";
 

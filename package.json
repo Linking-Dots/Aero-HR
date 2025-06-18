@@ -6,7 +6,7 @@
           "build": "vite build",
           "test": "vitest",
           "performance:baseline": "node tools/performance/scripts/establish-baseline.js",
-          "performance:test": "playwright test --config=tools/performance/performance.test.config.js",
+          "performance:test": "playwright test --config=tools/performance/performance.test.config.cjs",
           "performance:report": "node tools/performance/scripts/generate-report.js",
           "performance:compare": "node tools/performance/scripts/compare-baseline.js",
           "bundle:analyze": "webpack --config webpack.analyzer.config.js && webpack-bundle-analyzer storage/app/bundle-stats.json",
@@ -97,6 +97,7 @@
           "react-router-dom": "^6.25.1",
           "react-timer-hook": "^3.0.7",
           "react-toastify": "^10.0.5",
+          "recharts": "^2.15.3",
           "xlsx": "^0.18.5"
      }
 }

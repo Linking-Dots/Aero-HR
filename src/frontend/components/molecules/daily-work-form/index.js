@@ -43,14 +43,8 @@ export {
   DailyWorkAnalyticsSummary
 } from './components';
 
-// Configuration and validation exports
+// Configuration exports
 export { FORM_CONFIG, FIELD_TYPES, VALIDATION_RULES } from './config';
-export { 
-  validateDailyWorkForm, 
-  validateRfiNumber, 
-  validateWorkType,
-  validateTimeEstimation 
-} from './validation';
 
 // Module metadata and documentation
 export const MODULE_METADATA = {

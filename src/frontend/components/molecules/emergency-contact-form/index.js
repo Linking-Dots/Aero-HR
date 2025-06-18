@@ -354,8 +354,5 @@ export const PERFORMANCE_BENCHMARKS = {
     component: '~30KB',
     hooks: '~10KB',
     validation: '~5KB',
-    total: '~45KB'
-  }
+    total: '~45KB'  }
 };
-
-export default EmergencyContactForm;
