@@ -22,7 +22,6 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Settings\AttendanceSettingController;
-use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 
 
@@ -87,7 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'ensure.role:Administrator'])->group(function () {
 
     Route::get('/letters', [LetterController::class, 'index'])->name('letters');
     Route::get('/letters-paginate', [LetterController::class, 'paginate'])->name('letters.paginate');
@@ -120,15 +119,12 @@ Route::middleware([CheckRole::class . ':Administrator','auth', 'verified'])->gro
     Route::post('/update-role-module', [RoleController::class, 'updateRoleModule'])->name('updateRoleModule');
     Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
 
-
-
     Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
     Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('company-settings');
 
+    // Legacy role routes (maintained for backward compatibility)
     Route::get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
-    Route::post('/roles', [RoleController::class, 'storeRole']);
-    Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
-    Route::delete('/roles/{id}', [RoleController::class, 'deleteRole']);
+    Route::post('/update-role-module', [RoleController::class, 'updateRoleModule'])->name('update-role-module');
 
 
     Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
@@ -176,9 +172,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports-json', [ReportController::class, 'allReports'])->name('allReports');
     Route::post('/reports/add', [ReportController::class, 'addReport'])->name('addReport');
     Route::post('/reports/delete', [ReportController::class, 'deleteReport'])->name('deleteReport');
-    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');
-    Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
+    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');    Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
 });
+
+// Enhanced Role Management Routes (with custom role-based access control)
+Route::middleware(['auth', 'verified', 'role:Super Administrator,Administrator'])->prefix('admin')->group(function () {
+    Route::get('/roles-management', [RoleController::class, 'index'])->name('admin.roles-management');
+    Route::post('/roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
+    Route::put('/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
+    Route::delete('/roles/{id}', [RoleController::class, 'deleteRole'])->name('admin.roles.delete');
+    Route::post('/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
+    Route::post('/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
+    Route::get('/roles/audit', [RoleController::class, 'getRoleAudit'])->name('admin.roles.audit');
+    Route::post('/roles/initialize-enterprise', [RoleController::class, 'initializeEnterpriseSystem'])->name('admin.roles.initialize-enterprise');
+});
+
+// Test route for role controller
+Route::middleware(['auth', 'verified'])->get('/admin/roles-test', [RoleController::class, 'test'])->name('admin.roles.test');
 
 Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
 
