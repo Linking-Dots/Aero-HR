@@ -10,18 +10,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LeaveQueryService
-{
-    /**
+{    /**
      * Get leave records with pagination and filtering
      */
-    public function getLeaveRecords(Request $request, int $perPage = 30, int $page = 1, string $employee = '', ?int $year = null, ?string $month = null): array
+    public function getLeaveRecords(Request $request, int $perPage = 30, int $page = 1, ?string $employee = '', ?int $year = null, ?string $month = null): array
     {
         $user = Auth::user();
         $isAdmin = $user->hasRole('Administrator');
 
         $perPage = $request->get('perPage', $perPage);
         $page = $request->get('employee') ? 1 : $request->get('page', $page);
-        $employee = $request->get('employee', $employee);
+        $employee = $request->get('employee', $employee) ?? '';
         $year = $request->get('year', $year);
         $month = $request->get('month', $month);
 
@@ -66,14 +65,13 @@ class LeaveQueryService
             ];
             $query->whereBetween('leaves.from_date', $range);
         } elseif (!$isAdmin) {
-            $query->where('leaves.user_id', $userId);
-        }
+            $query->where('leaves.user_id', $userId);        }
     }
 
     /**
      * Apply employee filter to the query
      */
-    private function applyEmployeeFilter($query, string $employee): void
+    private function applyEmployeeFilter($query, ?string $employee): void
     {
         if ($employee) {
             $query->whereHas('employee', fn($q) => $q->where('name', 'like', "%$employee%"));

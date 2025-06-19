@@ -86,7 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::middleware(['auth', 'verified', 'ensure.role:Administrator'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:Administrator'])->group(function () {
 
     Route::get('/letters', [LetterController::class, 'index'])->name('letters');
     Route::get('/letters-paginate', [LetterController::class, 'paginate'])->name('letters.paginate');
@@ -113,18 +113,13 @@ Route::middleware(['auth', 'verified', 'ensure.role:Administrator'])->group(func
     Route::get('/users', [UserController::class, 'index2'])->name('users');
     Route::post('/users', [ProfileController::class, 'store'])->name('addUser');
     Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
-    Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
-    Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');
+    Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');    Route::post('/user/{id}/update-role', [UserController::class, 'updateUserRole'])->name('user.updateRole');
     Route::put('/user/toggle-status/{id}', [UserController::class, 'toggleStatus'])->name('user.toggleStatus');
-    Route::post('/update-role-module', [RoleController::class, 'updateRoleModule'])->name('updateRoleModule');
-    Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
-
-    Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
-    Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('company-settings');
+    Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');    Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
+    Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('admin.settings.company');
 
     // Legacy role routes (maintained for backward compatibility)
     Route::get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
-    Route::post('/update-role-module', [RoleController::class, 'updateRoleModule'])->name('update-role-module');
 
 
     Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
@@ -176,15 +171,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Enhanced Role Management Routes (with custom role-based access control)
-Route::middleware(['auth', 'verified', 'role:Super Administrator,Administrator'])->prefix('admin')->group(function () {
-    Route::get('/roles-management', [RoleController::class, 'index'])->name('admin.roles-management');
-    Route::post('/roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
-    Route::put('/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
-    Route::delete('/roles/{id}', [RoleController::class, 'deleteRole'])->name('admin.roles.delete');
-    Route::post('/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
-    Route::post('/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
-    Route::get('/roles/audit', [RoleController::class, 'getRoleAudit'])->name('admin.roles.audit');
-    Route::post('/roles/initialize-enterprise', [RoleController::class, 'initializeEnterpriseSystem'])->name('admin.roles.initialize-enterprise');
+Route::middleware(['auth', 'verified', 'role:Super Administrator|Administrator'])->group(function () {    // Enhanced Role Management Routes
+    Route::get('/admin/roles-management', [RoleController::class, 'index'])->name('admin.roles-management');
+    Route::post('/admin/roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
+    Route::put('/admin/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
+    Route::delete('/admin/roles/{id}', [RoleController::class, 'deleteRole'])->name('admin.roles.delete');
+    Route::post('/admin/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
+    Route::post('/admin/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
+    Route::get('/admin/roles/audit', [RoleController::class, 'getEnhancedRoleAudit'])->name('admin.roles.audit');
+    Route::post('/admin/roles/initialize-enterprise', [RoleController::class, 'initializeEnterpriseSystem'])->name('admin.roles.initialize-enterprise');
+    
+    // New Enhanced Features
+    Route::post('/admin/roles/bulk-operation', [RoleController::class, 'bulkOperation'])->name('admin.roles.bulk-operation');
+    Route::post('/admin/roles/clone', [RoleController::class, 'cloneRole'])->name('admin.roles.clone');
+    Route::get('/admin/roles/export', [RoleController::class, 'exportRoles'])->name('admin.roles.export');
+    Route::get('/admin/roles/metrics', [RoleController::class, 'getRoleMetrics'])->name('admin.roles.metrics');
 });
 
 // Test route for role controller

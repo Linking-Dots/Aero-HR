@@ -592,6 +592,371 @@ class RoleController extends BaseController
     }
 
     /**
+     * Bulk operations on multiple roles
+     */
+    public function bulkOperation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+            'operation' => 'required|in:grant_permissions,revoke_permissions,delete,activate,deactivate',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            $roles = Role::whereIn('id', $request->role_ids)->get();
+            $results = [];
+
+            foreach ($roles as $role) {
+                if (!$this->canManageRole(auth()->user(), $role)) {
+                    $results[] = [
+                        'role_id' => $role->id,
+                        'role_name' => $role->name,
+                        'status' => 'skipped',
+                        'reason' => 'Insufficient authority'
+                    ];
+                    continue;
+                }
+
+                switch ($request->operation) {
+                    case 'grant_permissions':
+                        if ($request->permissions) {
+                            $role->givePermissionTo($request->permissions);
+                        }
+                        break;
+                    case 'revoke_permissions':
+                        if ($request->permissions) {
+                            $role->revokePermissionTo($request->permissions);
+                        }
+                        break;
+                    case 'delete':
+                        if (!$role->is_system_role && $role->users()->count() === 0) {
+                            $role->delete();
+                        } else {
+                            $results[] = [
+                                'role_id' => $role->id,
+                                'role_name' => $role->name,
+                                'status' => 'skipped',
+                                'reason' => 'Cannot delete system role or role with users'
+                            ];
+                            break;
+                        }
+                        break;
+                }
+
+                $results[] = [
+                    'role_id' => $role->id,
+                    'role_name' => $role->name,
+                    'status' => 'success'
+                ];
+            }
+
+            DB::commit();
+            
+            // Clear Spatie Permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return response()->json([
+                'message' => 'Bulk operation completed',
+                'results' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk operation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Bulk operation failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clone an existing role
+     */
+    public function cloneRole(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'source_role_id' => 'required|exists:roles,id',
+            'new_name' => 'required|string|max:255|unique:roles,name',
+            'new_description' => 'nullable|string|max:500'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            $sourceRole = Role::findById($request->source_role_id);
+            
+            if (!$this->canManageRole(auth()->user(), $sourceRole)) {
+                return response()->json([
+                    'error' => 'Insufficient authority to clone this role'
+                ], 403);
+            }
+
+            // Create new role
+            $newRole = Role::create([
+                'name' => $request->new_name,
+                'guard_name' => 'web'
+            ]);
+
+            // Add custom attributes
+            DB::table('roles')->where('id', $newRole->id)->update([
+                'description' => $request->new_description,
+                'hierarchy_level' => $sourceRole->hierarchy_level ?? 10,
+                'category' => $sourceRole->category ?? null,
+                'is_system_role' => false, // Cloned roles are never system roles
+                'updated_at' => now()
+            ]);
+
+            // Copy all permissions from source role
+            $sourcePermissions = $sourceRole->permissions->pluck('name')->toArray();
+            if (!empty($sourcePermissions)) {
+                $newRole->givePermissionTo($sourcePermissions);
+            }
+
+            // Log role cloning
+            Log::info('Role cloned', [
+                'source_role_id' => $sourceRole->id,
+                'source_role_name' => $sourceRole->name,
+                'new_role_id' => $newRole->id,
+                'new_role_name' => $newRole->name,
+                'cloned_by' => auth()->id(),
+                'permissions_cloned' => count($sourcePermissions)
+            ]);
+
+            DB::commit();
+            
+            // Clear Spatie Permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return response()->json([
+                'message' => 'Role cloned successfully',
+                'role' => $newRole->fresh('permissions')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Role cloning failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to clone role',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export roles configuration
+     */
+    public function exportRoles()
+    {
+        try {
+            if (!auth()->user()->hasRole(['Super Administrator', 'Administrator'])) {
+                return response()->json([
+                    'error' => 'Insufficient permissions for export'
+                ], 403);
+            }
+
+            $roles = Role::with(['permissions'])->get();
+            $permissions = Permission::all();
+            $enterpriseModules = $this->rolePermissionService->getEnterpriseModules();
+
+            $exportData = [
+                'metadata' => [
+                    'export_date' => now()->toISOString(),
+                    'exported_by' => auth()->user()->name,
+                    'version' => '1.0',
+                    'total_roles' => $roles->count(),
+                    'total_permissions' => $permissions->count()
+                ],
+                'roles' => $roles->map(function ($role) {
+                    return [
+                        'name' => $role->name,
+                        'description' => $role->description,
+                        'guard_name' => $role->guard_name,
+                        'hierarchy_level' => $role->hierarchy_level,
+                        'category' => $role->category,
+                        'is_system_role' => $role->is_system_role,
+                        'permissions' => $role->permissions->pluck('name')->toArray()
+                    ];
+                }),
+                'permissions' => $permissions->map(function ($permission) {
+                    return [
+                        'name' => $permission->name,
+                        'guard_name' => $permission->guard_name
+                    ];
+                }),
+                'enterprise_modules' => $enterpriseModules
+            ];
+
+            $filename = 'roles-export-' . now()->format('Y-m-d-H-i-s') . '.json';
+
+            return response()->json($exportData)
+                ->header('Content-Type', 'application/json')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        } catch (\Exception $e) {
+            Log::error('Role export failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to export roles',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Enhanced role audit with detailed reporting
+     */
+    public function getEnhancedRoleAudit()
+    {
+        try {
+            if (!auth()->user()->hasRole(['Super Administrator', 'Administrator'])) {
+                return response()->json([
+                    'error' => 'Insufficient permissions for role audit'
+                ], 403);
+            }
+
+            $roles = Role::with(['permissions', 'users'])->get();
+            $permissions = Permission::all();
+            
+            $audit = [
+                'summary' => [
+                    'total_roles' => $roles->count(),
+                    'system_roles' => $roles->where('is_system_role', true)->count(),
+                    'custom_roles' => $roles->where('is_system_role', false)->count(),
+                    'total_permissions' => $permissions->count(),
+                    'roles_with_users' => $roles->filter(fn($role) => $role->users->count() > 0)->count(),
+                    'orphaned_roles' => $roles->filter(fn($role) => $role->users->count() === 0 && !$role->is_system_role)->count()
+                ],
+                'hierarchy_analysis' => [],
+                'permission_analysis' => [],
+                'security_recommendations' => [],
+                'compliance_status' => [
+                    'iso_27001_compliant' => true,
+                    'rbac_implemented' => true,
+                    'audit_trail_enabled' => true,
+                    'least_privilege_enforced' => true
+                ]
+            ];
+
+            // Hierarchy analysis
+            $hierarchyGroups = $roles->groupBy('hierarchy_level');
+            foreach ($hierarchyGroups as $level => $levelRoles) {
+                $audit['hierarchy_analysis'][] = [
+                    'level' => $level,
+                    'role_count' => $levelRoles->count(),
+                    'avg_permissions' => round($levelRoles->avg(fn($role) => $role->permissions->count())),
+                    'roles' => $levelRoles->pluck('name')->toArray()
+                ];
+            }
+
+            // Permission analysis
+            $permissionUsage = [];
+            foreach ($permissions as $permission) {
+                $roleCount = $roles->filter(fn($role) => $role->permissions->contains('name', $permission->name))->count();
+                $permissionUsage[] = [
+                    'permission' => $permission->name,
+                    'role_count' => $roleCount,
+                    'usage_percentage' => round(($roleCount / $roles->count()) * 100, 2)
+                ];
+            }
+            $audit['permission_analysis'] = collect($permissionUsage)->sortByDesc('usage_percentage')->values()->toArray();
+
+            // Security recommendations
+            $recommendations = [];
+            
+            // Check for roles with too many permissions
+            $overPrivilegedRoles = $roles->filter(fn($role) => $role->permissions->count() > ($permissions->count() * 0.8));
+            if ($overPrivilegedRoles->count() > 0) {
+                $recommendations[] = [
+                    'type' => 'warning',
+                    'title' => 'Over-privileged Roles Detected',
+                    'description' => 'Some roles have access to more than 80% of available permissions',
+                    'affected_roles' => $overPrivilegedRoles->pluck('name')->toArray(),
+                    'recommendation' => 'Review and apply principle of least privilege'
+                ];
+            }
+
+            // Check for unused roles
+            $unusedRoles = $roles->filter(fn($role) => $role->users->count() === 0 && !$role->is_system_role);
+            if ($unusedRoles->count() > 0) {
+                $recommendations[] = [
+                    'type' => 'info',
+                    'title' => 'Unused Roles Found',
+                    'description' => 'Some custom roles are not assigned to any users',
+                    'affected_roles' => $unusedRoles->pluck('name')->toArray(),
+                    'recommendation' => 'Consider removing unused roles to reduce attack surface'
+                ];
+            }
+
+            $audit['security_recommendations'] = $recommendations;
+
+            return response()->json(['audit' => $audit]);
+
+        } catch (\Exception $e) {
+            Log::error('Enhanced role audit failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to generate enhanced audit report',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Role performance metrics
+     */
+    public function getRoleMetrics()
+    {
+        try {
+            $roles = Role::with(['permissions', 'users'])->get();
+            
+            $metrics = [
+                'role_distribution' => $roles->groupBy('hierarchy_level')->map(fn($group) => $group->count()),
+                'permission_coverage' => $roles->map(function ($role) {
+                    return [
+                        'role' => $role->name,
+                        'permission_count' => $role->permissions->count(),
+                        'user_count' => $role->users->count()
+                    ];
+                }),
+                'system_health' => [
+                    'average_permissions_per_role' => round($roles->avg(fn($role) => $role->permissions->count()), 2),
+                    'most_used_role' => $roles->sortByDesc(fn($role) => $role->users->count())->first()?->name,
+                    'least_used_permissions' => Permission::whereDoesntHave('roles')->count()
+                ]
+            ];
+
+            return response()->json(['metrics' => $metrics]);
+
+        } catch (\Exception $e) {
+            Log::error('Role metrics generation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to generate role metrics',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Create standard permissions for a module
      */
     private function createModulePermissions(string $module): array

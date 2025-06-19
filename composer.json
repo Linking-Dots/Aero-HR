@@ -14,7 +14,7 @@
         "maatwebsite/excel": "^3.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-medialibrary": "^11.9",
-        "spatie/laravel-permission": "^6.9",
+        "spatie/laravel-permission": "^6.20",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
