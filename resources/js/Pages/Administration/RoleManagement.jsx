@@ -57,8 +57,13 @@ const RoleManagement = ({
     navigation_permissions: navigationPermissions = {},
     user_hierarchy_level: userHierarchyLevel = 10,
     assignable_roles: assignableRoles = []
-}) => {
-    console.log(initialRoles, initialPermissions, initialRolePermissions, enterpriseModules, navigationPermissions, userHierarchyLevel, assignableRoles);
+}) => {    console.log('RoleManagement Props:', {
+        roles: initialRoles,
+        permissions: initialPermissions,
+        rolePermissions: initialRolePermissions,
+        userHierarchyLevel
+    });
+    
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));    
@@ -141,14 +146,12 @@ const RoleManagement = ({
             moduleSet.add(module);
         });
         return Array.from(moduleSet);
-    }, [permissions]);
-
-    // Get role permissions
-    const getRolePermissions = (roleId) => {
+    }, [permissions]);    // Get role permissions
+    const getRolePermissions = useCallback((roleId) => {
         return rolePermissions
             .filter(rp => rp.role_id === roleId)
             .map(rp => rp.permission_id);
-    };    // Get permission by ID
+    }, [rolePermissions]);// Get permission by ID
     const getPermissionById = (permissionId) => {
         return permissions.find(p => p.id === permissionId);
     };
@@ -167,9 +170,11 @@ const RoleManagement = ({
     };    // Event handlers
     const handleRoleSelect = useCallback((roleId) => {
         setActiveRoleId(roleId);
-        const rolePerms = getRolePermissions(roleId);
+        const rolePerms = rolePermissions
+            .filter(rp => rp.role_id === roleId)
+            .map(rp => rp.permission_id);
         setSelectedPermissions(new Set(rolePerms));
-    }, [rolePermissions, getRolePermissions]);
+    }, [rolePermissions]);
 
     const handleSearchChange = useCallback((value) => {
         setSearchQuery(value);
@@ -192,16 +197,16 @@ const RoleManagement = ({
             permissions: [],
             hierarchy_level: 10
         });
-    }, []);
-
-    // Toggle permission for active role
-    const togglePermission = async (permissionName) => {
-        if (!activeRole) return;
+    }, []);    // Toggle permission for active role
+    const togglePermission = useCallback(async (permissionName) => {
+        if (!activeRole || isLoading) return;
 
         setIsLoading(true);
         try {
             const hasPermission = roleHasPermission(activeRole.id, permissionName);
             const action = hasPermission ? 'revoke' : 'grant';
+
+            console.log(`Toggling permission: ${permissionName}, action: ${action}, role: ${activeRole.name}`);
 
             const response = await axios.post('/admin/roles/update-permission', {
                 role_id: activeRole.id,
@@ -214,6 +219,7 @@ const RoleManagement = ({
                 const permission = permissions.find(p => p.name === permissionName);
                 if (permission) {
                     if (hasPermission) {
+                        // Remove permission
                         setRolePermissions(prev => 
                             prev.filter(rp => !(rp.role_id === activeRole.id && rp.permission_id === permission.id))
                         );
@@ -223,6 +229,7 @@ const RoleManagement = ({
                             return newSet;
                         });
                     } else {
+                        // Add permission
                         setRolePermissions(prev => [
                             ...prev,
                             { role_id: activeRole.id, permission_id: permission.id }
@@ -239,14 +246,14 @@ const RoleManagement = ({
         } finally {
             setIsLoading(false);
         }
-    };
-
-    // Toggle module permissions
-    const toggleModulePermissions = async (module) => {
-        if (!activeRole) return;
+    }, [activeRole, isLoading, roleHasPermission, permissions, setRolePermissions, setSelectedPermissions]);    // Toggle module permissions
+    const toggleModulePermissions = useCallback(async (module) => {
+        if (!activeRole || isLoading) return;
 
         setIsLoading(true);
         try {
+            console.log(`Toggling module permissions for: ${module}, role: ${activeRole.name}`);
+            
             const response = await axios.post('/admin/roles/update-module', {
                 roleId: activeRole.id,
                 module: module,
@@ -271,7 +278,7 @@ const RoleManagement = ({
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [activeRole, isLoading]);
 
     // Handle role form submission
     const handleRoleSubmit = async () => {
@@ -853,26 +860,43 @@ const RoleManagement = ({
                                                                                 </div>
                                                                             </div>
                                                                         </AccordionSummary>
-                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>
-                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                                                 {modulePermissions.map((permission) => {
                                                                                     const isChecked = roleHasPermission(activeRole.id, permission.name);
+                                                                                    const isDisabled = isLoading || !canManageRole(activeRole);
+                                                                                    
                                                                                     return (
                                                                                         <div
                                                                                             key={permission.id}
-                                                                                            className={`p-3 border rounded-xl hover:bg-white/5 transition-all duration-200 cursor-pointer ${
+                                                                                            className={`p-3 border rounded-xl transition-all duration-200 ${
+                                                                                                isDisabled 
+                                                                                                    ? 'cursor-not-allowed opacity-50' 
+                                                                                                    : 'cursor-pointer hover:bg-white/5'
+                                                                                            } ${
                                                                                                 isChecked 
                                                                                                     ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30' 
                                                                                                     : 'bg-white/5 border-white/10 hover:border-white/20'
                                                                                             }`}
-                                                                                            onClick={() => togglePermission(permission.name)}
+                                                                                            onClick={(e) => {
+                                                                                                e.preventDefault();
+                                                                                                e.stopPropagation();
+                                                                                                if (!isDisabled) {
+                                                                                                    togglePermission(permission.name);
+                                                                                                }
+                                                                                            }}
                                                                                         >
                                                                                             <FormControlLabel
                                                                                                 control={
                                                                                                     <Checkbox
                                                                                                         checked={isChecked}
-                                                                                                        onChange={() => togglePermission(permission.name)}
-                                                                                                        disabled={isLoading || !canManageRole(activeRole)}
+                                                                                                        onChange={(e) => {
+                                                                                                            e.preventDefault();
+                                                                                                            e.stopPropagation();
+                                                                                                            if (!isDisabled) {
+                                                                                                                togglePermission(permission.name);
+                                                                                                            }
+                                                                                                        }}
+                                                                                                        disabled={isDisabled}
                                                                                                         sx={{
                                                                                                             color: isChecked ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
                                                                                                             '&.Mui-checked': {
@@ -898,8 +922,7 @@ const RoleManagement = ({
                                                                                                         </Typography>
                                                                                                     </div>
                                                                                                 }
-                                                                                                className="m-0 w-full"
-                                                                                                onClick={(e) => e.stopPropagation()}
+                                                                                                className="m-0 w-full pointer-events-none"
                                                                                             />
                                                                                         </div>
                                                                                     );
