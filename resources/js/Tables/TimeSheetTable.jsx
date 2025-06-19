@@ -52,225 +52,10 @@ import * as XLSX from 'xlsx'; // Add this import
 import { jsPDF } from 'jspdf'; // Changed import
 import autoTable from 'jspdf-autotable'; // Changed import
 
-// Updated function to handle both daily and monthly views
-const processAttendanceData = (rawAttendances, isEmployeeView = false) => {
-    if (!Array.isArray(rawAttendances)) return [];
-
-    // For employee view, group by date instead of user to show per-date records
-    if (isEmployeeView) {
-        // Group by date for employee monthly view
-        const groupedByDate = rawAttendances.reduce((acc, attendance) => {
-            const dateKey = attendance.date.split('T')[0]; // Get YYYY-MM-DD format
-            
-            if (!acc[dateKey]) {
-                acc[dateKey] = {
-                    id: attendance.id,
-                    user_id: attendance.user?.id,
-                    user: attendance.user,
-                    date: attendance.date,
-                    punches: []
-                };
-            }
-            
-            // Add punch data for this date
-            acc[dateKey].punches.push({
-                punch_in: attendance.punchin_time,
-                punch_out: attendance.punchout_time || null,
-                id: attendance.id,
-                date: attendance.date
-            });
-            
-            return acc;
-        }, {});
-
-        // Process each date entry
-        const processedData = Object.values(groupedByDate).map(entry => {
-            if (entry.punches.length === 0) {
-                return {
-                    ...entry,
-                    punchin_time: null,
-                    punchout_time: null,
-                    total_work_minutes: 0,
-                    punch_count: 0,
-                    complete_punches: 0,
-                    has_incomplete_punch: false
-                };
-            }
-
-            // Sort punches by time for this specific date
-            entry.punches.sort((a, b) => {
-                if (!a.punch_in) return 1;
-                if (!b.punch_in) return -1;
-                
-                const timeA = new Date(`${a.date}T${a.punch_in}`);
-                const timeB = new Date(`${b.date}T${b.punch_in}`);
-                return timeA - timeB;
-            });
-
-            // Get first and last punch for this date
-            const firstPunch = entry.punches[0];
-            const punchesWithOut = entry.punches.filter(p => p.punch_out);
-            let lastPunchOut = null;
-            
-            if (punchesWithOut.length > 0) {
-                punchesWithOut.sort((a, b) => {
-                    const timeA = new Date(`${a.date}T${a.punch_out}`);
-                    const timeB = new Date(`${b.date}T${b.punch_out}`);
-                    return timeB - timeA; // Sort descending to get latest
-                });
-                lastPunchOut = punchesWithOut[0];
-            }
-            
-            let totalWorkMinutes = 0;
-            let completePunches = 0;
-            let hasIncompletePunch = false;
-            
-            // Calculate total work time for this date
-            entry.punches.forEach(punch => {
-                if (punch.punch_in && punch.punch_out) {
-                    const punchDate = punch.date.split('T')[0];
-                    const punchIn = new Date(`${punchDate}T${punch.punch_in}`);
-                    const punchOut = new Date(`${punchDate}T${punch.punch_out}`);
-                    
-                    if (!isNaN(punchIn.getTime()) && !isNaN(punchOut.getTime())) {
-                        const diffMs = punchOut - punchIn;
-                        if (diffMs > 0) {
-                            totalWorkMinutes += diffMs / (1000 * 60);
-                            completePunches++;
-                        }
-                    }
-                } else if (punch.punch_in && !punch.punch_out) {
-                    hasIncompletePunch = true;
-                }
-            });
-
-            return {
-                ...entry,
-                punchin_time: firstPunch?.punch_in || null,
-                punchout_time: lastPunchOut?.punch_out || null,
-                total_work_minutes: Math.round(totalWorkMinutes * 100) / 100,
-                punch_count: entry.punches.length,
-                complete_punches: completePunches,
-                has_incomplete_punch: hasIncompletePunch,
-                first_punch_date: entry.date,
-                last_punch_date: entry.date
-            };
-        });
-
-        // Sort by date descending (newest first)
-        return processedData.sort((a, b) => new Date(b.date) - new Date(a.date));
-    }
-
-    // Original logic for daily view (Administrator view)
-    // Group by user.id for daily admin view
-    const groupedData = rawAttendances.reduce((acc, attendance) => {
-        const key = attendance.user?.id;
-        
-        if (!key) return acc;
-        
-        if (!acc[key]) {
-            acc[key] = {
-                id: attendance.id,
-                user_id: attendance.user.id,
-                user: attendance.user,
-                date: attendance.date,
-                punches: []
-            };
-        }
-        
-        acc[key].punches.push({
-            punch_in: attendance.punchin_time,
-            punch_out: attendance.punchout_time || null,
-            id: attendance.id,
-            date: attendance.date
-        });
-        
-        return acc;
-    }, {});
-
-    // Process each grouped entry (one per user)
-    const processedData = Object.values(groupedData).map(entry => {
-        if (entry.punches.length === 0) {
-            return {
-                ...entry,
-                punchin_time: null,
-                punchout_time: null,
-                total_work_minutes: 0,
-                punch_count: 0,
-                complete_punches: 0,
-                has_incomplete_punch: false
-            };
-        }
-
-        // Sort all punches by punch_in time to get chronological order
-        entry.punches.sort((a, b) => {
-            if (!a.punch_in) return 1;
-            if (!b.punch_in) return -1;
-            
-            const timeA = new Date(`${a.date}T${a.punch_in}`);
-            const timeB = new Date(`${b.date}T${b.punch_in}`);
-            return timeA - timeB;
-        });
-
-        // Get the very first punch in time across all dates
-        const firstPunch = entry.punches[0];
-        
-        // Get the very last punch out time across all dates
-        const punchesWithOut = entry.punches.filter(p => p.punch_out);
-        let lastPunchOut = null;
-        
-        if (punchesWithOut.length > 0) {
-            punchesWithOut.sort((a, b) => {
-                const timeA = new Date(`${a.date}T${a.punch_out}`);
-                const timeB = new Date(`${b.date}T${b.punch_out}`);
-                return timeB - timeA;
-            });
-            lastPunchOut = punchesWithOut[0];
-        }
-        
-        let totalWorkMinutes = 0;
-        let completePunches = 0;
-        let hasIncompletePunch = false;
-        
-        // Calculate total work time for all complete punch pairs
-        entry.punches.forEach(punch => {
-            if (punch.punch_in && punch.punch_out) {
-                const punchDate = punch.date.split('T')[0];
-                const punchIn = new Date(`${punchDate}T${punch.punch_in}`);
-                const punchOut = new Date(`${punchDate}T${punch.punch_out}`);
-                
-                if (!isNaN(punchIn.getTime()) && !isNaN(punchOut.getTime())) {
-                    const diffMs = punchOut - punchIn;
-                    if (diffMs > 0) {
-                        totalWorkMinutes += diffMs / (1000 * 60);
-                        completePunches++;
-                    }
-                }
-            } else if (punch.punch_in && !punch.punch_out) {
-                hasIncompletePunch = true;
-            }
-        });
-
-        return {
-            ...entry,
-            punchin_time: firstPunch?.punch_in || null,
-            punchout_time: lastPunchOut?.punch_out || null,
-            total_work_minutes: Math.round(totalWorkMinutes * 100) / 100,
-            punch_count: entry.punches.length,
-            complete_punches: completePunches,
-            has_incomplete_punch: hasIncompletePunch,
-            first_punch_date: firstPunch?.date || entry.date,
-            last_punch_date: lastPunchOut?.date || entry.date
-        };
-    });
-
-    return processedData;
-};
-
 const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => {
     const { auth } = usePage().props;
     const { url } = usePage();
-    const theme = useTheme(); // Add this
+    const theme = useTheme();
     const isLargeScreen = useMediaQuery('(min-width: 1025px)');
     const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
 
@@ -284,7 +69,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     const [currentPage, setCurrentPage] = useState(1);
     const [employee, setEmployee] = useState('');
     const [isLoaded, setIsLoaded] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
+    const [refreshKey, setRefreshKey] = useState(0);
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
     });
@@ -300,7 +85,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             ? route('getAllUsersAttendanceForDate')
             : route('getCurrentUserAttendanceForDate');
         try {
-            setIsLoaded(false); // Set loading state
+            setIsLoaded(false);
             const response = await axios.get(attendanceRoute, {
                 params: {
                     page,
@@ -309,21 +94,18 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     date: selectedDate,
                     currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
                     currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
-                    _t: forceRefresh ? Date.now() : undefined // Cache buster for refresh
+                    _t: forceRefresh ? Date.now() : undefined
                 }
             });
          
             if (response.status === 200) {
-                // Pass the isEmployeeView flag to determine processing logic
-                const isEmployeeView = url === '/attendance-employee';
-                const processedAttendances = processAttendanceData(response.data.attendances, isEmployeeView);
-               
-                
-                setAttendances(processedAttendances);
-                setLeaves(response.data.leaves);
-                setAbsentUsers(response.data.absent_users);
-                setTotalRows(processedAttendances.length); // Use processed data length
-                setLastPage(Math.ceil(processedAttendances.length / perPage)); // Calculate based on processed data
+                // Use backend data directly - no more processing needed
+                setAttendances(response.data.attendances || []);
+                setLeaves(response.data.leaves || []);
+                setAbsentUsers(response.data.absent_users || []);
+                setTotalRows(response.data.total || 0);
+                setLastPage(response.data.last_page || 1);
+                setCurrentPage(response.data.current_page || 1);
                 setError('');
                 setIsLoaded(true);
             }
@@ -369,10 +151,55 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
 
     const handleLoadMore = () => {
         setVisibleUsersCount((prev) => prev + 2);
-    };
-
-    const getUserLeave = (userId) => {
+    };    const getUserLeave = (userId) => {
         return leaves.find((leave) => String(leave.user_id) === String(userId));
+    };    // Helper function to safely format time
+    const formatTime = (timeString, date) => {
+        if (!timeString) return null;
+        
+        try {
+            let dateObj;
+            
+            // Handle different time formats
+            if (typeof timeString === 'string') {
+                // If it's just a time string (HH:MM:SS), combine with date
+                if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                    const dateTimeString = `${date}T${timeString}`;
+                    dateObj = new Date(dateTimeString);
+                } 
+                // If it's already a full datetime string
+                else if (timeString.includes('T') || timeString.includes(' ')) {
+                    dateObj = new Date(timeString);
+                }
+                // If it's just HH:MM format
+                else if (timeString.match(/^\d{2}:\d{2}$/)) {
+                    const dateTimeString = `${date}T${timeString}:00`;
+                    dateObj = new Date(dateTimeString);
+                }
+                // Fallback - try to parse as is
+                else {
+                    dateObj = new Date(`${date}T${timeString}`);
+                }
+            } else {
+                // If it's already a Date object or timestamp
+                dateObj = new Date(timeString);
+            }
+            
+            // Check if the date is valid
+            if (isNaN(dateObj.getTime())) {
+                console.warn('Invalid time data:', timeString);
+                return 'Invalid time';
+            }
+            
+            return dateObj.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
+        } catch (error) {
+            console.warn('Error formatting time:', { timeString, date, error });
+            return 'Invalid time';
+        }
     };
 
     const getLeaveStatusIcon = (status) => {
@@ -404,9 +231,9 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
         { name: "Clock Out", uid: "clockout_time", icon: ClockIcon },
         { name: "Work Hours", uid: "production_time", icon: ClockIcon },
         { name: "Punches", uid: "punch_details", icon: ClockIcon }
-    ];
-
-    const renderCell = (attendance, columnKey) => {
+    ];    const renderCell = (attendance, columnKey) => {
+        const isCurrentDate = new Date(attendance.date).toDateString() === new Date().toDateString();
+        
         switch (columnKey) {
             case "date":
                 return (
@@ -415,20 +242,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             <CalendarDaysIcon className="w-4 h-4 text-primary" />
                             <Box className="flex flex-col">
                                 <span>
-                                    {new Date(attendance.first_punch_date || attendance.date).toLocaleString('en-US', {
+                                    {new Date(attendance.date).toLocaleString('en-US', {
                                         month: 'short',
                                         day: 'numeric',
                                         year: 'numeric',
                                     })}
                                 </span>
-                                {attendance.last_punch_date && attendance.last_punch_date !== attendance.first_punch_date && (
-                                    <span className="text-xs text-default-500">
-                                        to {new Date(attendance.last_punch_date).toLocaleString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                        })}
-                                    </span>
-                                )}
                             </Box>
                         </Box>
                     </TableCell>
@@ -448,21 +267,17 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             name={attendance.user?.name}
                         />
                     </TableCell>
-                );
-            case "clockin_time":
+                );            case "clockin_time":
                 return (
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-success" />
                             <Box className="flex flex-col">
                                 <span>
-                                    {attendance.punchin_time
-                                        ? new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                                            hour: 'numeric',
-                                            minute: '2-digit',
-                                            hour12: true,
-                                        })
-                                        : 'Not clocked in'}
+                                    {attendance.punchin_time 
+                                        ? formatTime(attendance.punchin_time, attendance.date) || 'Invalid time'
+                                        : 'Not clocked in'
+                                    }
                                 </span>
                                 {attendance.punchin_time && (
                                     <span className="text-xs text-default-500">
@@ -472,21 +287,19 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             </Box>
                         </Box>
                     </TableCell>
-                );
-            case "clockout_time":
+                );            case "clockout_time":
                 return (
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-danger" />
                             <Box className="flex flex-col">
                                 <span>
-                                    {attendance.punchout_time
-                                        ? new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                                            hour: 'numeric',
-                                            minute: '2-digit',
-                                            hour12: true,
-                                        })
-                                        : attendance.punchin_time ? 'Still working' : 'Not started'}
+                                    {attendance.punchout_time 
+                                        ? formatTime(attendance.punchout_time, attendance.date) || 'Invalid time'
+                                        : attendance.punchin_time 
+                                            ? (isCurrentDate ? 'Still working' : 'Not Punched Out')
+                                            : 'Not started'
+                                    }
                                 </span>
                                 {attendance.punchout_time && (
                                     <span className="text-xs text-default-500">
@@ -496,10 +309,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             </Box>
                         </Box>
                     </TableCell>
-                );
-            case "production_time":
+                );case "production_time":
                 const hasWorkTime = attendance.total_work_minutes > 0;
                 const hasIncompletePunch = attendance.has_incomplete_punch;
+                const isCurrentlyWorking = attendance.punchin_time && !attendance.punchout_time && isCurrentDate;
                 
                 if (hasWorkTime) {
                     const hours = Math.floor(attendance.total_work_minutes / 60);
@@ -518,7 +331,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             </Box>
                         </TableCell>
                     );
-                } else if (hasIncompletePunch || (attendance.punchin_time && !attendance.punchout_time)) {
+                } else if (isCurrentlyWorking) {
+                    // Currently working (today's date and has punch in but no punch out)
                     return (
                         <TableCell className="text-xs sm:text-sm md:text-base">
                             <Box className="flex items-center gap-2">
@@ -532,8 +346,24 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             </Box>
                         </TableCell>
                     );
+                } else if (attendance.punchin_time && !attendance.punchout_time && !isCurrentDate) {
+                    // Past date with incomplete punch
+                    return (
+                        <TableCell className="text-xs sm:text-sm md:text-base">
+                            <Box className="flex items-center gap-2">
+                                <ExclamationTriangleIcon className="w-4 h-4 text-danger" />
+                                <Box className="flex flex-col">
+                                    <span className="text-danger">Incomplete punch</span>
+                                    <span className="text-xs text-default-500">
+                                        Missing punch out
+                                    </span>
+                                </Box>
+                            </Box>
+                        </TableCell>
+                    );
                 }
                 
+                // No punch in at all
                 return (
                     <TableCell className="text-xs sm:text-sm md:text-base">
                         <Box className="flex items-center gap-2">
@@ -541,7 +371,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                             <Box className="flex flex-col">
                                 <span className="text-warning">No work time</span>
                                 <span className="text-xs text-default-500">
-                                    Incomplete punches
+                                    No attendance
                                 </span>
                             </Box>
                         </Box>
@@ -573,9 +403,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             default:
                 return <TableCell className="text-xs sm:text-sm md:text-base">N/A</TableCell>;
         }
-    };
-
-    // Excel download function
+    };    // Excel download function
     const downloadExcel = useCallback(() => {
         try {
             // Combine attendance and absent users data
@@ -593,7 +421,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
 
                 combinedData.push({
                     'No.': combinedData.length + 1,
-                    'Date': new Date(attendance.first_punch_date || attendance.date).toLocaleDateString('en-US', {
+                    'Date': new Date(attendance.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
@@ -601,19 +429,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     'Employee Name': attendance.user?.name || 'N/A',
                     'Employee ID': attendance.user?.employee_id || 'N/A',
                     'Designation': attendance.user?.designation_name || 'N/A',
-                    'Phone': attendance.user?.phone || 'N/A',
-                    'Clock In': attendance.punchin_time ? 
-                        new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        }) : 'Not clocked in',
+                    'Phone': attendance.user?.phone || 'N/A',                    'Clock In': attendance.punchin_time ? 
+                        formatTime(attendance.punchin_time, attendance.date) || 'Invalid time' : 'Not clocked in',
                     'Clock Out': attendance.punchout_time ? 
-                        new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        }) : (attendance.punchin_time ? 'Still working' : 'Not started'),
+                        formatTime(attendance.punchout_time, attendance.date) || 'Invalid time' : 
+                        (attendance.punchin_time ? 
+                            (new Date(attendance.date).toDateString() === new Date().toDateString() ? 'Still working' : 'Not Punched Out') : 
+                            'Not started'),
                     'Work Hours': workTime,
                     'Total Punches': attendance.punch_count || 0,
                     'Complete Punches': attendance.complete_punches || 0,
@@ -772,11 +594,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
 
             // Download file
             XLSX.writeFile(wb, filename);
-        } catch (error) {
-            console.error('Error generating Excel file:', error);
+        } catch (error) {            console.error('Error generating Excel file:', error);
             alert('Error generating Excel file. Please try again.');
         }
-    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave]);
+    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
 
     // PDF download function
     const downloadPDF = useCallback(() => {
@@ -814,28 +635,20 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                 
                 const remarks = status === 'Complete' ? 'Present - All complete' : 
                               status === 'In Progress' ? 'Present - Working' : 
-                              'Present - Incomplete';
-
-                tableData.push([
+                              'Present - Incomplete';                tableData.push([
                     tableData.length + 1,
-                    new Date(attendance.first_punch_date || attendance.date).toLocaleDateString('en-US', {
+                    new Date(attendance.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                     }),
-                    attendance.user?.name || 'N/A',
-                    attendance.punchin_time ? 
-                        new Date(`2024-06-04T${attendance.punchin_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        }) : 'Not clocked in',
+                    attendance.user?.name || 'N/A',                    attendance.punchin_time ? 
+                        formatTime(attendance.punchin_time, attendance.date) || 'Invalid time' : 'Not clocked in',
                     attendance.punchout_time ? 
-                        new Date(`2024-06-04T${attendance.punchout_time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        }) : (attendance.punchin_time ? 'Still working' : 'Not started'),
+                        formatTime(attendance.punchout_time, attendance.date) || 'Invalid time' : 
+                        (attendance.punchin_time ? 
+                            (new Date(attendance.date).toDateString() === new Date().toDateString() ? 'Still working' : 'Not Punched Out') : 
+                            'Not started'),
                     workTime,
                     `${attendance.complete_punches}/${attendance.punch_count}`,
                     remarks
@@ -936,39 +749,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
 
             // Download file
             doc.save(filename);
-        } catch (error) {
-            console.error('Error generating PDF file:', error);
+        } catch (error) {            console.error('Error generating PDF file:', error);
             alert('Error generating PDF file. Please try again.');
         }
-    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave]);
+    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
 
-   
-
-   // Recalculate visible users when absentUsers or updateTimeSheet changes
-    useEffect(() => {
-        setVisibleUsersCount(2);
-        const timer = setTimeout(() => {
-            calculateVisibleUsers();
-        }, 100);
-        window.addEventListener('resize', calculateVisibleUsers);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', calculateVisibleUsers);
-        };
-    }, [absentUsers, updateTimeSheet, calculateVisibleUsers]);
-
-    // Fetch attendance data when filters change
-    useEffect(() => {
-        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
-        // eslint-disable-next-line
-    }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet, refreshKey]);
-
-   
- 
-
-   
-
-    // Recalculate visible users when absentUsers or updateTimeSheet changes
+      // Recalculate visible users when absentUsers or updateTimeSheet changes
     useEffect(() => {
         setVisibleUsersCount(2);
         const timer = setTimeout(() => {
@@ -1156,7 +942,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                     </HeroCard>
                                 ) : (
                                     <Box 
-                                        sx={{ maxHeight: '70vh' }}
+                                      
                                         role="region"
                                         aria-label="Attendance data table"
                                     >
@@ -1193,18 +979,16 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                                     No attendance records found
                                                                 </Typography>
                                                             </Box>
-                                                        }
-                                                    >
+                                                        }                                                    >
                                                         {(attendance) => (
-                                                            <TableRow key={attendance.user_id}>
+                                                            <TableRow key={attendance.id || attendance.user_id}>
                                                                 {(columnKey) => renderCell(attendance, columnKey)}
                                                             </TableRow>
                                                         )}
                                                     </TableBody>
                                                 </Table>
                                             </Skeleton>
-                                        </ScrollShadow>
-                                        {totalRows > 10 && (
+                                        </ScrollShadow>                                        {totalRows > perPage && (
                                             <Box className="py-4 flex justify-center">
                                                 <Pagination
                                                     initialPage={1}

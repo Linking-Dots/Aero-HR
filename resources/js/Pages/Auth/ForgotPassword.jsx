@@ -32,7 +32,7 @@ export default function ForgotPassword() {
 
         if (step === 1) {
             // Send OTP
-            axios.post(route('password.email'), {
+            axios.post(route('password.send-otp'), {
                 email: data.email
             })
                 .then((response) => {
@@ -67,7 +67,7 @@ export default function ForgotPassword() {
                 });
         } else if (step === 3) {
             // Reset Password
-            axios.post(route('password.reset'), {
+            axios.post(route('password.reset-custom'), {
                 email: data.email,
                 newPassword: data.newPassword,
                 newPassword_confirmation: data.confirmPassword

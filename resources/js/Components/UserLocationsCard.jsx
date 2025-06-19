@@ -156,18 +156,47 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
         );
     }, []);
 
-    const parseLocation = useCallback((locationString) => {
-        if (!locationString || typeof locationString !== 'string') return null;
+    const parseLocation = useCallback((locationData) => {
+        if (!locationData) return null;
         
-        const coords = locationString.split(',');
-        if (coords.length !== 2) return null;
+        // Handle object format: {lat: 23.8845952, lng: 90.4986624, address: "", timestamp: "..."}
+        if (typeof locationData === 'object' && locationData.lat && locationData.lng) {
+            const lat = parseFloat(locationData.lat);
+            const lng = parseFloat(locationData.lng);
+            
+            if (isNaN(lat) || isNaN(lng)) return null;
+            
+            return { lat, lng };
+        }
         
-        const lat = parseFloat(coords[0].trim());
-        const lng = parseFloat(coords[1].trim());
+        // Handle string format (fallback for legacy data or direct JSON strings)
+        if (typeof locationData === 'string') {
+            // Try to parse as JSON first
+            try {
+                const parsed = JSON.parse(locationData);
+                if (parsed.lat && parsed.lng) {
+                    const lat = parseFloat(parsed.lat);
+                    const lng = parseFloat(parsed.lng);
+                    
+                    if (isNaN(lat) || isNaN(lng)) return null;
+                    
+                    return { lat, lng };
+                }
+            } catch (error) {
+                // If JSON parsing fails, try comma-separated coordinate format
+                const coords = locationData.split(',');
+                if (coords.length >= 2) {
+                    const lat = parseFloat(coords[0].trim());
+                    const lng = parseFloat(coords[1].trim());
+                    
+                    if (isNaN(lat) || isNaN(lng)) return null;
+                    
+                    return { lat, lng };
+                }
+            }
+        }
         
-        if (isNaN(lat) || isNaN(lng)) return null;
-        
-        return { lat, lng };
+        return null;
     }, []);
 
     const formatTime = useCallback((timeString) => {

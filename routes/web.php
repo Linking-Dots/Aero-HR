@@ -41,12 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/leave-update', [LeaveController::class, 'update'])->name('leave-update');
     Route::post('/leave-update-status', [LeaveController::class, 'updateStatus'])->name('leave-update-status');
     Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
-    Route::get('/leaves-paginate', [LeaveController::class, 'paginate'])->name('leaves.paginate');
-
-    Route::get('/attendance-employee', [AttendanceController::class, 'index2'])->name('attendance-employee');
-    Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('getCurrentUserPunch');
+    Route::get('/leaves-paginate', [LeaveController::class, 'paginate'])->name('leaves.paginate');    Route::get('/attendance-employee', [AttendanceController::class, 'index2'])->name('attendance-employee');
+    Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('attendance.current-user-punch');
     Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
     Route::get('/get-current-user-attendance-for-date', [AttendanceController::class, 'getCurrentUserAttendanceForDate'])->name('getCurrentUserAttendanceForDate');
+    Route::get('/get-client-ip', [AttendanceController::class, 'getClientIp'])->name('getClientIp');
 
     Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('daily-works');
     Route::get('/daily-works-paginate', [DailyWorkController::class, 'paginate'])->name('dailyWorks.paginate');
@@ -63,10 +62,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/holiday-add', [HolidayController::class, 'create'])->name('holiday-add');
     Route::delete('/holiday-delete', [HolidayController::class, 'delete'])->name('holiday-delete');
 
-
-
     Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
     Route::post('/punchOut', [AttendanceController::class, 'punchOut'])->name('punchOut');
+    Route::post('/attendance/punch', [AttendanceController::class, 'punch'])->name('attendance.punch');
 
 
     //Profile Routes:
@@ -178,38 +176,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports-json', [ReportController::class, 'allReports'])->name('allReports');
     Route::post('/reports/add', [ReportController::class, 'addReport'])->name('addReport');
     Route::post('/reports/delete', [ReportController::class, 'deleteReport'])->name('deleteReport');
-    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');
-
-    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');
+    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');
     Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
-
-
-
-
 });
 
-
-// Add these routes to support the punch status component
-
-// Get user's attendance rules
-Route::get('/user/attendance-rules', function () {
-    $user = auth()->user();
-    $rules = \App\Models\AttendanceRule::forUser($user)->with(['attendanceType', 'attendanceLocation'])->get();
-    
-    return response()->json([
-        'rules' => $rules,
-        'user_attendance_type' => $user->attendanceType,
-    ]);
-})->name('user.attendance-rules');
-
-// Main punch endpoint (already exists in your controller)
-Route::post('/attendance/punch', [AttendanceController::class, 'punch'])->name('attendance.punch');
-
-// Get current user punch status (already exists)
-Route::get('/attendance/current-user-punch', [AttendanceController::class, 'getCurrentUserPunch'])->name('attendance.current-user-punch');
-
-
 Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
-
 
 require __DIR__.'/auth.php';

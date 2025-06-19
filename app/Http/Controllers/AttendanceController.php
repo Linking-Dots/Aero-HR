@@ -32,13 +32,11 @@ class AttendanceController extends Controller
         return Inertia::render('AttendanceEmployee', [
             'title' => 'Attendances',
         ]);
-    }
-
-    public function paginate(Request $request): \Illuminate\Http\JsonResponse
+    }    public function paginate(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-            $perPage = $request->get('perPage', 30);
-            $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+            $perPage = (int) $request->get('perPage', 30);
+            $page = $request->get('employee') != '' ? 1 : (int) $request->get('page', 1);
             $employee = $request->get('employee');
             $currentMonth = $request->get('currentMonth');
             $currentYear = $request->get('currentYear');
@@ -60,13 +58,11 @@ class AttendanceController extends Controller
                 $paginatedAttendances = $paginatedAttendances->filter(function ($attendance) use ($employee) {
                     return stripos($attendance['name'], $employee) !== false;
                 })->values();
-            }
-
-            return response()->json([
+            }            return response()->json([
                 'data' => $paginatedAttendances,
-                'total' => $sortedAttendances->count(),
-                'page' => $page,
-                'last_page' => ceil($sortedAttendances->count() / $perPage),
+                'total' => (int) $sortedAttendances->count(),
+                'page' => (int) $page,
+                'last_page' => (int) ceil($sortedAttendances->count() / $perPage),
                 'leaveTypes' => $leaveTypes,
                 'leaveCounts' => $leaveCountsArray,
             ]);
@@ -345,15 +341,13 @@ class AttendanceController extends Controller
                 ->whereDate('date', $selectedDate)
                 ->get()
                 ->map(function ($location) {
-                    $user = User::find($location->user_id);
-
-                    return [
+                    $user = User::find($location->user_id);                    return [
                         'user_id' => $user->id,
                         'name' => $user->name,
                         'profile_image' => $user->profile_image,
                         'designation' => Designation::find($user->designation)->title,
-                        'punchin_location' => $location->punchin_location,
-                        'punchout_location' => $location->punchout_location,
+                        'punchin_location' => $location->punchin_location_array,
+                        'punchout_location' => $location->punchout_location_array,
                         'punchin_time' => $location->punchin,
                         'punchout_time' => $location->punchout,
                     ];
@@ -403,14 +397,12 @@ class AttendanceController extends Controller
                     $punchInTime = Carbon::parse($attendance->punchin);
                     $punchOutTime = $attendance->punchout ? Carbon::parse($attendance->punchout) : $now;
                     $duration = $punchInTime->diffInSeconds($punchOutTime);
-                    $totalProductionTime += $duration;
-
-                    return [
+                    $totalProductionTime += $duration;                    return [
                         'date' => $attendance->date,
                         'punchin_time' => $attendance->punchin,
-                        'punchin_location' => $attendance->punchin_location,
+                        'punchin_location' => $attendance->punchin_location_array,
                         'punchout_time' => $attendance->punchout,
-                        'punchout_location' => $attendance->punchout_location,
+                        'punchout_location' => $attendance->punchout_location_array,
                         'duration' => gmdate('H:i:s', $duration)
                     ];
                 });
@@ -425,16 +417,12 @@ class AttendanceController extends Controller
             report($exception);
             return response()->json('An error occurred while retrieving attendance data.', 500);
         }
-    }
-
-    public function getAllUsersAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
-    {
-        // Get the date from the query parameter, defaulting to today's date if none is provided
+    }    public function getAllUsersAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
+    {        // Get the date from the query parameter, defaulting to today's date if none is provided
         $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
-        $perPage = $request->get('perPage', 10); // Default to 10 users per page
-        $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
+        $perPage = (int) $request->get('perPage', 10); // Default to 10 users per page
+        $page = $request->get('employee') != '' ? 1 : (int) $request->get('page', 1);
         $employee = $request->get('employee', '');
-
 
         try {
             // Get all users with Employee role
@@ -473,34 +461,74 @@ class AttendanceController extends Controller
             // Identify absent users: filter out users who don't have any attendance record
             $absentUsers = $allUsers->filter(function ($user) use ($usersWithAttendance) {
                 return !$usersWithAttendance->contains('id', $user->id);
-            });
-
-            if ($attendanceRecords->isEmpty()) {
+            });            if ($attendanceRecords->isEmpty()) {
                 return response()->json([
                     'message' => 'No attendance records found for the selected date.',
                     'attendances' => [],
                     'absent_users' => $allUsers->values(), // All users are absent if no attendance is recorded
                     'leaves' => [],
-                    'current_page' => $page,
+                    'current_page' => (int) $page,
                     'last_page' => 1,
                     'total' => 0,
                 ]);
             }
 
-            // Transform the attendance records into a response-friendly format
-            $formattedRecords = $attendanceRecords->map(function ($record) {
+            // Group attendance records by user (Admin view logic)
+            $groupedByUser = $attendanceRecords->groupBy('user_id')->map(function ($userAttendances) {
+                $firstRecord = $userAttendances->first();
+                $user = $firstRecord->user;
+                
+                // Sort punches by time
+                $sortedPunches = $userAttendances->sortBy('punchin');
+                
+                // Calculate totals for this user
+                $totalWorkMinutes = 0;
+                $completePunches = 0;
+                $hasIncompletePunch = false;
+                
+                $punches = $sortedPunches->map(function ($record) use (&$totalWorkMinutes, &$completePunches, &$hasIncompletePunch) {
+                    if ($record->punchin && $record->punchout) {
+                        $punchIn = Carbon::parse($record->punchin);
+                        $punchOut = Carbon::parse($record->punchout);
+                        $workMinutes = $punchIn->diffInMinutes($punchOut);
+                        $totalWorkMinutes += $workMinutes;
+                        $completePunches++;
+                    } elseif ($record->punchin && !$record->punchout) {
+                        $hasIncompletePunch = true;
+                    }
+                    
+                    return [
+                        'punch_in' => $record->punchin,
+                        'punch_out' => $record->punchout,
+                        'id' => $record->id,
+                        'date' => $record->date,
+                        'punchin_location' => $record->punchin_location_array,
+                        'punchout_location' => $record->punchout_location_array,
+                    ];
+                })->values();
+                
+                // Get first punch and last complete punch
+                $firstPunch = $sortedPunches->first();
+                $lastCompletePunch = $sortedPunches->where('punchout', '!=', null)->last();
+                
                 return [
-                    'id' => $record->id,
-                    'date' => Carbon::parse($record->date)->toIso8601String(),
-                    'user' => $record->user,
-                    'punchin_time' => $record->punchin,
-                    'punchin_location' => $record->punchin_location,
-                    'punchout_time' => $record->punchout,
-                    'punchout_location' => $record->punchout_location,
+                    'id' => 'user-' . $user->id, // Unique ID for user grouping
+                    'user_id' => $user->id,
+                    'user' => $user,
+                    'date' => $firstRecord->date,
+                    'punchin_time' => $firstPunch->punchin,
+                    'punchout_time' => $lastCompletePunch ? $lastCompletePunch->punchout : null,
+                    'punchin_location' => $firstPunch->punchin_location_array,
+                    'punchout_location' => $lastCompletePunch ? $lastCompletePunch->punchout_location_array : null,
+                    'total_work_minutes' => round($totalWorkMinutes, 2),
+                    'punch_count' => $userAttendances->count(),
+                    'complete_punches' => $completePunches,
+                    'has_incomplete_punch' => $hasIncompletePunch,
+                    'first_punch_date' => $firstRecord->date,
+                    'last_punch_date' => $sortedPunches->last()->date,
+                    'punches' => $punches
                 ];
-            });
-
-
+            })->values();
 
             // Get today's leaves
             $todayLeaves = DB::table('leaves')
@@ -508,87 +536,160 @@ class AttendanceController extends Controller
                 ->select('leaves.*', 'leave_settings.type as leave_type')
                 ->whereDate('leaves.from_date', '<=', $selectedDate)
                 ->whereDate('leaves.to_date', '>=', $selectedDate)
-                ->get();
-
-            // Calculate pagination info based on users, not attendance records
+                ->get();            // Calculate pagination info based on users, not attendance records
             $totalUsers = $usersWithAttendance->count();
-            $lastPage = ceil($totalUsers / $perPage);
+            $lastPage = (int) ceil($totalUsers / $perPage);
 
             // Return paginated data for attendances, absent users, and leave data
             return response()->json([
-                'attendances' => $formattedRecords,
+                'attendances' => $groupedByUser,
                 'absent_users' => $absentUsers->values(),
                 'leaves' => $todayLeaves,
-                'current_page' => $page,
+                'current_page' => (int) $page,
                 'last_page' => $lastPage,
-                'total' => $totalUsers, // Total number of users with attendance, not total records
+                'total' => (int) $totalUsers, // Total number of users with attendance, not total records
             ]);
 
         } catch (Throwable $exception) {
             // Handle unexpected exceptions during data retrieval
             report($exception); // Report the exception for debugging or logging
             return response()->json([
+                'error' => 'An error occurred while retrieving attendance data.',
+                'details' => $exception->getMessage() // Return the error message for debugging
+            ], 500);
+        }
+    }    public function getCurrentUserAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $perPage = (int) $request->get('perPage', 10); // Default to 10 items per page
+        $page = $request->get('employee') != '' ? 1 : (int) $request->get('page', 1);
+        $currentMonth = $request->get('currentMonth'); // Filter by month
+        $currentYear = $request->get('currentYear'); // Filter by year
+
+        try {
+            // Get all attendance records for the current user for the specified month/year
+            $attendanceRecords = Attendance::with('user')
+                ->whereNotNull('punchin')
+                ->where('user_id', Auth::id())
+                ->whereYear('date', $currentYear)
+                ->whereMonth('date', $currentMonth)
+                ->orderBy('date')
+                ->orderBy('punchin')
+                ->get();            if ($attendanceRecords->isEmpty()) {
+                return response()->json([
+                    'message' => 'No attendance records found for the selected month.',
+                    'attendances' => [],
+                    'absent_users' => [],
+                    'leaves' => [],
+                    'current_page' => (int) $page,
+                    'last_page' => 1,
+                    'total' => 0,
+                ]);
+            }
+
+            // Group attendance records by date (Employee view logic)
+            $groupedByDate = $attendanceRecords->groupBy(function ($record) {
+                return Carbon::parse($record->date)->format('Y-m-d');
+            })->map(function ($dateAttendances, $date) {
+                $firstRecord = $dateAttendances->first();
+                $user = $firstRecord->user;
+                
+                // Sort punches by time for this date
+                $sortedPunches = $dateAttendances->sortBy('punchin');
+                
+                // Calculate totals for this date
+                $totalWorkMinutes = 0;
+                $completePunches = 0;
+                $hasIncompletePunch = false;
+                
+                $punches = $sortedPunches->map(function ($record) use (&$totalWorkMinutes, &$completePunches, &$hasIncompletePunch) {
+                    if ($record->punchin && $record->punchout) {
+                        $punchIn = Carbon::parse($record->punchin);
+                        $punchOut = Carbon::parse($record->punchout);
+                        $workMinutes = $punchIn->diffInMinutes($punchOut);
+                        $totalWorkMinutes += $workMinutes;
+                        $completePunches++;
+                    } elseif ($record->punchin && !$record->punchout) {
+                        $hasIncompletePunch = true;
+                    }
+                    
+                    return [
+                        'punch_in' => $record->punchin,
+                        'punch_out' => $record->punchout,
+                        'id' => $record->id,
+                        'date' => $record->date,
+                        'punchin_location' => $record->punchin_location_array,
+                        'punchout_location' => $record->punchout_location_array,
+                    ];
+                })->values();
+                
+                // Get first punch and last complete punch for this date
+                $firstPunch = $sortedPunches->first();
+                $lastCompletePunch = $sortedPunches->where('punchout', '!=', null)->last();
+                
+                return [
+                    'id' => $firstRecord->id, // Use first record ID for the date
+                    'user_id' => $user->id,
+                    'user' => $user,
+                    'date' => $date,
+                    'punchin_time' => $firstPunch->punchin,
+                    'punchout_time' => $lastCompletePunch ? $lastCompletePunch->punchout : null,
+                    'punchin_location' => $firstPunch->punchin_location_array,
+                    'punchout_location' => $lastCompletePunch ? $lastCompletePunch->punchout_location_array : null,
+                    'total_work_minutes' => round($totalWorkMinutes, 2),
+                    'punch_count' => $dateAttendances->count(),
+                    'complete_punches' => $completePunches,
+                    'has_incomplete_punch' => $hasIncompletePunch,
+                    'first_punch_date' => $date,
+                    'last_punch_date' => $date,
+                    'punches' => $punches
+                ];
+            })->values();
+
+            // Sort by date descending (newest first)
+            $sortedByDate = $groupedByDate->sortByDesc('date')->values();            // Apply pagination to the grouped data
+            $paginatedData = $sortedByDate->forPage($page, $perPage)->values();
+            $totalRecords = $sortedByDate->count();
+            $lastPage = (int) ceil($totalRecords / $perPage);
+
+            // Return paginated data for attendances
+            return response()->json([
+                'attendances' => $paginatedData,
+                'absent_users' => [], // No absent users for employee view
+                'leaves' => [],
+                'current_page' => (int) $page,
+                'last_page' => $lastPage,
+                'total' => (int) $totalRecords,
+            ]);} catch (Throwable $exception) {
+            // Handle unexpected exceptions during data retrieval
+            report($exception); // Report the exception for debugging or logging
+              return response()->json([
                 'error' => 'An error occurred while retrieving attendance data.',
                 'details' => $exception->getMessage() // Return the error message for debugging
             ], 500);
         }
     }
-    public function getCurrentUserAttendanceForDate(Request $request): \Illuminate\Http\JsonResponse
+
+    /**
+     * Get the client's IP address
+     */
+    public function getClientIp(Request $request): \Illuminate\Http\JsonResponse
     {
-        $perPage = $request->get('perPage', 10); // Default to 30 items per page
-        $page = $request->get('employee') != '' ? 1 : $request->get('page', 1);
-        $currentMonth = $request->get('currentMonth'); // Filter by start date
-        $currentYear = $request->get('currentYear'); // Filter by end date
-
-        try {
-
-            $attendanceQuery = Attendance::whereNotNull('punchin')
-                ->where('user_id', Auth::id())
-                ->whereYear('date', $currentYear)
-                ->whereMonth('date', $currentMonth);
-
-
-            $attendanceRecords = $attendanceQuery->paginate($perPage, ['*'], 'page', $page);
-
-            if ($attendanceRecords->isEmpty()) {
-                return response()->json([
-                    'message' => 'No attendance records found for the selected month.',
-                    'absent_users' => [] // All users are absent if no attendance is recorded
-                ], 404);
+        $ip = $request->ip();
+        
+        // Try to get the real IP if behind proxy
+        if ($request->hasHeader('X-Forwarded-For')) {
+            $ip = $request->header('X-Forwarded-For');
+            // If multiple IPs, get the first one
+            if (strpos($ip, ',') !== false) {
+                $ip = trim(explode(',', $ip)[0]);
             }
-
-            // Transform the attendance records into a response-friendly format
-            $formattedRecords = $attendanceRecords->map(function ($record) {
-                return [
-                    'id' => $record->id,
-                    'date' => Carbon::parse($record->date)->toIso8601String(),
-                    'punchin_time' => $record->punchin,
-                    'punchin_location' => $record->punchin_location,
-                    'punchout_time' => $record->punchout,
-                    'punchout_location' => $record->punchout_location,
-                ];
-            });
-
-
-
-
-            // Return paginated data for attendances, absent users, and leave data
-            return response()->json([
-                'attendances' => $formattedRecords,
-                'absent_users' => [], // Return absent users in array format
-                'leaves' => [],
-                'current_page' => $attendanceRecords->currentPage(),
-                'last_page' => $attendanceRecords->lastPage(),
-                'total' => $attendanceRecords->total(),
-            ]);
-
-        } catch (Throwable $exception) {
-            // Handle unexpected exceptions during data retrieval
-            report($exception); // Report the exception for debugging or logging
-            return response()->json([
-                'error' => 'An error occurred while retrieving attendance data.',
-                'details' => $exception->getMessage() // Return the error message for debugging
-            ], 500);
+        } elseif ($request->hasHeader('X-Real-IP')) {
+            $ip = $request->header('X-Real-IP');
         }
+        
+        return response()->json([
+            'ip' => $ip,
+            'timestamp' => now()->toISOString()
+        ]);
     }
 }

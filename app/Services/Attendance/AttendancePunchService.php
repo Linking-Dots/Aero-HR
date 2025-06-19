@@ -89,12 +89,10 @@ class AttendancePunchService
             'action' => 'punch_in',
             'attendance_id' => $attendance->id
         ];
-    }
-
-    /**
+    }    /**
      * Format location data from request
      */
-    private function formatLocation(Request $request): ?array
+    private function formatLocation(Request $request): ?string
     {
         $lat = $request->input('lat');
         $lng = $request->input('lng');
@@ -103,11 +101,13 @@ class AttendancePunchService
             return null;
         }
 
-        return [
+        $locationData = [
             'lat' => $lat,
             'lng' => $lng,
             'address' => $request->input('address', ''),
             'timestamp' => now()->toISOString()
         ];
+
+        return json_encode($locationData);
     }
 }

@@ -35,7 +35,7 @@ export default function ResetPassword({ status }) {
         setProcessing(true);
 
         // Replace with your own logic for making HTTP requests
-        post(route('password.update'), {
+        post(route('password.update-custom'), {
             old_password: data.oldPassword,
             new_password: data.newPassword
         })

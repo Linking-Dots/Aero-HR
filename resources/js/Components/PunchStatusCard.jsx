@@ -304,7 +304,7 @@ const PunchStatusCard = () => {
             
             let currentIp = 'Unknown';
             try {
-                const ipResponse = await axios.get('https://api.ipify.org?format=json');
+                const ipResponse = await axios.get(route('getClientIp'));
                 currentIp = ipResponse.data.ip;
             } catch (ipError) {
                 console.warn('Could not fetch IP address:', ipError);
@@ -425,6 +425,42 @@ const PunchStatusCard = () => {
         } catch (error) {
             console.warn('Error formatting time:', timeString, error);
             return timeString; // Return original string if error occurs
+        }
+    };
+
+    const formatLocation = (locationData) => {
+        if (!locationData) return 'Location not available';
+        
+        try {
+            // Handle object format: {lat: 23.8845952, lng: 90.4986624, address: "", timestamp: "..."}
+            if (typeof locationData === 'object' && locationData.lat && locationData.lng) {
+                if (locationData.address && locationData.address.trim()) {
+                    return locationData.address.substring(0, 30);
+                }
+                return `${locationData.lat.toFixed(4)}, ${locationData.lng.toFixed(4)}`;
+            }
+            
+            // Handle string format (legacy data or JSON strings)
+            if (typeof locationData === 'string') {
+                // Try to parse as JSON first
+                try {
+                    const parsed = JSON.parse(locationData);
+                    if (parsed.lat && parsed.lng) {
+                        if (parsed.address && parsed.address.trim()) {
+                            return parsed.address.substring(0, 30);
+                        }
+                        return `${parsed.lat.toFixed(4)}, ${parsed.lng.toFixed(4)}`;
+                    }
+                } catch (error) {
+                    // If JSON parsing fails, treat as legacy coordinate string
+                    return locationData.substring(0, 30);
+                }
+            }
+            
+            return 'Location not available';
+        } catch (error) {
+            console.warn('Error formatting location:', locationData, error);
+            return 'Location not available';
         }
     };
 
@@ -734,7 +770,7 @@ const PunchStatusCard = () => {
                                                     }
                                                     secondary={
                                                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                                            📍 {(punch.punchin_location || punch.location || 'Location not available').substring(0, 30)}...
+                                                            📍 {formatLocation(punch.punchin_location || punch.location)}...
                                                         </Typography>
                                                     }
                                                 />

@@ -51,7 +51,7 @@ export const getPages = (permissions) => [
       { name: 'Letters', icon: <EnvelopeIcon className="ml-2 h-5 w-5" />, route: 'letters' },
     ]
   }] : []),
-  ...(permissions.includes('admin') || permissions.includes('manage-settings') ? [{
+  ...(permissions.includes('admin') || permissions.includes('read settings') ? [{
     name: 'Administration',
     icon: <Cog6ToothIcon className="h-6 w-6" />,
     subMenu: [
