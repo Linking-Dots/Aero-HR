@@ -20,42 +20,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        $roles = [
-//            'Administrator', 'Manager','Deputy Manager', 'Supervision Engineer',
-//            'Quality Control Inspector', 'Asst. Quality Control Inspector', 'Web Designer',
-//            'HR', 'UI/UX Developer', 'SEO Analyst'
-//        ];
-//
-//        // Create roles
-//        foreach ($roles as $roleName) {
-//            Role::firstOrCreate(['name' => $roleName]);
-//        }
-//
-//        // Define modules and their permissions
-        // $modules = [
-        //     'Settings', 'Attendances', 'Departments', 'Designations', 'Timesheet', 'Users'
-        // ];
+        // Run the comprehensive role and permission seeder first
+        $this->call([
+            ComprehensiveRolePermissionSeeder::class,
+        ]);
 
-        // $permissions = ['Read', 'Write', 'Create', 'Delete', 'Import', 'Export'];
-
-        // // Create permissions for each module
-        // foreach ($modules as $module) {
-        //     foreach ($permissions as $permission) {
-        //         $permName = strtolower($permission) . ' ' . strtolower($module);
-        //         Permission::firstOrCreate(['name' => $permName]);
-        //     }
-        // }
-
-        // // Assign permissions to Administrator role as an example
-        // $adminRole = Role::findByName('Administrator');
-        // $adminRole->givePermissionTo(Permission::all());
-
-//        $users = User::all();
-
-//// Assign the "Employee" role to all users
-//        $users->each(function ($user) {
-//            $user->assignRole('Employee');
-//        });
+        // Create default attendance types
         AttendanceType::create([
             'name' => 'Main Site Zone',
             'slug' => 'geo_polygon',
@@ -85,7 +55,5 @@ class DatabaseSeeder extends Seeder
             'applicable_to_type' => User::class,
             'applicable_to_id' => 1
         ]);
-
-
     }
 }

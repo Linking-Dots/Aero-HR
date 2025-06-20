@@ -20,17 +20,26 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
     const navItems = [
         {
             id: 'dashboard',
-            label: 'Home',
+            label: 'Dashboard',
             icon: HomeIcon,
             href: '/dashboard',
             route: 'dashboard'
         },
         {
-            id: 'daily-works',
-            label: 'Tasks',
+            id: 'attendance',
+            label: 'Attendance',
             icon: DocumentTextIcon,
-            href: '/daily-works',
-            route: 'daily-works',
+            href: '/attendance-employee',
+            route: 'attendance-employee',
+            badge: null
+        },
+        {
+            id: 'leaves',
+            label: 'Leaves',
+            icon: DocumentTextIcon,
+            href: '/leaves-employee',
+            route: 'leaves-employee',
+            badge: null
         },
         {
             id: 'profile',
@@ -51,8 +60,10 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
 
     // Update active tab based on current URL
     useEffect(() => {
-        if (url.includes('/daily-works')) {
-            setActiveTab('daily-works');
+        if (url.includes('/attendance-employee')) {
+            setActiveTab('attendance');
+        } else if (url.includes('/leaves-employee')) {
+            setActiveTab('leaves');
         } else if (url.includes('/dashboard')) {
             setActiveTab('dashboard');
         } else if (url.includes(`/profile/${auth.user.id}`)) {
@@ -91,13 +102,13 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                 right: 0,
                 zIndex: 1200,
                 display: { xs: 'flex', md: 'none' },
-                backdropFilter: 'blur(16px) saturate(200%)',
+                backdropFilter: 'blur(20px) saturate(200%)',
                 background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
                 borderTop: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)',
-                py: 1,
+                boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.1)',
+                py: 1.5,
                 px: 2,
-                minHeight: 64
+                minHeight: 72
             }}
         >
             <div className="flex items-center justify-around w-full max-w-md mx-auto">
@@ -128,11 +139,11 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                     }
 
                     const ButtonContent = (
-                        <div className="flex flex-col items-center justify-center gap-1 py-1">
+                        <div className="flex flex-col items-center justify-center gap-1.5 py-1.5">
                             <div className="relative">
                                 <IconComponent 
-                                    className={`w-5 h-5 transition-colors duration-200 ${
-                                        isActive ? 'text-primary' : 'text-default-500'
+                                    className={`w-5 h-5 transition-all duration-200 ${
+                                        isActive ? 'text-primary scale-110' : 'text-default-500'
                                     }`} 
                                 />
                                 {item.badge && (
@@ -145,7 +156,7 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                                 )}
                             </div>
                             <span className={`
-                                text-xs font-medium transition-colors duration-200 
+                                text-xs font-semibold transition-all duration-200 
                                 ${isActive ? 'text-primary' : 'text-default-500'}
                             `}>
                                 {item.label}
@@ -162,10 +173,10 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                             preserveScroll
                             variant="light"
                             className={`
-                                h-14 min-w-16 px-2 transition-all duration-200
+                                h-16 min-w-16 px-2 transition-all duration-300
                                 ${isActive 
-                                    ? 'bg-primary/10 border border-primary/20' 
-                                    : 'bg-transparent hover:bg-white/5'
+                                    ? 'bg-primary/15 border border-primary/30 shadow-lg scale-105' 
+                                    : 'bg-transparent hover:bg-white/5 hover:scale-105'
                                 }
                             `}
                             onPress={() => handleItemPress(item)}

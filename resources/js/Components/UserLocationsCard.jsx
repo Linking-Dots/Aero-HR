@@ -15,7 +15,9 @@ import {
     Alert,
     Fade,
     Zoom,
-    Skeleton
+    Skeleton,
+    Divider,
+    useMediaQuery
 } from '@mui/material';
 import {
     LocationOn,
@@ -40,6 +42,7 @@ import 'leaflet-fullscreen/dist/Leaflet.fullscreen.js';
 import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import { usePage } from "@inertiajs/react";
 import GlassCard from "@/Components/GlassCard.jsx";
+import { Card, CardBody, CardHeader as HeroCardHeader } from "@heroui/react";
 import L from 'leaflet';
 
 // Constants following ISO standards
@@ -394,6 +397,8 @@ const UserLocationsCard = ({ updateMap, selectedDate }) => {
     const [users, setUsers] = useState([]);
     const [mapKey, setMapKey] = useState(0);
     const [loading, setLoading] = useState(true);
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
     const handleUsersLoad = useCallback((loadedUsers) => {
         setUsers(loadedUsers);
@@ -468,141 +473,135 @@ const UserLocationsCard = ({ updateMap, selectedDate }) => {
         return { checkedIn, completed, total };
     }, [users]);
 
-    return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+    return (        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Fade in timeout={800}>
                 <GlassCard sx={{ width: '100%', maxWidth: '100%' }}>
-                    {/* Hero Header */}
+                    {/* Header - Consistent with other pages */}
                     <CardHeader
-                        avatar={
-                            <Box
-                                sx={{
-                                    width: 56,
-                                    height: 56,
-                                    borderRadius: '50%',
-                                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.3)}`,
-                                    backdropFilter: 'blur(10px)'
-                                }}
-                            >
-                                <MapIcon sx={{ color: 'white', fontSize: 28 }} />
-                            </Box>
-                        }
                         title={
-                            <Typography 
-                                variant="h4" 
-                                sx={{ 
-                                    fontWeight: 700,
-                                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                                    backgroundClip: 'text',
-                                    WebkitBackgroundClip: 'text',
-                                    color: 'transparent',
-                                    fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' }
-                                }}
-                            >
-                                Team Locations
-                            </Typography>
-                        }
-                        subheader={
-                            <Typography 
-                                variant="subtitle1" 
-                                sx={{ 
-                                    color: theme.palette.text.secondary,
-                                    fontWeight: 500,
-                                    fontSize: { xs: '0.9rem', sm: '1rem' }
-                                }}
-                            >
-                                {formattedDate}
-                            </Typography>
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                                    <MapIcon className="w-8 h-8 text-blue-600" />
+                                </div>
+                                <div>
+                                    <Typography 
+                                        variant="h4" 
+                                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                        sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
+                                    >
+                                        Team Locations
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        {formattedDate}
+                                    </Typography>
+                                </div>
+                            </div>
                         }
                         action={
-                            <Stack direction="row" spacing={1}>
-                                <Tooltip title="Refresh Map">
-                                    <IconButton 
-                                        onClick={handleRefresh}
-                                        sx={{
-                                            background: alpha(theme.palette.primary.main, 0.1),
-                                            backdropFilter: 'blur(10px)',
-                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                                            '&:hover': {
-                                                background: alpha(theme.palette.primary.main, 0.2),
-                                                transform: 'scale(1.05)'
-                                            }
-                                        }}
-                                    >
-                                        <Refresh color="primary" />
-                                    </IconButton>
-                                </Tooltip>
-                            </Stack>
-                        }
+                            <Tooltip title="Refresh Map">
+                                <IconButton 
+                                    onClick={handleRefresh}
+                                    sx={{
+                                        background: alpha(theme.palette.primary.main, 0.1),
+                                        backdropFilter: 'blur(10px)',
+                                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                        '&:hover': {
+                                            background: alpha(theme.palette.primary.main, 0.2),
+                                            transform: 'scale(1.05)'
+                                        }
+                                    }}
+                                >
+                                    <Refresh color="primary" />
+                                </IconButton>
+                            </Tooltip>
+                        }                        sx={{ padding: '24px' }}
                     />
-
-                    {/* Stats Cards */}
+                    <Divider />                    {/* Stats Cards - Exact match with leave admin */}
                     <Box sx={{ px: 3, pb: 2 }}>
-                        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                            <Paper
-                                sx={{
-                                    flex: 1,
-                                    p: 2,
-                                    textAlign: 'center',
-                                    background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)}, ${alpha(theme.palette.info.main, 0.05)})`,
-                                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                                    borderRadius: 3,
-                                    backdropFilter: 'blur(10px)'
-                                }}
-                            >
-                                <Groups color="info" sx={{ mb: 1 }} />
-                                <Typography variant="h6" color="info.main" sx={{ fontWeight: 700 }}>
-                                    {userStats.total}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Total Users
-                                </Typography>
-                            </Paper>
+                        <div className="mb-6">
+                            <div className={`grid gap-4 ${
+                                isMobile 
+                                    ? 'grid-cols-1' 
+                                    : isTablet 
+                                        ? 'grid-cols-2' 
+                                        : 'grid-cols-3'
+                            }`}>
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                    <HeroCardHeader className="pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Groups className="w-5 h-5 text-blue-600" />
+                                            <Typography 
+                                                variant={isMobile ? "subtitle1" : "h6"} 
+                                                className="font-semibold text-blue-600"
+                                            >
+                                                Total
+                                            </Typography>
+                                        </div>
+                                    </HeroCardHeader>
+                                    <CardBody className="pt-0">
+                                        <Typography 
+                                            variant={isMobile ? "h4" : "h3"} 
+                                            className="font-bold text-blue-600"
+                                        >
+                                            {userStats.total}
+                                        </Typography>
+                                        <Typography variant="caption" color="textSecondary">
+                                            Total users tracked
+                                        </Typography>
+                                    </CardBody>
+                                </Card>
 
-                            <Paper
-                                sx={{
-                                    flex: 1,
-                                    p: 2,
-                                    textAlign: 'center',
-                                    background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)}, ${alpha(theme.palette.warning.main, 0.05)})`,
-                                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                                    borderRadius: 3,
-                                    backdropFilter: 'blur(10px)'
-                                }}
-                            >
-                                <AccessTime color="warning" sx={{ mb: 1 }} />
-                                <Typography variant="h6" color="warning.main" sx={{ fontWeight: 700 }}>
-                                    {userStats.checkedIn}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Active
-                                </Typography>
-                            </Paper>
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                    <HeroCardHeader className="pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <AccessTime className="w-5 h-5 text-orange-600" />
+                                            <Typography 
+                                                variant={isMobile ? "subtitle1" : "h6"} 
+                                                className="font-semibold text-orange-600"
+                                            >
+                                                Active
+                                            </Typography>
+                                        </div>
+                                    </HeroCardHeader>
+                                    <CardBody className="pt-0">
+                                        <Typography 
+                                            variant={isMobile ? "h4" : "h3"} 
+                                            className="font-bold text-orange-600"
+                                        >
+                                            {userStats.checkedIn}
+                                        </Typography>
+                                        <Typography variant="caption" color="textSecondary">
+                                            Currently working
+                                        </Typography>
+                                    </CardBody>
+                                </Card>
 
-                            <Paper
-                                sx={{
-                                    flex: 1,
-                                    p: 2,
-                                    textAlign: 'center',
-                                    background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.main, 0.05)})`,
-                                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                    borderRadius: 3,
-                                    backdropFilter: 'blur(10px)'
-                                }}
-                            >
-                                <Place color="success" sx={{ mb: 1 }} />
-                                <Typography variant="h6" color="success.main" sx={{ fontWeight: 700 }}>
-                                    {userStats.completed}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Completed
-                                </Typography>
-                            </Paper>
-                        </Stack>
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                    <HeroCardHeader className="pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Place className="w-5 h-5 text-green-600" />
+                                            <Typography 
+                                                variant={isMobile ? "subtitle1" : "h6"} 
+                                                className="font-semibold text-green-600"
+                                            >
+                                                Completed
+                                            </Typography>
+                                        </div>
+                                    </HeroCardHeader>
+                                    <CardBody className="pt-0">
+                                        <Typography 
+                                            variant={isMobile ? "h4" : "h3"} 
+                                            className="font-bold text-green-600"
+                                        >
+                                            {userStats.completed}
+                                        </Typography>
+                                        <Typography variant="caption" color="textSecondary">
+                                            Finished workday
+                                        </Typography>
+                                    </CardBody>
+                                </Card>
+                            </div>
+                        </div>
                     </Box>
 
                     <CardContent sx={{ p: 3, pt: 0 }}>

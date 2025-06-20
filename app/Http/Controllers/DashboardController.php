@@ -25,13 +25,23 @@ class DashboardController extends Controller
 
     public function stats() {
         $user = Auth::user();
-        // Optimize: Use query builder for counts instead of loading all tasks
-        if ($user->hasRole('Supervision Engineer')) {
-            $taskQuery = DailyWork::where('incharge', $user->id);
-        } elseif ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')) {
-            $taskQuery = DailyWork::where('assigned', $user->id);
-        } else {
+        
+        // Use permission-based access control instead of roles
+        $taskQuery = DailyWork::query();
+        
+        // Apply filters based on user permissions and context
+        if ($user->can('daily-works.view')) {
+            // Users with full daily works access can see all tasks
             $taskQuery = DailyWork::query();
+        } elseif ($user->can('daily-works.own.view')) {
+            // Users with limited access see only their own tasks
+            $taskQuery = DailyWork::where(function($query) use ($user) {
+                $query->where('incharge', $user->id)
+                      ->orWhere('assigned', $user->id);
+            });
+        } else {
+            // No access to daily works - return empty stats
+            $taskQuery = DailyWork::whereRaw('1 = 0'); // Always empty
         }
 
         $total = (clone $taskQuery)->count();
@@ -52,6 +62,15 @@ class DashboardController extends Controller
     }
 
     public function updates() {
+        $user = Auth::user();
+        
+        // Check if user has permission to view updates
+        if (!$user->can('updates.view')) {
+            return response()->json([
+                'message' => 'Unauthorized access to updates'
+            ], 403);
+        }
+        
         $users = User::with('roles:name')
             ->whereHas('roles', function ($query) {
                 $query->where('name', 'Employee');
@@ -65,31 +84,45 @@ class DashboardController extends Controller
         
         $today = now()->toDateString();
 
-        $todayLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->whereDate('leaves.from_date', '<=', $today)
-            ->whereDate('leaves.to_date', '>=', $today)
-            ->get();
+        // Only show leave information if user has appropriate permissions
+        $todayLeaves = [];
+        $upcomingLeaves = [];
+        
+        if ($user->can('leaves.view') || $user->can('leaves.own.view')) {
+            $leaveQuery = DB::table('leaves')
+                ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+                ->select('leaves.*', 'leave_settings.type as leave_type');
+            
+            // If user can only view own leaves, filter accordingly
+            if (!$user->can('leaves.view') && $user->can('leaves.own.view')) {
+                $leaveQuery->where('leaves.user_id', $user->id);
+            }
 
-        $upcomingLeaves = DB::table('leaves')
-            ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->where(function($query) {
-                $query->whereDate('leaves.from_date', '>=', now())
-                    ->orWhereDate('leaves.to_date', '>=', now());
-            })
-            ->where(function($query) {
-                $query->whereDate('leaves.from_date', '<=', now()->addDays(7))
-                    ->orWhereDate('leaves.to_date', '<=', now()->addDays(7));
-            })
-            ->orderBy('leaves.from_date', 'desc')
-            ->get();
+            $todayLeaves = (clone $leaveQuery)
+                ->whereDate('leaves.from_date', '<=', $today)
+                ->whereDate('leaves.to_date', '>=', $today)
+                ->get();
 
-        $upcomingHoliday = DB::table('holidays')
-            ->whereDate('holidays.from_date', '>=', now())
-            ->orderBy('holidays.from_date', 'asc')
-            ->first();
+            $upcomingLeaves = (clone $leaveQuery)
+                ->where(function($query) {
+                    $query->whereDate('leaves.from_date', '>=', now())
+                        ->orWhereDate('leaves.to_date', '>=', now());
+                })
+                ->where(function($query) {
+                    $query->whereDate('leaves.from_date', '<=', now()->addDays(7))
+                        ->orWhereDate('leaves.to_date', '<=', now()->addDays(7));
+                })
+                ->orderBy('leaves.from_date', 'desc')
+                ->get();
+        }
+
+        $upcomingHoliday = null;
+        if ($user->can('holidays.view')) {
+            $upcomingHoliday = DB::table('holidays')
+                ->whereDate('holidays.from_date', '>=', now())
+                ->orderBy('holidays.from_date', 'asc')
+                ->first();
+        }
 
         return response()->json([
             'users' => $users,

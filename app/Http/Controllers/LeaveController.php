@@ -54,11 +54,13 @@ class LeaveController extends Controller
     {
         try {
             $leaveData = $this->queryService->getLeaveRecords($request);
+            $stats = $this->queryService->getLeaveStatistics($request);
 
             if ($leaveData['leaveRecords']->isEmpty()) {
                 return response()->json([
                     'message' => 'No leave records found for the selected period.',
                     'leavesData' => $leaveData['leavesData'],
+                    'stats' => $stats,
                 ], 404);
             }
 
@@ -68,6 +70,7 @@ class LeaveController extends Controller
                 'last_page' => $leaveData['leaveRecords']->lastPage(),
                 'total' => $leaveData['leaveRecords']->total(),
                 'leavesData' => $leaveData['leavesData'],
+                'stats' => $stats,
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -196,5 +199,69 @@ class LeaveController extends Controller
             'data' => $summaryData['data'],
             'year' => $summaryData['year'],
         ]);
+    }
+
+    public function bulkApprove(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $request->validate([
+                'leave_ids' => 'required|array',
+                'leave_ids.*' => 'integer|exists:leave_applications,id'
+            ]);
+
+            $leaveIds = $request->input('leave_ids');
+            $updatedCount = 0;
+
+            foreach ($leaveIds as $leaveId) {
+                $result = $this->crudService->updateLeaveStatus($leaveId, 'Approved', Auth::id());
+                if ($result['success']) {
+                    $updatedCount++;
+                }
+            }
+
+            return response()->json([
+                'message' => "{$updatedCount} leave(s) approved successfully",
+                'updated_count' => $updatedCount,
+                'total_requested' => count($leaveIds)
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'error' => 'An error occurred while approving leaves.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bulkReject(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $request->validate([
+                'leave_ids' => 'required|array',
+                'leave_ids.*' => 'integer|exists:leave_applications,id'
+            ]);
+
+            $leaveIds = $request->input('leave_ids');
+            $updatedCount = 0;
+
+            foreach ($leaveIds as $leaveId) {
+                $result = $this->crudService->updateLeaveStatus($leaveId, 'Declined', Auth::id());
+                if ($result['success']) {
+                    $updatedCount++;
+                }
+            }
+
+            return response()->json([
+                'message' => "{$updatedCount} leave(s) rejected successfully",
+                'updated_count' => $updatedCount,
+                'total_requested' => count($leaveIds)
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'error' => 'An error occurred while rejecting leaves.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

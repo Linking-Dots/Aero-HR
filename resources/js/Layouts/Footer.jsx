@@ -19,7 +19,11 @@ const Footer = () => {
     const quickLinks = [
         { label: 'Dashboard', href: '/dashboard' },
         { label: 'Employees', href: '/employees' },
-        { label: 'Projects', href: '/daily-works' },
+        { label: 'Attendance', href: '/attendance-admin' },
+        { label: 'Leave Management', href: '/leaves-admin' },
+        { label: 'Timesheets', href: '/time-sheet' },
+        { label: 'User Management', href: '/users' },
+        { label: 'Reports', href: '/reports' },
         { label: 'Settings', href: '/settings' }
     ];
 
@@ -27,20 +31,20 @@ const Footer = () => {
         { 
             icon: EnvelopeIcon, 
             label: 'Email', 
-            value: 'support@dbedc.com',
-            href: 'mailto:support@dbedc.com'
+            value: 'support@aero-hr.com',
+            href: 'mailto:support@aero-hr.com'
         },
         { 
             icon: PhoneIcon, 
             label: 'Phone', 
-            value: '+880 1234 567890',
-            href: 'tel:+8801234567890'
+            value: '+1 (555) 123-4567',
+            href: 'tel:+15551234567'
         },
         { 
             icon: GlobeAltIcon, 
             label: 'Website', 
-            value: 'www.dbedc.com',
-            href: 'https://www.dbedc.com'
+            value: 'www.aero-hr.com',
+            href: 'https://www.aero-hr.com'
         }
     ];
 
@@ -63,34 +67,40 @@ const Footer = () => {
                             <Grid item xs={12} md={4}>
                                 <Box className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                                             <Typography 
-                                                variant="h6" 
+                                                variant="h5" 
                                                 className="font-bold text-white"
-                                                style={{ fontFamily: 'monospace' }}
+                                                style={{ fontFamily: 'Inter, sans-serif' }}
                                             >
-                                                D
+                                                A
                                             </Typography>
                                         </div>
-                                        <Typography 
-                                            variant="h6" 
-                                            className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                        >
-                                            DBEDC ERP
-                                        </Typography>
+                                        <div>
+                                            <Typography 
+                                                variant="h5" 
+                                                className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                            >
+                                                Aero HR
+                                            </Typography>
+                                            <Typography variant="caption" className="text-default-500">
+                                                Enterprise Solution
+                                            </Typography>
+                                        </div>
                                     </div>
                                     <Typography 
                                         variant="body2" 
                                         color="text.secondary"
-                                        className="leading-relaxed"
+                                        className="leading-relaxed mt-3"
                                     >
-                                        Enterprise Resource Planning system designed for modern businesses. 
-                                        Streamline your operations with our comprehensive solution.
+                                        Advanced Human Resource Management system designed for modern enterprises. 
+                                        Streamline your HR operations with our comprehensive, cloud-based solution 
+                                        featuring employee management, attendance tracking, leave management, and more.
                                     </Typography>
-                                    <div className="flex items-center gap-2 text-sm text-default-500">
-                                        <span>Made with</span>
+                                    <div className="flex items-center gap-2 text-sm text-default-500 mt-4">
+                                        <span>Crafted with</span>
                                         <HeartIcon className="w-4 h-4 text-red-500 animate-pulse" />
-                                        <span>by Emam Hosen</span>
+                                        <span>by the Aero Team</span>
                                     </div>
                                 </Box>
                             </Grid>
@@ -165,7 +175,7 @@ const Footer = () => {
                                     color="text.secondary"
                                     className="text-center md:text-left"
                                 >
-                                    &copy; {currentYear} DBEDC. All rights reserved.
+                                    &copy; {currentYear} Aero HR Enterprise Solution. All rights reserved.
                                 </Typography>
                             </Grid>
                             <Grid item xs={12} md={6}>

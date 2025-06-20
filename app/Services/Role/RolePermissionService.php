@@ -16,597 +16,385 @@ use Illuminate\Support\Facades\Log;
  * Follows RBAC (Role-Based Access Control) industry standards
  */
 class RolePermissionService
-{
-    /**
-     * Standard enterprise module definitions aligned with pages.jsx
+{    /**
+     * Standard enterprise module definitions aligned with comprehensive permission system
      */
     private const ENTERPRISE_MODULES = [
-        // Core HR & Employee Management
-        'employees' => [
-            'name' => 'Employee Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'import', 'export'],
-            'description' => 'Employee directory, profiles, and management',
-            'category' => 'human_resources'
+        // Core System
+        'core' => [
+            'name' => 'Dashboard & Analytics',
+            'permissions' => ['dashboard.view', 'stats.view', 'updates.view'],
+            'description' => 'Core system dashboard and analytics',
+            'category' => 'core_system'
         ],
-        'departments' => [
-            'name' => 'Department Management',
-            'permissions' => ['read', 'write', 'create', 'delete'],
-            'description' => 'Department structure and management',
-            'category' => 'human_resources'
+
+        // Self Service Module  
+        'self-service' => [
+            'name' => 'Self Service Portal',
+            'permissions' => [
+                'attendance.own.view', 'attendance.own.punch',
+                'leave.own.view', 'leave.own.create', 'leave.own.update', 'leave.own.delete',
+                'communications.own.view', 'profile.own.view', 'profile.own.update', 'profile.password.change'
+            ],
+            'description' => 'Employee self-service capabilities',
+            'category' => 'self_service'
         ],
-        'designations' => [
-            'name' => 'Job Positions',
-            'permissions' => ['read', 'write', 'create', 'delete'],
-            'description' => 'Job titles and position management',
-            'category' => 'human_resources'
-        ],
-        'attendances' => [
-            'name' => 'Attendance Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'import', 'export'],
-            'description' => 'Time tracking and attendance monitoring',
-            'category' => 'human_resources'
-        ],
-        'leaves' => [
-            'name' => 'Leave Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve', 'reject'],
-            'description' => 'Leave applications and approvals',
-            'category' => 'human_resources'
-        ],
-        'holidays' => [
-            'name' => 'Holiday Calendar',
-            'permissions' => ['read', 'write', 'create', 'delete'],
-            'description' => 'Holiday and calendar management',
+
+        // Human Resource Management
+        'hrm' => [
+            'name' => 'Human Resource Management',
+            'permissions' => [
+                'employees.view', 'employees.create', 'employees.update', 'employees.delete', 'employees.import', 'employees.export',
+                'departments.view', 'departments.create', 'departments.update', 'departments.delete',
+                'designations.view', 'designations.create', 'designations.update', 'designations.delete',
+                'attendance.view', 'attendance.create', 'attendance.update', 'attendance.delete', 'attendance.import', 'attendance.export',
+                'holidays.view', 'holidays.create', 'holidays.update', 'holidays.delete',
+                'leaves.view', 'leaves.create', 'leaves.update', 'leaves.delete', 'leaves.approve', 'leaves.analytics',
+                'leave-settings.view', 'leave-settings.update',
+                'jurisdiction.view', 'jurisdiction.create', 'jurisdiction.update', 'jurisdiction.delete'
+            ],
+            'description' => 'Human resources and employee management',
             'category' => 'human_resources'
         ],
 
-        // Customer Management (CRM)
-        'customers' => [
-            'name' => 'Customer Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'import', 'export'],
-            'description' => 'Customer relationship management',
-            'category' => 'customer_relations'
-        ],
-        'leads' => [
-            'name' => 'Leads & Opportunities',
-            'permissions' => ['read', 'write', 'create', 'delete', 'convert'],
-            'description' => 'Lead generation and opportunity tracking',
-            'category' => 'customer_relations'
-        ],
-        'feedback' => [
-            'name' => 'Customer Feedback',
-            'permissions' => ['read', 'write', 'create', 'delete'],
-            'description' => 'Customer feedback and reviews',
-            'category' => 'customer_relations'
-        ],
-
-        // Project Management
-        'projects' => [
-            'name' => 'Project Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'manage', 'assign'],
-            'description' => 'Project planning and execution',
-            'category' => 'project_management'
-        ],
-        'daily_works' => [
-            'name' => 'Daily Work Logs',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve'],
-            'description' => 'Daily work tracking and logging',
-            'category' => 'project_management'
-        ],
-        'work_summary' => [
-            'name' => 'Work Summary Reports',
-            'permissions' => ['read', 'write', 'export'],
-            'description' => 'Work performance reports',
+        // Project & Portfolio Management
+        'ppm' => [
+            'name' => 'Project & Portfolio Management',
+            'permissions' => [
+                'daily-works.view', 'daily-works.create', 'daily-works.update', 'daily-works.delete', 'daily-works.import', 'daily-works.export',
+                'projects.analytics',
+                'tasks.view', 'tasks.create', 'tasks.update', 'tasks.delete', 'tasks.assign',
+                'reports.view', 'reports.create', 'reports.update', 'reports.delete'
+            ],
+            'description' => 'Project management and portfolio tracking',
             'category' => 'project_management'
         ],
 
-        // Inventory Management System (IMS)
-        'inventory' => [
-            'name' => 'Inventory Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'import', 'export', 'audit'],
-            'description' => 'Stock and inventory management',
-            'category' => 'inventory'
-        ],
-        'suppliers' => [
-            'name' => 'Supplier Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'import', 'export'],
-            'description' => 'Supplier and vendor management',
-            'category' => 'inventory'
-        ],
-        'purchase_orders' => [
-            'name' => 'Purchase Orders',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve', 'reject'],
-            'description' => 'Purchase order management',
-            'category' => 'inventory'
-        ],
-        'warehousing' => [
-            'name' => 'Warehousing',
-            'permissions' => ['read', 'write', 'create', 'delete', 'transfer'],
-            'description' => 'Warehouse operations management',
-            'category' => 'inventory'
+        // Document & Knowledge Management
+        'dms' => [
+            'name' => 'Document & Knowledge Management',
+            'permissions' => [
+                'letters.view', 'letters.create', 'letters.update', 'letters.delete',
+                'documents.view', 'documents.create', 'documents.update', 'documents.delete'
+            ],
+            'description' => 'Document management and knowledge base',
+            'category' => 'document_management'
         ],
 
-        // Point of Sale (POS)
-        'pos' => [
-            'name' => 'Point of Sale',
-            'permissions' => ['read', 'write', 'create', 'process', 'refund'],
-            'description' => 'Sales terminal operations',
-            'category' => 'point_of_sale'
-        ],
-        'sales_history' => [
-            'name' => 'Sales History',
-            'permissions' => ['read', 'export', 'report'],
-            'description' => 'Transaction history and reports',
-            'category' => 'point_of_sale'
+        // Customer Relationship Management (Future)
+        'crm' => [
+            'name' => 'Customer Relationship Management',
+            'permissions' => [
+                'customers.view', 'customers.create', 'customers.update', 'customers.delete',
+                'leads.view', 'leads.create', 'leads.update', 'leads.delete',
+                'feedback.view', 'feedback.create', 'feedback.update', 'feedback.delete'
+            ],
+            'description' => 'Customer relationship and lead management',
+            'category' => 'customer_relations'
         ],
 
-        // Finance & Accounting
+        // Supply Chain & Inventory Management (Future)
+        'scm' => [
+            'name' => 'Supply Chain & Inventory Management',
+            'permissions' => [
+                'inventory.view', 'inventory.create', 'inventory.update', 'inventory.delete',
+                'suppliers.view', 'suppliers.create', 'suppliers.update', 'suppliers.delete',
+                'purchase-orders.view', 'purchase-orders.create', 'purchase-orders.update', 'purchase-orders.delete',
+                'warehousing.view', 'warehousing.manage'
+            ],
+            'description' => 'Supply chain and inventory operations',
+            'category' => 'supply_chain'
+        ],
+
+        // Retail & Sales Operations (Future)
+        'retail' => [
+            'name' => 'Retail & Sales Operations',
+            'permissions' => [
+                'pos.view', 'pos.operate',
+                'sales.view', 'sales.create', 'sales.analytics'
+            ],
+            'description' => 'Point of sale and retail operations',
+            'category' => 'retail_sales'
+        ],
+
+        // Financial Management & Accounting (Future)
         'finance' => [
-            'name' => 'Finance & Accounting',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve', 'audit'],
+            'name' => 'Financial Management & Accounting',
+            'permissions' => [
+                'accounts-payable.view', 'accounts-payable.manage',
+                'accounts-receivable.view', 'accounts-receivable.manage',
+                'ledger.view', 'ledger.manage',
+                'financial-reports.view', 'financial-reports.create'
+            ],
             'description' => 'Financial management and accounting',
-            'category' => 'finance'
-        ],
-        'accounts_payable' => [
-            'name' => 'Accounts Payable',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve', 'pay'],
-            'description' => 'Vendor payment management',
-            'category' => 'finance'
-        ],
-        'accounts_receivable' => [
-            'name' => 'Accounts Receivable',
-            'permissions' => ['read', 'write', 'create', 'delete', 'collect'],
-            'description' => 'Customer payment tracking',
-            'category' => 'finance'
-        ],
-        'ledger' => [
-            'name' => 'General Ledger',
-            'permissions' => ['read', 'write', 'create', 'delete', 'reconcile'],
-            'description' => 'General accounting ledger',
-            'category' => 'finance'
-        ],
-        'financial_reports' => [
-            'name' => 'Financial Reports',
-            'permissions' => ['read', 'export', 'generate'],
-            'description' => 'Financial reporting and analytics',
-            'category' => 'finance'
-        ],
-
-        // Document Center
-        'documents' => [
-            'name' => 'Document Center',
-            'permissions' => ['read', 'write', 'create', 'delete', 'approve', 'archive'],
-            'description' => 'Document management system',
-            'category' => 'document_management'
-        ],
-        'letters' => [
-            'name' => 'Official Letters',
-            'permissions' => ['read', 'write', 'create', 'delete', 'send'],
-            'description' => 'Official correspondence',
-            'category' => 'document_management'
+            'category' => 'financial_management'
         ],
 
         // System Administration
         'admin' => [
             'name' => 'System Administration',
-            'permissions' => ['read', 'write', 'create', 'delete', 'configure', 'audit'],
+            'permissions' => [
+                'users.view', 'users.create', 'users.update', 'users.delete', 'users.impersonate',
+                'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.assign',
+                'settings.view', 'settings.update',
+                'company.settings', 'attendance.settings', 'email.settings', 'notification.settings',
+                'theme.settings', 'localization.settings', 'performance.settings', 'approval.settings',
+                'invoice.settings', 'salary.settings', 'system.settings',
+                'audit.view', 'audit.export', 'backup.create', 'backup.restore'
+            ],
             'description' => 'System administration and configuration',
-            'category' => 'administration'
-        ],
-        'users' => [
-            'name' => 'User Administration',
-            'permissions' => ['read', 'write', 'create', 'delete', 'activate', 'deactivate'],
-            'description' => 'User account management',
-            'category' => 'administration'
-        ],
-        'roles' => [
-            'name' => 'Role Management',
-            'permissions' => ['read', 'write', 'create', 'delete', 'assign'],
-            'description' => 'Role and permission management',
-            'category' => 'administration'
-        ],
-        'settings' => [
-            'name' => 'System Configuration',
-            'permissions' => ['read', 'write', 'configure', 'backup', 'restore'],
-            'description' => 'System settings and configuration',
-            'category' => 'administration'
-        ],
-        'analytics' => [
-            'name' => 'Performance Analytics',
-            'permissions' => ['read', 'export', 'dashboard'],
-            'description' => 'System performance and analytics',
-            'category' => 'administration'
+            'category' => 'system_administration'
         ]
     ];    /**
-     * Standard enterprise role templates
+     * Get all permissions grouped by module for frontend display
      */
-    private const ENTERPRISE_ROLES = [
-        'super_admin' => [
-            'name' => 'Super Administrator',
-            'description' => 'Full system access with all permissions',
-            'guard_name' => 'web',
-            'is_system_role' => true,
-            'hierarchy_level' => 1,
-            'permissions' => '*' // All permissions
-        ],
-        'administrator' => [
-            'name' => 'Administrator',
-            'description' => 'Administrative access to most system functions',
-            'guard_name' => 'web',
-            'is_system_role' => true,
-            'hierarchy_level' => 2,
-            'permissions' => [
-                'read admin', 'write admin', 'create admin', 'delete admin', 'configure admin', 'audit admin',
-                'read users', 'write users', 'create users', 'delete users', 'activate users', 'deactivate users',
-                'read roles', 'write roles', 'create roles', 'delete roles', 'assign roles',
-                'read settings', 'write settings', 'configure settings', 'backup settings', 'restore settings',
-                'read employees', 'write employees', 'create employees', 'delete employees', 'import employees', 'export employees',
-                'read departments', 'write departments', 'create departments', 'delete departments',
-                'read designations', 'write designations', 'create designations', 'delete designations'
-            ]
-        ],
-        'hr_manager' => [
-            'name' => 'HR Manager',
-            'description' => 'Human resources management and oversight',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 3,
-            'permissions' => [
-                'read employees', 'write employees', 'create employees', 'delete employees', 'import employees', 'export employees',
-                'read departments', 'write departments', 'create departments', 'delete departments',
-                'read designations', 'write designations', 'create designations', 'delete designations',
-                'read attendances', 'write attendances', 'create attendances', 'delete attendances', 'import attendances', 'export attendances',
-                'read leaves', 'write leaves', 'create leaves', 'delete leaves', 'approve leaves', 'reject leaves',
-                'read holidays', 'write holidays', 'create holidays', 'delete holidays'
-            ]
-        ],
-        'project_manager' => [
-            'name' => 'Project Manager',
-            'description' => 'Project management and team coordination',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 3,
-            'permissions' => [
-                'read projects', 'write projects', 'create projects', 'delete projects', 'manage projects', 'assign projects',
-                'read daily_works', 'write daily_works', 'create daily_works', 'delete daily_works', 'approve daily_works',
-                'read work_summary', 'write work_summary', 'export work_summary',
-                'read employees', 'read attendances'
-            ]
-        ],
-        'finance_manager' => [
-            'name' => 'Finance Manager',
-            'description' => 'Financial operations and accounting management',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 3,
-            'permissions' => [
-                'read finance', 'write finance', 'create finance', 'delete finance', 'approve finance', 'audit finance',
-                'read accounts_payable', 'write accounts_payable', 'create accounts_payable', 'delete accounts_payable', 'approve accounts_payable', 'pay accounts_payable',
-                'read accounts_receivable', 'write accounts_receivable', 'create accounts_receivable', 'delete accounts_receivable', 'collect accounts_receivable',
-                'read ledger', 'write ledger', 'create ledger', 'delete ledger', 'reconcile ledger',
-                'read financial_reports', 'export financial_reports', 'generate financial_reports'
-            ]
-        ],
-        'inventory_manager' => [
-            'name' => 'Inventory Manager',
-            'description' => 'Inventory and supply chain management',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 4,
-            'permissions' => [
-                'read inventory', 'write inventory', 'create inventory', 'delete inventory', 'import inventory', 'export inventory', 'audit inventory',
-                'read suppliers', 'write suppliers', 'create suppliers', 'delete suppliers', 'import suppliers', 'export suppliers',
-                'read purchase_orders', 'write purchase_orders', 'create purchase_orders', 'delete purchase_orders', 'approve purchase_orders', 'reject purchase_orders',
-                'read warehousing', 'write warehousing', 'create warehousing', 'delete warehousing', 'transfer warehousing'
-            ]
-        ],
-        'sales_manager' => [
-            'name' => 'Sales Manager',
-            'description' => 'Sales operations and customer management',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 4,
-            'permissions' => [
-                'read customers', 'write customers', 'create customers', 'delete customers', 'import customers', 'export customers',
-                'read leads', 'write leads', 'create leads', 'delete leads', 'convert leads',
-                'read feedback', 'write feedback', 'create feedback', 'delete feedback',
-                'read pos', 'write pos', 'create pos', 'process pos', 'refund pos',
-                'read sales_history', 'export sales_history', 'report sales_history'
-            ]
-        ],
-        'team_lead' => [
-            'name' => 'Team Lead',
-            'description' => 'Team leadership and project coordination',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 5,
-            'permissions' => [
-                'read daily_works', 'write daily_works', 'create daily_works',
-                'read attendances', 'read leaves', 'read projects'
-            ]
-        ],
-        'supervisor' => [
-            'name' => 'Supervisor',
-            'description' => 'Supervisory access and team oversight',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 6,
-            'permissions' => [
-                'read employees', 'read attendances', 'read daily_works',
-                'read leaves', 'approve leaves'
-            ]
-        ],
-        'employee' => [
-            'name' => 'Employee',
-            'description' => 'Standard employee access to personal features',
-            'guard_name' => 'web',
-            'is_system_role' => false,
-            'hierarchy_level' => 10,
-            'permissions' => [
-                'read attendances', 'read leaves', 'create leaves',
-                'read daily_works', 'create daily_works'
-            ]
-        ]
-    ];
+    public function getPermissionsGroupedByModule(): array
+    {
+        $groupedPermissions = [];
+        
+        foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
+            $groupedPermissions[$moduleKey] = [
+                'name' => $moduleConfig['name'],
+                'description' => $moduleConfig['description'],
+                'category' => $moduleConfig['category'],
+                'permissions' => []
+            ];
+            
+            // Get actual permissions from database that match this module
+            foreach ($moduleConfig['permissions'] as $permissionName) {
+                $permission = Permission::where('name', $permissionName)->first();
+                if ($permission) {
+                    $groupedPermissions[$moduleKey]['permissions'][] = [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'display_name' => $this->formatPermissionDisplayName($permission->name)
+                    ];
+                }
+            }
+        }
+        
+        return $groupedPermissions;
+    }
 
     /**
-     * Initialize standard enterprise modules and roles
+     * Format permission name for display
      */
-    public function initializeEnterpriseSystem(): array
+    private function formatPermissionDisplayName(string $permissionName): string
     {
-        DB::beginTransaction();
-        
-        try {
-            $results = [
-                'modules_created' => 0,
-                'permissions_created' => 0,
-                'roles_created' => 0,
-                'assignments_made' => 0
+        // Convert "employees.view" to "View Employees"
+        $parts = explode('.', $permissionName);
+        if (count($parts) >= 2) {
+            $resource = ucfirst(str_replace('-', ' ', $parts[0]));
+            $action = ucfirst($parts[1]);
+            
+            // Handle special cases for actions
+            $actionMap = [
+                'view' => 'View',
+                'create' => 'Create',
+                'update' => 'Edit',
+                'delete' => 'Delete',
+                'import' => 'Import',
+                'export' => 'Export',
+                'approve' => 'Approve',
+                'assign' => 'Assign',
+                'manage' => 'Manage',
+                'operate' => 'Operate',
+                'punch' => 'Punch',
+                'change' => 'Change',
+                'impersonate' => 'Impersonate',
+                'analytics' => 'View Analytics'
             ];
-
-            // Create all permissions for modules
-            foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
-                $results['modules_created']++;
-                
-                foreach ($moduleConfig['permissions'] as $permission) {
-                    $permissionName = "{$permission} {$moduleKey}";
-                    
-                    Permission::firstOrCreate([
-                        'name' => $permissionName,
-                        'guard_name' => 'web'
-                    ]);
-                    
-                    $results['permissions_created']++;
-                }
+            
+            $actionText = $actionMap[$parts[1]] ?? ucfirst($parts[1]);
+            
+            // Handle "own" permissions
+            if (count($parts) >= 3 && $parts[1] === 'own') {
+                $actionText = $actionMap[$parts[2]] ?? ucfirst($parts[2]);
+                return "{$actionText} Own {$resource}";
             }
-
-            // Create standard enterprise roles
-            foreach (self::ENTERPRISE_ROLES as $roleKey => $roleConfig) {
-                $role = Role::firstOrCreate([
-                    'name' => $roleConfig['name'],
-                    'guard_name' => $roleConfig['guard_name']
-                ]);
-
-                // Add custom attributes if using extended role model
-                if (method_exists($role, 'update')) {
-                    $role->update([
-                        'description' => $roleConfig['description'],
-                        'is_system_role' => $roleConfig['is_system_role'],
-                        'hierarchy_level' => $roleConfig['hierarchy_level']
-                    ]);
-                }
-
-                $results['roles_created']++;
-
-                // Assign permissions based on role configuration
-                $this->assignRolePermissions($role, $roleConfig['permissions']);
-                $results['assignments_made']++;
-            }
-
-            DB::commit();
-            Cache::forget('spatie.permission.cache');
             
-            Log::info('Enterprise role system initialized', $results);
-            
-            return $results;
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to initialize enterprise system: ' . $e->getMessage());
-            throw $e;
+            return "{$actionText} {$resource}";
         }
-    }    /**
-     * Assign permissions to a role with wildcard support
-     */
-    private function assignRolePermissions(Role $role, $permissions): void
-    {
-        if ($permissions === '*') {
-            // Assign all permissions
-            $role->syncPermissions(Permission::all());
-            return;
-        }
-
-        $permissionNames = [];
         
-        foreach ((array) $permissions as $permission) {
-            // Direct permission assignment - no wildcard support since 
-            // we're using explicit permission lists now
+        return ucwords(str_replace(['.', '-', '_'], ' ', $permissionName));
+    }    /**
+     * Assign permissions to a role
+     */
+    public function assignPermissionsToRole(Role $role, array $permissions): void
+    {
+        $validPermissions = [];
+        
+        foreach ($permissions as $permission) {
             $existingPermission = Permission::where('name', $permission)->first();
             if ($existingPermission) {
-                $permissionNames[] = $permission;
+                $validPermissions[] = $permission;
             } else {
                 Log::warning("Permission not found: {$permission} for role: {$role->name}");
             }
         }
 
-        if (!empty($permissionNames)) {
-            $role->syncPermissions(array_unique($permissionNames));
+        if (!empty($validPermissions)) {
+            $role->syncPermissions(array_unique($validPermissions));
+            Cache::forget('spatie.permission.cache');
         }
-    }
-
-    /**
-     * Get enterprise module structure for frontend
+    }    /**
+     * Get enterprise modules structure for frontend
      */
     public function getEnterpriseModules(): array
     {
-        $modules = [];
-        
-        foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
-            $modules[$moduleKey] = [
-                'name' => $moduleConfig['name'],
-                'description' => $moduleConfig['description'],
-                'category' => $moduleConfig['category'],
-                'permissions' => $moduleConfig['permissions'],
-                'available_permissions' => $this->getModulePermissions($moduleKey)
-            ];
-        }
-
-        return $modules;
+        return self::ENTERPRISE_MODULES;
     }
 
     /**
      * Get all permissions for a specific module
      */
-    public function getModulePermissions(string $module): Collection
+    public function getModulePermissions(string $moduleKey): Collection
     {
-        return Permission::where('name', 'like', "% {$module}")
+        if (!isset(self::ENTERPRISE_MODULES[$moduleKey])) {
+            return collect();
+        }
+
+        $modulePermissions = self::ENTERPRISE_MODULES[$moduleKey]['permissions'];
+        
+        return Permission::whereIn('name', $modulePermissions)
             ->orderBy('name')
             ->get();
     }
 
     /**
-     * Get role hierarchy for authorization checks
+     * Get all roles with their permissions grouped by module
      */
-    public function getRoleHierarchy(): array
+    public function getRolesWithModulePermissions(): Collection
     {
-        $hierarchy = [];
-        
-        foreach (self::ENTERPRISE_ROLES as $roleKey => $roleConfig) {
-            $hierarchy[$roleConfig['hierarchy_level']][] = [
-                'key' => $roleKey,
-                'name' => $roleConfig['name'],
-                'description' => $roleConfig['description']
-            ];
-        }
-
-        ksort($hierarchy);
-        return $hierarchy;
+        return Role::with(['permissions' => function ($query) {
+            $query->orderBy('name');
+        }])->get()->map(function ($role) {
+            $role->module_permissions = $this->groupPermissionsByModule($role->permissions);
+            return $role;
+        });
     }
 
     /**
-     * Check if a role can manage another role (hierarchy-based)
+     * Group permissions by module
      */
-    public function canManageRole(Role $managerRole, Role $targetRole): bool
+    private function groupPermissionsByModule(Collection $permissions): array
     {
-        $managerLevel = $this->getRoleHierarchyLevel($managerRole->name);
-        $targetLevel = $this->getRoleHierarchyLevel($targetRole->name);
-        
-        return $managerLevel < $targetLevel;
-    }
-
-    /**
-     * Get role hierarchy level
-     */
-    private function getRoleHierarchyLevel(string $roleName): int
-    {
-        foreach (self::ENTERPRISE_ROLES as $roleConfig) {
-            if ($roleConfig['name'] === $roleName) {
-                return $roleConfig['hierarchy_level'];
-            }
-        }
-        
-        return 999; // Unknown role gets lowest priority
-    }
-
-    /**
-     * Audit role permissions for compliance
-     */
-    public function auditRolePermissions(): array
-    {
-        $audit = [
-            'timestamp' => now(),
-            'roles_reviewed' => 0,
-            'permission_conflicts' => [],
-            'orphaned_permissions' => [],
-            'recommendations' => []
-        ];
-
-        $roles = Role::with('permissions')->get();
-        
-        foreach ($roles as $role) {
-            $audit['roles_reviewed']++;
-            
-            // Check for permission conflicts
-            $this->checkPermissionConflicts($role, $audit);
-            
-            // Check for unnecessary permissions
-            $this->checkUnnecessaryPermissions($role, $audit);
-        }
-
-        // Check for orphaned permissions
-        $audit['orphaned_permissions'] = Permission::whereDoesntHave('roles')->pluck('name')->toArray();
-
-        Log::info('Role permission audit completed', $audit);
-        
-        return $audit;
-    }
-
-    /**
-     * Check for permission conflicts within a role
-     */
-    private function checkPermissionConflicts(Role $role, array &$audit): void
-    {
-        $permissions = $role->permissions->pluck('name');
-        
-        // Example: Check if role has both read and delete but not write
-        foreach ($this->getEnterpriseModules() as $moduleKey => $moduleConfig) {
-            $modulePermissions = $permissions->filter(function ($permission) use ($moduleKey) {
-                return str_ends_with($permission, " {$moduleKey}");
-            });
-
-            if ($modulePermissions->contains("delete {$moduleKey}") && 
-                !$modulePermissions->contains("write {$moduleKey}")) {
-                $audit['permission_conflicts'][] = [
-                    'role' => $role->name,
-                    'module' => $moduleKey,
-                    'issue' => 'Has delete permission without write permission'
-                ];
-            }
-        }
-    }
-
-    /**
-     * Check for unnecessary permissions
-     */
-    private function checkUnnecessaryPermissions(Role $role, array &$audit): void
-    {
-        // Add logic to detect unnecessary permissions based on role hierarchy
-        // For example, if a role has individual permissions that could be covered by admin access
-    }
-
-    /**
-     * Get role-based navigation permissions for pages.jsx
-     */
-    public function getNavigationPermissions(): array
-    {
-        $navigation = [];
+        $grouped = [];
         
         foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
-            $category = $moduleConfig['category'];
+            $modulePermissions = $permissions->whereIn('name', $moduleConfig['permissions']);
             
-            if (!isset($navigation[$category])) {
-                $navigation[$category] = [
-                    'name' => ucwords(str_replace('_', ' ', $category)),
-                    'modules' => []
+            if ($modulePermissions->isNotEmpty()) {
+                $grouped[$moduleKey] = [
+                    'name' => $moduleConfig['name'],
+                    'permissions' => $modulePermissions->toArray()
                 ];
             }
+        }
+        
+        return $grouped;
+    }    /**
+     * Check if a user can access a specific module
+     */
+    public function userCanAccessModule(string $moduleKey, $user = null): bool
+    {
+        if (!$user) {
+            $user = auth()->user();
+        }
+        
+        if (!$user || !isset(self::ENTERPRISE_MODULES[$moduleKey])) {
+            return false;
+        }
+        
+        $modulePermissions = self::ENTERPRISE_MODULES[$moduleKey]['permissions'];
+        
+        // Check if user has any permission for this module
+        foreach ($modulePermissions as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get user's accessible modules
+     */
+    public function getUserAccessibleModules($user = null): array
+    {
+        if (!$user) {
+            $user = auth()->user();
+        }
+        
+        if (!$user) {
+            return [];
+        }
+        
+        $accessibleModules = [];
+        
+        foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
+            if ($this->userCanAccessModule($moduleKey, $user)) {
+                $accessibleModules[$moduleKey] = $moduleConfig;
+            }
+        }
+        
+        return $accessibleModules;
+    }    /**
+     * Validate role permissions for consistency
+     */
+    public function validateRolePermissions(Role $role): array
+    {
+        $validation = [
+            'role' => $role->name,
+            'valid' => true,
+            'issues' => [],
+            'recommendations' => []
+        ];
+        
+        $permissions = $role->permissions->pluck('name');
+        
+        // Check if role has permissions that don't exist in our module structure
+        foreach ($permissions as $permission) {
+            $found = false;
+            foreach (self::ENTERPRISE_MODULES as $moduleConfig) {
+                if (in_array($permission, $moduleConfig['permissions'])) {
+                    $found = true;
+                    break;
+                }
+            }
             
-            $navigation[$category]['modules'][$moduleKey] = [
+            if (!$found) {
+                $validation['valid'] = false;
+                $validation['issues'][] = "Permission '{$permission}' is not defined in any module";
+            }
+        }
+        
+        return $validation;
+    }
+
+    /**
+     * Get permission statistics
+     */
+    public function getPermissionStatistics(): array
+    {
+        $stats = [
+            'total_permissions' => Permission::count(),
+            'total_roles' => Role::count(),
+            'modules' => count(self::ENTERPRISE_MODULES),
+            'permissions_by_module' => [],
+            'roles_with_permissions' => Role::has('permissions')->count(),
+            'unused_permissions' => Permission::doesntHave('roles')->count()
+        ];
+        
+        foreach (self::ENTERPRISE_MODULES as $moduleKey => $moduleConfig) {
+            $stats['permissions_by_module'][$moduleKey] = [
                 'name' => $moduleConfig['name'],
-                'required_permission' => "read {$moduleKey}",
-                'admin_permission' => "admin {$moduleKey}"
+                'permission_count' => count($moduleConfig['permissions']),
+                'category' => $moduleConfig['category']
             ];
         }
-
-        return $navigation;
+        
+        return $stats;
     }
 }

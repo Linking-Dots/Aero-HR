@@ -27,7 +27,9 @@ import {
     Pagination,
     Skeleton,
     Card as HeroCard,
-    Divider
+    CardBody,
+    Divider,
+    Button as HeroButton
 } from "@heroui/react";
 import Grow from '@mui/material/Grow';
 import GlassCard from "@/Components/GlassCard.jsx";
@@ -43,7 +45,8 @@ import {
     XCircleIcon,
     ChevronDownIcon,
     UserGroupIcon,
-    DocumentArrowDownIcon // Add this import
+    DocumentArrowDownIcon,
+    PresentationChartLineIcon
 } from '@heroicons/react/24/outline';
 import { Refresh, FileDownload, PictureAsPdf } from '@mui/icons-material'; // Add these imports
 import axios from 'axios';
@@ -222,16 +225,19 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             default:
                 return 'warning';
         }
-    };
-
+    };    // Check permissions using new system
+    const canViewAllAttendance = auth.permissions?.includes('attendance.view') || false;
+    const canManageAttendance = auth.permissions?.includes('attendance.manage') || false;
+    const canExportAttendance = auth.permissions?.includes('attendance.export') || canManageAttendance || false;
+    
     const columns = [
         { name: "Date", uid: "date", icon: CalendarDaysIcon },
-        ...((auth.roles.includes('Administrator')) && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
+        ...(canViewAllAttendance && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
         { name: "Clock In", uid: "clockin_time", icon: ClockIcon },
         { name: "Clock Out", uid: "clockout_time", icon: ClockIcon },
         { name: "Work Hours", uid: "production_time", icon: ClockIcon },
         { name: "Punches", uid: "punch_details", icon: ClockIcon }
-    ];    const renderCell = (attendance, columnKey) => {
+    ];const renderCell = (attendance, columnKey) => {
         const isCurrentDate = new Date(attendance.date).toDateString() === new Date().toDateString();
         
         switch (columnKey) {
@@ -785,108 +791,161 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             aria-label="Timesheet Management"
         >
             <Grid container spacing={2}>
-                {/* Main Attendance Table */}
-                <Grid item xs={12} md={(url !== '/attendance-employee') ? 9 : 12}>
+                {/* Main Attendance Table */}                <Grid item xs={12} md={canViewAllAttendance && (url !== '/attendance-employee') ? 9 : 12}>
                     <Grow in timeout={500}>
                         <GlassCard>
-                            <CardHeader
-                                title={
-                                    <Box className="flex items-center gap-3">
-                                        <ClockIcon className="w-6 h-6 text-primary" />
-                                        <Typography 
-                                            variant="h5"
-                                            component="h1"
-                                            sx={{ 
-                                                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
-                                                fontWeight: 600
-                                            }}
-                                        >
-                                            {url === '/attendance-employee'
-                                                ? `Timesheet - ${new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`
-                                                : `Daily Timesheet - ${new Date(selectedDate).toLocaleString('en-US', {
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                })}`
-                                            }
-                                        </Typography>
-                                    </Box>
-                                }
-                                action={
-                                    <Stack direction="row" spacing={1}>
-                                        <Tooltip title="Download as Excel">
-                                            <IconButton 
-                                                onClick={downloadExcel}
-                                                disabled={!isLoaded || attendances.length === 0}
-                                                sx={{
-                                                    background: alpha(theme.palette.success.main, 0.1),
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                                    '&:hover': {
-                                                        background: alpha(theme.palette.success.main, 0.2),
-                                                        transform: 'scale(1.05)'
-                                                    },
-                                                    '&:disabled': {
-                                                        opacity: 0.5
-                                                    }
-                                                }}
-                                            >
-                                                <FileDownload sx={{ color: theme.palette.success.main }} />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Download as PDF">
-                                            <IconButton 
-                                                onClick={downloadPDF}
-                                                disabled={!isLoaded || attendances.length === 0}
-                                                sx={{
-                                                    background: alpha(theme.palette.error.main, 0.1),
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                                                    '&:hover': {
-                                                        background: alpha(theme.palette.error.main, 0.2),
-                                                        transform: 'scale(1.05)'
-                                                    },
-                                                    '&:disabled': {
-                                                        opacity: 0.5
-                                                    }
-                                                }}
-                                            >
-                                                <PictureAsPdf sx={{ color: theme.palette.error.main }} />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Refresh Timesheet">
-                                            <IconButton 
-                                                onClick={handleRefresh}
-                                                disabled={!isLoaded}
-                                                sx={{
-                                                    background: alpha(theme.palette.primary.main, 0.1),
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                                                    '&:hover': {
-                                                        background: alpha(theme.palette.primary.main, 0.2),
-                                                        transform: 'scale(1.05)'
-                                                    },
-                                                    '&:disabled': {
-                                                        opacity: 0.5
-                                                    }
-                                                }}
-                                            >
-                                                <Refresh color="primary" />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Stack>
-                                }
-                                sx={{ padding: '24px' }}
-                            />
-                            <Divider />
-                            <CardContent>
+                            {url === '/attendance-employee' ? (
+                                // Employee View - Use AttendanceAdmin header style
+                                <div className="overflow-hidden">
+                                    <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
+                                        <div className="p-6">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                                                        <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <Typography 
+                                                            variant="h4" 
+                                                            className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                                        >
+                                                            My Timesheet
+                                                        </Typography>
+                                                        <Typography variant="body2" color="textSecondary">
+                                                            {new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Action Buttons */}
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {canExportAttendance && (
+                                                        <>
+                                                            <HeroButton
+                                                                color="success"
+                                                                variant="flat"
+                                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                                className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
+                                                                onPress={downloadExcel}
+                                                                isDisabled={!isLoaded || attendances.length === 0}
+                                                            >
+                                                                Excel
+                                                            </HeroButton>
+                                                            
+                                                            <HeroButton
+                                                                color="danger"
+                                                                variant="flat"
+                                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                                className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30"
+                                                                onPress={downloadPDF}
+                                                                isDisabled={!isLoaded || attendances.length === 0}
+                                                            >
+                                                                PDF
+                                                            </HeroButton>
+                                                        </>
+                                                    )}
+                                                    
+                                                    <HeroButton
+                                                        color="primary"
+                                                        variant="flat"
+                                                        startContent={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                        </svg>}
+                                                        onPress={handleRefresh}
+                                                        isDisabled={!isLoaded}
+                                                        className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
+                                                    >
+                                                        Refresh
+                                                    </HeroButton>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Divider className="border-white/10" />
+                                </div>
+                            ) : (
+                                // Admin View - Keep original header style
+                                <>
+                                    <CardHeader
+                                        title={
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                                                    <ClockIcon className="w-8 h-8 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <Typography 
+                                                        variant="h4" 
+                                                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                                    >
+                                                        Daily Timesheet
+                                                    </Typography>
+                                                    <Typography variant="body2" color="textSecondary">
+                                                        {new Date(selectedDate).toLocaleString('en-US', {
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </Typography>
+                                                </div>
+                                            </div>
+                                        }
+                                        action={
+                                            <div className="flex gap-2 flex-wrap">
+                                                {canExportAttendance && (
+                                                    <>
+                                                        <HeroButton
+                                                            color="success"
+                                                            variant="flat"
+                                                            startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                            className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
+                                                            onPress={downloadExcel}
+                                                            isDisabled={!isLoaded || attendances.length === 0}
+                                                        >
+                                                            Excel
+                                                        </HeroButton>
+                                                        
+                                                        <HeroButton
+                                                            color="danger"
+                                                            variant="flat"
+                                                            startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                            className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30"
+                                                            onPress={downloadPDF}
+                                                            isDisabled={!isLoaded || attendances.length === 0}
+                                                        >
+                                                            PDF
+                                                        </HeroButton>
+                                                    </>
+                                                )}
+                                                
+                                                <HeroButton
+                                                    color="primary"
+                                                    variant="flat"
+                                                    startContent={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    </svg>}
+                                                    onPress={handleRefresh}
+                                                    isDisabled={!isLoaded}
+                                                    className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
+                                                >
+                                                    Refresh
+                                                </HeroButton>
+                                            </div>
+                                        }
+                                        sx={{ padding: '24px' }}
+                                    />
+                                    <Divider />
+                                </>
+                            )}                            <CardContent>
                                 <Box 
                                     component="section"
                                     role="search"
                                     aria-label="Timesheet filters"
+                                    sx={{ 
+                                        padding: url === '/attendance-employee' ? '24px' : '0'
+                                    }}
                                 >
                                     <Grid container spacing={3}>
-                                        {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && (
+                                        {canViewAllAttendance && (url !== '/attendance-employee') && (
                                             <>
                                                 <Grid item xs={12} sm={6} md={4}>
                                                     <Input
@@ -899,6 +958,9 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                         onChange={handleSearch}
                                                         startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
                                                         aria-label="Search employees"
+                                                        classNames={{
+                                                            inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                        }}
                                                     />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} md={4}>
@@ -910,11 +972,14 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                         value={new Date(selectedDate).toISOString().slice(0, 10) || ''}
                                                         startContent={<CalendarDaysIcon className="w-4 h-4 text-default-400" />}
                                                         aria-label="Select date for timesheet"
+                                                        classNames={{
+                                                            inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                        }}
                                                     />
                                                 </Grid>
                                             </>
                                         )}
-                                        {(auth.roles.includes('Employee')) && (url === '/attendance-employee') && (
+                                        {(!canViewAllAttendance || url === '/attendance-employee') && (
                                             <Grid item xs={12} sm={6} md={4}>
                                                 <Input
                                                     label="Select Month"
@@ -926,12 +991,14 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                     onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
                                                     startContent={<CalendarDaysIcon className="w-4 h-4 text-default-400" />}
                                                     aria-label="Select month for timesheet"
+                                                    classNames={{
+                                                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                    }}
                                                 />
                                             </Grid>
                                         )}
                                     </Grid>
-                                </Box>
-                            </CardContent>
+                                </Box>                            </CardContent>
                             <CardContent>
                                 {error ? (
                                     <HeroCard className="p-4 bg-danger-50 border-danger-200">
@@ -942,7 +1009,6 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                     </HeroCard>
                                 ) : (
                                     <Box 
-                                      
                                         role="region"
                                         aria-label="Attendance data table"
                                     >
@@ -979,7 +1045,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                                     No attendance records found
                                                                 </Typography>
                                                             </Box>
-                                                        }                                                    >
+                                                        }
+                                                    >
                                                         {(attendance) => (
                                                             <TableRow key={attendance.id || attendance.user_id}>
                                                                 {(columnKey) => renderCell(attendance, columnKey)}
@@ -988,7 +1055,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                     </TableBody>
                                                 </Table>
                                             </Skeleton>
-                                        </ScrollShadow>                                        {totalRows > perPage && (
+                                        </ScrollShadow>
+                                        {totalRows > perPage && (
                                             <Box className="py-4 flex justify-center">
                                                 <Pagination
                                                     initialPage={1}
@@ -1012,45 +1080,43 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                 </Grid>
 
                 {/* Absent Users Card */}
-                {(auth.roles.includes('Administrator')) && (url !== '/attendance-employee') && absentUsers.length > 0 && (
-                    <Grid item xs={12} md={3}>
+                {canViewAllAttendance && (url !== '/attendance-employee') && absentUsers.length > 0 && (                    <Grid item xs={12} md={3}>
                         <Grow in timeout={700}>
                             <GlassCard ref={cardRef}>
                                 <CardHeader
                                     title={
-                                        <Box className="flex items-center justify-between">
-                                            <Box className="flex items-center gap-2">
-                                                <UserGroupIcon className="w-5 h-5 text-warning" />
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
+                                                <UserGroupIcon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <div>
                                                 <Typography 
                                                     variant="h6"
-                                                    component="h2"
-                                                    sx={{ 
-                                                        fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
-                                                        fontWeight: 600
-                                                    }}
+                                                    className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
                                                 >
-                                                    Absent
+                                                    Absent Today
                                                 </Typography>
-                                            </Box>
-                                            <Chip 
-                                                label={absentUsers.length} 
-                                                variant="flat" 
-                                                color="warning" 
-                                                size="sm"
-                                                startContent={<ExclamationTriangleIcon className="w-3 h-3" />}
-                                            />
-                                        </Box>
+                                                <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
+                                                    <CalendarDaysIcon className="w-4 h-4" />
+                                                    {new Date(selectedDate).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                </Typography>
+                                            </div>
+                                        </div>
                                     }
-                                    subheader={
-                                        <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
-                                            <CalendarDaysIcon className="w-4 h-4" />
-                                            {new Date(selectedDate).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })}
-                                        </Typography>
+                                    action={
+                                        <Chip 
+                                            label={absentUsers.length} 
+                                            variant="flat" 
+                                            color="warning" 
+                                            size="sm"
+                                            startContent={<ExclamationTriangleIcon className="w-3 h-3" />}
+                                        />
                                     }
+                                    sx={{ padding: '24px' }}
                                 />
                                 <Divider />
                                 <CardContent>
@@ -1061,13 +1127,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                         {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
                                             const userLeave = getUserLeave(user.id);
                                             const ref = index === 0 ? userItemRef : null;
-                                            return (
-                                                <Collapse in={index < visibleUsersCount} key={user.id} timeout="auto" unmountOnExit>
-                                                    <HeroCard
-                                                        ref={ref}
-                                                        className="mb-3 p-3 bg-default-50 border-default-200"
-                                                        shadow="sm"
-                                                    >
+                                            return (                                                <Collapse in={index < visibleUsersCount} key={user.id} timeout="auto" unmountOnExit>
+                                                    <div className="mb-3 p-3 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-200 rounded-lg">
                                                         <Box className="flex items-start justify-between">
                                                             <Box className="flex items-center gap-3 flex-1">
                                                                 <Avatar 
@@ -1119,28 +1180,34 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                                 </Box>
                                                             </Box>
                                                             {userLeave && (
-                                                                <Chip 
-                                                                    label={userLeave.status} 
-                                                                    variant="flat" 
-                                                                    color={getLeaveStatusColor(userLeave.status)}
-                                                                    size="sm"
-                                                                    startContent={getLeaveStatusIcon(userLeave.status)}
-                                                                />
+                                                                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-2 py-1">
+                                                                    <div className="flex items-center gap-1">
+                                                                        {getLeaveStatusIcon(userLeave.status)}
+                                                                        <Typography 
+                                                                            variant="caption" 
+                                                                            className={`font-semibold ${
+                                                                                userLeave.status?.toLowerCase() === 'approved' ? 'text-green-600' :
+                                                                                userLeave.status?.toLowerCase() === 'rejected' ? 'text-red-600' :
+                                                                                'text-orange-600'
+                                                                            }`}
+                                                                        >
+                                                                            {userLeave.status}
+                                                                        </Typography>
+                                                                    </div>
+                                                                </div>
                                                             )}
                                                         </Box>
-                                                    </HeroCard>
+                                                    </div>
                                                 </Collapse>
                                             );
-                                        })}
-                                        {visibleUsersCount < absentUsers.length && (
+                                        })}                                        {visibleUsersCount < absentUsers.length && (
                                             <Box className="text-center mt-3">
                                                 <Button 
                                                     variant="outlined" 
                                                     onClick={handleLoadMore}
                                                     startIcon={<ChevronDownIcon className="w-4 h-4" />}
                                                     size="small"
-                                                >
-                                                    Show More ({absentUsers.length - visibleUsersCount} remaining)
+                                                >                                                    Show More ({absentUsers.length - visibleUsersCount} remaining)
                                                 </Button>
                                             </Box>
                                         )}

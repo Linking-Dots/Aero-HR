@@ -48,20 +48,21 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import { toast } from "react-toastify";
 import axios from 'axios';
 
+
 const RoleManagement = ({ 
     title, 
     roles: initialRoles = [], 
     permissions: initialPermissions = [],
+    permissions_grouped: permissionsGrouped = {},
     role_has_permissions: initialRolePermissions = [],
     enterprise_modules: enterpriseModules = {},
-    navigation_permissions: navigationPermissions = {},
-    user_hierarchy_level: userHierarchyLevel = 10,
-    assignable_roles: assignableRoles = []
+    can_manage_super_admin: canManageSuperAdmin = false
 }) => {    console.log('RoleManagement Props:', {
         roles: initialRoles,
         permissions: initialPermissions,
+        permissionsGrouped,
         rolePermissions: initialRolePermissions,
-        userHierarchyLevel
+        canManageSuperAdmin
     });
     
     const theme = useTheme();
@@ -106,47 +107,56 @@ const RoleManagement = ({
         totalPermissions: permissions.length,
         activeRole: activeRole?.name || 'None Selected',
         grantedPermissions: selectedPermissions.size
-    }), [roles, permissions, activeRole, selectedPermissions]);
-
-    // Memoized filtered permissions
+    }), [roles, permissions, activeRole, selectedPermissions]);    // Memoized filtered permissions - now using new structure
     const filteredPermissions = useMemo(() => {
-        return permissions.filter(permission => {
-            const matchesSearch = searchQuery === '' || 
-                permission.name.toLowerCase().includes(searchQuery.toLowerCase());
-            
-            const parts = permission.name.split(' ');
-            const module = parts.slice(1).join(' ');
-            const matchesModule = moduleFilter === 'all' || module === moduleFilter;
-            
-            return matchesSearch && matchesModule;
-        });
-    }, [permissions, searchQuery, moduleFilter]);
-
-    // Group permissions by module
-    const groupedPermissions = useMemo(() => {
-        return filteredPermissions.reduce((acc, permission) => {
-            const parts = permission.name.split(' ');
-            const action = parts[0];
-            const module = parts.slice(1).join(' ');
-            
-            if (!acc[module]) {
-                acc[module] = [];
+        if (!permissionsGrouped) return [];
+        
+        let filteredPerms = [];
+        
+        Object.entries(permissionsGrouped).forEach(([moduleKey, moduleData]) => {
+            if (moduleFilter === 'all' || moduleFilter === moduleKey) {
+                const modulePermissions = moduleData.permissions.filter(permission => {
+                    return searchQuery === '' || 
+                           permission.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           permission.display_name.toLowerCase().includes(searchQuery.toLowerCase());
+                });
+                filteredPerms = [...filteredPerms, ...modulePermissions];
             }
-            acc[module].push({ ...permission, action });
-            return acc;
-        }, {});
-    }, [filteredPermissions]);
+        });
+        
+        return filteredPerms;
+    }, [permissionsGrouped, searchQuery, moduleFilter]);
+
+    // Group permissions by module using new structure
+    const groupedPermissions = useMemo(() => {
+        if (!permissionsGrouped) return {};
+        
+        const filtered = {};
+        Object.entries(permissionsGrouped).forEach(([moduleKey, moduleData]) => {
+            if (moduleFilter === 'all' || moduleFilter === moduleKey) {
+                const modulePermissions = moduleData.permissions.filter(permission => {
+                    return searchQuery === '' || 
+                           permission.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           permission.display_name.toLowerCase().includes(searchQuery.toLowerCase());
+                });
+                
+                if (modulePermissions.length > 0) {
+                    filtered[moduleKey] = {
+                        ...moduleData,
+                        permissions: modulePermissions
+                    };
+                }
+            }
+        });
+        
+        return filtered;
+    }, [permissionsGrouped, searchQuery, moduleFilter]);
 
     // Get unique modules for filter
     const modules = useMemo(() => {
-        const moduleSet = new Set();
-        permissions.forEach(permission => {
-            const parts = permission.name.split(' ');
-            const module = parts.slice(1).join(' ');
-            moduleSet.add(module);
-        });
-        return Array.from(moduleSet);
-    }, [permissions]);    // Get role permissions
+        if (!permissionsGrouped) return [];
+        return Object.keys(permissionsGrouped).sort();
+    }, [permissionsGrouped]);// Get role permissions
     const getRolePermissions = useCallback((roleId) => {
         return rolePermissions
             .filter(rp => rp.role_id === roleId)
@@ -161,13 +171,35 @@ const RoleManagement = ({
         const rolePerms = rolePermissions.filter(rp => rp.role_id === roleId);
         const permission = permissions.find(p => p.name === permissionName);
         return permission && rolePerms.some(rp => rp.permission_id === permission.id);
+    };    // Check if module has all permissions granted
+    const moduleHasAllPermissions = useCallback((moduleKey) => {
+        if (!activeRole || !permissionsGrouped[moduleKey]) return false;
+        
+        const modulePermissions = permissionsGrouped[moduleKey].permissions;
+        
+        return modulePermissions.every(permission => 
+            roleHasPermission(activeRole.id, permission.name)
+        );
+    }, [activeRole, permissionsGrouped, roleHasPermission]);
+
+    // Check if module has some permissions granted
+    const moduleHasSomePermissions = useCallback((moduleKey) => {
+        if (!activeRole || !permissionsGrouped[moduleKey]) return false;
+        
+        const modulePermissions = permissionsGrouped[moduleKey].permissions;
+        
+        return modulePermissions.some(permission => 
+            roleHasPermission(activeRole.id, permission.name)
+        );
+    }, [activeRole, permissionsGrouped, roleHasPermission]);    // Check if user can manage role
+    const canManageRole = (role) => {
+        if (role.name === 'Super Administrator') {
+            return canManageSuperAdmin;
+        }
+        return true; // Can manage all other roles if has access to role management
     };
 
-    // Check if user can manage role
-    const canManageRole = (role) => {
-        if (role.name === 'Super Administrator') return false;
-        return role.hierarchy_level > userHierarchyLevel;
-    };    // Event handlers
+    // Event handlers
     const handleRoleSelect = useCallback((roleId) => {
         setActiveRoleId(roleId);
         const rolePerms = rolePermissions
@@ -386,15 +418,15 @@ const RoleManagement = ({
                                     required
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
+                            <Grid item xs={12} sm={6}>                                <TextField
                                     fullWidth
                                     label="Hierarchy Level"
                                     type="number"
                                     value={roleForm.hierarchy_level}
                                     onChange={(e) => setRoleForm(prev => ({ ...prev, hierarchy_level: parseInt(e.target.value) }))}
-                                    helperText={`Must be greater than ${userHierarchyLevel}`}
-                                    inputProps={{ min: userHierarchyLevel + 1, max: 50 }}
+                                    helperText="Role priority level (1-50, lower numbers = higher priority)"
+                                    inputProps={{ min: 1, max: 50 }}
+                                    disabled={!canManageSuperAdmin}
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -491,9 +523,8 @@ const RoleManagement = ({
                                                 className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
                                             >
                                                 Role Management
-                                            </Typography>
-                                            <Typography variant="body2" color="textSecondary">
-                                                Manage roles, permissions, and access control. Your hierarchy level: {userHierarchyLevel}
+                                            </Typography>                                            <Typography variant="body2" color="textSecondary">
+                                                Manage roles, permissions, and access control. {canManageSuperAdmin ? 'Super Administrator' : 'Administrator'} Access
                                             </Typography>
                                         </div>
                                     </div>
@@ -748,9 +779,9 @@ const RoleManagement = ({
                                                                 color="primary"
                                                                 variant="flat"
                                                             />
-                                                        </div>
-                                                          <div className="max-h-96 overflow-y-auto space-y-3">
-                                                            {Object.entries(groupedPermissions).map(([module, modulePermissions]) => {
+                                                        </div>                                                        <div className="max-h-96 overflow-y-auto space-y-3">
+                                                            {Object.entries(groupedPermissions).map(([module, moduleData]) => {
+                                                                const modulePermissions = moduleData.permissions;
                                                                 const grantedCount = modulePermissions.filter(perm => 
                                                                     roleHasPermission(activeRole.id, perm.name)
                                                                 ).length;
@@ -808,40 +839,41 @@ const RoleManagement = ({
                                                                                                 : 'bg-gray-500/20 text-gray-400'
                                                                                     }`}>
                                                                                         {percentageGranted}%
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <Typography variant="subtitle1" className="font-semibold capitalize text-white">
-                                                                                            {module}
-                                                                                        </Typography>
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <Typography variant="caption" color="textSecondary">
-                                                                                                {grantedCount} of {totalCount} permissions granted
+                                                                                    </div>                                                                        <div>
+                                                                                            <Typography variant="subtitle1" className="font-semibold text-white">
+                                                                                                {moduleData.name}
                                                                                             </Typography>
-                                                                                            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                                                hasAllPermissions 
-                                                                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                                                                                    : hasAnyPermissions 
-                                                                                                        ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' 
-                                                                                                        : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                                                                                            }`}>
-                                                                                                {hasAllPermissions ? 'Full Access' : hasAnyPermissions ? 'Partial' : 'No Access'}
+                                                                                            <Typography variant="caption" color="textSecondary" className="block">
+                                                                                                {moduleData.description}
+                                                                                            </Typography>
+                                                                                            <div className="flex items-center gap-2 mt-1">
+                                                                                                <Typography variant="caption" color="textSecondary">
+                                                                                                    {grantedCount} of {totalCount} permissions granted
+                                                                                                </Typography>
                                                                                             </div>
                                                                                         </div>
-                                                                                    </div>
                                                                                 </div>
                                                                                 <div className="flex items-center gap-2">
                                                                                     <div className="text-right mr-2">
                                                                                         <Typography variant="caption" color="textSecondary" className="block">
                                                                                             Module Toggle
                                                                                         </Typography>
-                                                                                    </div>
-                                                                                    <Switch
+                                                                                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                                            hasAllPermissions 
+                                                                                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                                                                                : hasAnyPermissions 
+                                                                                                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' 
+                                                                                                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                                                        }`}>
+                                                                                            {hasAllPermissions ? 'Full Access' : hasAnyPermissions ? 'Partial' : 'No Access'}
+                                                                                        </div>
+                                                                                    </div>                                                                                    <Switch
                                                                                         checked={hasAllPermissions}
                                                                                         onChange={(e) => {
                                                                                             e.stopPropagation();
                                                                                             toggleModulePermissions(module);
                                                                                         }}
-                                                                                        disabled={isLoading || !canManageRole(activeRole)}
+                                                                                        disabled={isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin)}
                                                                                         sx={{
                                                                                             '& .MuiSwitch-switchBase.Mui-checked': {
                                                                                                 color: '#10b981',
@@ -859,11 +891,11 @@ const RoleManagement = ({
                                                                                     />
                                                                                 </div>
                                                                             </div>
-                                                                        </AccordionSummary>
-                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                        </AccordionSummary>                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                                                 {modulePermissions.map((permission) => {
                                                                                     const isChecked = roleHasPermission(activeRole.id, permission.name);
-                                                                                    const isDisabled = isLoading || !canManageRole(activeRole);
+                                                                                    const isDisabled = isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin);
                                                                                     
                                                                                     return (
                                                                                         <div
@@ -908,12 +940,11 @@ const RoleManagement = ({
                                                                                                         }}
                                                                                                     />
                                                                                                 }
-                                                                                                label={
-                                                                                                    <div>
+                                                                                                label={                                                                                                    <div>
                                                                                                         <Typography variant="body2" className={`font-medium ${
                                                                                                             isChecked ? 'text-green-400' : 'text-white'
                                                                                                         }`}>
-                                                                                                            {permission.action}
+                                                                                                            {permission.display_name || permission.name}
                                                                                                         </Typography>
                                                                                                         <Typography variant="caption" className={`${
                                                                                                             isChecked ? 'text-green-300/70' : 'text-gray-400'

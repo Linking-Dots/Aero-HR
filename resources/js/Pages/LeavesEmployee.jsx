@@ -23,7 +23,8 @@ import {
   CalendarIcon, 
   ChartBarIcon, 
   ClockIcon,
-  UserIcon 
+  UserIcon,
+  PresentationChartLineIcon
 } from "@heroicons/react/24/outline";
 import GlassCard from '@/Components/GlassCard.jsx';
 import App from '@/Layouts/App.jsx';
@@ -231,41 +232,50 @@ const LeavesEmployee = ({ title, allUsers }) => {
   return (
     <>
       <Head title={title} />
-      <Box 
-        className="min-h-screen p-2 sm:p-4 md:p-6"
-        sx={{ 
-          background: 'linear-gradient(135deg, rgba(67, 56, 202, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-        }}
-      >
-        <Grow in timeout={800}>
-          <div className="mx-auto">
-            <GlassCard>
-              {/* Header Section */}
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <UserIcon className="w-8 h-8 text-blue-400" />
-                    <div>
-                      <Typography 
-                        variant={isMobile ? "h5" : "h4"} 
-                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Grow in>
+          <GlassCard>
+            <div className="overflow-hidden">
+              {/* Header Section - Matching AttendanceAdmin */}
+              <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
+                <div className="p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                        <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <Typography 
+                          variant={isMobile ? "h5" : "h4"} 
+                          className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                        >
+                          My Leaves
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Your leave requests and balances
+                        </Typography>
+                      </div>
+                    </div>
+                    
+                    {/* Year Indicator */}
+                    <div className="flex gap-2 flex-wrap">
+                      <Chip
+                        startContent={<ClockIcon className="w-4 h-4" />}
+                        variant="flat"
+                        color="primary"
+                        size={isMobile ? "sm" : "md"}
+                        className="bg-white/10 backdrop-blur-md border-white/20"
                       >
-                        My Leaves
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Your leave requests and balances
-                      </Typography>
+                        {filters.year}
+                      </Chip>
                     </div>
                   </div>
-                  <Chip
-                    startContent={<ClockIcon className="w-4 h-4" />}
-                    variant="flat"
-                    color="primary"
-                    size={isMobile ? "sm" : "md"}
-                  >
-                    {filters.year}
-                  </Chip>
                 </div>
+              </div>
+
+              <Divider className="border-white/10" />
+
+              <div className="p-6">
 
                 {/* Filters Section */}
                 <div className="mb-6">
@@ -365,8 +375,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
                   )}
                 </div>
               </div>
-            </GlassCard>
-          </div>
+            </div>
+          </GlassCard>
         </Grow>
       </Box>
     </>

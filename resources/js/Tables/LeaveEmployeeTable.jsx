@@ -73,7 +73,13 @@ const LeaveEmployeeTable = ({
     lastPage,
     perPage,
     selectedMonth,
-    employee
+    employee,
+    isAdminView = false,
+    onBulkApprove,
+    onBulkReject,
+    canApproveLeaves = false,
+    canEditLeaves = false,
+    canDeleteLeaves = false
 }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
@@ -82,9 +88,16 @@ const LeaveEmployeeTable = ({
     const isMobile = useMediaQuery('(max-width: 640px)');
 
     const [isUpdating, setIsUpdating] = useState(false);
+    const [selectedLeaves, setSelectedLeaves] = useState(new Set());
 
-    const userIsAdmin = auth.roles.includes("Administrator");
-    const userIsSE = auth.roles.includes("Supervision Engineer");
+    // Check permissions using new system
+    const canViewLeaves = auth.permissions?.includes('leaves.view') || false;
+    const canManageOwnLeaves = auth.permissions?.includes('leave.own.view') || false;
+    const hasAdminAccess = isAdminView && (canApproveLeaves || canEditLeaves || canDeleteLeaves);
+    
+    // Permission-based access control (replacing role-based checks)
+    const userIsAdmin = isAdminView || hasAdminAccess;
+    const userIsSE = canApproveLeaves; // SE/Manager can approve leaves
 
     // Status configuration
     const statusConfig = {
@@ -207,7 +220,7 @@ const LeaveEmployeeTable = ({
                 <CardContent className="p-4">
                     <Box className="flex items-start justify-between mb-3">
                         <Box className="flex items-center gap-3 flex-1">
-                            {userIsAdmin && (
+                            {isAdminView && (
                                 <User
                                     avatarProps={{
                                         radius: "lg",
@@ -230,7 +243,7 @@ const LeaveEmployeeTable = ({
                         </Box>
                         <Box className="flex items-center gap-2">
                             {getStatusChip(leave.status)}
-                            {userIsAdmin && (
+                            {hasAdminAccess && (
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <IconButton size="small">
@@ -238,25 +251,29 @@ const LeaveEmployeeTable = ({
                                         </IconButton>
                                     </DropdownTrigger>
                                     <DropdownMenu aria-label="Leave actions">
-                                        <DropdownItem
-                                            key="edit"
-                                            startContent={<PencilIcon className="w-4 h-4" />}
-                                            onPress={() => {
-                                                setCurrentLeave(leave);
-                                                openModal("edit_leave");
-                                            }}
-                                        >
-                                            Edit Leave
-                                        </DropdownItem>
-                                        <DropdownItem
-                                            key="delete"
-                                            className="text-danger"
-                                            color="danger"
-                                            startContent={<TrashIcon className="w-4 h-4" />}
-                                            onPress={() => handleClickOpen(leave.id, "delete_leave")}
-                                        >
-                                            Delete Leave
-                                        </DropdownItem>
+                                        {canEditLeaves && (
+                                            <DropdownItem
+                                                key="edit"
+                                                startContent={<PencilIcon className="w-4 h-4" />}
+                                                onPress={() => {
+                                                    setCurrentLeave(leave);
+                                                    openModal("edit_leave");
+                                                }}
+                                            >
+                                                Edit Leave
+                                            </DropdownItem>
+                                        )}
+                                        {canDeleteLeaves && (
+                                            <DropdownItem
+                                                key="delete"
+                                                className="text-danger"
+                                                color="danger"
+                                                startContent={<TrashIcon className="w-4 h-4" />}
+                                                onPress={() => handleClickOpen(leave.id, "delete_leave")}
+                                            >
+                                                Delete Leave
+                                            </DropdownItem>
+                                        )}
                                     </DropdownMenu>
                                 </Dropdown>
                             )}
@@ -293,7 +310,7 @@ const LeaveEmployeeTable = ({
                         )}
                     </Stack>
 
-                    {userIsAdmin && (userIsSE || userIsAdmin) && (
+                    {isAdminView && canApproveLeaves && (
                         <>
                             <Divider className="my-3" />
                             <Box className="flex gap-2">
@@ -383,7 +400,7 @@ const LeaveEmployeeTable = ({
                     <TableCell>
                         <Box className="flex items-center gap-2">
                             {getStatusChip(leave.status)}
-                            {userIsAdmin && (userIsSE || userIsAdmin) && (
+                            {isAdminView && canApproveLeaves && (
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <Button 
@@ -438,37 +455,41 @@ const LeaveEmployeeTable = ({
                 return (
                     <TableCell>
                         <Box className="flex items-center gap-1">
-                            <Tooltip content="Edit Leave">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                        setCurrentLeave(leave);
-                                        openModal("edit_leave");
-                                    }}
-                                    sx={{
-                                        background: alpha(theme.palette.primary.main, 0.1),
-                                        '&:hover': {
-                                            background: alpha(theme.palette.primary.main, 0.2)
-                                        }
-                                    }}
-                                >
-                                    <PencilIcon className="w-4 h-4" />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip content="Delete Leave" color="danger">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleClickOpen(leave.id, "delete_leave")}
-                                    sx={{
-                                        background: alpha(theme.palette.error.main, 0.1),
-                                        '&:hover': {
-                                            background: alpha(theme.palette.error.main, 0.2)
-                                        }
-                                    }}
-                                >
-                                    <TrashIcon className="w-4 h-4" />
-                                </IconButton>
-                            </Tooltip>
+                            {canEditLeaves && (
+                                <Tooltip content="Edit Leave">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            setCurrentLeave(leave);
+                                            openModal("edit_leave");
+                                        }}
+                                        sx={{
+                                            background: alpha(theme.palette.primary.main, 0.1),
+                                            '&:hover': {
+                                                background: alpha(theme.palette.primary.main, 0.2)
+                                            }
+                                        }}
+                                    >
+                                        <PencilIcon className="w-4 h-4" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {canDeleteLeaves && (
+                                <Tooltip content="Delete Leave" color="danger">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleClickOpen(leave.id, "delete_leave")}
+                                        sx={{
+                                            background: alpha(theme.palette.error.main, 0.1),
+                                            '&:hover': {
+                                                background: alpha(theme.palette.error.main, 0.2)
+                                            }
+                                        }}
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
                         </Box>
                     </TableCell>
                 );
@@ -476,16 +497,16 @@ const LeaveEmployeeTable = ({
             default:
                 return <TableCell>{leave[columnKey]}</TableCell>;
         }
-    }, [userIsAdmin, userIsSE, isLargeScreen, isUpdating, theme, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus]);
+    }, [isAdminView, canApproveLeaves, isLargeScreen, isUpdating, theme, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus]);
 
     const columns = [
-        ...(userIsAdmin ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
+        ...(isAdminView ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
         { name: "Leave Type", uid: "leave_type", icon: DocumentTextIcon },
         { name: "From Date", uid: "from_date", icon: CalendarDaysIcon },
         { name: "To Date", uid: "to_date", icon: CalendarDaysIcon },
         { name: "Status", uid: "status", icon: ClockIconOutline },
         { name: "Reason", uid: "reason", icon: DocumentTextIcon },
-        ...(userIsAdmin ? [{ name: "Actions", uid: "actions" }] : [])
+        ...(isAdminView ? [{ name: "Actions", uid: "actions" }] : [])
     ];
 
     if (isMobile) {
@@ -518,11 +539,57 @@ const LeaveEmployeeTable = ({
 
     return (
         <Box sx={{ maxHeight: "84vh", overflowY: "auto" }}>
+            {/* Bulk Actions Bar for Admin */}
+            {isAdminView && selectedLeaves.size > 0 && (
+                <Card className="mb-4 bg-primary-50 border border-primary-200">
+                    <CardBody className="py-3">
+                        <Box className="flex items-center justify-between">
+                            <Typography variant="body2" className="text-primary-700">
+                                {selectedLeaves.size} leave{selectedLeaves.size > 1 ? 's' : ''} selected
+                            </Typography>
+                            <Box className="flex gap-2">
+                                {canApproveLeaves && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            color="success"
+                                            variant="flat"
+                                            startContent={<CheckCircleIcon className="w-4 h-4" />}
+                                            onPress={() => onBulkApprove && onBulkApprove(Array.from(selectedLeaves))}
+                                        >
+                                            Approve Selected
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            color="danger"
+                                            variant="flat"
+                                            startContent={<XCircleIcon className="w-4 h-4" />}
+                                            onPress={() => onBulkReject && onBulkReject(Array.from(selectedLeaves))}
+                                        >
+                                            Reject Selected
+                                        </Button>
+                                    </>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="light"
+                                    onPress={() => setSelectedLeaves(new Set())}
+                                >
+                                    Clear Selection
+                                </Button>
+                            </Box>
+                        </Box>
+                    </CardBody>
+                </Card>
+            )}
+            
             <ScrollShadow className="max-h-[70vh]">
                 <Table
                     isStriped
-                    selectionMode="multiple"
+                    selectionMode={isAdminView ? "multiple" : "none"}
                     selectionBehavior="toggle"
+                    selectedKeys={selectedLeaves}
+                    onSelectionChange={setSelectedLeaves}
                     isCompact={!isLargeScreen}
                     isHeaderSticky
                     removeWrapper

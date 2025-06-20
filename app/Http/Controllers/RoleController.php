@@ -52,30 +52,23 @@ class RoleController extends BaseController
                 })
                 ->get();
 
-            // Get enterprise modules structure
-            $enterpriseModules = $this->rolePermissionService->getEnterpriseModules();
+            // Get permissions grouped by module using the new service method
+            $permissionsGrouped = $this->rolePermissionService->getPermissionsGroupedByModule();
             
-            // Get all permissions organized by category
-            $permissions = Permission::all()->groupBy(function ($permission) {
-                $parts = explode(' ', $permission->name);
-                return end($parts); // Get module name
-            });
+            // Get all permissions as flat array for compatibility
+            $permissions = Permission::all();
 
             // Get role-permission relationships
             $roleHasPermissions = DB::table('role_has_permissions')->get();
-
-            // Get navigation permissions for frontend
-            $navigationPermissions = $this->rolePermissionService->getNavigationPermissions();
 
             return Inertia::render('Administration/RoleManagement', [
                 'title' => 'Enterprise Role Management',
                 'roles' => $roles,
                 'permissions' => $permissions,
+                'permissions_grouped' => $permissionsGrouped,
                 'role_has_permissions' => $roleHasPermissions,
-                'enterprise_modules' => $enterpriseModules,
-                'navigation_permissions' => $navigationPermissions,
-                'user_hierarchy_level' => $this->getUserHierarchyLevel($user),
-                'assignable_roles' => $this->getAssignableRoles($user)
+                'enterprise_modules' => $this->rolePermissionService->getEnterpriseModules(),
+                'can_manage_super_admin' => $user->hasRole('Super Administrator')
             ]);
             
         } catch (\Exception $e) {
@@ -91,9 +84,6 @@ class RoleController extends BaseController
         try {
             $user = auth()->user();
             
-            // Get enterprise modules structure
-            $enterpriseModules = $this->rolePermissionService->getEnterpriseModules();
-            
             // Get roles based on user's access level
             $roles = Role::with(['permissions'])
                 ->when(!$user->hasRole('Super Administrator'), function ($query) {
@@ -103,27 +93,23 @@ class RoleController extends BaseController
                 ->orderBy('name', 'asc')
                 ->get();
 
-            // Get all permissions organized by category
-            $permissions = Permission::all()->groupBy(function ($permission) {
-                $parts = explode(' ', $permission->name);
-                return end($parts); // Get module name
-            });
+            // Get permissions grouped by module using the new service method
+            $permissionsGrouped = $this->rolePermissionService->getPermissionsGroupedByModule();
+            
+            // Get all permissions as flat array
+            $permissions = Permission::all();
 
             // Get role-permission relationships
             $roleHasPermissions = DB::table('role_has_permissions')->get();
 
-            // Get navigation permissions for frontend
-            $navigationPermissions = $this->rolePermissionService->getNavigationPermissions();
-
             return Inertia::render('Administration/RoleManagement', [
                 'title' => 'Enterprise Role Management',
                 'roles' => $roles,
-                'permissions' => $permissions->flatten()->values(),
+                'permissions' => $permissions,
+                'permissions_grouped' => $permissionsGrouped,
                 'role_has_permissions' => $roleHasPermissions,
-                'enterprise_modules' => $enterpriseModules,
-                'navigation_permissions' => $navigationPermissions,
-                'user_hierarchy_level' => $this->getUserHierarchyLevel($user),
-                'assignable_roles' => $this->getAssignableRoles($user)
+                'enterprise_modules' => $this->rolePermissionService->getEnterpriseModules(),
+                'can_manage_super_admin' => $user->hasRole('Super Administrator')
             ]);
             
         } catch (\Exception $e) {
@@ -152,14 +138,10 @@ class RoleController extends BaseController
 
         DB::beginTransaction();
         
-        try {
-            // Check if user can create roles at this hierarchy level
-            $userLevel = $this->getUserHierarchyLevel(auth()->user());
-            $requestedLevel = $request->input('hierarchy_level', 10);
-            
-            if ($requestedLevel <= $userLevel) {
+        try {            // Only Super Administrator can create roles for security
+            if (!auth()->user()->hasRole('Super Administrator')) {
                 return response()->json([
-                    'error' => 'Cannot create role at or above your hierarchy level'
+                    'error' => 'Insufficient permissions to create roles'
                 ], 403);
             }
 
@@ -169,23 +151,15 @@ class RoleController extends BaseController
                 'guard_name' => 'web'
             ];
 
-            $role = Role::create($roleData);
-
-            // Add custom attributes using database update
-            if ($request->has('description') || $request->has('hierarchy_level')) {
+            $role = Role::create($roleData);            // Add description if provided
+            if ($request->has('description')) {
                 DB::table('roles')->where('id', $role->id)->update([
                     'description' => $request->description,
-                    'hierarchy_level' => $request->hierarchy_level ?? 10,
                     'updated_at' => now()
                 ]);
-            }
-
-            // Assign permissions if provided using Spatie's givePermissionTo method
+            }// Assign permissions if provided using the service
             if ($request->permissions && is_array($request->permissions)) {
-                $validPermissions = Permission::whereIn('name', $request->permissions)->pluck('name')->toArray();
-                if (!empty($validPermissions)) {
-                    $role->givePermissionTo($validPermissions);
-                }
+                $this->rolePermissionService->assignPermissionsToRole($role, $request->permissions);
             }
 
             // Log role creation
@@ -265,12 +239,9 @@ class RoleController extends BaseController
                     'description' => $request->description,
                     'updated_at' => now()
                 ]);
-            }
-
-            // Sync permissions using Spatie's syncPermissions method
+            }            // Sync permissions using the service
             if ($request->has('permissions')) {
-                $validPermissions = Permission::whereIn('name', $request->permissions ?? [])->pluck('name')->toArray();
-                $role->syncPermissions($validPermissions);
+                $this->rolePermissionService->assignPermissionsToRole($role, $request->permissions ?? []);
             }
 
             // Log role update
@@ -978,74 +949,18 @@ class RoleController extends BaseController
 
     /**
      * Check if user can manage a specific role
+     */    /**
+     * Check if user can manage a specific role
      */
     private function canManageRole($user, Role $role): bool
     {
-        return $this->rolePermissionService->canManageRole(
-            $user->roles->first(),
-            $role
-        );
-    }    /**
-     * Get user's hierarchy level
-     */
-    private function getUserHierarchyLevel($user): int
-    {
-        $hierarchyLevels = [
-            'Super Administrator' => 1,
-            'Administrator' => 2,
-            'HR Manager' => 3,
-            'Project Manager' => 3,
-            'Finance Manager' => 3,
-            'Inventory Manager' => 4,
-            'Sales Manager' => 4,
-            'Team Lead' => 5,
-            'Supervisor' => 6,
-            'Employee' => 10
-        ];
-
-        $highestLevel = 999;
-        foreach ($user->roles as $role) {
-            $level = $hierarchyLevels[$role->name] ?? 999;
-            if ($level < $highestLevel) {
-                $highestLevel = $level;
-            }
+        // Only Super Administrator can manage other Super Administrator roles
+        if ($role->name === 'Super Administrator') {
+            return $user->hasRole('Super Administrator');
         }
-
-        return $highestLevel;
-    }
-
-    /**
-     * Get roles that a user can assign to others
-     */
-    private function getAssignableRoles($user): array
-    {
-        if (!$user) {
-            return [];
-        }
-
-        $userLevel = $this->getUserHierarchyLevel($user);
-        $assignableRoles = [];
-
-        $hierarchyLevels = [
-            'Super Administrator' => 1,
-            'Administrator' => 2,
-            'HR Manager' => 3,
-            'Project Manager' => 3,
-            'Finance Manager' => 3,
-            'Inventory Manager' => 4,
-            'Sales Manager' => 4,
-            'Team Lead' => 5,
-            'Supervisor' => 6,
-            'Employee' => 10
-        ];
-
-        foreach ($hierarchyLevels as $roleName => $level) {
-            if ($level > $userLevel) {
-                $assignableRoles[] = $roleName;
-            }
-        }
-
-        return $assignableRoles;
+        
+        // Users with roles.update permission can manage other roles
+        return $user->can('roles.update');
     }
 
     /**

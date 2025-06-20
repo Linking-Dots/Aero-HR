@@ -23,6 +23,16 @@ export default function Dashboard({ auth }) {
         day: '2-digit',
     }).format(new Date()));
 
+    // Helper function to check permissions
+    const hasPermission = (permission) => {
+        return auth.permissions && auth.permissions.includes(permission);
+    };
+
+    // Helper function to check if user has any of the specified permissions
+    const hasAnyPermission = (permissions) => {
+        return permissions.some(permission => hasPermission(permission));
+    };
+
     const handlePunchSuccess = () => {
         setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
@@ -55,25 +65,32 @@ export default function Dashboard({ auth }) {
                             />
                         </div>
                     }
-                >
-                    <Grid container>
-                        {auth.roles.includes('Employee') &&
+                >                    <Grid container>
+                        {/* Punch Status Card - for employees and self-service users */}
+                        {hasAnyPermission(['attendance.own.punch', 'attendance.own.view']) &&
                             <Grid item xs={12} md={6}>
                                 <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
                             </Grid>
                         }
+                        {/* Statistics Card - for users with dashboard access */}
+                        {hasPermission('dashboard.view') &&
                             <Grid item xs={12} md={6}>
                                 <StatisticCard />
                             </Grid>
+                        }
                     </Grid>
-                    {auth.roles.includes('Administrator') && (
+                    
+                    {/* Admin/Manager level components */}
+                    {hasAnyPermission(['attendance.view', 'employees.view']) && (
                         <>
                             <TimeSheetTable selectedDate={selectedDate} handleDateChange={handleDateChange} updateTimeSheet={updateTimeSheet} />
                             <UserLocationsCard selectedDate={selectedDate} updateMap={updateMap} />
                         </>
                     )}
-                    <UpdatesCards />
-                    <HolidayCard />
+                    
+                    {/* Updates and holidays - available to all authenticated users */}
+                    {hasPermission('updates.view') && <UpdatesCards />}
+                    {hasPermission('dashboard.view') && <HolidayCard />}
                 </Suspense>
             </Box>
         </>
