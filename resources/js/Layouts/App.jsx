@@ -158,10 +158,13 @@ function App({ children }) {
                             sx={{
                                 display: { xs: 'none', md: 'block' },
                                 height: '100vh',
-                                width: sideBarOpen ? 280 : 0,
-                                transition: 'width 0.3s ease-in-out',
+                                minWidth: sideBarOpen ? 'auto' : 0,
+                                width: sideBarOpen ? 'auto' : 0,
+                                maxWidth: sideBarOpen ? '400px' : 0,
+                                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                                 flexDirection: 'column',
                                 overflow: 'hidden',
+                                flexShrink: 0,
                             }}
                         >
                             <Sidebar 
