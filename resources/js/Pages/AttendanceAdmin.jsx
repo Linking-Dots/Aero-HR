@@ -65,15 +65,38 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
 
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
-    });
-
-    // Attendance stats state
+    });    // Enhanced attendance stats state
     const [attendanceStats, setAttendanceStats] = useState({
+        // Basic metrics
         totalEmployees: 0,
+        totalWorkingDays: 0,
+        totalDaysInMonth: 0,
+        holidaysCount: 0,
+        weekendsCount: 0,
+        
+        // Attendance metrics
+        presentDays: 0,
+        absentDays: 0,
+        lateArrivals: 0,
+        attendancePercentage: 0,
+        
+        // Work time metrics
+        averageWorkHours: 0,
+        overtimeHours: 0,
+        totalWorkHours: 0,
+        
+        // Leave metrics
+        totalLeaveDays: 0,
+        leaveBreakdown: {},
+        
+        // Today's stats
         presentToday: 0,
         absentToday: 0,
         lateToday: 0,
-        onLeave: 0
+        
+        // Meta
+        month: '',
+        generated_at: null
     });
 
 
@@ -88,12 +111,11 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             ...prevState,
             [key]: value,
         }));
-    }, []);
-
-    const fetchData = async (page, perPage, filterData) => {
+    }, []);    const fetchData = async (page, perPage, filterData) => {
         setLoading(true);
 
         try {
+            // Fetch attendance data
             const response = await axios.get(route('attendancesAdmin.paginate'), {
                 params: {
                     page,
@@ -110,9 +132,17 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             setLeaveTypes(response.data.leaveTypes);
             setLeaveCounts(response.data.leaveCounts);
 
-            // Calculate attendance stats
-            const stats = calculateAttendanceStats(response.data);
-            setAttendanceStats(stats);
+            // Fetch enhanced monthly statistics
+            const statsResponse = await axios.get(route('attendance.monthlyStats'), {
+                params: {
+                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : dayjs().year(),
+                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : dayjs().format('MM'),
+                }
+            });
+
+            if (statsResponse.data.success) {
+                setAttendanceStats(statsResponse.data.data);
+            }
 
         } catch (error) {
             console.error(error)
@@ -129,39 +159,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const calculateAttendanceStats = (data) => {
-        // Calculate basic attendance statistics
-        const totalEmployees = allUsers.length;
-        const today = dayjs().format('YYYY-MM-DD');
-        
-        let presentToday = 0;
-        let absentToday = 0;
-        let lateToday = 0;
-        let onLeave = 0;
-
-        // Calculate stats based on attendance data
-        data.data.forEach(record => {
-            if (record[today]) {
-                const status = record[today];
-                if (status === 'P') presentToday++;
-                else if (status === 'A') absentToday++;
-                else if (status === 'L') lateToday++;
-                else if (status.includes('Leave')) onLeave++;
-            }
-        });
-
-        return {
-            totalEmployees,
-            presentToday,
-            absentToday,
-            lateToday,
-            onLeave
-        };
-    };
-
-    const handleSearch = (event) => {
+    };    const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setEmployee(value);
     };
@@ -295,12 +293,11 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                 }
             }
         );
-    };
-
-    // Render Quick Stats - Similar to LeavesAdmin
+    };    // Render Enhanced Quick Stats with industry-standard monthly metrics
     const renderQuickStats = () => (
         <div className="mb-6">
-            <Grid container spacing={3}>
+            {/* Primary Stats Row */}
+            <Grid container spacing={3} className="mb-4">
                 <Grid item xs={12} sm={6} md={2.4}>
                     <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
                         <CardHeader className="pb-2">
@@ -310,7 +307,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                     variant={isMobile ? "subtitle1" : "h6"} 
                                     className="font-semibold text-blue-600"
                                 >
-                                    Total
+                                    Total Employees
                                 </Typography>
                             </div>
                         </CardHeader>
@@ -322,7 +319,34 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                 {attendanceStats.totalEmployees}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                Total employees
+                                Active employees
+                            </Typography>
+                        </CardBody>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={2.4}>
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="w-5 h-5 text-indigo-600" />
+                                <Typography 
+                                    variant={isMobile ? "subtitle1" : "h6"} 
+                                    className="font-semibold text-indigo-600"
+                                >
+                                    Working Days
+                                </Typography>
+                            </div>
+                        </CardHeader>
+                        <CardBody className="pt-0">
+                            <Typography 
+                                variant={isMobile ? "h4" : "h3"} 
+                                className="font-bold text-indigo-600"
+                            >
+                                {attendanceStats.totalWorkingDays}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                This month ({attendanceStats.month})
                             </Typography>
                         </CardBody>
                     </Card>
@@ -337,7 +361,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                     variant={isMobile ? "subtitle1" : "h6"} 
                                     className="font-semibold text-green-600"
                                 >
-                                    Present
+                                    Present Today
                                 </Typography>
                             </div>
                         </CardHeader>
@@ -349,7 +373,10 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                 {attendanceStats.presentToday}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                Present today
+                                {attendanceStats.presentToday > 0 
+                                    ? `${((attendanceStats.presentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% of employees`
+                                    : 'No attendance yet'
+                                }
                             </Typography>
                         </CardBody>
                     </Card>
@@ -364,7 +391,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                     variant={isMobile ? "subtitle1" : "h6"} 
                                     className="font-semibold text-red-600"
                                 >
-                                    Absent
+                                    Absent Today
                                 </Typography>
                             </div>
                         </CardHeader>
@@ -376,7 +403,10 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                 {attendanceStats.absentToday}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                Absent today
+                                {attendanceStats.absentToday > 0 
+                                    ? `${((attendanceStats.absentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% absent`
+                                    : 'All present'
+                                }
                             </Typography>
                         </CardBody>
                     </Card>
@@ -391,7 +421,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                     variant={isMobile ? "subtitle1" : "h6"} 
                                     className="font-semibold text-orange-600"
                                 >
-                                    Late
+                                    Late Today
                                 </Typography>
                             </div>
                         </CardHeader>
@@ -403,13 +433,70 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                 {attendanceStats.lateToday}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                Late arrivals
+                                Late arrivals today
+                            </Typography>
+                        </CardBody>
+                    </Card>
+                </Grid>
+            </Grid>
+
+            {/* Monthly Analytics Row */}
+            <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={3}>
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <ChartBarIcon className="w-5 h-5 text-emerald-600" />
+                                <Typography 
+                                    variant={isMobile ? "subtitle1" : "h6"} 
+                                    className="font-semibold text-emerald-600"
+                                >
+                                    Attendance Rate
+                                </Typography>
+                            </div>
+                        </CardHeader>
+                        <CardBody className="pt-0">
+                            <Typography 
+                                variant={isMobile ? "h4" : "h3"} 
+                                className="font-bold text-emerald-600"
+                            >
+                                {attendanceStats.attendancePercentage}%
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                Monthly average
                             </Typography>
                         </CardBody>
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={2.4}>
+                <Grid item xs={12} sm={6} md={3}>
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <ClockIcon className="w-5 h-5 text-blue-600" />
+                                <Typography 
+                                    variant={isMobile ? "subtitle1" : "h6"} 
+                                    className="font-semibold text-blue-600"
+                                >
+                                    Avg Work Hours
+                                </Typography>
+                            </div>
+                        </CardHeader>
+                        <CardBody className="pt-0">
+                            <Typography 
+                                variant={isMobile ? "h4" : "h3"} 
+                                className="font-bold text-blue-600"
+                            >
+                                {attendanceStats.averageWorkHours}h
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                Daily average this month
+                            </Typography>
+                        </CardBody>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
                     <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-2">
@@ -418,7 +505,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                     variant={isMobile ? "subtitle1" : "h6"} 
                                     className="font-semibold text-purple-600"
                                 >
-                                    On Leave
+                                    Overtime
                                 </Typography>
                             </div>
                         </CardHeader>
@@ -427,10 +514,37 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                 variant={isMobile ? "h4" : "h3"} 
                                 className="font-bold text-purple-600"
                             >
-                                {attendanceStats.onLeave}
+                                {attendanceStats.overtimeHours}h
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                On leave today
+                                Total overtime this month
+                            </Typography>
+                        </CardBody>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <UserIcon className="w-5 h-5 text-amber-600" />
+                                <Typography 
+                                    variant={isMobile ? "subtitle1" : "h6"} 
+                                    className="font-semibold text-amber-600"
+                                >
+                                    Leave Days
+                                </Typography>
+                            </div>
+                        </CardHeader>
+                        <CardBody className="pt-0">
+                            <Typography 
+                                variant={isMobile ? "h4" : "h3"} 
+                                className="font-bold text-amber-600"
+                            >
+                                {attendanceStats.totalLeaveDays}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                Total leaves this month
                             </Typography>
                         </CardBody>
                     </Card>

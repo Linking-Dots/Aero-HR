@@ -61,10 +61,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
         Route::post('/punchOut', [AttendanceController::class, 'punchOut'])->name('punchOut');
         Route::post('/attendance/punch', [AttendanceController::class, 'punch'])->name('attendance.punch');
-    });
-
-    // General access routes (available to all authenticated users)
+    });    // General access routes (available to all authenticated users)
     Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
+    Route::get('/get-present-users-for-date', [AttendanceController::class, 'getPresentUsersForDate'])->name('getPresentUsersForDate');
+    Route::get('/get-absent-users-for-date', [AttendanceController::class, 'getAbsentUsersForDate'])->name('getAbsentUsersForDate');
     Route::get('/get-client-ip', [AttendanceController::class, 'getClientIp'])->name('getClientIp');
 
     // Daily works routes
@@ -179,15 +179,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['permission:roles.view'])->get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
     
     // Document management routes
-    Route::middleware(['permission:letters.view'])->get('/letters', [LetterController::class, 'index'])->name('letters');
-
-    // Attendance management routes
+    Route::middleware(['permission:letters.view'])->get('/letters', [LetterController::class, 'index'])->name('letters');    // Attendance management routes
     Route::middleware(['permission:attendance.view'])->group(function () {
         Route::get('/attendances', [AttendanceController::class, 'index1'])->name('attendances');
         Route::get('/attendances-admin-paginate', [AttendanceController::class, 'paginate'])->name('attendancesAdmin.paginate');
         Route::get('/attendance/locations-today', [AttendanceController::class, 'getUserLocationsForDate'])->name('getUserLocationsForDate');
+        Route::get('/admin/get-present-users-for-date', [AttendanceController::class, 'getPresentUsersForDate'])->name('admin.getPresentUsersForDate');
+        Route::get('/admin/get-absent-users-for-date', [AttendanceController::class, 'getAbsentUsersForDate'])->name('admin.getAbsentUsersForDate');
+        Route::get('/attendance/monthly-stats', [AttendanceController::class, 'getMonthlyAttendanceStats'])->name('attendance.monthlyStats');
     });
     
+    // Employee attendance stats route
+    Route::middleware(['permission:attendance.own.view'])->group(function () {
+        Route::get('/attendance/my-monthly-stats', [AttendanceController::class, 'getMonthlyAttendanceStats'])->name('attendance.myMonthlyStats');
+    });
+
     Route::middleware(['permission:attendance.settings'])->group(function () {
         Route::get('/settings/attendance', [AttendanceSettingController::class, 'index'])->name('attendance-settings.index');
         Route::post('/settings/attendance', [AttendanceSettingController::class, 'updateSettings'])->name('attendance-settings.update');

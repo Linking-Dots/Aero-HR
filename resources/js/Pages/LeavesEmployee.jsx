@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import {
   Box,
   Typography,
@@ -29,6 +29,7 @@ import {
 import GlassCard from '@/Components/GlassCard.jsx';
 import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
+import axios from 'axios';
 
 const LeavesEmployee = ({ title, allUsers }) => {
   const { auth } = usePage().props;
@@ -134,11 +135,28 @@ const LeavesEmployee = ({ title, allUsers }) => {
   useEffect(() => {
     fetchLeaves();
   }, [fetchLeaves]);
-
-  // Extract user-specific leave counts
+  // Extract user-specific leave counts and calculate stats
   const userLeaveCounts = useMemo(() => {
     return leavesData.leaveCountsByUser[auth.user.id] || [];
   }, [leavesData.leaveCountsByUser, auth.user.id]);
+
+
+
+  // Action buttons for the header
+  const actionButtons = [
+    {
+      label: "Current Year",
+      icon: <CalendarIcon className="w-4 h-4" />,
+      onPress: () => handleFilterChange('year', new Date().getFullYear()),
+      className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:from-blue-600 hover:to-purple-600"
+    },
+    {
+      label: "Refresh",
+      icon: <ChartBarIcon className="w-4 h-4" />,
+      onPress: fetchLeaves,
+      className: "bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium hover:from-green-600 hover:to-teal-600"
+    }
+  ];
 
   // Render leave type cards with responsive design
   const renderLeaveTypeCards = () => {
@@ -227,16 +245,14 @@ const LeavesEmployee = ({ title, allUsers }) => {
         })}
       </div>
     );
-  };
-
-  return (
+  };  return (
     <>
       <Head title={title} />
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
         <Grow in>
           <GlassCard>
             <div className="overflow-hidden">
-              {/* Header Section - Matching AttendanceAdmin */}
+              {/* Header Section - Matching LeavesAdmin */}
               <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
                 <div className="p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -257,17 +273,26 @@ const LeavesEmployee = ({ title, allUsers }) => {
                       </div>
                     </div>
                     
-                    {/* Year Indicator */}
+                    {/* Action Buttons */}
                     <div className="flex gap-2 flex-wrap">
-                      <Chip
-                        startContent={<ClockIcon className="w-4 h-4" />}
-                        variant="flat"
+                      <Button
                         color="primary"
-                        size={isMobile ? "sm" : "md"}
-                        className="bg-white/10 backdrop-blur-md border-white/20"
+                        startContent={<CalendarIcon className="w-4 h-4" />}
+                        onPress={() => handleFilterChange('year', new Date().getFullYear())}
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
                       >
-                        {filters.year}
-                      </Chip>
+                        Current Year
+                      </Button>
+                      
+                      <Button
+                        variant="bordered"
+                        startContent={<ChartBarIcon className="w-4 h-4" />}
+                        onPress={fetchLeaves}
+                        isLoading={loading}
+                        className="border-white/20 bg-white/5 hover:bg-white/10"
+                      >
+                        Refresh
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -276,8 +301,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
               <Divider className="border-white/10" />
 
               <div className="p-6">
-
-                {/* Filters Section */}
+              
+                {/* Filters Section - Matching LeavesAdmin */}
                 <div className="mb-6">
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
                     <div className="w-full sm:w-auto sm:min-w-[200px]">
@@ -305,7 +330,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         ))}
                       </Select>
                     </div>
-                    <Spacer />
+                    
                     <div className="flex gap-2">
                       <Button
                         variant="flat"
@@ -331,7 +356,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                 </div>
 
                 {/* Leave History Table */}
-                <div>
+                <div className="min-h-96">
                   <Typography variant="h6" className="mb-4 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5" />
                     Leave History
@@ -354,8 +379,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         onDelete={(id) => handleOpenModal('delete', id)}
                         onEdit={(leave) => handleOpenModal('edit', leave.id)}
                         pagination={pagination}
-                        onPageChange={(page) => setPagination(prev => ({ ...prev, page }))
-                        }
+                        onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
                         isMobile={isMobile}
                         setLeaves={setLeaves}
                       />

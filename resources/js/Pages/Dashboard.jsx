@@ -10,7 +10,13 @@ const StatisticCard = lazy(() => import('@/Components/StatisticCard.jsx'));
 const PunchStatusCard = lazy(() => import('@/Components/PunchStatusCard.jsx'));
 import App from "@/Layouts/App.jsx";
 import { Grid, Box } from "@mui/material";
-import {Spinner} from "@heroui/react";
+import { Spinner } from "@heroui/react";
+import PageHeader from "@/Components/PageHeader.jsx";
+import { 
+    HomeIcon, 
+    CalendarDaysIcon,
+    ChartBarIcon 
+} from '@heroicons/react/24/outline';
 
 export default function Dashboard({ auth }) {
 
@@ -31,9 +37,33 @@ export default function Dashboard({ auth }) {
     // Helper function to check if user has any of the specified permissions
     const hasAnyPermission = (permissions) => {
         return permissions.some(permission => hasPermission(permission));
-    };
-
-    const handlePunchSuccess = () => {
+    };    const actionButtons = [
+        {
+            label: "Today",
+            icon: <CalendarDaysIcon className="w-4 h-4" />,
+            onPress: () => {
+                const today = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'Asia/Dhaka',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                }).format(new Date());
+                setSelectedDate(today);
+                setUpdateTimeSheet(prev => !prev);
+                setUpdateMap(prev => !prev);
+            },
+            className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:from-blue-600 hover:to-purple-600"
+        },
+        hasPermission('dashboard.view') && {
+            label: "Analytics",
+            icon: <ChartBarIcon className="w-4 h-4" />,
+            onPress: () => {
+                // Could navigate to analytics page or show modal
+                console.log("Analytics clicked");
+            },
+            className: "bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium hover:from-green-600 hover:to-teal-600"
+        }
+    ].filter(Boolean);    const handlePunchSuccess = () => {
         setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
     };

@@ -21,14 +21,18 @@ import {
   AccordionSummary,
   AccordionDetails,
   Switch,
-  Alert
+  Alert,
+  Divider
 } from '@mui/material';
 import LoadingButton from "@mui/lab/LoadingButton";
 import { 
   Button,
   Input,
   Chip,
-  Spacer
+  Spacer,
+  Card,
+  CardHeader,
+  CardBody
 } from "@heroui/react";
 import { 
   PlusIcon,
@@ -41,7 +45,9 @@ import {
   TrashIcon,
   ExclamationTriangleIcon,
   ChevronDownIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  PresentationChartLineIcon,
+  DocumentArrowDownIcon
 } from "@heroicons/react/24/outline";
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
@@ -510,114 +516,168 @@ const RoleManagement = ({
                 }}
             >
                 <Grow in timeout={800}>
-                    <div className="max-w-7xl mx-auto">
-                        <GlassCard>
-                            {/* Header Section */}
-                            <div className="p-4 sm:p-6">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <ShieldCheckIcon className="w-8 h-8 text-blue-400" />
-                                        <div>
-                                            <Typography 
-                                                variant={isMobile ? "h5" : "h4"} 
-                                                className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                            >
-                                                Role Management
-                                            </Typography>                                            <Typography variant="body2" color="textSecondary">
-                                                Manage roles, permissions, and access control. {canManageSuperAdmin ? 'Super Administrator' : 'Administrator'} Access
-                                            </Typography>
+                    <div className="max-w-7xl mx-auto">                        <GlassCard>
+                            <div className="overflow-hidden">
+                                {/* Header Section */}
+                                <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
+                                    <div className="p-6">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                                                    <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <Typography 
+                                                        variant={isMobile ? "h5" : "h4"} 
+                                                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                                    >
+                                                        Role Management
+                                                    </Typography>
+                                                    <Typography variant="body2" color="textSecondary">
+                                                        Manage roles, permissions, and access control
+                                                    </Typography>
+                                                </div>
+                                            </div>
+                                              {/* Action Buttons */}
+                                            <div className="flex gap-2 flex-wrap">
+                                                <Button
+                                                    color="primary"
+                                                    variant="flat"
+                                                    startContent={<PlusIcon className="w-4 h-4" />}
+                                                    onPress={openModal}
+                                                    className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
+                                                >
+                                                    Create Role
+                                                </Button>
+                                                
+                                                <Button
+                                                    color="success"
+                                                    variant="flat"
+                                                    startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                    className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
+                                                >
+                                                    Export
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 w-full sm:w-auto">
-                                        <Button
-                                            variant="flat"
-                                            color="primary"
-                                            size={isMobile ? "sm" : "md"}
-                                            startContent={<PlusIcon className="w-4 h-4" />}
-                                            onPress={openModal}
-                                            className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                                        >
-                                            {isMobile ? "Add" : "Create Role"}
-                                        </Button>
                                     </div>
                                 </div>
 
-                                {/* Statistics Cards */}
-                                <Fade in timeout={1000}>
-                                    <div className={`grid gap-4 mb-6 ${
+                                <Divider className="border-white/10" />
+
+                                <div className="p-6">                                {/* Statistics Cards */}
+                                <div className="mb-6">
+                                    <div className={`grid gap-4 ${
                                         isMobile 
-                                            ? 'grid-cols-2' 
+                                            ? 'grid-cols-1' 
                                             : isTablet 
                                                 ? 'grid-cols-2' 
                                                 : 'grid-cols-4'
                                     }`}>
-                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-blue-500/20 rounded-lg">
-                                                    <UserGroupIcon className="w-5 h-5 text-blue-400" />
-                                                </div>
-                                                <div>
-                                                    <Typography variant="h6" className="font-bold text-blue-400">
-                                                        {stats.totalRoles}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="textSecondary">
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <UserGroupIcon className="w-5 h-5 text-blue-600" />
+                                                    <Typography 
+                                                        variant={isMobile ? "subtitle1" : "h6"} 
+                                                        className="font-semibold text-blue-600"
+                                                    >
                                                         Total Roles
                                                     </Typography>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </CardHeader>
+                                            <CardBody className="pt-0">
+                                                <Typography 
+                                                    variant={isMobile ? "h4" : "h3"} 
+                                                    className="font-bold text-blue-600"
+                                                >
+                                                    {stats.totalRoles}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    System roles
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
 
-                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-green-500/20 rounded-lg">
-                                                    <KeyIcon className="w-5 h-5 text-green-400" />
-                                                </div>
-                                                <div>
-                                                    <Typography variant="h6" className="font-bold text-green-400">
-                                                        {stats.totalPermissions}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="textSecondary">
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <KeyIcon className="w-5 h-5 text-green-600" />
+                                                    <Typography 
+                                                        variant={isMobile ? "subtitle1" : "h6"} 
+                                                        className="font-semibold text-green-600"
+                                                    >
                                                         Permissions
                                                     </Typography>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </CardHeader>
+                                            <CardBody className="pt-0">
+                                                <Typography 
+                                                    variant={isMobile ? "h4" : "h3"} 
+                                                    className="font-bold text-green-600"
+                                                >
+                                                    {stats.totalPermissions}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Available permissions
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
 
-                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-purple-500/20 rounded-lg">
-                                                    <Cog6ToothIcon className="w-5 h-5 text-purple-400" />
-                                                </div>
-                                                <div>
-                                                    <Typography variant="h6" className="font-bold text-purple-400">
-                                                        {stats.activeRole}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="textSecondary">
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Cog6ToothIcon className="w-5 h-5 text-purple-600" />
+                                                    <Typography 
+                                                        variant={isMobile ? "subtitle1" : "h6"} 
+                                                        className="font-semibold text-purple-600"
+                                                    >
                                                         Active Role
                                                     </Typography>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </CardHeader>                                            <CardBody className="pt-0">
+                                                <Typography 
+                                                    variant={isMobile ? "h6" : "h5"} 
+                                                    className="font-bold text-purple-600"
+                                                    style={{ 
+                                                        fontSize: stats.activeRole === 'None Selected' ? '1rem' : (isMobile ? '1.5rem' : '2rem'),
+                                                        lineHeight: '1.2'
+                                                    }}
+                                                >
+                                                    {stats.activeRole === 'None Selected' ? 'None' : stats.activeRole}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Currently selected
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
 
-                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-orange-500/20 rounded-lg">
-                                                    <FunnelIcon className="w-5 h-5 text-orange-400" />
-                                                </div>
-                                                <div>
-                                                    <Typography variant="h6" className="font-bold text-orange-400">
-                                                        {stats.grantedPermissions}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="textSecondary">
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <FunnelIcon className="w-5 h-5 text-orange-600" />
+                                                    <Typography 
+                                                        variant={isMobile ? "subtitle1" : "h6"} 
+                                                        className="font-semibold text-orange-600"
+                                                    >
                                                         Granted
                                                     </Typography>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </CardHeader>
+                                            <CardBody className="pt-0">
+                                                <Typography 
+                                                    variant={isMobile ? "h4" : "h3"} 
+                                                    className="font-bold text-orange-600"
+                                                >
+                                                    {stats.grantedPermissions}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Active permissions
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
                                     </div>
-                                </Fade>
+                                </div>
 
                                 {/* Filters Section */}
                                 <Fade in timeout={1200}>
@@ -977,16 +1037,16 @@ const RoleManagement = ({
                                                     </div>
                                                 )}
                                             </div>
-                                        </div>
-                                    </div>
+                                        </div>                                    </div>
                                 </Fade>
                             </div>
-                        </GlassCard>
-                    </div>
-                </Grow>
-            </Box>
-        </>
-    );
+                        </div>
+                    </GlassCard>
+                </div>
+            </Grow>
+        </Box>
+    </>
+);
 };
 RoleManagement.layout = (page) => <App>{page}</App>;
 export default RoleManagement;

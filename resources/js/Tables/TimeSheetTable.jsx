@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
     Box,
     CardContent,
@@ -55,7 +55,7 @@ import * as XLSX from 'xlsx'; // Add this import
 import { jsPDF } from 'jspdf'; // Changed import
 import autoTable from 'jspdf-autotable'; // Changed import
 
-const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => {
+const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, externalFilterData, externalEmployee }) => {
     const { auth } = usePage().props;
     const { url } = usePage();
     const theme = useTheme();
@@ -68,24 +68,15 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     const [error, setError] = useState('');
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
-    const [perPage, setPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [employee, setEmployee] = useState('');
+    const [perPage, setPerPage] = useState(10);    const [currentPage, setCurrentPage] = useState(1);
+    const [employee, setEmployee] = useState(externalEmployee || '');
     const [isLoaded, setIsLoaded] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
-    const [filterData, setFilterData] = useState({
+    const [refreshKey, setRefreshKey] = useState(0);    const [filterData, setFilterData] = useState(externalFilterData || {
         currentMonth: dayjs().format('YYYY-MM'),
-    });
-
-    // For absent users card
-    const [visibleUsersCount, setVisibleUsersCount] = useState(2);
-    const cardRef = useRef(null);
-    const userItemRef = useRef(null);
-
-    // Fetch attendance and absent users
-    const getAllUsersAttendanceForDate = async (selectedDate, page, perPage, employee, filterData, forceRefresh = false) => {
+    });    // Fetch attendance data for present users
+    const getPresentUsersForDate = async (selectedDate, page, perPage, employee, filterData, forceRefresh = false) => {
         const attendanceRoute = (url !== '/attendance-employee')
-            ? route('getAllUsersAttendanceForDate')
+            ? route('admin.getPresentUsersForDate')
             : route('getCurrentUserAttendanceForDate');
         try {
             setIsLoaded(false);
@@ -102,10 +93,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             });
          
             if (response.status === 200) {
-                // Use backend data directly - no more processing needed
                 setAttendances(response.data.attendances || []);
-                setLeaves(response.data.leaves || []);
-                setAbsentUsers(response.data.absent_users || []);
                 setTotalRows(response.data.total || 0);
                 setLastPage(response.data.last_page || 1);
                 setCurrentPage(response.data.current_page || 1);
@@ -113,30 +101,43 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                 setIsLoaded(true);
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
-            setAbsentUsers(error.response?.data?.absent_users || []);
+            setError(error.response?.data?.message || 'An error occurred while retrieving present users data.');
             setIsLoaded(true);
         }
     };
 
-    // Add refresh functionality
+    // Fetch absent users data
+    const getAbsentUsersForDate = async (selectedDate, employee) => {
+        if (url === '/attendance-employee') {
+            // Employee view doesn't need absent users
+            setAbsentUsers([]);
+            setLeaves([]);
+            return;
+        }
+
+        try {
+            const response = await axios.get(route('admin.getAbsentUsersForDate'), {
+                params: {
+                    date: selectedDate,
+                    
+                }
+            });
+
+            if (response.status === 200) {
+                setAbsentUsers(response.data.absent_users || []);
+                setLeaves(response.data.leaves || []);
+            }
+        } catch (error) {
+            console.error('Error fetching absent users:', error);
+            setAbsentUsers([]);
+            setLeaves([]);
+        }
+    };    // Add refresh functionality
     const handleRefresh = useCallback(() => {
         setRefreshKey(prev => prev + 1);
-        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData, true);
+        getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData, true);
+        getAbsentUsersForDate(selectedDate, employee);
     }, [selectedDate, currentPage, perPage, employee, filterData]);
-
-    // Calculate how many absent users to show based on card height
-    const calculateVisibleUsers = useCallback(() => {
-        if (cardRef.current && userItemRef.current) {
-            const cardHeight = cardRef.current.clientHeight;
-            const userItemHeight = userItemRef.current.clientHeight;
-            const availableHeight = cardHeight - 150;
-            const calculatedVisibleUsers = Math.max(1, Math.floor(availableHeight / userItemHeight));
-            setVisibleUsersCount(calculatedVisibleUsers);
-        }
-    }, []);
-
-    
     const handleSearch = (event) => {
         setEmployee(event.target.value.toLowerCase());
     };
@@ -146,17 +147,14 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     };
 
     const handleFilterChange = useCallback((key, value) => {
-        setFilterData(prevState => ({
-            ...prevState,
+        setFilterData(prevState => ({            ...prevState,
             [key]: value,
         }));
     }, []);
 
-    const handleLoadMore = () => {
-        setVisibleUsersCount((prev) => prev + 2);
-    };    const getUserLeave = (userId) => {
+    const getUserLeave = (userId) => {
         return leaves.find((leave) => String(leave.user_id) === String(userId));
-    };    // Helper function to safely format time
+    };// Helper function to safely format time
     const formatTime = (timeString, date) => {
         if (!timeString) return null;
         
@@ -228,16 +226,21 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
     };    // Check permissions using new system
     const canViewAllAttendance = auth.permissions?.includes('attendance.view') || false;
     const canManageAttendance = auth.permissions?.includes('attendance.manage') || false;
-    const canExportAttendance = auth.permissions?.includes('attendance.export') || canManageAttendance || false;
+    const canExportAttendance = auth.permissions?.includes('attendance.export') || canManageAttendance || false;    // Filter absent users for export functions only - backend now handles search filtering
+    const filteredAbsentUsers = useMemo(() => {
+        // No need to filter here since backend handles the search filtering
+        return absentUsers;
+    }, [absentUsers]);
     
     const columns = [
         { name: "Date", uid: "date", icon: CalendarDaysIcon },
         ...(canViewAllAttendance && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
         { name: "Clock In", uid: "clockin_time", icon: ClockIcon },
-        { name: "Clock Out", uid: "clockout_time", icon: ClockIcon },
-        { name: "Work Hours", uid: "production_time", icon: ClockIcon },
+        { name: "Clock Out", uid: "clockout_time", icon: ClockIcon },        { name: "Work Hours", uid: "production_time", icon: ClockIcon },
         { name: "Punches", uid: "punch_details", icon: ClockIcon }
-    ];const renderCell = (attendance, columnKey) => {
+    ];
+
+    const renderCell = (attendance, columnKey) => {
         const isCurrentDate = new Date(attendance.date).toDateString() === new Date().toDateString();
         
         switch (columnKey) {
@@ -448,12 +451,11 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     'Status': status,
                     'Remarks': status === 'Complete' ? 'Present - All punches complete' : 
                               status === 'In Progress' ? 'Present - Currently working' : 
-                              'Present - Incomplete punches'
-                });
+                              'Present - Incomplete punches'                });
             });
 
             // Add absent employees
-            absentUsers.forEach((user) => {
+            filteredAbsentUsers.forEach((user) => {
                 const userLeave = getUserLeave(user.id);
                 let remarks = 'Absent without leave';
                 
@@ -497,7 +499,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             const headerData = [
                 [title], // Row 1: Title
                 [`Generated on: ${new Date().toLocaleString('en-US')}`], // Row 2: Generated date
-                [`Total Employees: ${combinedData.length} (Present: ${attendances.length}, Absent: ${absentUsers.length})`], // Row 3: Total count
+                [`Total Employees: ${combinedData.length} (Present: ${attendances.length}, Absent: ${filteredAbsentUsers.length})`], // Row 3: Total count
                 [], // Row 4: Empty row
                 // Row 5: Column headers
                 ['No.', 'Date', 'Employee Name', 'Employee ID', 'Designation', 'Phone', 'Clock In', 'Clock Out', 'Work Hours', 'Total Punches', 'Complete Punches', 'Status', 'Remarks']
@@ -603,7 +605,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
         } catch (error) {            console.error('Error generating Excel file:', error);
             alert('Error generating Excel file. Please try again.');
         }
-    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
+    }, [attendances, filteredAbsentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
 
     // PDF download function
     const downloadPDF = useCallback(() => {
@@ -624,7 +626,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString('en-US')}`, 14, 35);
-            doc.text(`Total Employees: ${attendances.length + absentUsers.length} (Present: ${attendances.length}, Absent: ${absentUsers.length})`, 14, 42);
+            doc.text(`Total Employees: ${attendances.length + filteredAbsentUsers.length} (Present: ${attendances.length}, Absent: ${filteredAbsentUsers.length})`, 14, 42);
 
             // Prepare table data - combine present and absent users
             const tableData = [];
@@ -658,11 +660,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                     workTime,
                     `${attendance.complete_punches}/${attendance.punch_count}`,
                     remarks
-                ]);
-            });
+                ]);            });
 
             // Add absent employees
-            absentUsers.forEach((user) => {
+            filteredAbsentUsers.forEach((user) => {
                 const userLeave = getUserLeave(user.id);
                 let remarks = 'Absent without leave';
                 
@@ -751,38 +752,119 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             // Generate filename
             const filename = url === '/attendance-employee' 
                 ? `Employee_Timesheet_${dayjs(filterData.currentMonth).format('YYYY_MM')}.pdf`
-                : `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.pdf`;
-
-            // Download file
+                : `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.pdf`;            // Download file
             doc.save(filename);
         } catch (error) {            console.error('Error generating PDF file:', error);
             alert('Error generating PDF file. Please try again.');
         }
-    }, [attendances, absentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
-
-      // Recalculate visible users when absentUsers or updateTimeSheet changes
+    }, [attendances, filteredAbsentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);    // Fetch attendance data when filters change
     useEffect(() => {
-        setVisibleUsersCount(2);
-        const timer = setTimeout(() => {
-            calculateVisibleUsers();
-        }, 100);
-        window.addEventListener('resize', calculateVisibleUsers);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', calculateVisibleUsers);
-        };
-    }, [absentUsers, updateTimeSheet, calculateVisibleUsers]);
-
-    // Fetch attendance data when filters change
-    useEffect(() => {
-        getAllUsersAttendanceForDate(selectedDate, currentPage, perPage, employee, filterData);
+        getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData);
+        getAbsentUsersForDate(selectedDate, employee);
         // eslint-disable-next-line
     }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet, refreshKey]);
 
+    // Sync external filter data
+    useEffect(() => {
+        if (externalFilterData) {
+            setFilterData(externalFilterData);
+        }
+    }, [externalFilterData]);
+
+    // Sync external employee search
+    useEffect(() => {
+        if (externalEmployee !== undefined) {
+            setEmployee(externalEmployee);
+        }
+    }, [externalEmployee]);
 
 
-  
 
+      // Employee view - render only table and pagination without wrapper
+    if (url === '/attendance-employee') {
+        return (
+            <Box 
+                role="region"
+                aria-label="Attendance data table"
+                className="w-full"
+            >
+                {error ? (
+                    <HeroCard className="p-4 bg-danger-50 border-danger-200">
+                        <Box className="flex items-center gap-3">
+                            <ExclamationTriangleIcon className="w-5 h-5 text-danger" />
+                            <Typography color="error" variant="body1">{error}</Typography>
+                        </Box>
+                    </HeroCard>
+                ) : (
+                    <>
+                        <ScrollShadow
+                            orientation="horizontal"
+                            className="overflow-y-hidden"
+                        >
+                            <Skeleton className="rounded-lg" isLoaded={isLoaded}>
+                                <Table
+                                    selectionMode="multiple"
+                                    selectionBehavior="toggle"
+                                    isCompact
+                                    removeWrapper
+                                    aria-label="Employee attendance timesheet table"
+                                    isHeaderSticky
+                                    classNames={{
+                                        base: "max-h-[520px] overflow-scroll",
+                                        table: "min-h-[200px]",
+                                    }}
+                                >
+                                    <TableHeader columns={columns}>
+                                        {(column) => (
+                                            <TableColumn key={column.uid} align="start">
+                                                <Box className="flex items-center gap-2">
+                                                    {column.icon && <column.icon className="w-4 h-4" />}
+                                                    <span className="text-sm font-medium">{column.name}</span>
+                                                </Box>
+                                            </TableColumn>
+                                        )}
+                                    </TableHeader>
+                                    <TableBody 
+                                        items={attendances}
+                                        emptyContent={
+                                            <Box className="flex flex-col items-center justify-center py-8">
+                                                <ClockIcon className="w-12 h-12 text-default-300 mb-4" />
+                                                <Typography variant="body1" color="textSecondary">
+                                                    No attendance records found
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    >
+                                        {(attendance) => (
+                                            <TableRow key={attendance.id || attendance.user_id}>
+                                                {(columnKey) => renderCell(attendance, columnKey)}
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </Skeleton>
+                        </ScrollShadow>
+                        {totalRows > perPage && (
+                            <Box className="py-4 flex justify-center">
+                                <Pagination
+                                    initialPage={1}
+                                    isCompact
+                                    showControls
+                                    showShadow
+                                    color="primary"
+                                    variant="bordered"
+                                    page={currentPage}
+                                    total={lastPage}
+                                    onChange={handlePageChange}
+                                    aria-label="Timesheet pagination"
+                                />
+                            </Box>
+                        )}
+                    </>
+                )}
+            </Box>
+        );
+    }    // Admin view - render full layout with combined GlassCard wrapper
     return (
         <Box 
             sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
@@ -791,51 +873,80 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
             aria-label="Timesheet Management"
         >
             <Grid container spacing={2}>
-                {/* Main Attendance Table */}                <Grid item xs={12} md={canViewAllAttendance && (url !== '/attendance-employee') ? 9 : 12}>
+                {/* Combined Attendance and Absent Users Card */}
+                <Grid item xs={12}>
                     <Grow in timeout={500}>
-                        <GlassCard>
-                            {url === '/attendance-employee' ? (
-                                // Employee View - Use AttendanceAdmin header style
-                                <div className="overflow-hidden">
-                                    <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
-                                        <div className="p-6">
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                                        <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
+                        <GlassCard>                            <CardHeader
+                                className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20"
+                                title={
+                                    <div className={`${isLargeScreen ? 'p-6' : isMediumScreen ? 'p-4' : 'p-3'}`}>
+                                        <div className="flex flex-col space-y-4">
+                                            {/* Main Header Content */}
+                                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                                {/* Title Section */}
+                                                <div className="flex items-center gap-3 lg:gap-4">
+                                                    <div className={`
+                                                        ${isLargeScreen ? 'p-3' : isMediumScreen ? 'p-2.5' : 'p-2'} 
+                                                        rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30
+                                                    `}>
+                                                        <ClockIcon className={`
+                                                            ${isLargeScreen ? 'w-8 h-8' : isMediumScreen ? 'w-6 h-6' : 'w-5 h-5'} 
+                                                            text-blue-600
+                                                        `} />
                                                     </div>
-                                                    <div>
+                                                    <div className="min-w-0 flex-1">
                                                         <Typography 
-                                                            variant="h4" 
-                                                            className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                                            variant={isLargeScreen ? "h4" : isMediumScreen ? "h5" : "h6"}
+                                                            className={`
+                                                                font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent
+                                                                ${!isLargeScreen ? 'truncate' : ''}
+                                                            `}
                                                         >
-                                                            My Timesheet
+                                                            Daily Timesheet
                                                         </Typography>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            {new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                                                        <Typography 
+                                                            variant={isLargeScreen ? "body2" : "caption"} 
+                                                            color="textSecondary"
+                                                            className={!isLargeScreen ? 'truncate' : ''}
+                                                        >
+                                                            {new Date(selectedDate).toLocaleString('en-US', {
+                                                                month: isLargeScreen ? 'long' : 'short',
+                                                                day: 'numeric',
+                                                                year: isLargeScreen ? 'numeric' : undefined,
+                                                            })}
                                                         </Typography>
                                                     </div>
                                                 </div>
-                                                
+
                                                 {/* Action Buttons */}
-                                                <div className="flex gap-2 flex-wrap">
+                                                <div className="flex gap-2 flex-wrap justify-start lg:justify-end">
                                                     {canExportAttendance && (
                                                         <>
                                                             <HeroButton
                                                                 color="success"
                                                                 variant="flat"
-                                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                                size={isLargeScreen ? "md" : "sm"}
+                                                                startContent={
+                                                                    <DocumentArrowDownIcon className={`
+                                                                        ${isLargeScreen ? 'w-4 h-4' : 'w-3.5 h-3.5'}
+                                                                    `} />
+                                                                }
                                                                 className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
                                                                 onPress={downloadExcel}
                                                                 isDisabled={!isLoaded || attendances.length === 0}
                                                             >
-                                                                Excel
+                                                                {isLargeScreen ? 'Excel' : 'XLS'}
                                                             </HeroButton>
                                                             
                                                             <HeroButton
                                                                 color="danger"
                                                                 variant="flat"
-                                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                                                size={isLargeScreen ? "md" : "sm"}
+                                                                startContent={
+                                                                    <DocumentArrowDownIcon className={`
+                                                                        ${isLargeScreen ? 'w-4 h-4' : 'w-3.5 h-3.5'}
+                                                                    `} />
+                                                                }
                                                                 className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30"
                                                                 onPress={downloadPDF}
                                                                 isDisabled={!isLoaded || attendances.length === 0}
@@ -848,104 +959,66 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                     <HeroButton
                                                         color="primary"
                                                         variant="flat"
-                                                        startContent={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                        </svg>}
+                                                        size={isLargeScreen ? "md" : "sm"}
+                                                        startContent={
+                                                            <svg className={`${isLargeScreen ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                        }
                                                         onPress={handleRefresh}
                                                         isDisabled={!isLoaded}
                                                         className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
                                                     >
-                                                        Refresh
+                                                        {isLargeScreen ? 'Refresh' : ''}
                                                     </HeroButton>
                                                 </div>
                                             </div>
+
+                                            {/* Stats Bar - Only show on larger screens */}
+                                            {isLargeScreen && (
+                                                <div className="flex items-center gap-6 pt-2 border-t border-white/10">
+                                                    <div className="flex items-center gap-2">
+                                                        <CheckCircleIcon className="w-4 h-4 text-success" />
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            Present: {attendances.length}
+                                                        </Typography>
+                                                    </div>
+                                                    {canViewAllAttendance && (
+                                                        <div className="flex items-center gap-2">
+                                                            <ExclamationTriangleIcon className="w-4 h-4 text-warning" />
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                Absent: {absentUsers.length}
+                                                            </Typography>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <UserGroupIcon className="w-4 h-4 text-primary" />
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            Total: {attendances.length + absentUsers.length}
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <Divider className="border-white/10" />
-                                </div>
-                            ) : (
-                                // Admin View - Keep original header style
-                                <>
-                                    <CardHeader
-                                        title={
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                                    <ClockIcon className="w-8 h-8 text-blue-600" />
-                                                </div>
-                                                <div>
-                                                    <Typography 
-                                                        variant="h4" 
-                                                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                                    >
-                                                        Daily Timesheet
-                                                    </Typography>
-                                                    <Typography variant="body2" color="textSecondary">
-                                                        {new Date(selectedDate).toLocaleString('en-US', {
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                            year: 'numeric',
-                                                        })}
-                                                    </Typography>
-                                                </div>
-                                            </div>
-                                        }
-                                        action={
-                                            <div className="flex gap-2 flex-wrap">
-                                                {canExportAttendance && (
-                                                    <>
-                                                        <HeroButton
-                                                            color="success"
-                                                            variant="flat"
-                                                            startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
-                                                            className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
-                                                            onPress={downloadExcel}
-                                                            isDisabled={!isLoaded || attendances.length === 0}
-                                                        >
-                                                            Excel
-                                                        </HeroButton>
-                                                        
-                                                        <HeroButton
-                                                            color="danger"
-                                                            variant="flat"
-                                                            startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
-                                                            className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30"
-                                                            onPress={downloadPDF}
-                                                            isDisabled={!isLoaded || attendances.length === 0}
-                                                        >
-                                                            PDF
-                                                        </HeroButton>
-                                                    </>
-                                                )}
-                                                
-                                                <HeroButton
-                                                    color="primary"
-                                                    variant="flat"
-                                                    startContent={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                    </svg>}
-                                                    onPress={handleRefresh}
-                                                    isDisabled={!isLoaded}
-                                                    className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
-                                                >
-                                                    Refresh
-                                                </HeroButton>
-                                            </div>
-                                        }
-                                        sx={{ padding: '24px' }}
-                                    />
-                                    <Divider />
-                                </>
-                            )}                            <CardContent>
+                                }
+                                sx={{ 
+                                    padding: 0,
+                                    '& .MuiCardHeader-content': { 
+                                        width: '100%',
+                                        overflow: 'hidden' 
+                                    }
+                                }}
+                            />
+                            <Divider />
+                            <CardContent>
                                 <Box 
                                     component="section"
                                     role="search"
                                     aria-label="Timesheet filters"
-                                    sx={{ 
-                                        padding: url === '/attendance-employee' ? '24px' : '0'
-                                    }}
                                 >
                                     <Grid container spacing={3}>
-                                        {canViewAllAttendance && (url !== '/attendance-employee') && (
+                                        {canViewAllAttendance && (
                                             <>
                                                 <Grid item xs={12} sm={6} md={4}>
                                                     <Input
@@ -979,247 +1052,666 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet }) => 
                                                 </Grid>
                                             </>
                                         )}
-                                        {(!canViewAllAttendance || url === '/attendance-employee') && (
-                                            <Grid item xs={12} sm={6} md={4}>
-                                                <Input
-                                                    label="Select Month"
-                                                    type="month"
-                                                    fullWidth
-                                                    variant="bordered"
-                                                    placeholder="Select month..."
-                                                    value={filterData.currentMonth}
-                                                    onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
-                                                    startContent={<CalendarDaysIcon className="w-4 h-4 text-default-400" />}
-                                                    aria-label="Select month for timesheet"
-                                                    classNames={{
-                                                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                    }}
-                                                />
-                                            </Grid>
-                                        )}
                                     </Grid>
-                                </Box>                            </CardContent>
+                                </Box>
+                            </CardContent>
+                            <Divider />                           
                             <CardContent>
-                                {error ? (
-                                    <HeroCard className="p-4 bg-danger-50 border-danger-200">
-                                        <Box className="flex items-center gap-3">
-                                            <ExclamationTriangleIcon className="w-5 h-5 text-danger" />
-                                            <Typography color="error" variant="body1">{error}</Typography>
-                                        </Box>
-                                    </HeroCard>
-                                ) : (
-                                    <Box 
-                                        role="region"
-                                        aria-label="Attendance data table"
-                                    >
-                                        <ScrollShadow
-                                            orientation="horizontal"
-                                            className="overflow-y-hidden"
-                                        >
-                                            <Skeleton className="rounded-lg" isLoaded={isLoaded}>
-                                                <Table
-                                                    isStriped
-                                                    selectionMode="multiple"
-                                                    selectionBehavior="toggle"
-                                                    isCompact
-                                                    removeWrapper
-                                                    aria-label="Employee attendance timesheet table"
-                                                    isHeaderSticky
-                                                >
-                                                    <TableHeader columns={columns}>
-                                                        {(column) => (
-                                                            <TableColumn key={column.uid} align="start">
-                                                                <Box className="flex items-center gap-2">
-                                                                    {column.icon && <column.icon className="w-4 h-4" />}
-                                                                    <span>{column.name}</span>
-                                                                </Box>
-                                                            </TableColumn>
-                                                        )}
-                                                    </TableHeader>
-                                                    <TableBody 
-                                                        items={attendances}
-                                                        emptyContent={
-                                                            <Box className="flex flex-col items-center justify-center py-8">
-                                                                <ClockIcon className="w-12 h-12 text-default-300 mb-4" />
-                                                                <Typography variant="body1" color="textSecondary">
-                                                                    No attendance records found
-                                                                </Typography>
-                                                            </Box>
-                                                        }
+                                {/* Two Column Layout for Present and Absent Users */}
+                                <Grid container spacing={3}>
+                                    {/* Present Users - Attendance Table */}
+                                    <Grid item xs={12} md={canViewAllAttendance ? 9 : 12}>
+                                        {error ? (
+                                            <HeroCard className="p-4 bg-danger-50 border-danger-200">
+                                                <Box className="flex items-center gap-3">
+                                                    <ExclamationTriangleIcon className="w-5 h-5 text-danger" />
+                                                    <Typography color="error" variant="body1">{error}</Typography>
+                                                </Box>
+                                            </HeroCard>
+                                        ) : (                                            
+                                            <Box 
+                                                role="region"
+                                                aria-label="Present employees attendance table"
+                                                className="border-r border-gray-200 pr-4"
+                                                sx={{ borderRightColor: 'rgba(0, 0, 0, 0.1)' }}
+                                            >
+                                                 
+                                            
+                                                <Box className="mb-4">
+                                                    <Typography 
+                                                        variant="h6" 
+                                                        className="font-semibold text-blue-600 flex items-center gap-2"
                                                     >
-                                                        {(attendance) => (
-                                                            <TableRow key={attendance.id || attendance.user_id}>
-                                                                {(columnKey) => renderCell(attendance, columnKey)}
-                                                            </TableRow>
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
-                                            </Skeleton>
-                                        </ScrollShadow>
-                                        {totalRows > perPage && (
-                                            <Box className="py-4 flex justify-center">
-                                                <Pagination
-                                                    initialPage={1}
-                                                    isCompact
-                                                    showControls
-                                                    showShadow
-                                                    color="primary"
-                                                    variant="bordered"
-                                                    page={currentPage}
-                                                    total={lastPage}
-                                                    onChange={handlePageChange}
-                                                    aria-label="Timesheet pagination"
-                                                />
+                                                        <CheckCircleIcon className="w-5 h-5" />
+                                                        Present Employees ({attendances.length})
+                                                    </Typography>
+                                                </Box>
+                                                <ScrollShadow
+                                                    orientation="horizontal"
+                                                    className="overflow-y-hidden"
+                                                >
+                                                    <Skeleton className="rounded-lg" isLoaded={isLoaded}>
+                                                        <Table
+                                                            selectionMode="multiple"
+                                                            selectionBehavior="toggle"
+                                                            isCompact
+                                                            removeWrapper
+                                                            aria-label="Employee attendance timesheet table"
+                                                            isHeaderSticky
+                                                            classNames={{
+                                                                base: "max-h-[520px] overflow-scroll",
+                                                                table: "min-h-[200px]",
+                                                            }}
+                                                        >
+                                                            <TableHeader columns={columns}>
+                                                                {(column) => (
+                                                                    <TableColumn key={column.uid} align="start">
+                                                                        <Box className="flex items-center gap-2">
+                                                                            {column.icon && <column.icon className="w-4 h-4" />}
+                                                                            <span className="text-sm font-medium">{column.name}</span>
+                                                                        </Box>
+                                                                    </TableColumn>
+                                                                )}
+                                                            </TableHeader>
+                                                            <TableBody 
+                                                                items={attendances}
+                                                                emptyContent={
+                                                                    <Box className="flex flex-col items-center justify-center py-8">
+                                                                        <ClockIcon className="w-12 h-12 text-default-300 mb-4" />
+                                                                        <Typography variant="body1" color="textSecondary">
+                                                                            No attendance records found
+                                                                        </Typography>
+                                                                    </Box>
+                                                                }
+                                                            >
+                                                                {(attendance) => (
+                                                                    <TableRow key={attendance.id || attendance.user_id}>
+                                                                        {(columnKey) => renderCell(attendance, columnKey)}
+                                                                    </TableRow>
+                                                                )}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </Skeleton>
+                                                </ScrollShadow>
+                                                {totalRows > perPage && (
+                                                    <Box className="py-4 flex justify-center">
+                                                        <Pagination
+                                                            initialPage={1}
+                                                            isCompact
+                                                            showControls
+                                                            showShadow
+                                                            color="primary"
+                                                            variant="bordered"
+                                                            page={currentPage}
+                                                            total={lastPage}
+                                                            onChange={handlePageChange}
+                                                            aria-label="Timesheet pagination"
+                                                        />
+                                                    </Box>
+                                                )}
                                             </Box>
                                         )}
-                                    </Box>
-                                )}
+                                    
+                                    </Grid>
+
+                                  
+
+                                    {/* Absent Users Section */}
+                                    {canViewAllAttendance && (
+                                        <Grid item xs={12} md={3}>
+                                            <AbsentUsersInlineCard 
+                                                absentUsers={absentUsers}
+                                                selectedDate={selectedDate}
+                                                getUserLeave={getUserLeave}
+                                            />
+                                        </Grid>
+                                    )}
+                                </Grid>
                             </CardContent>
                         </GlassCard>
                     </Grow>
                 </Grid>
-
-                {/* Absent Users Card */}
-                {canViewAllAttendance && (url !== '/attendance-employee') && absentUsers.length > 0 && (                    <Grid item xs={12} md={3}>
-                        <Grow in timeout={700}>
-                            <GlassCard ref={cardRef}>
-                                <CardHeader
-                                    title={
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
-                                                <UserGroupIcon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <div>
-                                                <Typography 
-                                                    variant="h6"
-                                                    className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
-                                                >
-                                                    Absent Today
-                                                </Typography>
-                                                <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
-                                                    <CalendarDaysIcon className="w-4 h-4" />
-                                                    {new Date(selectedDate).toLocaleDateString('en-US', {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        year: 'numeric'
-                                                    })}
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                    }
-                                    action={
-                                        <Chip 
-                                            label={absentUsers.length} 
-                                            variant="flat" 
-                                            color="warning" 
-                                            size="sm"
-                                            startContent={<ExclamationTriangleIcon className="w-3 h-3" />}
-                                        />
-                                    }
-                                    sx={{ padding: '24px' }}
-                                />
-                                <Divider />
-                                <CardContent>
-                                    <Box 
-                                        role="region"
-                                        aria-label="Absent employees list"
-                                    >
-                                        {absentUsers.slice(0, visibleUsersCount).map((user, index) => {
-                                            const userLeave = getUserLeave(user.id);
-                                            const ref = index === 0 ? userItemRef : null;
-                                            return (                                                <Collapse in={index < visibleUsersCount} key={user.id} timeout="auto" unmountOnExit>
-                                                    <div className="mb-3 p-3 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-200 rounded-lg">
-                                                        <Box className="flex items-start justify-between">
-                                                            <Box className="flex items-center gap-3 flex-1">
-                                                                <Avatar 
-                                                                    src={user.profile_image} 
-                                                                    alt={user.name}
-                                                                    size="sm"
-                                                                    fallback={<UserIcon className="w-4 h-4" />}
-                                                                />
-                                                                <Box>
-                                                                    <Typography 
-                                                                        variant="body2" 
-                                                                        fontWeight="medium"
-                                                                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                                                                    >
-                                                                        {user.name}
-                                                                    </Typography>
-                                                                    {userLeave ? (
-                                                                        <Box className="flex flex-col gap-1 mt-1">
-                                                                            <Typography 
-                                                                                variant="caption" 
-                                                                                color="textSecondary"
-                                                                                className="flex items-center gap-1"
-                                                                            >
-                                                                                <CalendarDaysIcon className="w-3 h-3" />
-                                                                                {userLeave.from_date === userLeave.to_date 
-                                                                                    ? userLeave.from_date 
-                                                                                    : `${userLeave.from_date} - ${userLeave.to_date}`
-                                                                                }
-                                                                            </Typography>
-                                                                            <Typography 
-                                                                                variant="caption" 
-                                                                                color="primary"
-                                                                                className="flex items-center gap-1"
-                                                                            >
-                                                                                {getLeaveStatusIcon(userLeave.status)}
-                                                                                {userLeave.leave_type} Leave
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    ) : (
-                                                                        <Typography 
-                                                                            variant="caption" 
-                                                                            color="error"
-                                                                            className="flex items-center gap-1 mt-1"
-                                                                        >
-                                                                            <ExclamationTriangleIcon className="w-3 h-3" />
-                                                                            Absent without leave
-                                                                        </Typography>
-                                                                    )}
-                                                                </Box>
-                                                            </Box>
-                                                            {userLeave && (
-                                                                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-2 py-1">
-                                                                    <div className="flex items-center gap-1">
-                                                                        {getLeaveStatusIcon(userLeave.status)}
-                                                                        <Typography 
-                                                                            variant="caption" 
-                                                                            className={`font-semibold ${
-                                                                                userLeave.status?.toLowerCase() === 'approved' ? 'text-green-600' :
-                                                                                userLeave.status?.toLowerCase() === 'rejected' ? 'text-red-600' :
-                                                                                'text-orange-600'
-                                                                            }`}
-                                                                        >
-                                                                            {userLeave.status}
-                                                                        </Typography>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </Box>
-                                                    </div>
-                                                </Collapse>
-                                            );
-                                        })}                                        {visibleUsersCount < absentUsers.length && (
-                                            <Box className="text-center mt-3">
-                                                <Button 
-                                                    variant="outlined" 
-                                                    onClick={handleLoadMore}
-                                                    startIcon={<ChevronDownIcon className="w-4 h-4" />}
-                                                    size="small"
-                                                >                                                    Show More ({absentUsers.length - visibleUsersCount} remaining)
-                                                </Button>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </CardContent>
-                            </GlassCard>
-                        </Grow>
-                    </Grid>
-                )}
             </Grid>
         </Box>
     );
 };
+
+// Inline AbsentUsersCard component for the combined layout
+const AbsentUsersInlineCard = React.memo(({ absentUsers, selectedDate, getUserLeave }) => {
+    const [visibleUsersCount, setVisibleUsersCount] = useState(5);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Filter absent users based on search term
+    const filteredAbsentUsers = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return absentUsers;
+        }
+        
+        const searchLower = searchTerm.toLowerCase();
+        return absentUsers.filter(user => {
+            const name = user.name?.toLowerCase() || '';
+            const employeeId = user.employee_id?.toString().toLowerCase() || '';
+            const email = user.email?.toLowerCase() || '';
+            const phone = user.phone?.toString().toLowerCase() || '';
+            
+            return name.includes(searchLower) ||
+                   employeeId.includes(searchLower) ||
+                   email.includes(searchLower) ||
+                   phone.includes(searchLower);
+        });
+    }, [absentUsers, searchTerm]);
+
+    const handleLoadMore = () => {
+        setVisibleUsersCount((prev) => prev + 5);
+    };
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+        setVisibleUsersCount(5); // Reset visible count when searching
+    };
+
+    const getLeaveStatusIcon = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'approved':
+                return <CheckCircleIcon className="w-4 h-4 text-success" />;
+            case 'rejected':
+                return <XCircleIcon className="w-4 h-4 text-danger" />;
+            default:
+                return <ClockIcon className="w-4 h-4 text-warning" />;
+        }
+    };    if (absentUsers.length === 0) {
+        return (
+            <Box className="h-full" >                
+                <Box className="mb-4 flex items-center justify-between">
+                    <Typography 
+                        variant="h6" 
+                        className="font-semibold text-orange-600 flex items-center gap-2 text-sm"
+                    >
+                        <UserGroupIcon className="w-4 h-4" />
+                        Absent Today
+                    </Typography>
+                    <Chip 
+                        label="0" 
+                        variant="flat" 
+                        color="success" 
+                        size="sm"
+                        startContent={<CheckCircleIcon className="w-3 h-3" />}
+                    />
+                </Box>
+                <Box 
+                    role="region"
+                    aria-label="No absent employees today"
+                    className="text-center py-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg h-96 flex flex-col items-center justify-center"
+                >
+                    <CheckCircleIcon className="w-12 h-12 text-success mx-auto mb-4" />
+                    <Typography variant="body2" color="success" className="mb-2 text-sm font-medium">
+                        Perfect Attendance!
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary" className="text-xs">
+                        No employees are absent today.
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary" className="mt-1 block text-xs">
+                        All employees are either present or on approved leave.
+                    </Typography>
+                </Box>
+            </Box>
+        );
+    }
+
+    return (
+        <Box className="h-full">
+            <Box className="mb-4 flex items-center justify-between">
+                <Typography 
+                    variant="h6" 
+                    className="font-semibold text-orange-600 flex items-center gap-2 text-sm"
+                >
+                    <UserGroupIcon className="w-4 h-4" />
+                    Absent Today
+                </Typography>
+                <Chip 
+                    label={absentUsers.length} 
+                    variant="flat" 
+                    color="warning" 
+                    size="sm"
+                    startContent={<ExclamationTriangleIcon className="w-3 h-3" />}
+                />
+            </Box>
+
+            {/* Search Input */}
+            <Box className="mb-3 m-2">
+                <Input
+                    size="sm"
+                    placeholder="Search absent employees..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
+                    variant="bordered"
+                    classNames={{
+                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 h-8",
+                        input: "text-xs",
+                    }}
+                    aria-label="Search absent employees"
+                />
+            </Box>
+
+            {/* Show search results count */}
+            {searchTerm && (
+                <Box className="mb-2 ">
+                    <Typography variant="caption" color="textSecondary" className="text-xs">
+                        {filteredAbsentUsers.length} of {absentUsers.length} employees found
+                    </Typography>
+                </Box>
+            )}
+
+            {/* Show message if no results found */}
+            {searchTerm && filteredAbsentUsers.length === 0 && (
+                <Box className="text-center py-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
+                    <MagnifyingGlassIcon className="w-8 h-8 text-default-300 mx-auto mb-2" />
+                    <Typography variant="body2" color="textSecondary" className="text-sm">
+                        No employees found matching "{searchTerm}"
+                    </Typography>
+                </Box>
+            )}
+
+            <Box 
+                role="region"
+                aria-label="Absent employees list"
+                className="overflow-y-auto max-h-[520px]"
+            >
+                {filteredAbsentUsers.slice(0, visibleUsersCount).map((user) => {
+                    const userLeave = getUserLeave(user.id);
+                    
+                    return (
+                        <Collapse in={true} key={user.id} timeout="auto">
+                            <div className="p-3 m-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-200 rounded-lg">
+                                <Box className="flex items-start justify-between">
+                                    <Box className="flex items-center gap-2 flex-1">
+                                        <Avatar 
+                                            src={user.profile_image} 
+                                            alt={user.name}
+                                            size="sm"
+                                            fallback={<UserIcon className="w-4 h-4" />}
+                                        />
+                                        <Box className="flex-1 min-w-0">                                            <Typography 
+                                                variant="body2" 
+                                                fontWeight="medium"
+                                                className="truncate text-sm"
+                                            >
+                                                {user.name}
+                                            </Typography>
+                                            {user.employee_id && (
+                                                <Typography 
+                                                    variant="caption" 
+                                                    color="textSecondary"
+                                                    className="block text-xs"
+                                                >
+                                                    ID: {user.employee_id}
+                                                </Typography>
+                                            )}
+                                            {userLeave ? (
+                                                <Box className="flex flex-col gap-1 mt-1">
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        color="textSecondary"
+                                                        className="flex items-center gap-1 text-xs"
+                                                    >
+                                                        <CalendarDaysIcon className="w-3 h-3" />
+                                                        {userLeave.from_date === userLeave.to_date 
+                                                            ? userLeave.from_date 
+                                                            : `${userLeave.from_date} - ${userLeave.to_date}`
+                                                        }
+                                                    </Typography>
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        color="primary"
+                                                        className="flex items-center gap-1 text-xs"
+                                                    >
+                                                        {getLeaveStatusIcon(userLeave.status)}
+                                                        {userLeave.leave_type} Leave
+                                                    </Typography>
+                                                </Box>
+                                            ) : (
+                                                <Typography 
+                                                    variant="caption" 
+                                                    color="error"
+                                                    className="flex items-center gap-1 mt-1 text-xs"
+                                                >
+                                                    <ExclamationTriangleIcon className="w-3 h-3" />
+                                                    Absent without leave
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                    {userLeave && (
+                                        <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-md px-1.5 py-0.5 ml-2">
+                                            <div className="flex items-center gap-1">
+                                                {getLeaveStatusIcon(userLeave.status)}
+                                                <Typography 
+                                                    variant="caption" 
+                                                    className={`font-semibold text-xs ${
+                                                        userLeave.status?.toLowerCase() === 'approved' ? 'text-green-600' :
+                                                        userLeave.status?.toLowerCase() === 'rejected' ? 'text-red-600' :
+                                                        'text-orange-600'
+                                                    }`}
+                                                >
+                                                    {userLeave.status}
+                                                </Typography>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Box>
+                            </div>
+                        </Collapse>
+                    );
+                })}                
+                {visibleUsersCount < filteredAbsentUsers.length && (
+                    <Box className="text-center mt-4 pb-4">
+                        <Button 
+                            variant="outlined" 
+                            onClick={handleLoadMore}
+                            startIcon={<ChevronDownIcon className="w-4 h-4" />}
+                            size="small"
+                            color="warning"
+                            fullWidth
+                        >
+                            Show More ({filteredAbsentUsers.length - visibleUsersCount} remaining)
+                        </Button>
+                    </Box>
+                )}
+            </Box>
+        </Box>
+    );
+});
+
+// Original AbsentUsersCard component (kept for potential future use)
+const AbsentUsersCard = React.memo(({ absentUsers, selectedDate, getUserLeave }) => {
+    const [visibleUsersCount, setVisibleUsersCount] = useState(2);
+    const [searchTerm, setSearchTerm] = useState('');
+    const cardRef = useRef(null);
+    const userItemRef = useRef(null);    // Filter absent users based on search term
+    const filteredAbsentUsers = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return absentUsers;
+        }
+        
+        const searchLower = searchTerm.toLowerCase();
+        return absentUsers.filter(user => 
+            user.name?.toLowerCase().includes(searchLower) ||
+            user.employee_id?.toString().toLowerCase().includes(searchLower) ||
+            user.email?.toLowerCase().includes(searchLower) ||
+            user.phone?.toString().toLowerCase().includes(searchLower)
+        );
+    }, [absentUsers, searchTerm]);
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+        setVisibleUsersCount(2); // Reset visible count when searching
+    };// Calculate how many absent users to show based on card height
+    const calculateVisibleUsers = useCallback(() => {
+        if (cardRef.current && userItemRef.current) {
+            const cardHeight = cardRef.current.clientHeight;
+            const headerHeight = 120; // Approximate header height
+            const userItemHeight = userItemRef.current.clientHeight + 12; // Include margin
+            const availableHeight = cardHeight - headerHeight;
+            const maxVisible = Math.floor(availableHeight / userItemHeight);
+            setVisibleUsersCount(Math.max(2, Math.min(maxVisible, filteredAbsentUsers.length)));
+        }
+    }, [filteredAbsentUsers.length]);
+
+    const handleLoadMore = () => {
+        setVisibleUsersCount((prev) => prev + 2);
+    };
+
+    const getLeaveStatusIcon = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'approved':
+                return <CheckCircleIcon className="w-4 h-4 text-success" />;
+            case 'rejected':
+                return <XCircleIcon className="w-4 h-4 text-danger" />;
+            default:
+                return <ClockIcon className="w-4 h-4 text-warning" />;
+        }    };    // Recalculate visible users when filteredAbsentUsers changes
+    useEffect(() => {
+        setVisibleUsersCount(2);
+        const timer = setTimeout(() => {
+            calculateVisibleUsers();
+        }, 100);
+        window.addEventListener('resize', calculateVisibleUsers);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', calculateVisibleUsers);
+        };
+    }, [filteredAbsentUsers, calculateVisibleUsers]);if (absentUsers.length === 0) {
+        return (
+            <Grow in timeout={700}>
+                <GlassCard ref={cardRef}>
+                    <CardHeader
+                        title={
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
+                                    <UserGroupIcon className="w-6 h-6 text-orange-600" />
+                                </div>
+                                <div>
+                                    <Typography 
+                                        variant="h6"
+                                        className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
+                                    >
+                                        Absent Today
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
+                                        <CalendarDaysIcon className="w-4 h-4" />
+                                        {new Date(selectedDate).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </Typography>
+                                </div>
+                            </div>
+                        }
+                        action={
+                            <Chip 
+                                label="0" 
+                                variant="flat" 
+                                color="success" 
+                                size="sm"
+                                startContent={<CheckCircleIcon className="w-3 h-3" />}
+                            />
+                        }
+                        sx={{ padding: '24px' }}
+                    />
+                    <Divider />
+                    <CardContent>
+                        <Box 
+                            role="region"
+                            aria-label="No absent employees today"
+                            className="text-center py-8"
+                        >
+                            <CheckCircleIcon className="w-12 h-12 text-success mx-auto mb-3" />
+                            <Typography variant="body2" color="textSecondary">
+                                No employees are absent today!
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary" className="mt-1">
+                                All employees are either present or on approved leave.
+                            </Typography>
+                        </Box>
+                    </CardContent>
+                </GlassCard>
+            </Grow>
+        );
+    }
+
+    return (
+        <Grow in timeout={700}>
+            <GlassCard ref={cardRef}>
+                <CardHeader
+                    title={
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
+                                <UserGroupIcon className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                                <Typography 
+                                    variant="h6"
+                                    className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
+                                >
+                                    Absent Today
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
+                                    <CalendarDaysIcon className="w-4 h-4" />
+                                    {new Date(selectedDate).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    })}
+                                </Typography>
+                            </div>
+                        </div>
+                    }                    action={
+                        <Chip 
+                            label={absentUsers.length} 
+                            variant="flat" 
+                            color="warning" 
+                            size="sm"
+                            startContent={<ExclamationTriangleIcon className="w-3 h-3" />}
+                        />
+                    }
+                    sx={{ padding: '24px' }}                />                <Divider />
+                <CardContent>
+                    {/* Search Input */}
+                    <Box className="mb-4">
+                        <Input
+                            size="sm"
+                            placeholder="Search absent employees..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
+                            variant="bordered"
+                            classNames={{
+                                inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                input: "text-sm",
+                            }}
+                            aria-label="Search absent employees"
+                        />
+                    </Box>
+
+                    {/* Show search results count */}
+                    {searchTerm && (
+                        <Box className="mb-3">
+                            <Typography variant="caption" color="textSecondary" className="text-xs">
+                                {filteredAbsentUsers.length} of {absentUsers.length} employees found
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {/* Show message if no results found */}
+                    {searchTerm && filteredAbsentUsers.length === 0 && (
+                        <Box className="text-center py-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg mb-4">
+                            <MagnifyingGlassIcon className="w-8 h-8 text-default-300 mx-auto mb-2" />
+                            <Typography variant="body2" color="textSecondary" className="text-sm">
+                                No employees found matching "{searchTerm}"
+                            </Typography>
+                        </Box>
+                    )}
+
+                    <Box 
+                        role="region"
+                        aria-label="Absent employees list"
+                    >
+                        {filteredAbsentUsers.slice(0, visibleUsersCount).map((user, index) => {
+                            const userLeave = getUserLeave(user.id);
+                            const ref = index === 0 ? userItemRef : null;
+                            return (
+                                <Collapse in={index < visibleUsersCount} key={user.id} timeout="auto" unmountOnExit>
+                                    <div ref={ref} className="mb-3 p-3 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-200 rounded-lg">
+                                        <Box className="flex items-start justify-between">
+                                            <Box className="flex items-center gap-3 flex-1">
+                                                <Avatar 
+                                                    src={user.profile_image} 
+                                                    alt={user.name}
+                                                    size="sm"
+                                                    fallback={<UserIcon className="w-4 h-4" />}
+                                                />
+                                                <Box>
+                                                    <Typography 
+                                                        variant="body2" 
+                                                        fontWeight="medium"
+                                                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                                                    >
+                                                        {user.name}
+                                                    </Typography>
+                                                    {userLeave ? (
+                                                        <Box className="flex flex-col gap-1 mt-1">
+                                                            <Typography 
+                                                                variant="caption" 
+                                                                color="textSecondary"
+                                                                className="flex items-center gap-1"
+                                                            >
+                                                                <CalendarDaysIcon className="w-3 h-3" />
+                                                                {userLeave.from_date === userLeave.to_date 
+                                                                    ? userLeave.from_date 
+                                                                    : `${userLeave.from_date} - ${userLeave.to_date}`
+                                                                }
+                                                            </Typography>
+                                                            <Typography 
+                                                                variant="caption" 
+                                                                color="primary"
+                                                                className="flex items-center gap-1"
+                                                            >
+                                                                {getLeaveStatusIcon(userLeave.status)}
+                                                                {userLeave.leave_type} Leave
+                                                            </Typography>
+                                                        </Box>
+                                                    ) : (
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            color="error"
+                                                            className="flex items-center gap-1 mt-1"
+                                                        >
+                                                            <ExclamationTriangleIcon className="w-3 h-3" />
+                                                            Absent without leave
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                            {userLeave && (
+                                                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-2 py-1">
+                                                    <div className="flex items-center gap-1">
+                                                        {getLeaveStatusIcon(userLeave.status)}
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            className={`font-semibold ${
+                                                                userLeave.status?.toLowerCase() === 'approved' ? 'text-green-600' :
+                                                                userLeave.status?.toLowerCase() === 'rejected' ? 'text-red-600' :
+                                                                'text-orange-600'
+                                                            }`}
+                                                        >
+                                                            {userLeave.status}
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Box>
+                                    </div>
+                                </Collapse>
+                            );
+                        })}                        {visibleUsersCount < filteredAbsentUsers.length && (
+                            <Box className="text-center mt-3">                        <Button 
+                            variant="outlined" 
+                            onClick={handleLoadMore}
+                            startIcon={<ChevronDownIcon className="w-4 h-4" />}
+                            size="small"
+                            className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 text-sm"
+                        >
+                                    Show More ({filteredAbsentUsers.length - visibleUsersCount} remaining)
+                                </Button>
+                            </Box>
+                        )}
+                    </Box>
+                </CardContent>
+            </GlassCard>
+        </Grow>
+    );
+});
 
 export default TimeSheetTable;

@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { 
-  Box, 
-  Grid, 
-  Typography, 
-  Card, 
-  CardContent, 
   CircularProgress,
   Chip,
   Button,
@@ -13,8 +8,15 @@ import {
   Tooltip,
   Alert,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Grow,
+  Fade
 } from '@mui/material';
+import { 
+  Card, 
+  CardBody, 
+  CardHeader
+} from "@heroui/react";
 import {
   Refresh as RefreshIcon,
   Download as DownloadIcon,
@@ -23,7 +25,14 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { 
+  ChartBarIcon, 
+  CpuChipIcon,
+  ArrowPathIcon,
+  DocumentArrowDownIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon as HeroCheckCircleIcon
+} from '@heroicons/react/24/outline';
 
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
@@ -156,13 +165,13 @@ const PerformanceDashboardPage = ({ auth, title = "Performance Dashboard" }) => 
   // Performance Score Component
   const PerformanceScore = ({ score, size = 120 }) => {
     const getColor = (score) => {
-      if (score >= 90) return theme.palette.success.main;
-      if (score >= 70) return theme.palette.warning.main;
-      return theme.palette.error.main;
+      if (score >= 90) return '#10b981'; // green-500
+      if (score >= 70) return '#f59e0b'; // amber-500
+      return '#ef4444'; // red-500
     };
 
     return (
-      <Box position="relative" display="inline-flex">
+      <div className="relative inline-flex">
         <CircularProgress
           variant="determinate"
           value={score}
@@ -170,25 +179,15 @@ const PerformanceDashboardPage = ({ auth, title = "Performance Dashboard" }) => 
           thickness={4}
           sx={{ color: getColor(score) }}
         />
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          bottom={0}
-          right={0}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          flexDirection="column"
-        >
-          <Typography variant="h4" component="div" color={getColor(score)} fontWeight="bold">
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <div className="text-3xl font-bold" style={{ color: getColor(score) }}>
             {score}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
+          </div>
+          <div className="text-xs text-gray-400">
             /100
-          </Typography>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     );
   };
   // Core Web Vitals Component
@@ -205,38 +204,29 @@ const PerformanceDashboardPage = ({ auth, title = "Performance Dashboard" }) => 
     ];
 
     return (
-      <Grid container spacing={2}>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {metrics.map((metric) => (
-          <Grid item xs={12} sm={6} md={2} key={metric.name}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  {metric.name}
-                </Typography>
-                <Typography variant="h4" component="div" sx={{ 
-                  color: metric.value <= metric.threshold ? 'success.main' : 'error.main',
-                  fontWeight: 'bold'
-                }}>
-                  {metric.name === 'CLS' ? metric.value.toFixed(3) : Math.round(metric.value)}
-                  <Typography variant="caption" component="span" sx={{ ml: 0.5 }}>
-                    {metric.unit}
-                  </Typography>
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {metric.label}
-                </Typography>
-                <br />
-                <Chip 
-                  size="small" 
-                  label={metric.value <= metric.threshold ? 'Good' : 'Needs Work'}
-                  color={metric.value <= metric.threshold ? 'success' : 'error'}
-                  sx={{ mt: 1 }}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
+          <div key={metric.name} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 text-center">
+            <div className="text-sm font-medium text-gray-400 mb-2">
+              {metric.name}
+            </div>
+            <div className={`text-2xl font-bold mb-1 ${
+              metric.value <= metric.threshold ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {metric.name === 'CLS' ? metric.value.toFixed(3) : Math.round(metric.value)}
+              <span className="text-xs ml-1">{metric.unit}</span>
+            </div>
+            <div className="text-xs text-gray-400 mb-2">
+              {metric.label}
+            </div>
+            <Chip 
+              size="small" 
+              label={metric.value <= metric.threshold ? 'Good' : 'Needs Work'}
+              color={metric.value <= metric.threshold ? 'success' : 'error'}
+            />
+          </div>
         ))}
-      </Grid>
+      </div>
     );
   };
 
@@ -245,199 +235,279 @@ const PerformanceDashboardPage = ({ auth, title = "Performance Dashboard" }) => 
     if (!features) return null;
 
     return (
-      <Grid container spacing={2}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(features).map(([name, feature]) => (
-          <Grid item xs={12} sm={6} md={4} key={name}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">{name}</Typography>
-                  <Chip 
-                    size="small"
-                    label={feature.priority}
-                    color={feature.priority === 'high' ? 'error' : feature.priority === 'medium' ? 'warning' : 'default'}
-                  />
-                </Box>
-                <Typography variant="h4" sx={{ 
-                  color: feature.averageLoadTime <= feature.target ? 'success.main' : 'warning.main',
-                  fontWeight: 'bold'
-                }}>
-                  {Math.round(feature.averageLoadTime)}ms
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Target: {feature.target}ms | Routes: {Object.keys(feature.routes).length}
-                </Typography>
-                <Box mt={1}>
-                  <Chip 
-                    size="small"
-                    icon={feature.averageLoadTime <= feature.target ? <CheckCircleIcon /> : <WarningIcon />}
-                    label={feature.averageLoadTime <= feature.target ? 'Meeting Target' : 'Exceeds Target'}
-                    color={feature.averageLoadTime <= feature.target ? 'success' : 'warning'}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div key={name} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-lg font-semibold text-white">{name}</div>
+              <Chip 
+                size="small"
+                label={feature.priority}
+                color={feature.priority === 'high' ? 'error' : feature.priority === 'medium' ? 'warning' : 'default'}
+              />
+            </div>
+            <div className={`text-3xl font-bold mb-2 ${
+              feature.averageLoadTime <= feature.target ? 'text-green-400' : 'text-orange-400'
+            }`}>
+              {Math.round(feature.averageLoadTime)}ms
+            </div>
+            <div className="text-sm text-gray-400 mb-3">
+              Target: {feature.target}ms | Routes: {Object.keys(feature.routes).length}
+            </div>
+            <Chip 
+              size="small"
+              icon={feature.averageLoadTime <= feature.target ? <CheckCircleIcon /> : <WarningIcon />}
+              label={feature.averageLoadTime <= feature.target ? 'Meeting Target' : 'Exceeds Target'}
+              color={feature.averageLoadTime <= feature.target ? 'success' : 'warning'}
+            />
+          </div>
         ))}
-      </Grid>
+      </div>
     );
   };
 
   if (loading) {
     return (
-      <App title={title} auth={auth}>
+      <>
         <Head title={title} />
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <div className="min-h-screen flex items-center justify-center">
           <CircularProgress size={60} />
-        </Box>
-      </App>
+        </div>
+      </>
     );
   }
 
   return (
-    <App title={title} auth={auth}>
+    <>
       <Head title={title} />
       
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
-        {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              🚀 Performance Monitor
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Real-time performance monitoring and optimization insights
-            </Typography>
-          </Box>
-          <Box display="flex" gap={1}>
-            <Tooltip title="Refresh Data">
-              <IconButton 
-                onClick={fetchPerformanceData} 
-                disabled={refreshing}
-                color="primary"
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Generate Report">
-              <Button 
-                variant="outlined" 
-                startIcon={<TrendingUpIcon />}
-                onClick={handleGenerateReport}
-                size="small"
-              >
-                Generate Report
-              </Button>
-            </Tooltip>
-            <Tooltip title="Download Data">
-              <Button 
-                variant="outlined" 
-                startIcon={<DownloadIcon />}
-                onClick={handleDownloadReport}
-                size="small"
-              >
-                Export
-              </Button>
-            </Tooltip>
-          </Box>
-        </Box>
+      <div className="min-h-screen p-2 sm:p-4 md:p-6">
+        <div className="mx-auto max-w-7xl">
+          <Grow in timeout={800}>
+            <div>
+              <GlassCard>
+                {/* Header Section with Gradient Background */}
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20"></div>
+                  <div className="relative px-6 py-8">
+                    <div className="flex flex-col gap-6">
+                      {/* Title and Description */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl backdrop-blur-sm border border-white/10">
+                            <ChartBarIcon className="w-8 h-8 text-blue-400" />
+                          </div>
+                          <div>
+                            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                              🚀 Performance Monitor
+                            </h1>
+                            <p className="text-gray-400 mt-1 text-sm md:text-base">
+                              Real-time performance monitoring and optimization insights
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 flex-wrap">
+                          <Tooltip title="Refresh Data">
+                            <IconButton 
+                              onClick={fetchPerformanceData} 
+                              disabled={refreshing}
+                              className="text-blue-400 hover:bg-blue-500/10"
+                            >
+                              <ArrowPathIcon className="w-5 h-5" />
+                            </IconButton>
+                          </Tooltip>
+                          <Button 
+                            variant="outlined" 
+                            startIcon={<TrendingUpIcon />}
+                            onClick={handleGenerateReport}
+                            size="small"
+                            className="border-blue-400/50 text-blue-400 hover:bg-blue-500/10"
+                          >
+                            Generate Report
+                          </Button>
+                          <Button 
+                            variant="outlined" 
+                            startIcon={<DownloadIcon />}
+                            onClick={handleDownloadReport}
+                            size="small"
+                            className="border-purple-400/50 text-purple-400 hover:bg-purple-500/10"
+                          >
+                            Export
+                          </Button>
+                        </div>
+                      </div>
 
-        {/* Alerts */}
-        {alerts.map((alert, index) => (
-          <Alert severity={alert.type} sx={{ mb: 2 }} key={index}>
-            {alert.message}
-          </Alert>
-        ))}
+                      {/* Statistics Cards */}
+                      <Fade in timeout={1000}>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+                                <SpeedIcon className="w-5 h-5 text-blue-400" />
+                              </div>
+                              <div>
+                                <div className="text-xl font-bold text-blue-400">
+                                  {performanceData?.baseline?.overall?.performanceScore || 0}
+                                </div>
+                                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                                  Performance Score
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Performance Overview */}
-        <Grid container spacing={3} mb={3}>
-          <Grid item xs={12} md={3}>
-            <GlassCard>
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant="h6" gutterBottom>
-                  Overall Performance
-                </Typography>
-                <PerformanceScore 
-                  score={performanceData?.baseline?.overall?.performanceScore || 0} 
-                />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                  Last Updated: {performanceData?.lastUpdated?.toLocaleTimeString()}
-                </Typography>
-              </CardContent>
-            </GlassCard>
-          </Grid>
-          
-          <Grid item xs={12} md={9}>
-            <GlassCard>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  📊 Core Web Vitals
-                </Typography>
-                <CoreWebVitals vitals={performanceData?.baseline?.overall?.coreWebVitals} />
-              </CardContent>
-            </GlassCard>
-          </Grid>
-        </Grid>
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-colors">
+                                <CheckCircleIcon className="w-5 h-5 text-green-400" />
+                              </div>
+                              <div>
+                                <div className="text-xl font-bold text-green-400">
+                                  {performanceData?.baseline?.overall?.totalIssues || 0}
+                                </div>
+                                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                                  Issues Detected
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Feature Performance */}
-        <GlassCard sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              📦 Feature Module Performance
-            </Typography>
-            <FeaturePerformance features={performanceData?.baseline?.features} />
-          </CardContent>
-        </GlassCard>
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
+                                <CpuChipIcon className="w-5 h-5 text-purple-400" />
+                              </div>
+                              <div>
+                                <div className="text-xl font-bold text-purple-400">
+                                  {performanceData?.comparison?.summary?.regressions?.length || 0}
+                                </div>
+                                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                                  Regressions
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Quick Actions */}
-        <GlassCard>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              🔧 Quick Actions
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button 
-                  fullWidth 
-                  variant="outlined" 
-                  startIcon={<SpeedIcon />}
-                  onClick={() => window.open('/storage/app/reports/performance-dashboard.html', '_blank')}
-                >
-                  View Full Dashboard
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button 
-                  fullWidth 
-                  variant="outlined"
-                  onClick={() => window.open('/storage/app/reports/technical-report.md', '_blank')}
-                >
-                  Technical Report
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button 
-                  fullWidth 
-                  variant="outlined"
-                  onClick={() => window.open('/storage/app/reports/executive-summary.md', '_blank')}
-                >
-                  Executive Summary
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button 
-                  fullWidth 
-                  variant="outlined"
-                  onClick={handleDownloadReport}
-                >
-                  Download Data
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </GlassCard>
-      </Box>
-    </App>
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
+                                <DocumentArrowDownIcon className="w-5 h-5 text-orange-400" />
+                              </div>
+                              <div>
+                                <div className="text-lg font-bold text-orange-400">
+                                  {performanceData?.lastUpdated?.toLocaleTimeString() || 'Never'}
+                                </div>
+                                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                                  Last Updated
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Fade>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="px-6 pb-6">
+                  {/* Alerts */}
+                  {alerts.map((alert, index) => (
+                    <Alert severity={alert.type} className="mb-4" key={index}>
+                      {alert.message}
+                    </Alert>
+                  ))}
+
+                  {/* Performance Overview */}
+                  <Fade in timeout={1200}>
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                      <div className="lg:col-span-1">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 text-center">
+                          <div className="text-lg font-semibold text-white mb-4">
+                            Overall Performance
+                          </div>
+                          <PerformanceScore 
+                            score={performanceData?.baseline?.overall?.performanceScore || 0} 
+                          />
+                          <div className="text-xs text-gray-400 mt-4">
+                            Last Updated: {performanceData?.lastUpdated?.toLocaleTimeString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="lg:col-span-3">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
+                          <div className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            📊 Core Web Vitals
+                          </div>
+                          <CoreWebVitals vitals={performanceData?.baseline?.overall?.coreWebVitals} />
+                        </div>
+                      </div>
+                    </div>
+                  </Fade>
+
+                  {/* Feature Performance */}
+                  <Fade in timeout={1400}>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 mb-6">
+                      <div className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        📦 Feature Module Performance
+                      </div>
+                      <FeaturePerformance features={performanceData?.baseline?.features} />
+                    </div>
+                  </Fade>
+
+                  {/* Quick Actions */}
+                  <Fade in timeout={1600}>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
+                      <div className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        🔧 Quick Actions
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Button 
+                          fullWidth 
+                          variant="outlined" 
+                          startIcon={<SpeedIcon />}
+                          onClick={() => window.open('/storage/app/reports/performance-dashboard.html', '_blank')}
+                          className="border-blue-400/50 text-blue-400 hover:bg-blue-500/10"
+                        >
+                          View Full Dashboard
+                        </Button>
+                        <Button 
+                          fullWidth 
+                          variant="outlined"
+                          onClick={() => window.open('/storage/app/reports/technical-report.md', '_blank')}
+                          className="border-green-400/50 text-green-400 hover:bg-green-500/10"
+                        >
+                          Technical Report
+                        </Button>
+                        <Button 
+                          fullWidth 
+                          variant="outlined"
+                          onClick={() => window.open('/storage/app/reports/executive-summary.md', '_blank')}
+                          className="border-purple-400/50 text-purple-400 hover:bg-purple-500/10"
+                        >
+                          Executive Summary
+                        </Button>
+                        <Button 
+                          fullWidth 
+                          variant="outlined"
+                          onClick={handleDownloadReport}
+                          className="border-orange-400/50 text-orange-400 hover:bg-orange-500/10"
+                        >
+                          Download Data
+                        </Button>
+                      </div>
+                    </div>
+                  </Fade>
+                </div>
+              </GlassCard>
+            </div>
+          </Grow>
+        </div>
+      </div>
+    </>
   );
 };
 

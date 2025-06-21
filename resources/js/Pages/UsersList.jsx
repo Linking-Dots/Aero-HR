@@ -19,10 +19,16 @@ import {
   UsersIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  UserIcon
+  UserIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
+import PageHeader from "@/Components/PageHeader.jsx";
+import StatsCards from "@/Components/StatsCards.jsx";
+import ActionButtons from "@/Components/ActionButtons.jsx";
 import UsersTable from '@/Tables/UsersTable.jsx';
 import AddUserForm from "@/Forms/AddUserForm.jsx";
 
@@ -90,6 +96,48 @@ const UsersList = ({ title, roles, departments, designations }) => {
     filtered: filteredUsers.length
   }), [users, filteredUsers]);
 
+  // Statistics with proper icons and colors
+  const statsData = useMemo(() => [
+    {
+      title: 'Total',
+      value: stats.total,
+      icon: <ChartBarIcon className="w-5 h-5" />,
+      color: 'text-blue-600',
+      description: 'All employees'
+    },
+    {
+      title: 'Active',
+      value: stats.active,
+      icon: <CheckCircleIcon className="w-5 h-5" />,
+      color: 'text-green-600',
+      description: 'Active employees'
+    },
+    {
+      title: 'Inactive',
+      value: stats.inactive,
+      icon: <XCircleIcon className="w-5 h-5" />,
+      color: 'text-red-600',
+      description: 'Inactive employees'
+    },
+    {
+      title: 'Filtered',
+      value: stats.filtered,
+      icon: <FunnelIcon className="w-5 h-5" />,
+      color: 'text-purple-600',
+      description: 'Current results'
+    }
+  ], [stats]);
+
+  // Action buttons configuration
+  const actionButtons = [
+    {
+      label: "Add Employee",
+      icon: <UserPlusIcon className="w-4 h-4" />,
+      onPress: () => openModal('add'),
+      className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
+    }
+  ];
+
   return (
     <>
       <Head title={title} />
@@ -106,228 +154,77 @@ const UsersList = ({ title, roles, departments, designations }) => {
         />
       )}
 
-      <Box 
-        className="min-h-screen p-2 sm:p-4 md:p-6"
-        sx={{ 
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
-        }}
-      >
-        <Grow in timeout={800}>
-          <div className="max-w-7xl mx-auto">
-            <GlassCard>
-              {/* Header Section */}
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                  <div className="flex items-center gap-3">
-                    <UsersIcon className="w-8 h-8 text-blue-400" />
-                    <div>
-                      <Typography 
-                        variant={isMobile ? "h5" : "h4"} 
-                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                      >
-                        Employee Management
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Manage employee accounts, roles, and permissions
-                      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Grow in>
+          <GlassCard>
+            <PageHeader
+              title="Employee Management"
+              subtitle="Manage employee accounts, roles, and permissions"
+              icon={<UsersIcon className="w-8 h-8 text-blue-600" />}
+              actionButtons={actionButtons}
+            >
+              <div className="p-6">
+                {/* Quick Stats */}
+                <StatsCards stats={statsData} />
+                
+                {/* Filters Section */}
+                <div className="mb-6">
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                    <div className="w-full sm:w-auto sm:min-w-[200px]">
+                      <Input
+                        label="Search Employees"
+                        placeholder="Enter name or email..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
+                        variant="bordered"
+                        classNames={{
+                          inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                        }}
+                        size={isMobile ? "sm" : "md"}
+                      />
                     </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="flat"
-                      color="primary"
-                      size={isMobile ? "sm" : "md"}
-                      startContent={<UserPlusIcon className="w-4 h-4" />}
-                      onPress={() => openModal('add')}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                    >
-                      {isMobile ? "Add" : "Add Employee"}
-                    </Button>
+                    
+                    <div className="flex gap-2 flex-wrap">
+                      <Chip
+                        variant={roleFilter === 'all' ? 'solid' : 'bordered'}
+                        color="primary"
+                        onClose={roleFilter !== 'all' ? () => handleRoleFilterChange('all') : undefined}
+                        className="cursor-pointer"
+                      >
+                        All Roles
+                      </Chip>
+                      <Chip
+                        variant={statusFilter === 'active' ? 'solid' : 'bordered'}
+                        color="success"
+                        onClose={statusFilter !== 'all' ? () => handleStatusFilterChange('all') : undefined}
+                        className="cursor-pointer"
+                      >
+                        Active
+                      </Chip>
+                      <Chip
+                        variant={statusFilter === 'inactive' ? 'solid' : 'bordered'}
+                        color="danger"
+                        onClose={statusFilter !== 'all' ? () => handleStatusFilterChange('all') : undefined}
+                        className="cursor-pointer"
+                      >
+                        Inactive
+                      </Chip>
+                    </div>
                   </div>
                 </div>
 
-                {/* Statistics Cards */}
-                <Fade in timeout={1000}>
-                  <div className={`grid gap-4 mb-6 ${
-                    isMobile 
-                      ? 'grid-cols-2' 
-                      : isTablet 
-                        ? 'grid-cols-3' 
-                        : 'grid-cols-4'
-                  }`}>
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                          <UsersIcon className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-blue-400">
-                            {stats.total}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Total Users
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500/20 rounded-lg">
-                          <UserIcon className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-green-400">
-                            {stats.active}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Active
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-500/20 rounded-lg">
-                          <UserIcon className="w-5 h-5 text-red-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-red-400">
-                            {stats.inactive}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Inactive
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-lg">
-                          <FunnelIcon className="w-5 h-5 text-purple-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-purple-400">
-                            {stats.filtered}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Filtered
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Fade>
-
-                {/* Filters Section */}
-                <Fade in timeout={1200}>
-                  <div className="mb-6">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                        <div className="w-full sm:flex-1">
-                          <Input
-                            label="Search Employees"
-                            variant="bordered"
-                            placeholder="Search by name or email..."
-                            value={searchQuery}
-                            onValueChange={handleSearchChange}
-                            startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
-                            classNames={{
-                              input: "bg-transparent",
-                              inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                            }}
-                            size={isMobile ? "sm" : "md"}
-                          />
-                        </div>
-
-                        <div className="flex gap-2 w-full sm:w-auto">
-                          <div className="flex-1 sm:min-w-[150px]">
-                            <select
-                              className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                              value={roleFilter}
-                              onChange={(e) => handleRoleFilterChange(e.target.value)}
-                            >
-                              <option value="all">All Roles</option>
-                              {roles.map(role => (
-                                <option key={role.id} value={role.name}>
-                                  {role.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="flex-1 sm:min-w-[120px]">
-                            <select
-                              className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                              value={statusFilter}
-                              onChange={(e) => handleStatusFilterChange(e.target.value)}
-                            >
-                              <option value="all">All Status</option>
-                              <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Active Filters */}
-                      {(searchQuery || roleFilter !== 'all' || statusFilter !== 'all') && (
-                        <div className="flex flex-wrap gap-2">
-                          {searchQuery && (
-                            <Chip
-                              variant="flat"
-                              color="primary"
-                              size="sm"
-                              onClose={() => setSearchQuery('')}
-                            >
-                              Search: {searchQuery}
-                            </Chip>
-                          )}
-                          {roleFilter !== 'all' && (
-                            <Chip
-                              variant="flat"
-                              color="secondary"
-                              size="sm"
-                              onClose={() => setRoleFilter('all')}
-                            >
-                              Role: {roleFilter}
-                            </Chip>
-                          )}
-                          {statusFilter !== 'all' && (
-                            <Chip
-                              variant="flat"
-                              color="warning"
-                              size="sm"
-                              onClose={() => setStatusFilter('all')}
-                            >
-                              Status: {statusFilter}
-                            </Chip>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Fade>
-
                 {/* Users Table */}
-                <Fade in timeout={1400}>
-                  <div className="overflow-hidden rounded-lg">
-                    <UsersTable 
-                      allUsers={filteredUsers} 
-                      roles={roles}
-                      setUsers={handleUsersUpdate}
-                      isMobile={isMobile}
-                      isTablet={isTablet}
-                    />
-                  </div>
-                </Fade>
+                <UsersTable 
+                  allUsers={filteredUsers}
+                  roles={roles}
+                  departments={departments}
+                  designations={designations}
+                  setUsers={handleUsersUpdate}
+                />
               </div>
-            </GlassCard>
-          </div>
+            </PageHeader>
+          </GlassCard>
         </Grow>
       </Box>
     </>

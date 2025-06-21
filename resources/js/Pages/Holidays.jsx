@@ -1,16 +1,25 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import { Box, Button, Card, CardContent, CardHeader, Typography, Grid, Avatar, Divider } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Box, Typography, useMediaQuery, useTheme, Grow } from '@mui/material';
+import { 
+    CalendarIcon, 
+    PlusIcon,
+    ChartBarIcon,
+    CheckCircleIcon
+} from "@heroicons/react/24/outline";
 import GlassCard from '@/Components/GlassCard.jsx';
+import PageHeader from "@/Components/PageHeader.jsx";
+import StatsCards from "@/Components/StatsCards.jsx";
 import App from "@/Layouts/App.jsx";
 import HolidayTable from '@/Tables/HolidayTable.jsx';
 import HolidayForm from "@/Forms/HolidayForm.jsx";
-import Grow from "@mui/material/Grow";
 import DeleteHolidayForm from "@/Forms/DeleteHolidayForm.jsx";
 
 const Holidays = ({ title }) => {
     const { auth, holidays: initialHolidays } = usePage().props;
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
     const [modalState, setModalState] = useState({
         type: null,
         holidayId: null,
@@ -38,6 +47,51 @@ const Holidays = ({ title }) => {
         setHolidaysData(newData);
     }, []);
 
+    // Statistics
+    const stats = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const thisYearHolidays = holidaysData.filter(holiday => 
+            new Date(holiday.date).getFullYear() === currentYear
+        );
+        const upcomingHolidays = holidaysData.filter(holiday => 
+            new Date(holiday.date) > new Date()
+        );
+        
+        return [
+            {
+                title: 'Total',
+                value: holidaysData.length,
+                icon: <ChartBarIcon className="w-5 h-5" />,
+                color: 'text-blue-600',
+                description: 'All holidays'
+            },
+            {
+                title: 'This Year',
+                value: thisYearHolidays.length,
+                icon: <CalendarIcon className="w-5 h-5" />,
+                color: 'text-green-600',
+                description: 'Current year holidays'
+            },
+            {
+                title: 'Upcoming',
+                value: upcomingHolidays.length,
+                icon: <CheckCircleIcon className="w-5 h-5" />,
+                color: 'text-purple-600',
+                description: 'Future holidays'
+            }
+        ];
+    }, [holidaysData]);
+
+    // Action buttons configuration
+    const actionButtons = [
+        {
+            label: "Add Holiday",
+            icon: <PlusIcon className="w-4 h-4" />,
+            onPress: () => handleModalOpen('add_holiday'),
+            className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
+        }
+    ];
+
     const modalProps = useMemo(() => ({
         open: Boolean(modalState.type),
         closeModal: handleModalClose,
@@ -49,6 +103,8 @@ const Holidays = ({ title }) => {
     return (
         <>
             <Head title={title} />
+            
+            {/* Modals */}
             {modalState.type === 'add_holiday' && <HolidayForm {...modalProps} />}
             {modalState.type === 'edit_holiday' && <HolidayForm {...modalProps} />}
             {modalState.type === 'delete_holiday' && (
@@ -60,31 +116,30 @@ const Holidays = ({ title }) => {
                     holidaysData={holidaysData}
                 />
             )}
-            <Box sx={{ p: 2 }}>
-                <GlassCard>
-                    <CardHeader
-                        title="Leaves"
-                        sx={{ padding: '24px' }}
-                        action={
-                            <Button
-                                title="Add Leave"
-                                variant="outlined"
-                                startIcon={<Add />}
-                                onClick={() => handleModalOpen('add_holiday')}
-                            >
-                                Add Holiday
-                            </Button>
-                        }
-                    />
-                    <Divider />
-                    <CardContent>
-                        <HolidayTable
-                            holidaysData={holidaysData}
-                            onEdit={(holiday) => handleModalOpen('edit_holiday', null, holiday)}
-                            onDelete={(holidayId) => handleModalOpen('delete_holiday', holidayId)}
-                        />
-                    </CardContent>
-                </GlassCard>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <Grow in>
+                    <GlassCard>
+                        <PageHeader
+                            title="Holiday Management"
+                            subtitle="Manage company holidays and special occasions"
+                            icon={<CalendarIcon className="w-8 h-8 text-blue-600" />}
+                            actionButtons={actionButtons}
+                        >
+                            <div className="p-6">
+                                {/* Quick Stats */}
+                                <StatsCards stats={stats} gridCols="grid-cols-3" />
+                                
+                                {/* Holiday Table */}
+                                <HolidayTable
+                                    holidaysData={holidaysData}
+                                    onEdit={(holiday) => handleModalOpen('edit_holiday', null, holiday)}
+                                    onDelete={(holidayId) => handleModalOpen('delete_holiday', holidayId)}
+                                />
+                            </div>
+                        </PageHeader>
+                    </GlassCard>
+                </Grow>
             </Box>
         </>
     );
