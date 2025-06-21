@@ -23,27 +23,32 @@ import {
 
 export const getPages = (permissions) => [
   // 1. Dashboard & Analytics (ISO 9000 - Information Management)
-  { 
+  ...(permissions.includes('dashboard.view') ? [{
     name: 'Dashboard', 
     icon: <HomeIcon className="h-6 w-6" />, 
     route: 'dashboard',
     priority: 1,
     module: 'core'
-  },
+  }] : []),
+  
   // 2. Workspace & Self-Service (ISO 27001 - Personal Information Management)
-  {
+  ...((permissions.includes('attendance.own.view') || permissions.includes('leave.own.view') || permissions.includes('communications.own.view')) ? [{
     name: 'My Workspace',
     icon: <UserGroupIcon className="h-6 w-6" />,
     priority: 2,
     module: 'self-service',
     subMenu: [
-      { name: 'My Attendance', icon: <CalendarDaysIcon className="ml-2 h-5 w-5" />, route: 'attendance-employee' },
-      { name: 'My Leave Requests', icon: <ArrowRightOnRectangleIcon className="ml-2 h-5 w-5" />, route: 'leaves-employee' },
+      ...(permissions.includes('attendance.own.view') ? [
+        { name: 'My Attendance', icon: <CalendarDaysIcon className="ml-2 h-5 w-5" />, route: 'attendance-employee' }
+      ] : []),
+      ...(permissions.includes('leave.own.view') ? [
+        { name: 'My Leave Requests', icon: <ArrowRightOnRectangleIcon className="ml-2 h-5 w-5" />, route: 'leaves-employee' }
+      ] : []),
       ...(permissions.includes('communications.own.view') ? [
         { name: 'My Communications', icon: <EnvelopeIcon className="ml-2 h-5 w-5" />, route: 'emails' },
       ] : []),
     ]
-  },  // 3. Human Resource Management (ISO 30414 - Human Capital Reporting)
+  }] : []),// 3. Human Resource Management (ISO 30414 - Human Capital Reporting)
   ...(permissions.includes('employees.view') ? [{
     name: 'Human Resource Management',
     icon: <UserGroupIcon className="h-6 w-6" />,
@@ -62,19 +67,25 @@ export const getPages = (permissions) => [
       ] : []),
     ]
   }] : []),
-
   // 4. Project & Portfolio Management (ISO 21500 - Project Management)
-  {
+  ...(permissions.includes('daily-works.view') ? [{
     name: 'Project & Portfolio Management',
     icon: <BriefcaseIcon className="h-6 w-6" />,
     priority: 4,
-    module: 'ppm',    subMenu: [
-      { name: 'Work Log Management', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'daily-works' },
-      { name: 'Project Analytics', icon: <ChartBarIcon className="ml-2 h-5 w-5" />, route: 'daily-works-summary' },
+    module: 'ppm',
+    subMenu: [
+      ...(permissions.includes('daily-works.view') ? [
+        { name: 'Work Log Management', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'daily-works' }
+      ] : []),
+      ...(permissions.includes('daily-works.view') ? [
+        { name: 'Project Analytics', icon: <ChartBarIcon className="ml-2 h-5 w-5" />, route: 'daily-works-summary' }
+      ] : []),
       // Note: Project planner route not implemented yet
-      // { name: 'Project Planning', icon: <CalendarIcon className="ml-2 h-5 w-5" />, route: 'project-planner' }
+      // ...(permissions.includes('projects.view') ? [
+      //   { name: 'Project Planning', icon: <CalendarIcon className="ml-2 h-5 w-5" />, route: 'project-planner' }
+      // ] : [])
     ]
-  },
+  }] : []),
 
   // 5. Customer Relationship Management (ISO 27500 - Customer Experience Management)  // Note: CRM routes not implemented yet - placeholder for future development
   // ...(permissions.includes('customers.view') ? [{

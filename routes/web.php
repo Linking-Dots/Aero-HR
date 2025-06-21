@@ -68,18 +68,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/get-client-ip', [AttendanceController::class, 'getClientIp'])->name('getClientIp');
 
     // Daily works routes
-    Route::middleware(['permission:daily-works.view,daily-works.own.view'])->group(function () {
+    Route::middleware(['permission:daily-works.view'])->group(function () {
         Route::get('/daily-works', [DailyWorkController::class, 'index'])->name('daily-works');
         Route::get('/daily-works-paginate', [DailyWorkController::class, 'paginate'])->name('dailyWorks.paginate');
         Route::get('/daily-works-all', [DailyWorkController::class, 'all'])->name('dailyWorks.all');
         Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('daily-works-summary');
     });
     
-    Route::middleware(['permission:daily-works.create,daily-works.own.create'])->group(function () {
+    Route::middleware(['permission:daily-works.create'])->group(function () {
         Route::post('/add-daily-work', [DailyWorkController::class, 'add'])->name('dailyWorks.add');
     });
     
-    Route::middleware(['permission:daily-works.update,daily-works.own.update'])->group(function () {
+    Route::middleware(['permission:daily-works.update'])->group(function () {
         Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
         Route::post('/update-rfi-file', [DailyWorkController::class, 'uploadRFIFile'])->name('dailyWorks.uploadRFI');
     });
@@ -175,10 +175,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['permission:company.settings'])->group(function () {
         Route::put('/update-company-settings', [CompanySettingController::class, 'update'])->name('update-company-settings');
         Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('admin.settings.company');
-    });
-
-    // Legacy role routes (maintained for backward compatibility)
+    });    // Legacy role routes (maintained for backward compatibility)
     Route::middleware(['permission:roles.view'])->get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
+    
+    // Document management routes
+    Route::middleware(['permission:letters.view'])->get('/letters', [LetterController::class, 'index'])->name('letters');
 
     // Attendance management routes
     Route::middleware(['permission:attendance.view'])->group(function () {
@@ -238,22 +239,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');    Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
 });
 
-// Enhanced Role Management Routes (with custom role-based access control)
-Route::middleware(['auth', 'verified', 'role:Super Administrator|Administrator'])->group(function () {    // Enhanced Role Management Routes
+// Enhanced Role Management Routes (with proper permission-based access control)
+Route::middleware(['auth', 'verified', 'permission:roles.view'])->group(function () {
+    // Role Management Interface
     Route::get('/admin/roles-management', [RoleController::class, 'index'])->name('admin.roles-management');
-    Route::post('/admin/roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
-    Route::put('/admin/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
-    Route::delete('/admin/roles/{id}', [RoleController::class, 'deleteRole'])->name('admin.roles.delete');
-    Route::post('/admin/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
-    Route::post('/admin/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
     Route::get('/admin/roles/audit', [RoleController::class, 'getEnhancedRoleAudit'])->name('admin.roles.audit');
-    Route::post('/admin/roles/initialize-enterprise', [RoleController::class, 'initializeEnterpriseSystem'])->name('admin.roles.initialize-enterprise');
-    
-    // New Enhanced Features
-    Route::post('/admin/roles/bulk-operation', [RoleController::class, 'bulkOperation'])->name('admin.roles.bulk-operation');
-    Route::post('/admin/roles/clone', [RoleController::class, 'cloneRole'])->name('admin.roles.clone');
     Route::get('/admin/roles/export', [RoleController::class, 'exportRoles'])->name('admin.roles.export');
     Route::get('/admin/roles/metrics', [RoleController::class, 'getRoleMetrics'])->name('admin.roles.metrics');
+});
+
+Route::middleware(['auth', 'verified', 'permission:roles.create'])->group(function () {
+    Route::post('/admin/roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
+    Route::post('/admin/roles/clone', [RoleController::class, 'cloneRole'])->name('admin.roles.clone');
+});
+
+Route::middleware(['auth', 'verified', 'permission:roles.update'])->group(function () {
+    Route::put('/admin/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
+    Route::post('/admin/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
+    Route::post('/admin/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
+    Route::post('/admin/roles/bulk-operation', [RoleController::class, 'bulkOperation'])->name('admin.roles.bulk-operation');
+});
+
+Route::middleware(['auth', 'verified', 'permission:roles.delete'])->group(function () {
+    Route::delete('/admin/roles/{id}', [RoleController::class, 'deleteRole'])->name('admin.roles.delete');
+});
+
+// Super Administrator only routes
+Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(function () {
+    Route::post('/admin/roles/initialize-enterprise', [RoleController::class, 'initializeEnterpriseSystem'])->name('admin.roles.initialize-enterprise');
 });
 
 // Test route for role controller

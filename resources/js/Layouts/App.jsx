@@ -60,7 +60,7 @@ function App({ children }) {
                               url.includes('settings') || 
                               url === '/settings';
         
-        return isSettingsPage ? getSettingsPages() : getPages(permissions);
+        return isSettingsPage ? getSettingsPages(permissions) : getPages(permissions);
     }, [url, permissions]);
 
     // Theme and media query

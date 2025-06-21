@@ -364,24 +364,32 @@ class RoleController extends BaseController
                 return response()->json([
                     'error' => 'Insufficient authority to manage this role'
                 ], 403);
-            }
-
-            $module = $request->module;
+            }            $module = $request->module;
             $action = $request->action;
 
-            // Get module permissions using Spatie methods
-            $modulePermissions = Permission::where('name', 'like', "% {$module}")
+            // Get module permissions using the RolePermissionService (proper way)
+            $permissionsGrouped = $this->rolePermissionService->getPermissionsGroupedByModule();
+            
+            if (!isset($permissionsGrouped[$module])) {
+                return response()->json([
+                    'error' => 'Module not found'
+                ], 404);
+            }
+
+            // Get the permission names for this module
+            $modulePermissions = collect($permissionsGrouped[$module]['permissions'])
                 ->pluck('name')
                 ->toArray();
 
-            // If no permissions exist for module, create them
             if (empty($modulePermissions)) {
-                $modulePermissions = $this->createModulePermissions($module);
+                return response()->json([
+                    'error' => 'No permissions found for this module'
+                ], 404);
             }
 
             // Get current role permissions for this module using Spatie relationship
             $currentModulePermissions = $role->permissions()
-                ->where('name', 'like', "% {$module}")
+                ->whereIn('name', $modulePermissions)
                 ->pluck('name')
                 ->toArray();
 
@@ -404,14 +412,13 @@ class RoleController extends BaseController
                         $role->givePermissionTo($modulePermissions);
                     }
                     break;
-            }
-
-            // Log module permission change
+            }            // Log module permission change
             Log::info('Role module permissions updated', [
                 'role_id' => $role->id,
                 'role_name' => $role->name,
                 'module' => $module,
                 'action' => $action,
+                'permissions_affected' => $modulePermissions,
                 'updated_by' => auth()->id()
             ]);
 
@@ -925,31 +932,9 @@ class RoleController extends BaseController
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Create standard permissions for a module
-     */
-    private function createModulePermissions(string $module): array
-    {
-        $standardActions = ['read', 'write', 'create', 'delete', 'import', 'export'];
-        $permissions = [];
-
-        foreach ($standardActions as $action) {
-            $permissionName = "{$action} {$module}";
-            $permission = Permission::firstOrCreate([
-                'name' => $permissionName,
-                'guard_name' => 'web'
-            ]);
-            $permissions[] = $permissionName;
-        }
-
-        return $permissions;
-    }
-
-    /**
+    }    /**
      * Check if user can manage a specific role
-     */    /**
+     *//**
      * Check if user can manage a specific role
      */
     private function canManageRole($user, Role $role): bool
