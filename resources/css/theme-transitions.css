@@ -1,0 +1,193 @@
+/* Global Theme Transitions - Enhanced Smooth Theme Switching */
+
+:root {
+  /* Theme Color Variables */
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-primary-rgb: 14, 165, 233;
+  --theme-secondary-rgb: 2, 132, 199;
+  
+  /* Transition Variables */
+  --theme-transition-duration: 0.4s;
+  --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-transition-fast: 0.2s;
+  --theme-transition-slow: 0.6s;
+}
+
+/* Global Smooth Transitions */
+* {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    border-color var(--theme-transition-duration) var(--theme-transition-easing),
+    color var(--theme-transition-duration) var(--theme-transition-easing),
+    box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-easing),
+    opacity var(--theme-transition-fast) var(--theme-transition-easing);
+}
+
+/* Smooth Theme Color Transitions */
+[data-theme] {
+  transition: all var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Dark/Light Mode Transitions */
+[data-theme-mode="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme-mode="light"] {
+  color-scheme: light;
+}
+
+/* Gradient Transitions */
+.bg-gradient-to-r,
+.bg-gradient-to-br,
+.bg-gradient-to-l,
+.bg-gradient-to-tr {
+  transition: background var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Component-Specific Transitions */
+.MuiButton-root {
+  transition: 
+    background-color var(--theme-transition-fast) var(--theme-transition-easing),
+    color var(--theme-transition-fast) var(--theme-transition-easing),
+    border-color var(--theme-transition-fast) var(--theme-transition-easing),
+    box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
+    transform 0.15s var(--theme-transition-easing) !important;
+}
+
+.MuiCard-root {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    border-color var(--theme-transition-duration) var(--theme-transition-easing),
+    box-shadow var(--theme-transition-duration) var(--theme-transition-easing) !important;
+}
+
+.MuiDrawer-paper {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+    border-color var(--theme-transition-duration) var(--theme-transition-easing) !important;
+}
+
+/* Glass Card Transitions */
+.glass-card {
+  transition: 
+    background var(--theme-transition-duration) var(--theme-transition-easing),
+    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+    border-color var(--theme-transition-duration) var(--theme-transition-easing),
+    box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Sidebar Transitions */
+.sidebar-content {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Header Transitions */
+.header-content {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Hero UI Component Transitions */
+[data-slot="base"],
+[data-slot="wrapper"],
+[data-slot="content"] {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    border-color var(--theme-transition-duration) var(--theme-transition-easing),
+    color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Theme-specific Color Transitions */
+.text-primary {
+  color: rgb(var(--theme-primary-rgb)) !important;
+  transition: color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.bg-primary {
+  background-color: rgb(var(--theme-primary-rgb)) !important;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.border-primary {
+  border-color: rgb(var(--theme-primary-rgb)) !important;
+  transition: border-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Reduce Motion for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.1s !important;
+    animation-duration: 0.1s !important;
+  }
+}
+
+/* Enhanced Dark Mode Transition */
+html {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+body {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Toast Container Transitions */
+.Toastify__toast-container {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.Toastify__toast {
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-easing),
+    color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Scrollbar Transitions */
+::-webkit-scrollbar-track {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+::-webkit-scrollbar-thumb {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Special Transition Classes */
+.theme-transition-fast {
+  transition-duration: var(--theme-transition-fast) !important;
+}
+
+.theme-transition-slow {
+  transition-duration: var(--theme-transition-slow) !important;
+}
+
+.theme-no-transition {
+  transition: none !important;
+}
+
+/* Loading State Transitions */
+.theme-loading {
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity var(--theme-transition-fast) var(--theme-transition-easing);
+}
+
+/* Smooth Backdrop Filter Transitions */
+[style*="backdrop-filter"] {
+  transition: backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Improved Focus Transitions */
+:focus-visible {
+  transition: 
+    box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
+    outline-color var(--theme-transition-fast) var(--theme-transition-easing);
+}

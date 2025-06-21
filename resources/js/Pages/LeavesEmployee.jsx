@@ -27,6 +27,7 @@ import {
   PresentationChartLineIcon
 } from "@heroicons/react/24/outline";
 import GlassCard from '@/Components/GlassCard.jsx';
+import PageHeader from '@/Components/PageHeader.jsx';
 import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import axios from 'axios';
@@ -141,20 +142,19 @@ const LeavesEmployee = ({ title, allUsers }) => {
   }, [leavesData.leaveCountsByUser, auth.user.id]);
 
 
-
   // Action buttons for the header
   const actionButtons = [
     {
       label: "Current Year",
       icon: <CalendarIcon className="w-4 h-4" />,
       onPress: () => handleFilterChange('year', new Date().getFullYear()),
-      className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:from-blue-600 hover:to-purple-600"
+      className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
     },
     {
       label: "Refresh",
       icon: <ChartBarIcon className="w-4 h-4" />,
       onPress: fetchLeaves,
-      className: "bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium hover:from-green-600 hover:to-teal-600"
+      className: "bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.8)] to-[rgba(var(--theme-success-rgb),1)] text-white font-medium hover:opacity-90"
     }
   ];
 
@@ -248,58 +248,30 @@ const LeavesEmployee = ({ title, allUsers }) => {
   };  return (
     <>
       <Head title={title} />
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-        <Grow in>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>        <Grow in>
           <GlassCard>
-            <div className="overflow-hidden">
-              {/* Header Section - Matching LeavesAdmin */}
-              <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
-                <div className="p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                        <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <div>
-                        <Typography 
-                          variant={isMobile ? "h5" : "h4"} 
-                          className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                        >
-                          My Leaves
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Your leave requests and balances
-                        </Typography>
-                      </div>
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        color="primary"
-                        startContent={<CalendarIcon className="w-4 h-4" />}
-                        onPress={() => handleFilterChange('year', new Date().getFullYear())}
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
-                      >
-                        Current Year
-                      </Button>
-                      
-                      <Button
-                        variant="bordered"
-                        startContent={<ChartBarIcon className="w-4 h-4" />}
-                        onPress={fetchLeaves}
-                        isLoading={loading}
-                        className="border-white/20 bg-white/5 hover:bg-white/10"
-                      >
-                        Refresh
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Divider className="border-white/10" />
-
+            <PageHeader
+              title="My Leaves"
+              subtitle="Your leave requests and balances"
+              icon={<PresentationChartLineIcon className="w-8 h-8" />}
+              variant="gradient"
+              actionButtons={[
+                {
+                  label: "Current Year",
+                  icon: <CalendarIcon className="w-4 h-4" />,
+                  onPress: () => handleFilterChange('year', new Date().getFullYear()),
+                  className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                },
+                {
+                  label: "Refresh",
+                  icon: <ChartBarIcon className="w-4 h-4" />,
+                  onPress: fetchLeaves,
+                  isDisabled: loading,
+                  variant: "bordered",
+                  className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
+                }
+              ]}
+            >
               <div className="p-6">
               
                 {/* Filters Section - Matching LeavesAdmin */}
@@ -393,13 +365,12 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         </Typography>
                         <Typography color="textSecondary">
                           You haven't submitted any leave requests for {filters.year}.
-                        </Typography>
-                      </CardBody>
+                        </Typography>                      </CardBody>
                     </Card>
                   )}
                 </div>
               </div>
-            </div>
+            </PageHeader>
           </GlassCard>
         </Grow>
       </Box>

@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTheme } from "@mui/material/styles";
 import GlassCard from '@/Components/GlassCard.jsx';
+import { GRADIENT_PRESETS } from '@/utils/gradientUtils.js';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -67,7 +68,7 @@ const Footer = () => {
                             <Grid item xs={12} md={4}>
                                 <Box className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${GRADIENT_PRESETS.iconContainer}`}>
                                             <Typography 
                                                 variant="h5" 
                                                 className="font-bold text-white"
@@ -79,7 +80,7 @@ const Footer = () => {
                                         <div>
                                             <Typography 
                                                 variant="h5" 
-                                                className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                                                className={`font-bold ${GRADIENT_PRESETS.gradientText}`}
                                             >
                                                 Aero HR
                                             </Typography>

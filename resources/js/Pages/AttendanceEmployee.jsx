@@ -27,6 +27,8 @@ import {
 import { useTheme as useHeroTheme, alpha } from '@mui/material/styles';
 import { Refresh, FileDownload, PictureAsPdf } from '@mui/icons-material';
 import App from "@/Layouts/App.jsx";
+import PageHeader from '@/Components/PageHeader.jsx';
+import StatsCards from '@/Components/StatsCards.jsx';
 import TimeSheetTable from "@/Tables/TimeSheetTable.jsx";
 import GlassCard from '@/Components/GlassCard.jsx';
 import { 
@@ -118,304 +120,110 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
         } catch (error) {
             console.error('Failed to fetch monthly stats:', error);
         }
-    }, [filterData.currentMonth]);
-
-    // Fetch stats when component mounts or filter changes
+    }, [filterData.currentMonth]);    // Fetch stats when component mounts or filter changes
     useEffect(() => {
         fetchMonthlyStats();
-    }, [fetchMonthlyStats]);
-
-    // Render Enhanced Quick Stats with industry-standard monthly metrics
-    const renderQuickStats = () => (
-        <div className="mb-6">
-            {/* Primary Stats Row */}
-            <Grid container spacing={3} className="mb-4">
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-blue-600"
-                                >
-                                    Working Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-blue-600"
-                            >
-                                {attendanceStats.totalWorkingDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Total for {attendanceStats.month || 'this month'}
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-green-600"
-                                >
-                                    Present Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-green-600"
-                            >
-                                {attendanceStats.presentDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Days attended this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <XCircleIcon className="w-5 h-5 text-red-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-red-600"
-                                >
-                                    Absent Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-red-600"
-                            >
-                                {attendanceStats.absentDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Days missed this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ExclamationTriangleIcon className="w-5 h-5 text-orange-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-orange-600"
-                                >
-                                    Late Arrivals
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-orange-600"
-                            >
-                                {attendanceStats.lateArrivals}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Times late this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-            </Grid>
-
-            {/* Performance Analytics Row */}
-            <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ChartBarIcon className="w-5 h-5 text-emerald-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-emerald-600"
-                                >
-                                    Attendance Rate
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-emerald-600"
-                            >
-                                {attendanceStats.attendancePercentage}%
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Your monthly performance
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ClockIcon className="w-5 h-5 text-blue-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-blue-600"
-                                >
-                                    Avg Work Hours
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-blue-600"
-                            >
-                                {attendanceStats.averageWorkHours}h
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Daily average this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ClockIcon className="w-5 h-5 text-purple-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-purple-600"
-                                >
-                                    Overtime
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-purple-600"
-                            >
-                                {attendanceStats.overtimeHours}h
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Extra hours this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <UserIcon className="w-5 h-5 text-amber-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-amber-600"
-                                >
-                                    Leave Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-amber-600"
-                            >
-                                {attendanceStats.totalLeaveDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Leaves taken this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-            </Grid>
-        </div>
-    );
+    }, [fetchMonthlyStats]);    // Prepare all stats data for StatsCards component - Combined into one array
+    const allStatsData = [
+        {
+            title: "Working Days",
+            value: attendanceStats.totalWorkingDays,
+            icon: <CalendarDaysIcon />,
+            color: "text-blue-400",
+            iconBg: "bg-blue-500/20",
+            description: `Total for ${attendanceStats.month || 'this month'}`
+        },
+        {
+            title: "Present Days",
+            value: attendanceStats.presentDays,
+            icon: <CheckCircleIcon />,
+            color: "text-green-400",
+            iconBg: "bg-green-500/20",
+            description: "Days attended this month"
+        },
+        {
+            title: "Absent Days",
+            value: attendanceStats.absentDays,
+            icon: <XCircleIcon />,
+            color: "text-red-400",
+            iconBg: "bg-red-500/20",
+            description: "Days missed this month"
+        },
+        {
+            title: "Late Arrivals",
+            value: attendanceStats.lateArrivals,
+            icon: <ExclamationTriangleIcon />,
+            color: "text-orange-400",
+            iconBg: "bg-orange-500/20",
+            description: "Times late this month"
+        },
+        {
+            title: "Attendance Rate",
+            value: `${attendanceStats.attendancePercentage}%`,
+            icon: <ChartBarIcon />,
+            color: "text-emerald-400",
+            iconBg: "bg-emerald-500/20",
+            description: "Your monthly performance"
+        },
+        {
+            title: "Avg Work Hours",
+            value: `${attendanceStats.averageWorkHours}h`,
+            icon: <ClockIcon />,
+            color: "text-blue-400",
+            iconBg: "bg-blue-500/20",
+            description: "Daily average this month"
+        },
+        {
+            title: "Overtime",
+            value: `${attendanceStats.overtimeHours}h`,
+            icon: <ClockIcon />,
+            color: "text-purple-400",
+            iconBg: "bg-purple-500/20",
+            description: "Extra hours this month"
+        },
+        {
+            title: "Leave Days",
+            value: attendanceStats.totalLeaveDays,
+            icon: <UserIcon />,
+            color: "text-amber-400",
+            iconBg: "bg-amber-500/20",
+            description: "Leaves taken this month"
+        }
+    ];
 
     return (
-        <>
-            <Head title={title || "My Attendance"} />
+        <>            <Head title={title || "My Attendance"} />
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
-                        <div className="overflow-hidden">
-                            {/* Header Section - Matching AttendanceAdmin */}
-                            <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
-                                <div className="p-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                                <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <Typography 
-                                                    variant={isMobile ? "h5" : "h4"} 
-                                                    className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                                >
-                                                    My Attendance
-                                                </Typography>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    View your attendance records and timesheet details
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Action Buttons - Matching AttendanceAdmin pattern */}
-                                        <div className="flex gap-2 flex-wrap">
-                                            <Button
-                                                color="primary"
-                                                variant="flat"
-                                                startContent={<CalendarDaysIcon className="w-4 h-4" />}
-                                                onPress={() => {
-                                                    setSelectedDate(new Date());
-                                                    setFilterData({
-                                                        currentMonth: new Date().toISOString().slice(0, 7)
-                                                    });
-                                                    setUpdateTimeSheet(prev => !prev);
-                                                }}
-                                                className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
-                                            >
-                                                Today
-                                            </Button>
-                                            
-                                            <Button
-                                                color="success"
-                                                variant="flat"
-                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
-                                                className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
-                                            >
-                                                Export
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Divider className="border-white/10" />
-
-                            <div className="p-6">
-                                {/* Quick Stats - Matching AttendanceAdmin */}
-                                {renderQuickStats()}
+                        <PageHeader
+                            title="My Attendance"
+                            subtitle="View your attendance records and timesheet details"
+                            icon={<PresentationChartLineIcon className="w-8 h-8" />}
+                            variant="default"
+                            actionButtons={[
+                                {
+                                    label: "Today",
+                                    icon: <CalendarDaysIcon className="w-4 h-4" />,
+                                    onPress: () => {
+                                        setSelectedDate(new Date());
+                                        setFilterData({
+                                            currentMonth: new Date().toISOString().slice(0, 7)
+                                        });
+                                        setUpdateTimeSheet(prev => !prev);
+                                    },
+                                    className: "bg-gradient-to-r from-[rgba(var(--theme-primary-rgb),0.2)] to-[rgba(var(--theme-secondary-rgb),0.2)] hover:from-[rgba(var(--theme-primary-rgb),0.3)] hover:to-[rgba(var(--theme-secondary-rgb),0.3)] border border-[rgba(var(--theme-primary-rgb),0.3)]"
+                                },
+                                {
+                                    label: "Export",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
+                                    variant: "bordered",
+                                    className: "border-[rgba(var(--theme-success-rgb),0.3)] bg-[rgba(var(--theme-success-rgb),0.05)] hover:bg-[rgba(var(--theme-success-rgb),0.1)]"
+                                }
+                            ]}
+                        >                            <div className="p-6">
+                                {/* All Stats - Responsive Layout for 8 cards */}
+                                <StatsCards stats={allStatsData} className="mb-6" />
                                 
                                 {/* Filters Section - Matching AttendanceAdmin */}
                                 <div className="mb-6">
@@ -524,8 +332,7 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                                         <Box sx={{ maxHeight: '84vh', overflowY: 'auto' }}>
                                             <TimeSheetTable 
                                                 selectedDate={selectedDate} 
-                                                handleDateChange={handleDateChange}  
-                                                updateTimeSheet={updateTimeSheet}
+                                                handleDateChange={handleDateChange}                                                updateTimeSheet={updateTimeSheet}
                                                 externalFilterData={filterData}
                                                 key={`${selectedDate}-${filterData.currentMonth}`}
                                             />
@@ -533,7 +340,7 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                                     </MuiCardContent>
                                 </div>
                             </div>
-                        </div>
+                        </PageHeader>
                     </GlassCard>
                 </Grow>
             </Box>

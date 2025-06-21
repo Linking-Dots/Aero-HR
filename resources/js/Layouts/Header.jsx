@@ -37,6 +37,7 @@ import {
 import logo from '../../../public/assets/images/logo.png';
 import GlassCard from '@/Components/GlassCard.jsx';
 import useTheme from '@/theme.jsx';
+import { GRADIENT_PRESETS } from '@/utils/gradientUtils.js';
 
 const useDeviceType = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -127,7 +128,7 @@ const Header = React.memo(({
               <NavbarBrand>
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-xl">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xl ${GRADIENT_PRESETS.iconContainer}`}>
                       <Typography
                         variant="h6"
                         className="font-black text-white"
@@ -141,7 +142,7 @@ const Header = React.memo(({
                   <div className="hidden sm:block">
                     <Typography
                       variant="h6"
-                      className="font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                      className={`font-black ${GRADIENT_PRESETS.gradientText}`}
                       style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.025em' }}
                     >
                       AeroHR
@@ -252,7 +253,7 @@ const Header = React.memo(({
                       size="md"
                       src={auth.user.profile_image}
                       fallback={auth.user.first_name?.charAt(0)}
-                      className="ring-2 ring-primary/20"
+                      className={`ring-2 ring-blue-500/30`}
                     />
                     <div className="flex flex-col gap-1 flex-1">
                       <span className="font-semibold text-foreground text-sm">
@@ -261,7 +262,7 @@ const Header = React.memo(({
                       <span className="text-xs text-default-500">{auth.user.email}</span>
                       <div className="flex gap-1 mt-1">
                         {auth.user.roles?.slice(0, 2).map((role, index) => (
-                          <span key={index} className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                          <span key={index} className={`text-xs px-2 py-0.5 rounded-full font-medium text-blue-600 ${GRADIENT_PRESETS.accentCard}`}>
                             {role.name}
                           </span>
                         ))}
@@ -398,19 +399,14 @@ const Header = React.memo(({
                             >
                               <DropdownTrigger>
                                 <Button
-                                  variant={
-                                    page.subMenu.find(subPage => "/" + subPage.route === activePage)
-                                      ? "flat"
-                                      : "light"
-                                  }
-                                  color={
-                                    page.subMenu.find(subPage => "/" + subPage.route === activePage)
-                                      ? "primary"
-                                      : "default"
-                                  }
+                                  variant="light"
                                   startContent={page.icon}
                                   endContent={<ChevronDownIcon className="w-4 h-4" />}
-                                  className="bg-transparent hover:bg-white/10"
+                                  className={`transition-all duration-300 hover:scale-105 ${
+                                    page.subMenu.find(subPage => "/" + subPage.route === activePage)
+                                      ? `${GRADIENT_PRESETS.accentCard} text-blue-600`
+                                      : "bg-transparent hover:bg-white/10"
+                                  }`}
                                   size={isTablet ? "sm" : "md"}
                                 >
                                   {page.name}
@@ -426,7 +422,7 @@ const Header = React.memo(({
                                     startContent={subPage.icon}
                                     className={
                                       activePage === "/" + subPage.route
-                                        ? "bg-primary/20"
+                                        ? GRADIENT_PRESETS.accentCard
                                         : ""
                                     }
                                     onPress={() => handleNavigation(route(subPage.route), subPage.method)}
@@ -443,10 +439,13 @@ const Header = React.memo(({
                               method={page.method}
                               preserveState
                               preserveScroll
-                              variant={activePage === "/" + page.route ? "flat" : "light"}
-                              color={activePage === "/" + page.route ? "primary" : "default"}
+                              variant="light"
                               startContent={page.icon}
-                              className="bg-transparent hover:bg-white/10"
+                              className={`transition-all duration-300 hover:scale-105 ${
+                                activePage === "/" + page.route 
+                                  ? `${GRADIENT_PRESETS.accentCard} text-blue-600` 
+                                  : "bg-transparent hover:bg-white/10"
+                              }`}
                               size={isTablet ? "sm" : "md"}
                             >
                               {page.name}
@@ -490,7 +489,7 @@ const Header = React.memo(({
                           <div className="flex flex-wrap gap-1">
                             {auth.user.roles && auth.user.roles.length > 0 ? (
                               auth.user.roles.map((role, index) => (
-                                <span key={index} className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
+                                <span key={index} className={`text-xs px-2 py-1 rounded-full text-blue-600 ${GRADIENT_PRESETS.accentCard}`}>
                                   {role.name}
                                 </span>
                               ))

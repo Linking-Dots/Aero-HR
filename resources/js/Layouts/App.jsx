@@ -7,6 +7,7 @@ import { usePage } from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../../css/theme-transitions.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
 import { Inertia } from '@inertiajs/inertia';
 import { getPages } from '@/Props/pages.jsx';
@@ -14,6 +15,7 @@ import { getSettingsPages } from '@/Props/settings.jsx';
 import { HeroUIProvider } from "@heroui/react";
 import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
 import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
+import { applyThemeToRoot } from "@/utils/themeUtils.js";
 
 
 // Add this hook in your main App component or create a separate component
@@ -41,12 +43,17 @@ function App({ children }) {
         return saved !== null ? JSON.parse(saved) : false;
     });
     const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-    const [themeColor, setThemeColor] = useState(() => {
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');    const [themeColor, setThemeColor] = useState(() => {
         const stored = localStorage.getItem('themeColor');
         return stored
             ? JSON.parse(stored)
-            : { name: "DEFAULT", className: "bg-blue-600/25 text-blue-600 font-bold", backgroundColor: darkMode ? 'rgba(31, 38, 59, 0.55)' : 'rgba(255, 255, 255, 0.60)' };
+            : { 
+                name: "OCEAN", 
+                primary: "#0ea5e9", 
+                secondary: "#0284c7",
+                gradient: "from-sky-500 to-blue-600",
+                description: "Ocean Blue - Professional & Trustworthy"
+            };
     });
     const contentRef = useRef(null);
     const [bottomNavHeight, setBottomNavHeight] = useState(0);
@@ -70,6 +77,9 @@ function App({ children }) {
         localStorage.setItem('darkMode', darkMode);
         localStorage.setItem('themeColor', JSON.stringify(themeColor));
         localStorage.setItem('sidebar-open', JSON.stringify(sideBarOpen));
+        
+        // Apply theme to document root
+        applyThemeToRoot(themeColor, darkMode);
     }, [darkMode, themeColor, sideBarOpen]);
 
     // Toggle handlers (useCallback for stable references)
@@ -142,38 +152,80 @@ function App({ children }) {
                             flexDirection: 'row',
                             height: '100vh',
                         }}
-                    >
-                        {/* Mobile Sidebar Overlay */}
-                        {isMobile && sideBarOpen && (
-                            <Sidebar 
-                                url={url} 
-                                pages={pages} 
-                                toggleSideBar={toggleSideBar}
-                                sideBarOpen={sideBarOpen}
-                            />
+                    >                        {/* Mobile Sidebar Overlay */}
+                        {auth.user && isMobile && (
+                            <Box
+                                sx={{
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100vw',
+                                    height: '100vh',
+                                    zIndex: 1300,
+                                    visibility: sideBarOpen ? 'visible' : 'hidden',
+                                    opacity: sideBarOpen ? 1 : 0,
+                                    transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    backgroundColor: sideBarOpen ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0)',
+                                    backdropFilter: sideBarOpen ? 'blur(4px)' : 'blur(0px)',
+                                    display: 'flex',
+                                    pointerEvents: sideBarOpen ? 'auto' : 'none',
+                                }}
+                                onClick={(e) => {
+                                    if (e.target === e.currentTarget) {
+                                        toggleSideBar();
+                                    }
+                                }}
+                            >                                <Box
+                                    sx={{
+                                        width: 'fit-content',
+                                        minWidth: '240px',
+                                        maxWidth: '280px',
+                                        height: '100vh',
+                                        transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    }}
+                                >
+                                    <Sidebar 
+                                        url={url} 
+                                        pages={pages} 
+                                        toggleSideBar={toggleSideBar}
+                                        sideBarOpen={sideBarOpen}
+                                    />
+                                </Box>
+                            </Box>
+                        )}                        {/* Desktop Sidebar Area */}
+                        {auth.user && (
+                            <Box
+                                sx={{
+                                    display: { xs: 'none', md: 'block' },
+                                    height: '100vh',
+                                    minWidth: sideBarOpen ? 'fit-content' : '0px',
+                                    width: sideBarOpen ? 'fit-content' : '0px',
+                                    maxWidth: sideBarOpen ? '300px' : '0px',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    flexDirection: 'column',
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 'fit-content',
+                                        height: '100vh',
+                                        transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    }}
+                                >
+                                    <Sidebar 
+                                        url={url} 
+                                        pages={pages} 
+                                        toggleSideBar={toggleSideBar}
+                                        sideBarOpen={sideBarOpen}
+                                    />
+                                </Box>
+                            </Box>
                         )}
-
-                        {/* Desktop Sidebar Area */}
-                        <Box
-                            sx={{
-                                display: { xs: 'none', md: 'block' },
-                                height: '100vh',
-                                minWidth: sideBarOpen ? 'auto' : 0,
-                                width: sideBarOpen ? 'auto' : 0,
-                                maxWidth: sideBarOpen ? '400px' : 0,
-                                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                flexDirection: 'column',
-                                overflow: 'hidden',
-                                flexShrink: 0,
-                            }}
-                        >
-                            <Sidebar 
-                                url={url} 
-                                pages={pages} 
-                                toggleSideBar={toggleSideBar}
-                                sideBarOpen={sideBarOpen}
-                            />
-                        </Box>
 
                         {/* Main Content Area */}
                         <Box

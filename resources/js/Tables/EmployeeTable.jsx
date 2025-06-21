@@ -646,14 +646,15 @@ const EmployeeTable = ({ allUsers, departments, designations, attendanceTypes, s
         <Table
           aria-label="Employees table with custom cells"
           classNames={{
-            wrapper: "bg-white/5 backdrop-blur-md border border-white/20 rounded-lg shadow-xl",
+            wrapper: "bg-transparent",
             th: "bg-white/10 backdrop-blur-md text-foreground font-semibold",
             td: "border-b border-white/10",
             tbody: "divide-y divide-white/10"
           }}
-          removeWrapper={false}
+          removeWrapper={true}
           isHeaderSticky
           isCompact={isMobile}
+          className="min-h-[400px]"
         >
           <TableHeader columns={columns}>
             {(column) => (

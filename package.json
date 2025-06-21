@@ -73,6 +73,7 @@
           "exceljs": "^4.4.0",
           "firebase": "^11.8.1",
           "framer-motion": "^11.5.4",
+          "fs-extra": "^11.3.0",
           "jspdf": "^3.0.1",
           "jspdf-autotable": "^5.0.2",
           "jszip": "^3.10.1",
@@ -98,6 +99,7 @@
           "react-timer-hook": "^3.0.7",
           "react-toastify": "^10.0.5",
           "recharts": "^2.15.3",
+          "watchman": "^1.0.0",
           "xlsx": "^0.18.5"
      }
 }

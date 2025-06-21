@@ -887,20 +887,26 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                 <div className="flex items-center gap-3 lg:gap-4">
                                                     <div className={`
                                                         ${isLargeScreen ? 'p-3' : isMediumScreen ? 'p-2.5' : 'p-2'} 
-                                                        rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30
+                                                        rounded-xl bg-gradient-to-br from-[rgba(var(--theme-primary-rgb),0.2)] to-[rgba(var(--theme-secondary-rgb),0.2)] border border-[rgba(var(--theme-primary-rgb),0.3)] backdrop-blur-sm
                                                     `}>
-                                                        <ClockIcon className={`
-                                                            ${isLargeScreen ? 'w-8 h-8' : isMediumScreen ? 'w-6 h-6' : 'w-5 h-5'} 
-                                                            text-blue-600
-                                                        `} />
+                                                        <ClockIcon 
+                                                            className={`
+                                                                ${isLargeScreen ? 'w-8 h-8' : isMediumScreen ? 'w-6 h-6' : 'w-5 h-5'}
+                                                            `}
+                                                            style={{ color: 'var(--theme-primary)' }}
+                                                        />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <Typography 
                                                             variant={isLargeScreen ? "h4" : isMediumScreen ? "h5" : "h6"}
                                                             className={`
-                                                                font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent
+                                                                font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent
                                                                 ${!isLargeScreen ? 'truncate' : ''}
                                                             `}
+                                                            style={{
+                                                                fontFamily: 'var(--font-current)',
+                                                                transition: 'all var(--transition)'
+                                                            }}
                                                         >
                                                             Daily Timesheet
                                                         </Typography>
@@ -908,6 +914,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                             variant={isLargeScreen ? "body2" : "caption"} 
                                                             color="textSecondary"
                                                             className={!isLargeScreen ? 'truncate' : ''}
+                                                            style={{
+                                                                fontFamily: 'var(--font-current)',
+                                                                transition: 'all var(--transition)'
+                                                            }}
                                                         >
                                                             {new Date(selectedDate).toLocaleString('en-US', {
                                                                 month: isLargeScreen ? 'long' : 'short',
@@ -916,9 +926,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                             })}
                                                         </Typography>
                                                     </div>
-                                                </div>
-
-                                                {/* Action Buttons */}
+                                                </div>                                                {/* Action Buttons */}
                                                 <div className="flex gap-2 flex-wrap justify-start lg:justify-end">
                                                     {canExportAttendance && (
                                                         <>
@@ -931,9 +939,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                                         ${isLargeScreen ? 'w-4 h-4' : 'w-3.5 h-3.5'}
                                                                     `} />
                                                                 }
-                                                                className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30"
+                                                                className="bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.1)] to-[rgba(var(--theme-success-rgb),0.2)] hover:from-[rgba(var(--theme-success-rgb),0.2)] hover:to-[rgba(var(--theme-success-rgb),0.3)] border border-[rgba(var(--theme-success-rgb),0.2)] backdrop-blur-sm"
                                                                 onPress={downloadExcel}
                                                                 isDisabled={!isLoaded || attendances.length === 0}
+                                                                style={{
+                                                                    fontFamily: 'var(--font-current)',
+                                                                    transition: 'all var(--transition)'
+                                                                }}
                                                             >
                                                                 {isLargeScreen ? 'Excel' : 'XLS'}
                                                             </HeroButton>
@@ -947,9 +959,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                                         ${isLargeScreen ? 'w-4 h-4' : 'w-3.5 h-3.5'}
                                                                     `} />
                                                                 }
-                                                                className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30"
+                                                                className="bg-gradient-to-r from-[rgba(var(--theme-danger-rgb),0.1)] to-[rgba(var(--theme-danger-rgb),0.2)] hover:from-[rgba(var(--theme-danger-rgb),0.2)] hover:to-[rgba(var(--theme-danger-rgb),0.3)] border border-[rgba(var(--theme-danger-rgb),0.2)] backdrop-blur-sm"
                                                                 onPress={downloadPDF}
                                                                 isDisabled={!isLoaded || attendances.length === 0}
+                                                                style={{
+                                                                    fontFamily: 'var(--font-current)',
+                                                                    transition: 'all var(--transition)'
+                                                                }}
                                                             >
                                                                 PDF
                                                             </HeroButton>
@@ -967,7 +983,11 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                         }
                                                         onPress={handleRefresh}
                                                         isDisabled={!isLoaded}
-                                                        className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30"
+                                                        className="bg-gradient-to-r from-[rgba(var(--theme-primary-rgb),0.1)] to-[rgba(var(--theme-secondary-rgb),0.1)] hover:from-[rgba(var(--theme-primary-rgb),0.2)] hover:to-[rgba(var(--theme-secondary-rgb),0.2)] border border-[rgba(var(--theme-primary-rgb),0.2)] backdrop-blur-sm"
+                                                        style={{
+                                                            fontFamily: 'var(--font-current)',
+                                                            transition: 'all var(--transition)'
+                                                        }}
                                                     >
                                                         {isLargeScreen ? 'Refresh' : ''}
                                                     </HeroButton>
@@ -1481,20 +1501,27 @@ const AbsentUsersCard = React.memo(({ absentUsers, selectedDate, getUserLeave })
             clearTimeout(timer);
             window.removeEventListener('resize', calculateVisibleUsers);
         };
-    }, [filteredAbsentUsers, calculateVisibleUsers]);if (absentUsers.length === 0) {
+    }, [filteredAbsentUsers, calculateVisibleUsers]);    if (absentUsers.length === 0) {
         return (
             <Grow in timeout={700}>
                 <GlassCard ref={cardRef}>
                     <CardHeader
                         title={
                             <div className="flex items-center gap-4">
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
-                                    <UserGroupIcon className="w-6 h-6 text-orange-600" />
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-[rgba(var(--theme-warning-rgb),0.2)] to-[rgba(var(--theme-danger-rgb),0.2)] border border-[rgba(var(--theme-warning-rgb),0.3)] backdrop-blur-sm">
+                                    <UserGroupIcon 
+                                        className="w-6 h-6" 
+                                        style={{ color: 'var(--theme-warning)' }}
+                                    />
                                 </div>
                                 <div>
                                     <Typography 
                                         variant="h6"
-                                        className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
+                                        className="font-bold bg-gradient-to-r from-[var(--theme-warning)] to-[var(--theme-danger)] bg-clip-text text-transparent"
+                                        style={{
+                                            fontFamily: 'var(--font-current)',
+                                            transition: 'all var(--transition)'
+                                        }}
                                     >
                                         Absent Today
                                     </Typography>
@@ -1539,25 +1566,37 @@ const AbsentUsersCard = React.memo(({ absentUsers, selectedDate, getUserLeave })
                 </GlassCard>
             </Grow>
         );
-    }
-
-    return (
+    }    return (
         <Grow in timeout={700}>
             <GlassCard ref={cardRef}>
                 <CardHeader
                     title={
                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
-                                <UserGroupIcon className="w-6 h-6 text-orange-600" />
-                            </div>
-                            <div>
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-[rgba(var(--theme-warning-rgb),0.2)] to-[rgba(var(--theme-danger-rgb),0.2)] border border-[rgba(var(--theme-warning-rgb),0.3)] backdrop-blur-sm">
+                                <UserGroupIcon 
+                                    className="w-6 h-6" 
+                                    style={{ color: 'var(--theme-warning)' }}
+                                />
+                            </div>                            <div>
                                 <Typography 
                                     variant="h6"
-                                    className="font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent"
+                                    className="font-bold bg-gradient-to-r from-[var(--theme-warning)] to-[var(--theme-danger)] bg-clip-text text-transparent"
+                                    style={{
+                                        fontFamily: 'var(--font-current)',
+                                        transition: 'all var(--transition)'
+                                    }}
                                 >
                                     Absent Today
                                 </Typography>
-                                <Typography variant="body2" color="textSecondary" className="flex items-center gap-1">
+                                <Typography 
+                                    variant="body2" 
+                                    color="textSecondary" 
+                                    className="flex items-center gap-1"
+                                    style={{
+                                        fontFamily: 'var(--font-current)',
+                                        transition: 'all var(--transition)'
+                                    }}
+                                >
                                     <CalendarDaysIcon className="w-4 h-4" />
                                     {new Date(selectedDate).toLocaleDateString('en-US', {
                                         month: 'short',

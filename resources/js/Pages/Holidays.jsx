@@ -10,6 +10,7 @@ import {
 import GlassCard from '@/Components/GlassCard.jsx';
 import PageHeader from "@/Components/PageHeader.jsx";
 import StatsCards from "@/Components/StatsCards.jsx";
+import { GRADIENT_PRESETS } from '@/utils/gradientUtils.js';
 import App from "@/Layouts/App.jsx";
 import HolidayTable from '@/Tables/HolidayTable.jsx';
 import HolidayForm from "@/Forms/HolidayForm.jsx";
@@ -56,39 +57,39 @@ const Holidays = ({ title }) => {
         const upcomingHolidays = holidaysData.filter(holiday => 
             new Date(holiday.date) > new Date()
         );
-        
-        return [
+          return [
             {
                 title: 'Total',
                 value: holidaysData.length,
                 icon: <ChartBarIcon className="w-5 h-5" />,
-                color: 'text-blue-600',
+                color: 'text-blue-400',
+                iconBg: 'bg-blue-500/20',
                 description: 'All holidays'
             },
             {
                 title: 'This Year',
                 value: thisYearHolidays.length,
                 icon: <CalendarIcon className="w-5 h-5" />,
-                color: 'text-green-600',
+                color: 'text-green-400',
+                iconBg: 'bg-green-500/20',
                 description: 'Current year holidays'
             },
             {
                 title: 'Upcoming',
                 value: upcomingHolidays.length,
                 icon: <CheckCircleIcon className="w-5 h-5" />,
-                color: 'text-purple-600',
+                color: 'text-purple-400',
+                iconBg: 'bg-purple-500/20',
                 description: 'Future holidays'
             }
         ];
-    }, [holidaysData]);
-
-    // Action buttons configuration
+    }, [holidaysData]);    // Action buttons configuration
     const actionButtons = [
         {
             label: "Add Holiday",
             icon: <PlusIcon className="w-4 h-4" />,
             onPress: () => handleModalOpen('add_holiday'),
-            className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
+            className: GRADIENT_PRESETS.primaryButton
         }
     ];
 
@@ -123,7 +124,7 @@ const Holidays = ({ title }) => {
                         <PageHeader
                             title="Holiday Management"
                             subtitle="Manage company holidays and special occasions"
-                            icon={<CalendarIcon className="w-8 h-8 text-blue-600" />}
+                            icon={<CalendarIcon className="w-8 h-8" />}
                             actionButtons={actionButtons}
                         >
                             <div className="p-6">

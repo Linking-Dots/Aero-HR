@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Exo:ital,wght@0,100..900;1,100..900&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Merienda:wght@300..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Outfit:wght@100..900&display=swap');
 
 
@@ -78,4 +77,156 @@
 
 .jdPBzn {
     background-color: transparent !important;
+}
+
+/* Stats Cards Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 30px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* Enhanced responsive utilities for stats cards */
+@media (max-width: 640px) {
+    .stats-compact {
+        padding: 0.75rem;
+    }
+    
+    .stats-compact .card-title {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+    
+    .stats-compact .card-value {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+}
+
+/* Theme Gradient System */
+:root {
+    /* Default Ocean Theme Gradients */
+    --theme-gradient-primary: linear-gradient(to right, theme('colors.sky.400'), theme('colors.sky.600'));
+    --theme-gradient-secondary: linear-gradient(to right, theme('colors.blue.400'), theme('colors.blue.600'));
+    --theme-gradient-accent: linear-gradient(to right, theme('colors.cyan.400'), theme('colors.blue.600'));
+    --theme-gradient-light: linear-gradient(to right, theme('colors.sky.100'), theme('colors.blue.100'));
+    --theme-gradient-dark: linear-gradient(to right, theme('colors.sky.800'), theme('colors.blue.900'));
+    --theme-gradient-subtle: linear-gradient(to right, theme('colors.sky.50'), theme('colors.blue.50'));
+    
+    /* Multi-directional gradient utilities */
+    --theme-gradient-primary-br: linear-gradient(to bottom right, theme('colors.sky.400'), theme('colors.sky.600'));
+    --theme-gradient-secondary-br: linear-gradient(to bottom right, theme('colors.blue.400'), theme('colors.blue.600'));
+    --theme-gradient-accent-br: linear-gradient(to bottom right, theme('colors.cyan.400'), theme('colors.blue.600'));
+}
+
+/* Theme-aware gradient utility classes */
+.bg-theme-gradient-primary {
+    background: var(--theme-gradient-primary);
+}
+
+.bg-theme-gradient-secondary {
+    background: var(--theme-gradient-secondary);
+}
+
+.bg-theme-gradient-accent {
+    background: var(--theme-gradient-accent);
+}
+
+.bg-theme-gradient-light {
+    background: var(--theme-gradient-light);
+}
+
+.bg-theme-gradient-dark {
+    background: var(--theme-gradient-dark);
+}
+
+.bg-theme-gradient-subtle {
+    background: var(--theme-gradient-subtle);
+}
+
+/* Multi-directional theme gradients */
+.bg-theme-gradient-primary-br {
+    background: var(--theme-gradient-primary-br);
+}
+
+.bg-theme-gradient-secondary-br {
+    background: var(--theme-gradient-secondary-br);
+}
+
+.bg-theme-gradient-accent-br {
+    background: var(--theme-gradient-accent-br);
+}
+
+/* Dynamic theme gradient classes that work with CSS variables */
+.theme-gradient-primary {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 0.8), 
+        rgba(var(--theme-primary-rgb), 1)
+    );
+}
+
+.theme-gradient-secondary {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-secondary-rgb), 0.8), 
+        rgba(var(--theme-secondary-rgb), 1)
+    );
+}
+
+.theme-gradient-primary-secondary {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 1), 
+        rgba(var(--theme-secondary-rgb), 1)
+    );
+}
+
+.theme-gradient-light {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 0.1), 
+        rgba(var(--theme-secondary-rgb), 0.1)
+    );
+}
+
+.theme-gradient-subtle {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 0.05), 
+        rgba(var(--theme-secondary-rgb), 0.05)
+    );
+}
+
+/* Text gradients using theme colors */
+.text-theme-gradient {
+    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+}
+
+/* Hover and interaction states for theme gradients */
+.theme-gradient-hover:hover {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 0.9), 
+        rgba(var(--theme-secondary-rgb), 0.9)
+    );
+    transition: all 0.3s ease;
+}
+
+.theme-gradient-button {
+    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.theme-gradient-button:hover {
+    background: linear-gradient(to right, 
+        rgba(var(--theme-primary-rgb), 0.9), 
+        rgba(var(--theme-secondary-rgb), 0.9)
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--theme-primary-rgb), 0.3);
 }

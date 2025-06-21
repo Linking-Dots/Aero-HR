@@ -24,6 +24,7 @@ import {
   ClockIcon
 } from "@heroicons/react/24/outline";
 import GlassCard from "@/Components/GlassCard.jsx";
+import { GRADIENT_PRESETS, getTextGradientClasses } from '@/utils/gradientUtils.js';
 
 // Custom hook for sidebar state management
 const useSidebarState = () => {
@@ -127,6 +128,126 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
     return { mainPages, settingsPages };
   }, [pages]);
 
+  const renderCompactMenuItem = useCallback((page, isSubMenu = false) => {
+    const isActive = activePage === "/" + page.route;
+    const hasActiveSubPage = page.subMenu?.some(
+      subPage => "/" + subPage.route === activePage
+    );
+    const isExpanded = openSubMenus.has(page.name);
+
+    if (page.subMenu) {
+      return (
+        <div key={page.name} className="w-full">
+          <Button
+            variant="light"
+            color={hasActiveSubPage ? "primary" : "default"}
+            startContent={
+              <div className={hasActiveSubPage ? GRADIENT_PRESETS.iconContainer : 'p-1 rounded-md bg-white/5'}>
+                {React.cloneElement(page.icon, { className: "w-3 h-3" })}
+              </div>
+            }
+            endContent={
+              <ChevronRightIcon 
+                className={`w-3 h-3 transition-all duration-200 ${
+                  isExpanded ? 'rotate-90 text-primary' : 'text-default-400'
+                }`}
+              />
+            }
+            className={`w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
+              hasActiveSubPage 
+                ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500` 
+                : 'hover:border-l-2 hover:border-blue-500/30'
+            }`}
+            onPress={() => handleSubMenuToggle(page.name)}
+            size="sm"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className={`text-sm font-medium ${hasActiveSubPage ? 'text-primary' : 'text-foreground'}`}>
+                {page.name}
+              </span>                <Chip
+                  size="sm"
+                  variant="flat"
+                  className={`text-xs h-4 min-w-4 px-1 transition-all duration-300 ${
+                    hasActiveSubPage 
+                      ? `${GRADIENT_PRESETS.accentCard} text-blue-600` 
+                      : 'bg-white/10 text-default-500'
+                  }`}
+                >
+                  {page.subMenu.length}
+                </Chip>
+            </div>
+          </Button>
+          
+          {/* Compact Submenu */}
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+          }`}>
+            <div className="ml-6 mt-1 space-y-0.5 border-l border-primary/20 pl-2">
+              {page.subMenu.map((subPage, index) => {
+                const isSubActive = activePage === "/" + subPage.route;
+                return (
+                  <Button
+                    key={subPage.name}
+                    as={Link}
+                    href={route(subPage.route)}
+                    method={subPage.method}
+                    preserveState
+                    preserveScroll
+                    variant="light"
+                    startContent={
+                      <div className={isSubActive ? GRADIENT_PRESETS.iconContainer : 'p-0.5 rounded bg-white/5'}>
+                        {React.cloneElement(subPage.icon, { className: "w-3 h-3" })}
+                      </div>
+                    }
+                    className={`w-full justify-start h-8 px-2 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
+                      isSubActive 
+                        ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500 text-blue-600` 
+                        : 'hover:border-l-2 hover:border-blue-500/30'
+                    }`}
+                    onPress={() => handlePageClick(subPage.name)}
+                    size="sm"
+                  >
+                    <span className={`text-xs font-medium ${isSubActive ? 'text-blue-600' : 'text-foreground'}`}>
+                      {subPage.name}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Button
+        key={page.name}
+        as={Link}
+        href={route(page.route)}
+        method={page.method}
+        preserveState
+        preserveScroll
+        variant="light"
+        startContent={
+          <div className={isActive ? GRADIENT_PRESETS.iconContainer : 'p-1 rounded-md bg-white/5'}>
+            {React.cloneElement(page.icon, { className: "w-3 h-3" })}
+          </div>
+        }
+        className={`w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
+          isActive 
+            ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500` 
+            : 'hover:border-l-2 hover:border-blue-500/30'
+        }`}
+        onPress={() => handlePageClick(page.name)}
+        size="sm"
+      >
+        <span className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-foreground'}`}>
+          {page.name}
+        </span>
+      </Button>
+    );
+  }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick]);
+
   const renderMenuItem = useCallback((page, isSubMenu = false) => {
     const isActive = activePage === "/" + page.route;
     const hasActiveSubPage = page.subMenu?.some(
@@ -141,9 +262,7 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
             variant="light"
             color={hasActiveSubPage ? "primary" : "default"}
             startContent={
-              <div className={`p-1.5 rounded-lg transition-all duration-300 ${
-                hasActiveSubPage ? 'bg-primary/20' : 'bg-white/5'
-              }`}>
+              <div>
                 {page.icon}
               </div>
             }
@@ -156,17 +275,17 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
             }
             className={`w-full justify-start h-14 ${
               isSubMenu ? 'pl-12' : 'pl-4'
-            } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group ${
+            } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
               hasActiveSubPage 
-                ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary shadow-lg' 
-                : 'hover:border-l-4 hover:border-primary/30'
+                ? `${GRADIENT_PRESETS.accentCard} border-l-4 border-blue-500 shadow-lg` 
+                : 'hover:border-l-4 hover:border-blue-500/30'
             }`}
             onPress={() => handleSubMenuToggle(page.name)}
             size="md"
           >
             <div className="flex items-center justify-between w-full">
               <div className="flex flex-col items-start">
-                <span className={`font-semibold text-sm ${hasActiveSubPage ? 'text-primary' : 'text-foreground'}`}>
+                <span className={`font-semibold text-sm ${hasActiveSubPage ? 'text-blue-600' : 'text-foreground'}`}>
                   {page.name}
                 </span>
                 <span className="text-xs text-default-400 group-hover:text-default-500 transition-colors">
@@ -178,7 +297,7 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
                 variant="flat"
                 className={`transition-all duration-300 ${
                   hasActiveSubPage 
-                    ? 'bg-primary/20 text-primary' 
+                    ? `${GRADIENT_PRESETS.accentCard} text-blue-600` 
                     : 'bg-white/10 text-default-500 group-hover:bg-white/20'
                 }`}
               >
@@ -209,21 +328,19 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
                       preserveScroll
                       variant="light"
                       startContent={
-                        <div className={`p-1 rounded-md transition-all duration-300 ${
-                          isSubActive ? 'bg-primary/20' : 'bg-white/5'
-                        }`}>
+                        <div >
                           {subPage.icon}
                         </div>
                       }
-                      className={`w-full justify-start h-11 pl-4 pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 ${
+                      className={`w-full justify-start h-11 pl-4 pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 hover:scale-105 ${
                         isSubActive 
-                          ? 'bg-primary/10 border-l-3 border-primary text-primary shadow-md' 
-                          : 'hover:border-l-3 hover:border-primary/30'
+                          ? `${GRADIENT_PRESETS.accentCard} border-l-3 border-blue-500 text-blue-600 shadow-md` 
+                          : 'hover:border-l-3 hover:border-blue-500/30'
                       }`}
                       onPress={() => handlePageClick(subPage.name)}
                       size="sm"
                     >
-                      <span className={`text-sm font-medium ${isSubActive ? 'text-primary' : 'text-foreground'}`}>
+                      <span className={`text-sm font-medium ${isSubActive ? 'text-blue-600' : 'text-foreground'}`}>
                         {subPage.name}
                       </span>
                     </Button>
@@ -246,24 +363,22 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
         preserveScroll
         variant="light"
         startContent={
-          <div className={`p-1.5 rounded-lg transition-all duration-300 ${
-            isActive ? 'bg-primary/20' : 'bg-white/5'
-          }`}>
+          <div >
             {page.icon}
           </div>
         }
         className={`w-full justify-start h-14 ${
           isSubMenu ? 'pl-12' : 'pl-4'
-        } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group ${
+        } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
           isActive 
-            ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary shadow-lg' 
-            : 'hover:border-l-4 hover:border-primary/30'
+            ? `${GRADIENT_PRESETS.accentCard} border-l-4 border-blue-500 shadow-lg` 
+            : 'hover:border-l-4 hover:border-blue-500/30'
         }`}
         onPress={() => handlePageClick(page.name)}
         size="md"
       >
         <div className="flex flex-col items-start w-full">
-          <span className={`font-semibold text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>
+          <span className={`font-semibold text-sm ${isActive ? 'text-blue-600' : 'text-foreground'}`}>
             {page.name}
           </span>
           {page.description && (
@@ -277,287 +392,139 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
   }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick]);
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Modern Header */}
-      <div className="p-6 border-b border-white/10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-xl">
-                <Typography
-                  variant="h6"
-                  className="font-black text-white"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                >
+    <div className="flex flex-col h-full w-full">
+      {/* Compact Header - Using PageHeader theming */}
+      <div className={GRADIENT_PRESETS.pageHeader}>
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className={GRADIENT_PRESETS.iconContainer}>
+                <Typography variant="body2" className="font-black text-white text-xs">
                   A
                 </Typography>
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+              <div>
+                <Typography variant="body2" className={`font-bold leading-tight ${GRADIENT_PRESETS.gradientText}`}>
+                  AeroHR
+                </Typography>
+                <Typography variant="caption" className="text-default-400 text-xs leading-tight">
+                  Enterprise
+                </Typography>
+              </div>
             </div>
-            <div>
-              <Typography 
-                variant="h6" 
-                className="font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight"
-                style={{ letterSpacing: '-0.025em' }}
-              >
-                AeroHR
-              </Typography>
-              <Typography variant="caption" className="text-default-400 block leading-tight font-medium">
-                Enterprise Platform
-              </Typography>
-            </div>
+            <Button
+              isIconOnly
+              variant="light"
+              size="sm"
+              onPress={toggleSideBar}
+              className="text-foreground hover:bg-white/10 transition-all duration-200 min-w-6 w-6 h-6"
+            >
+              <XMarkIcon className="w-3 h-3" />
+            </Button>
           </div>
-          <Button
-            isIconOnly
-            variant="light"
-            size="sm"
-            onPress={toggleSideBar}
-            className="text-foreground hover:bg-white/10 transition-all duration-300 hover:rotate-90"
-            aria-label="Close sidebar"
-          >
-            <XMarkIcon className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {/* Enhanced User Card */}
-        {auth.user && (
-          <div className="p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-all duration-300">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="relative">
+          
+          {/* Compact User Info - Using PageHeader theming */}
+          {auth.user && (
+            <div className={`p-2 rounded-lg backdrop-blur-sm transition-all duration-300 ${GRADIENT_PRESETS.accentCard}`}>
+              <div className="flex items-center gap-2">
                 <Avatar
-                  size="md"
+                  size="sm"
                   src={auth.user.profile_image}
                   fallback={auth.user.first_name?.charAt(0)}
-                  className="ring-2 ring-primary/30"
+                  className="w-6 h-6"
                 />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
-              </div>
-              <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <Typography variant="body2" className="font-bold text-foreground truncate">
-                  {auth.user.first_name} {auth.user.last_name}
-                </Typography>
-                <Typography variant="caption" className="text-default-400">
-                  {auth.user.email}
-                </Typography>
+                <div className="flex-1 min-w-0">
+                  <Typography variant="caption" className="font-medium text-foreground truncate block">
+                    {auth.user.first_name} {auth.user.last_name}
+                  </Typography>
+                  {auth.user.roles && auth.user.roles.length > 0 && (
+                    <Typography variant="caption" className="text-default-400 text-xs truncate block">
+                      {auth.user.roles[0].name}
+                    </Typography>
+                  )}
+                </div>
               </div>
             </div>
-            
-            {/* Role Badges */}
-            {auth.user.roles && auth.user.roles.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {auth.user.roles.slice(0, 2).map((role, index) => (
-                  <Chip
-                    key={index}
-                    size="sm"
-                    variant="flat"
-                    startContent={<ShieldCheckIcon className="w-3 h-3" />}
-                    className="bg-primary/20 text-primary text-xs font-medium"
-                  >
-                    {role.name}
-                  </Chip>
-                ))}
-                {auth.user.roles.length > 2 && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    className="bg-default/20 text-default-500 text-xs"
-                  >
-                    +{auth.user.roles.length - 2}
-                  </Chip>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="mt-4">
-          <Input
-            placeholder="Search modules..."
-            startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
-            classNames={{
-              inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-300",
-              input: "text-sm"
-            }}
-            size="sm"
-          />
+          )}
         </div>
       </div>
 
-      {/* Navigation Content */}
-      <ScrollShadow 
-        className="flex-1 overflow-auto"
-        hideScrollBar={false}
-        size={10}
-      >
-        <div className="p-6 space-y-6">
-          {/* Quick Actions */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Typography variant="body2" className="font-bold text-foreground flex items-center gap-2">
-                <StarIcon className="w-4 h-4 text-primary" />
-                Quick Access
-              </Typography>
-              <Chip
-                size="sm"
-                variant="flat"
-                className="bg-primary/20 text-primary font-bold"
-              >
-                {pages.length}
-              </Chip>
-            </div>
-            
-            {/* Favorites or Recent */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="flat"
-                className="h-16 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20 transition-all duration-300"
-                startContent={<HomeIcon className="w-5 h-5 text-blue-500" />}
-              >
-                <div className="flex flex-col items-start">
-                  <span className="text-xs font-bold">Dashboard</span>
-                  <span className="text-xs text-default-400">Overview</span>
-                </div>
-              </Button>
-              <Button
-                variant="flat"
-                className="h-16 bg-gradient-to-br from-green-500/10 to-emerald-500/10 hover:from-green-500/20 hover:to-emerald-500/20 transition-all duration-300"
-                startContent={<ClockIcon className="w-5 h-5 text-green-500" />}
-              >
-                <div className="flex flex-col items-start">
-                  <span className="text-xs font-bold">Today</span>
-                  <span className="text-xs text-default-400">Activities</span>
-                </div>
-              </Button>
-            </div>
-          </div>
+      {/* Compact Navigation */}
+      <ScrollShadow className="flex-1 overflow-auto" hideScrollBar size={5}>
+        <div className="p-3 space-y-1">
+          {/* Quick Dashboard - Using PageHeader theming */}
+          <Button
+            variant="flat"
+            size="sm"
+            startContent={
+              <div className={GRADIENT_PRESETS.iconContainer}>
+                <HomeIcon className="w-4 h-4 text-blue-500" />
+              </div>
+            }
+            className={`w-full justify-start h-9 px-3 transition-all duration-300 hover:scale-105 ${GRADIENT_PRESETS.secondaryButton}`}
+          >
+            <span className="text-sm font-medium">Dashboard</span>
+          </Button>
 
-          <Divider className="bg-white/10" />
+          <Divider className="bg-white/10 my-2" />
           
-          {/* Main Navigation */}
+          {/* Main Navigation - Compact */}
           {groupedPages.mainPages.length > 0 && (
-            <div className="space-y-2">
-              <Typography 
-                variant="caption" 
-                className="px-2 py-1 text-default-500 font-bold uppercase tracking-wider flex items-center gap-2"
-              >
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-                Main Modules
+            <div className="space-y-1">
+              <Typography variant="caption" className="px-2 text-default-500 font-bold text-xs uppercase tracking-wide">
+                Main
               </Typography>
-              <div className="space-y-1">
-                {groupedPages.mainPages.map(page => renderMenuItem(page))}
-              </div>
+              {groupedPages.mainPages.map(page => renderCompactMenuItem(page))}
             </div>
           )}
 
-          {/* Settings Section */}
+          {/* Settings Section - Compact */}
           {groupedPages.settingsPages.length > 0 && (
-            <>
-              <Divider className="bg-white/10" />
-              <div className="space-y-2">
-                <Typography 
-                  variant="caption" 
-                  className="px-2 py-1 text-default-500 font-bold uppercase tracking-wider flex items-center gap-2"
-                >
-                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                  Administration
-                </Typography>
-                <div className="space-y-1">
-                  {groupedPages.settingsPages.map(page => renderMenuItem(page))}
-                </div>
-              </div>
-            </>
+            <div className="space-y-1 mt-3">
+              <Typography variant="caption" className="px-2 text-default-500 font-bold text-xs uppercase tracking-wide">
+                Admin
+              </Typography>
+              {groupedPages.settingsPages.map(page => renderCompactMenuItem(page))}
+            </div>
           )}
 
-          {/* If no categorization, render all pages */}
+          {/* All Pages fallback */}
           {groupedPages.mainPages.length === 0 && groupedPages.settingsPages.length === 0 && (
-            <div className="space-y-2">
-              <Typography 
-                variant="caption" 
-                className="px-2 py-1 text-default-500 font-bold uppercase tracking-wider"
-              >
-                All Modules
+            <div className="space-y-1">
+              <Typography variant="caption" className="px-2 text-default-500 font-bold text-xs uppercase tracking-wide">
+                Modules
               </Typography>
-              <div className="space-y-1">
-                {pages.map(page => renderMenuItem(page))}
-              </div>
+              {pages.map(page => renderCompactMenuItem(page))}
             </div>
           )}
         </div>
       </ScrollShadow>
 
-      {/* Enhanced Footer */}
-      <div className="p-6 border-t border-white/10 bg-gradient-to-r from-slate-500/5 to-gray-500/5">
-        <div className="space-y-3">
-          {/* Status Indicator */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-foreground">System Online</span>
-            </div>
-            <Badge content="99.9%" color="success" size="sm" />
+      {/* Compact Footer - Using PageHeader theming */}
+      <div className="p-3 border-t border-white/10">
+        <div className={`flex items-center justify-between p-2 rounded-md backdrop-blur-sm transition-all duration-300 ${GRADIENT_PRESETS.accentCard}`}>
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-xs font-medium text-foreground">Online</span>
           </div>
-          
-          {/* Version Info */}
-          <div className="text-center space-y-1">
-            <Typography variant="caption" className="text-default-500 font-bold">
-              AeroHR Enterprise v2.1.0
-            </Typography>
-            {process.env.NODE_ENV === 'development' && (
-              <Button
-                size="sm"
-                variant="light"
-                color="warning"
-                onPress={clearAllState}
-                className="text-xs w-full"
-              >
-                Clear Cache
-              </Button>
-            )}
-          </div>
+          <Typography variant="caption" className="text-default-500 text-xs">
+            v2.1.0
+          </Typography>
         </div>
       </div>
     </div>
   );
-  // Mobile Sidebar (Full Screen Overlay with Animation)
-  if (isMobile) {
-    return (
-      <div className={`fixed inset-0 z-50 transition-all duration-300 ${
-        sideBarOpen 
-          ? 'opacity-100 pointer-events-auto' 
-          : 'opacity-0 pointer-events-none'
-      }`}>
-        <div 
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-            sideBarOpen ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={toggleSideBar}
-        />
-        <div 
-          className={`min-w-80 max-w-96 w-fit h-full bg-white/5 backdrop-blur-2xl border-r border-white/20 shadow-2xl transform transition-transform duration-500 ease-out ${
-            sideBarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          <SidebarContent />
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop/Tablet Sidebar with Smooth Animation
+  // Unified Sidebar for both Mobile and Desktop
   return (
     <Box sx={{ 
-      p: 2, 
+      p: isMobile ? 0 : 2, 
       height: '100%',
-      transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-      transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
-      opacity: sideBarOpen ? 1 : 0,
-      
+      width: 'fit-content',
+      minWidth: isMobile ? '240px' : '220px',
+      maxWidth: isMobile ? '280px' : '260px',
       overflow: 'hidden'
     }}>
-      <div className={`h-full transition-all duration-500 ease-out ${
-        sideBarOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-      }`}>
+      <div className="h-full">
         <GlassCard className="h-full">
           <SidebarContent />
         </GlassCard>

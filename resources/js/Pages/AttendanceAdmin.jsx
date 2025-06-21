@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import {Head, usePage} from '@inertiajs/react';
 import {
     Box,
@@ -40,6 +40,8 @@ import {
     MagnifyingGlassIcon 
 } from '@heroicons/react/24/solid';
 import GlassCard from '@/Components/GlassCard.jsx';
+import PageHeader from '@/Components/PageHeader.jsx';
+import StatsCards from '@/Components/StatsCards.jsx';
 import App from "@/Layouts/App.jsx";
 import AttendanceAdminTable from '@/Tables/AttendanceAdminTable.jsx';
 import axios from "axios";
@@ -292,320 +294,111 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                     }
                 }
             }
-        );
-    };    // Render Enhanced Quick Stats with industry-standard monthly metrics
-    const renderQuickStats = () => (
-        <div className="mb-6">
-            {/* Primary Stats Row */}
-            <Grid container spacing={3} className="mb-4">
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <UserGroupIcon className="w-5 h-5 text-blue-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-blue-600"
-                                >
-                                    Total Employees
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-blue-600"
-                            >
-                                {attendanceStats.totalEmployees}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Active employees
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon className="w-5 h-5 text-indigo-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-indigo-600"
-                                >
-                                    Working Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-indigo-600"
-                            >
-                                {attendanceStats.totalWorkingDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                This month ({attendanceStats.month})
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-green-600"
-                                >
-                                    Present Today
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-green-600"
-                            >
-                                {attendanceStats.presentToday}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                {attendanceStats.presentToday > 0 
-                                    ? `${((attendanceStats.presentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% of employees`
-                                    : 'No attendance yet'
-                                }
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <XCircleIcon className="w-5 h-5 text-red-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-red-600"
-                                >
-                                    Absent Today
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-red-600"
-                            >
-                                {attendanceStats.absentToday}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                {attendanceStats.absentToday > 0 
-                                    ? `${((attendanceStats.absentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% absent`
-                                    : 'All present'
-                                }
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ExclamationTriangleIcon className="w-5 h-5 text-orange-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-orange-600"
-                                >
-                                    Late Today
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-orange-600"
-                            >
-                                {attendanceStats.lateToday}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Late arrivals today
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-            </Grid>
-
-            {/* Monthly Analytics Row */}
-            <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ChartBarIcon className="w-5 h-5 text-emerald-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-emerald-600"
-                                >
-                                    Attendance Rate
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-emerald-600"
-                            >
-                                {attendanceStats.attendancePercentage}%
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Monthly average
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ClockIcon className="w-5 h-5 text-blue-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-blue-600"
-                                >
-                                    Avg Work Hours
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-blue-600"
-                            >
-                                {attendanceStats.averageWorkHours}h
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Daily average this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <ClockIcon className="w-5 h-5 text-purple-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-purple-600"
-                                >
-                                    Overtime
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-purple-600"
-                            >
-                                {attendanceStats.overtimeHours}h
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Total overtime this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <UserIcon className="w-5 h-5 text-amber-600" />
-                                <Typography 
-                                    variant={isMobile ? "subtitle1" : "h6"} 
-                                    className="font-semibold text-amber-600"
-                                >
-                                    Leave Days
-                                </Typography>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="pt-0">
-                            <Typography 
-                                variant={isMobile ? "h4" : "h3"} 
-                                className="font-bold text-amber-600"
-                            >
-                                {attendanceStats.totalLeaveDays}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                Total leaves this month
-                            </Typography>
-                        </CardBody>
-                    </Card>
-                </Grid>
-            </Grid>
-        </div>
-    );
+        );    };    // Prepare all stats data for StatsCards component - Combined into one array
+    const allStatsData = useMemo(() => [
+        {            title: "Total Employees",
+            value: attendanceStats.totalEmployees,
+            icon: <UserGroupIcon />,
+            color: "text-blue-400",
+            iconBg: "bg-blue-500/20",
+            description: "Active employees"
+        },
+        {
+            title: "Working Days", 
+            value: attendanceStats.totalWorkingDays,
+            icon: <CalendarIcon />,
+            color: "text-indigo-600",
+            iconBg: "bg-indigo-500/20",
+            description: `This month (${attendanceStats.month})`
+        },
+        {
+            title: "Present Today",
+            value: attendanceStats.presentToday,
+            icon: <CheckCircleIcon />,
+            color: "text-green-400",
+            iconBg: "bg-green-500/20", 
+            description: attendanceStats.presentToday > 0 
+                ? `${((attendanceStats.presentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% of employees`
+                : 'No attendance yet'
+        },
+        {
+            title: "Absent Today",
+            value: attendanceStats.absentToday,
+            icon: <XCircleIcon />,
+            color: "text-red-400",
+            iconBg: "bg-red-500/20",
+            description: attendanceStats.absentToday > 0 
+                ? `${((attendanceStats.absentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% absent`
+                : 'All present'
+        },
+        {
+            title: "Late Today",
+            value: attendanceStats.lateToday,
+            icon: <ExclamationTriangleIcon />,
+            color: "text-orange-400",
+            iconBg: "bg-orange-500/20",
+            description: "Late arrivals today"
+        },
+        {
+            title: "Attendance Rate",
+            value: `${attendanceStats.attendancePercentage}%`,
+            icon: <ChartBarIcon />,
+            color: "text-emerald-600",
+            iconBg: "bg-emerald-500/20",
+            description: "Monthly average"
+        },        {
+            title: "Avg Work Hours", 
+            value: `${attendanceStats.averageWorkHours}h`,
+            icon: <ClockIcon />,
+            color: "text-blue-400",
+            iconBg: "bg-blue-500/20",
+            description: "Daily average this month"
+        },
+        {
+            title: "Overtime",
+            value: `${attendanceStats.overtimeHours}h`,
+            icon: <ClockIcon />,
+            color: "text-purple-400",
+            iconBg: "bg-purple-500/20", 
+            description: "Total overtime this month"
+        },
+        {
+            title: "Leave Days",
+            value: attendanceStats.totalLeaveDays,
+            icon: <UserIcon />,
+            color: "text-amber-600",
+            iconBg: "bg-amber-500/20",
+            description: "Total leaves this month"
+        }
+    ], [attendanceStats]);
 
 
 
 
     return (
-        <>
-            <Head title={title} />
+        <>            <Head title={title} />
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
-                        <div className="overflow-hidden">
-                            {/* Header Section - Matching LeavesAdmin */}
-                            <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
-                                <div className="p-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                                <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <Typography 
-                                                    variant={isMobile ? "h5" : "h4"} 
-                                                    className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                                >
-                                                    Attendance Management
-                                                </Typography>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    Monitor and manage employee attendance records
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-2 flex-wrap">
-                                            {auth.roles.includes('Administrator') && (
-                                                <Button
-                                                    variant="bordered"
-                                                    startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
-                                                    className="border-white/20 bg-white/5 hover:bg-white/10"
-                                                    onPress={exportToExcel}
-                                                >
-                                                    Export
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Divider className="border-white/10" />
-
-                            <div className="p-6">
-                                {/* Quick Stats */}
-                                {renderQuickStats()}
+                        <PageHeader
+                            title="Attendance Management"
+                            subtitle="Monitor and manage employee attendance records"
+                            icon={<PresentationChartLineIcon className="w-8 h-8" />}
+                            variant="default"
+                            actionButtons={auth.roles.includes('Administrator') ? [
+                                {
+                                    label: "Export",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
+                                    variant: "bordered",
+                                    onPress: exportToExcel,
+                                    className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
+                                }
+                            ] : []}                        >                            <div className="p-6">
+                                {/* All Stats - Responsive Layout for 9 cards */}
+                                <StatsCards 
+                                    stats={allStatsData} 
+                                    className="mb-6"
+                                />
                                 
                                 {/* Filters Section */}
                                 <div className="mb-6">
@@ -671,13 +464,11 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                                     wrapper: "bg-white/10 backdrop-blur-md border-white/20",
                                                     item: "bg-white/5 border-white/10",
                                                     cursor: "bg-primary/20 backdrop-blur-md"
-                                                }}
-                                            />
-                                        </div>
+                                                }}                                            />                                        </div>
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </PageHeader>
                     </GlassCard>
                 </Grow>
             </Box>

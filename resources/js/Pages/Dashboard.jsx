@@ -11,7 +11,7 @@ const PunchStatusCard = lazy(() => import('@/Components/PunchStatusCard.jsx'));
 import App from "@/Layouts/App.jsx";
 import { Grid, Box } from "@mui/material";
 import { Spinner } from "@heroui/react";
-import PageHeader from "@/Components/PageHeader.jsx";
+
 import { 
     HomeIcon, 
     CalendarDaysIcon,
@@ -50,9 +50,8 @@ export default function Dashboard({ auth }) {
                 }).format(new Date());
                 setSelectedDate(today);
                 setUpdateTimeSheet(prev => !prev);
-                setUpdateMap(prev => !prev);
-            },
-            className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium hover:from-blue-600 hover:to-purple-600"
+                setUpdateMap(prev => !prev);            },
+            className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
         },
         hasPermission('dashboard.view') && {
             label: "Analytics",
@@ -61,7 +60,7 @@ export default function Dashboard({ auth }) {
                 // Could navigate to analytics page or show modal
                 console.log("Analytics clicked");
             },
-            className: "bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium hover:from-green-600 hover:to-teal-600"
+            className: "bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.8)] to-[rgba(var(--theme-success-rgb),1)] text-white font-medium hover:opacity-90"
         }
     ].filter(Boolean);    const handlePunchSuccess = () => {
         setUpdateMap(prev => !prev);

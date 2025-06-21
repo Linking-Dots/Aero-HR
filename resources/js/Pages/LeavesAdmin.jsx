@@ -42,6 +42,8 @@ import {
     MagnifyingGlassIcon 
 } from '@heroicons/react/24/solid';
 import GlassCard from '@/Components/GlassCard.jsx';
+import PageHeader from '@/Components/PageHeader.jsx';
+import StatsCards from '@/Components/StatsCards.jsx';
 import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
@@ -284,118 +286,41 @@ const LeavesAdmin = ({ title, allUsers }) => {
         }
     }, [fetchLeavesData, canManageLeaves]);
 
-    // Render quick stats cards
-    const renderQuickStats = () => (
-        <div className="mb-6">
-            <div className={`grid gap-4 ${
-                isMobile 
-                    ? 'grid-cols-1' 
-                    : isTablet 
-                        ? 'grid-cols-2' 
-                        : 'grid-cols-4'
-            }`}>
-                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2">
-                            <ClockIcon className="w-5 h-5 text-orange-600" />
-                            <Typography 
-                                variant={isMobile ? "subtitle1" : "h6"} 
-                                className="font-semibold text-orange-600"
-                            >
-                                Pending
-                            </Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="pt-0">
-                        <Typography 
-                            variant={isMobile ? "h4" : "h3"} 
-                            className="font-bold text-orange-600"
-                        >
-                            {leaveStats.pending}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                            Awaiting approval
-                        </Typography>
-                    </CardBody>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2">
-                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                            <Typography 
-                                variant={isMobile ? "subtitle1" : "h6"} 
-                                className="font-semibold text-green-600"
-                            >
-                                Approved
-                            </Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="pt-0">
-                        <Typography 
-                            variant={isMobile ? "h4" : "h3"} 
-                            className="font-bold text-green-600"
-                        >
-                            {leaveStats.approved}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                            Successfully approved
-                        </Typography>
-                    </CardBody>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2">
-                            <XCircleIcon className="w-5 h-5 text-red-600" />
-                            <Typography 
-                                variant={isMobile ? "subtitle1" : "h6"} 
-                                className="font-semibold text-red-600"
-                            >
-                                Rejected
-                            </Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="pt-0">
-                        <Typography 
-                            variant={isMobile ? "h4" : "h3"} 
-                            className="font-bold text-red-600"
-                        >
-                            {leaveStats.rejected}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                            Declined requests
-                        </Typography>
-                    </CardBody>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2">
-                            <ChartBarIcon className="w-5 h-5 text-blue-600" />
-                            <Typography 
-                                variant={isMobile ? "subtitle1" : "h6"} 
-                                className="font-semibold text-blue-600"
-                            >
-                                Total
-                            </Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="pt-0">
-                        <Typography 
-                            variant={isMobile ? "h4" : "h3"} 
-                            className="font-bold text-blue-600"
-                        >
-                            {leaveStats.total}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                            All leave requests
-                        </Typography>
-                    </CardBody>
-                </Card>
-            </div>
-        </div>
-    );
+    // Prepare stats data for StatsCards component
+    const statsData = useMemo(() => [
+        {
+            title: "Pending",
+            value: leaveStats.pending,
+            icon: <ClockIcon />,
+            color: "text-orange-400",
+            iconBg: "bg-orange-500/20",
+            description: "Awaiting approval"
+        },
+        {
+            title: "Approved", 
+            value: leaveStats.approved,
+            icon: <CheckCircleIcon />,
+            color: "text-green-400",
+            iconBg: "bg-green-500/20",
+            description: "Successfully approved"
+        },
+        {
+            title: "Rejected",
+            value: leaveStats.rejected,
+            icon: <XCircleIcon />,
+            color: "text-red-400", 
+            iconBg: "bg-red-500/20",
+            description: "Declined requests"
+        },
+        {
+            title: "Total",
+            value: leaveStats.total,
+            icon: <ChartBarIcon />,
+            color: "text-blue-400",
+            iconBg: "bg-blue-500/20", 
+            description: "All leave requests"
+        }
+    ], [leaveStats]);
 
     // Early return if no permissions
     if (!canManageLeaves) {
@@ -462,58 +387,29 @@ const LeavesAdmin = ({ title, allUsers }) => {
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
-                        <div className="overflow-hidden">
-                            {/* Header Section - Matching AttendanceAdmin */}
-                            <div className="bg-gradient-to-br from-slate-50/50 to-white/30 backdrop-blur-sm border-b border-white/20">
-                                <div className="p-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                                <PresentationChartLineIcon className="w-8 h-8 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <Typography 
-                                                    variant={isMobile ? "h5" : "h4"} 
-                                                    className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                                >
-                                                    Leave Management
-                                                </Typography>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    Manage employee leave requests and approvals
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-2 flex-wrap">
-                                            {canCreateLeaves && (
-                                                <Button
-                                                    color="primary"
-                                                    startContent={<PlusIcon className="w-4 h-4" />}
-                                                    onPress={() => openModal('add_leave')}
-                                                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium"
-                                                >
-                                                    Add Leave
-                                                </Button>
-                                            )}
-                                            
-                                            <Button
-                                                variant="bordered"
-                                                startContent={<DocumentArrowDownIcon className="w-4 h-4" />}
-                                                className="border-white/20 bg-white/5 hover:bg-white/10"
-                                            >
-                                                Export
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Divider className="border-white/10" />
-
-                                <div className="p-6">
+                        <PageHeader
+                            title="Leave Management"
+                            subtitle="Manage employee leave requests and approvals"
+                            icon={<PresentationChartLineIcon className="w-8 h-8" />}
+                            variant="gradient"
+                            actionButtons={[
+                                ...(canCreateLeaves ? [{
+                                    label: "Add Leave",
+                                    icon: <PlusIcon className="w-4 h-4" />,
+                                    onPress: () => openModal('add_leave'),
+                                    className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                                }] : []),
+                                {
+                                    label: "Export",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
+                                    variant: "bordered",
+                                    className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
+                                }
+                            ]}
+                        >
+                            <div className="p-6">
                                     {/* Quick Stats */}
-                                    {renderQuickStats()}
+                                    <StatsCards stats={statsData} />
                                     
                                     {/* Tabs for different views */}
                                     <div className="mb-6">
@@ -706,7 +602,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </PageHeader>
                     </GlassCard>
                 </Grow>
             </Box>

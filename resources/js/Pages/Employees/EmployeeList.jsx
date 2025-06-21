@@ -3,28 +3,48 @@ import { Head, usePage } from "@inertiajs/react";
 import { 
   Box, 
   Typography, 
+  useTheme, 
   useMediaQuery, 
   Grow, 
-  Fade,
-  useTheme 
+  Fade 
 } from '@mui/material';
 import { 
-  Button,
-  Input,
-  Chip
+  Button, 
+  Input, 
+  Chip, 
+  ButtonGroup,
+  Card,
+  CardBody,
+  User,
+  Divider,
+  Select,
+  SelectItem
 } from "@heroui/react";
+
 import { 
-  UserPlusIcon,
-  UsersIcon,
-  MagnifyingGlassIcon,
+  UserPlusIcon, 
+  UsersIcon, 
+  BuildingOfficeIcon, 
+  BriefcaseIcon, 
+  MagnifyingGlassIcon, 
   FunnelIcon,
   UserIcon,
-  BuildingOfficeIcon,
-  BriefcaseIcon
+  ClockIcon,
+  Squares2X2Icon,
+  TableCellsIcon,
+  AdjustmentsHorizontalIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  PencilIcon
 } from "@heroicons/react/24/outline";
+
 import App from "@/Layouts/App.jsx";
 import GlassCard from "@/Components/GlassCard.jsx";
-import EmployeeTable from '@/Tables/EmployeeTable.jsx';
+import PageHeader from "@/Components/PageHeader.jsx";
+import StatsCards from "@/Components/StatsCards.jsx";
+import EmployeeTable from "@/Tables/EmployeeTable.jsx";
+
+
 
 const EmployeesList = ({ title, allUsers, departments, designations, attendanceTypes }) => {
   const theme = useTheme();
@@ -36,6 +56,8 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [designationFilter, setDesignationFilter] = useState('all');
   const [attendanceTypeFilter, setAttendanceTypeFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [showFilters, setShowFilters] = useState(false);
 
   // Memoized filtered users for performance
   const filteredUsers = useMemo(() => {
@@ -97,201 +119,293 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
     return designations.filter(d => d.department_id === parseInt(departmentFilter));
   }, [designations, departmentFilter]);
 
+  // Prepare stats data for StatsCards component
+  const statsData = useMemo(() => [
+    {
+      title: "Total Employees",
+      value: stats.total,
+      icon: <UsersIcon />,
+      color: "text-blue-400",
+      iconBg: "bg-blue-500/20",
+      description: "Total Employees"
+    },
+    {
+      title: "With Department", 
+      value: stats.withDepartment,
+      icon: <BuildingOfficeIcon />,
+      color: "text-green-400",
+      iconBg: "bg-green-500/20", 
+      description: "With Department"
+    },
+    {
+      title: "With Designation",
+      value: stats.withDesignation,
+      icon: <BriefcaseIcon />,
+      color: "text-orange-400",
+      iconBg: "bg-orange-500/20",
+      description: "With Designation"
+    },
+    {
+      title: "Filtered",
+      value: stats.filtered,
+      icon: <FunnelIcon />,
+      color: "text-purple-400", 
+      iconBg: "bg-purple-500/20",
+      description: "Filtered"
+    }
+  ], [stats]);
+
+  // Grid card component for employee display
+  const EmployeeCard = ({ user, index }) => {
+    const department = departments?.find(d => d.id === user.department);
+    const designation = designations?.find(d => d.id === user.designation);
+    const attendanceType = attendanceTypes?.find(a => a.id === user.attendance_type_id);
+
+    return (
+      <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer"
+            onPress={() => window.location.href = route('profile', { user: user.id })}>
+        <CardBody className="p-4">
+          <div className="flex items-start gap-3">
+            <User
+              avatarProps={{ 
+                radius: "lg", 
+                src: user?.profile_image,
+                size: "md",
+                fallback: <UserIcon className="w-4 h-4" />
+              }}
+              name={user?.name}
+              description={`ID: ${user?.employee_id || 'N/A'}`}
+              classNames={{
+                name: "font-semibold text-foreground text-left text-sm",
+                description: "text-default-500 text-left text-xs",
+                wrapper: "justify-start"
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-end mb-2">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className="text-default-400 hover:text-foreground"
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    window.location.href = route('profile', { user: user.id });
+                  }}
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {/* Contact Info */}
+                <div className="flex flex-col gap-1 text-xs">
+                  <div className="flex items-center gap-1 text-default-500">
+                    <EnvelopeIcon className="w-3 h-3" />
+                    <span className="truncate">{user?.email}</span>
+                  </div>
+                  {user?.phone && (
+                    <div className="flex items-center gap-1 text-default-500">
+                      <PhoneIcon className="w-3 h-3" />
+                      <span>{user?.phone}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Department & Designation */}
+                <div className="flex flex-wrap gap-1">
+                  {department && (
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color="primary"
+                      className="text-xs"
+                      startContent={<BuildingOfficeIcon className="w-3 h-3" />}
+                    >
+                      {department.name}
+                    </Chip>
+                  )}
+                  {designation && (
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color="secondary"
+                      className="text-xs"
+                      startContent={<BriefcaseIcon className="w-3 h-3" />}
+                    >
+                      {designation.title}
+                    </Chip>
+                  )}
+                </div>
+                
+                {/* Attendance Type */}
+                {attendanceType && (
+                  <Chip
+                    size="sm"
+                    variant="bordered"
+                    className="text-xs"
+                    startContent={<ClockIcon className="w-3 h-3" />}
+                  >
+                    {attendanceType.name}
+                  </Chip>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    );
+  };
+
   return (
     <>
       <Head title={title} />
 
-      <Box 
-        className="min-h-screen p-2 sm:p-4 md:p-6"
-        sx={{ 
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
-        }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
         <Grow in timeout={800}>
-          <div className="max-w-7xl mx-auto">
-            <GlassCard>
-              {/* Header Section */}
+          <GlassCard>
+            <PageHeader
+              title="Employee Directory"
+              subtitle="Manage employee information, departments, and designations"
+              icon={<UsersIcon className="w-8 h-8" />}
+              variant="default"
+              actionButtons={[
+                {
+                  label: isMobile ? "Add" : "Add Employee",
+                  icon: <UserPlusIcon className="w-4 h-4" />,
+                  className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                }
+              ]}
+            >
               <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                  <div className="flex items-center gap-3">
-                    <UsersIcon className="w-8 h-8 text-blue-400" />
-                    <div>
-                      <Typography 
-                        variant={isMobile ? "h5" : "h4"} 
-                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                      >
-                        Employee Directory
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Manage employee information, departments, and designations
-                      </Typography>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="flat"
-                      color="primary"
+                {/* Statistics Cards */}
+                <StatsCards stats={statsData} className="mb-6" />
+
+                {/* View Controls */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <div className="flex-1">
+                    <Input
+                      label="Search Employees"
+                      variant="bordered"
+                      placeholder="Search by name, email, or employee ID..."
+                      value={searchQuery}
+                      onValueChange={handleSearchChange}
+                      startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
+                      classNames={{
+                        input: "bg-transparent",
+                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                      }}
                       size={isMobile ? "sm" : "md"}
-                      startContent={<UserPlusIcon className="w-4 h-4" />}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 items-end">
+                    {/* View Toggle */}
+                    <ButtonGroup variant="bordered" className="bg-white/5">
+                      <Button
+                        isIconOnly={isMobile}
+                        color={viewMode === 'table' ? 'primary' : 'default'}
+                        onPress={() => setViewMode('table')}
+                        className={viewMode === 'table' ? 'bg-blue-500/20' : ''}
+                      >
+                        <TableCellsIcon className="w-4 h-4" />
+                        {!isMobile && <span className="ml-1">Table</span>}
+                      </Button>
+                      <Button
+                        isIconOnly={isMobile}
+                        color={viewMode === 'grid' ? 'primary' : 'default'}
+                        onPress={() => setViewMode('grid')}
+                        className={viewMode === 'grid' ? 'bg-blue-500/20' : ''}
+                      >
+                        <Squares2X2Icon className="w-4 h-4" />
+                        {!isMobile && <span className="ml-1">Grid</span>}
+                      </Button>
+                    </ButtonGroup>
+                    
+                    {/* Filter Toggle */}
+                    <Button
+                      isIconOnly={isMobile}
+                      variant="bordered"
+                      onPress={() => setShowFilters(!showFilters)}
+                      className={showFilters ? 'bg-purple-500/20' : 'bg-white/5'}
                     >
-                      {isMobile ? "Add" : "Add Employee"}
+                      <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                      {!isMobile && <span className="ml-1">Filters</span>}
                     </Button>
                   </div>
                 </div>
 
-                {/* Statistics Cards */}
-                <Fade in timeout={1000}>
-                  <div className={`grid gap-4 mb-6 ${
-                    isMobile 
-                      ? 'grid-cols-2' 
-                      : isTablet 
-                        ? 'grid-cols-3' 
-                        : 'grid-cols-4'
-                  }`}>
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                          <UsersIcon className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-blue-400">
-                            {stats.total}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Total Employees
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500/20 rounded-lg">
-                          <BuildingOfficeIcon className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-green-400">
-                            {stats.withDepartment}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            With Department
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500/20 rounded-lg">
-                          <BriefcaseIcon className="w-5 h-5 text-orange-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-orange-400">
-                            {stats.withDesignation}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            With Designation
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-lg">
-                          <FunnelIcon className="w-5 h-5 text-purple-400" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" className="font-bold text-purple-400">
-                            {stats.filtered}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Filtered
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Fade>
-
                 {/* Filters Section */}
-                <Fade in timeout={1200}>
-                  <div className="mb-6">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                        <div className="w-full sm:flex-1">
-                          <Input
-                            label="Search Employees"
+                {showFilters && (
+                  <Fade in timeout={300}>
+                    <div className="mb-6 p-4 bg-white/5 backdrop-blur-md rounded-lg border border-white/10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Select
+                          label="Department"
+                          variant="bordered"
+                          selectedKeys={departmentFilter !== 'all' ? [departmentFilter] : []}
+                          onSelectionChange={(keys) => {
+                            const value = Array.from(keys)[0] || 'all';
+                            handleDepartmentFilterChange(value);
+                          }}
+                          classNames={{
+                            trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                          }}
+                        >
+                          <SelectItem key="all" value="all">All Departments</SelectItem>
+                          {departments?.map(dept => (
+                            <SelectItem key={dept.id.toString()} value={dept.id.toString()}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </Select>
+
+                        <Select
+                          label="Designation"
+                          variant="bordered"
+                          selectedKeys={designationFilter !== 'all' ? [designationFilter] : []}
+                          onSelectionChange={(keys) => {
+                            const value = Array.from(keys)[0] || 'all';
+                            handleDesignationFilterChange(value);
+                          }}
+                          classNames={{
+                            trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                          }}
+                        >
+                          <SelectItem key="all" value="all">All Designations</SelectItem>
+                          {filteredDesignations?.map(desig => (
+                            <SelectItem key={desig.id.toString()} value={desig.id.toString()}>
+                              {desig.title}
+                            </SelectItem>
+                          ))}
+                        </Select>
+
+                        {!isMobile && (
+                          <Select
+                            label="Attendance Type"
                             variant="bordered"
-                            placeholder="Search by name, email, or employee ID..."
-                            value={searchQuery}
-                            onValueChange={handleSearchChange}
-                            startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
-                            classNames={{
-                              input: "bg-transparent",
-                              inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                            selectedKeys={attendanceTypeFilter !== 'all' ? [attendanceTypeFilter] : []}
+                            onSelectionChange={(keys) => {
+                              const value = Array.from(keys)[0] || 'all';
+                              handleAttendanceTypeFilterChange(value);
                             }}
-                            size={isMobile ? "sm" : "md"}
-                          />
-                        </div>
-
-                        <div className="flex gap-2 w-full sm:w-auto">
-                          <div className="flex-1 sm:min-w-[150px]">
-                            <select
-                              className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                              value={departmentFilter}
-                              onChange={(e) => handleDepartmentFilterChange(e.target.value)}
-                            >
-                              <option value="all">All Departments</option>
-                              {departments?.map(dept => (
-                                <option key={dept.id} value={dept.id}>
-                                  {dept.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="flex-1 sm:min-w-[150px]">
-                            <select
-                              className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                              value={designationFilter}
-                              onChange={(e) => handleDesignationFilterChange(e.target.value)}
-                              
-                            >
-                              <option value="all">All Designations</option>
-                              {filteredDesignations?.map(desig => (
-                                <option key={desig.id} value={desig.id}>
-                                  {desig.title}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {!isMobile && (
-                            <div className="flex-1 sm:min-w-[150px]">
-                              <select
-                                className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                value={attendanceTypeFilter}
-                                onChange={(e) => handleAttendanceTypeFilterChange(e.target.value)}
-                              >
-                                <option value="all">All Attendance Types</option>
-                                {attendanceTypes?.map(type => (
-                                  <option key={type.id} value={type.id}>
-                                    {type.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-                        </div>
+                            classNames={{
+                              trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                            }}
+                          >
+                            <SelectItem key="all" value="all">All Attendance Types</SelectItem>
+                            {attendanceTypes?.map(type => (
+                              <SelectItem key={type.id.toString()} value={type.id.toString()}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </Select>
+                        )}
                       </div>
 
                       {/* Active Filters */}
                       {(searchQuery || departmentFilter !== 'all' || designationFilter !== 'all' || attendanceTypeFilter !== 'all') && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
                           {searchQuery && (
                             <Chip
                               variant="flat"
@@ -335,26 +449,62 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                         </div>
                       )}
                     </div>
-                  </div>
-                </Fade>
+                  </Fade>
+                )}
 
-                {/* Employee Table */}
-                <Fade in timeout={1400}>
-                  <div className="overflow-hidden rounded-lg">
-                    <EmployeeTable 
-                      allUsers={filteredUsers} 
-                      departments={departments}
-                      designations={designations}
-                      attendanceTypes={attendanceTypes}
-                      setUsers={handleUsersUpdate}
-                      isMobile={isMobile}
-                      isTablet={isTablet}
-                    />
+                {/* Content Area */}
+                <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 overflow-hidden">
+                  <div className="p-4 border-b border-white/10">
+                    <Typography variant="h6" className="font-semibold text-foreground">
+                      {viewMode === 'table' ? 'Employee Table' : 'Employee Grid'} 
+                      <span className="text-sm text-default-500 ml-2">
+                        ({filteredUsers.length} {filteredUsers.length === 1 ? 'employee' : 'employees'})
+                      </span>
+                    </Typography>
                   </div>
-                </Fade>
+                  
+                  <div className="max-h-[60vh] overflow-y-auto p-4">
+                    {viewMode === 'table' ? (
+                      <EmployeeTable 
+                        allUsers={filteredUsers} 
+                        departments={departments}
+                        designations={designations}
+                        attendanceTypes={attendanceTypes}
+                        setUsers={handleUsersUpdate}
+                        isMobile={isMobile}
+                        isTablet={isTablet}
+                      />
+                    ) : (
+                      <div>
+                        <div className={`grid gap-4 ${
+                          isMobile 
+                            ? 'grid-cols-1' 
+                            : isTablet 
+                              ? 'grid-cols-2' 
+                              : 'grid-cols-3 xl:grid-cols-4'
+                        }`}>
+                          {filteredUsers.map((user, index) => (
+                            <EmployeeCard key={user.id} user={user} index={index} />
+                          ))}
+                        </div>
+                        {filteredUsers.length === 0 && (
+                          <div className="text-center py-8">
+                            <UsersIcon className="w-12 h-12 mx-auto text-default-300 mb-2" />
+                            <Typography variant="body1" color="textSecondary">
+                              No employees found
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              Try adjusting your search or filters
+                            </Typography>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </GlassCard>
-          </div>
+            </PageHeader>
+          </GlassCard>
         </Grow>
       </Box>
     </>

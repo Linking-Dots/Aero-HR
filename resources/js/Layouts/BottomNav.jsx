@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, usePage } from "@inertiajs/react";
 import { useTheme } from "@mui/material/styles";
+import { GRADIENT_PRESETS } from '@/utils/gradientUtils.js';
 
 const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBarOpen }) => {
     const theme = useTheme();
@@ -124,9 +125,9 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                                 variant={sideBarOpen ? "flat" : "light"}
                                 color={sideBarOpen ? "primary" : "default"}
                                 className={`
-                                    h-12 w-12 transition-all duration-200
+                                    h-12 w-12 transition-all duration-200 hover:scale-105
                                     ${sideBarOpen 
-                                        ? 'bg-primary/20 border border-primary/30' 
+                                        ? GRADIENT_PRESETS.accentCard 
                                         : 'bg-transparent hover:bg-white/10'
                                     }
                                 `}
@@ -141,11 +142,15 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                     const ButtonContent = (
                         <div className="flex flex-col items-center justify-center gap-1.5 py-1.5">
                             <div className="relative">
-                                <IconComponent 
-                                    className={`w-5 h-5 transition-all duration-200 ${
-                                        isActive ? 'text-primary scale-110' : 'text-default-500'
-                                    }`} 
-                                />
+                                <div className={`p-1 rounded-lg transition-all duration-300 ${
+                                    isActive ? GRADIENT_PRESETS.iconContainer : 'bg-transparent'
+                                }`}>
+                                    <IconComponent 
+                                        className={`w-5 h-5 transition-all duration-200 ${
+                                            isActive ? 'text-blue-600 scale-110' : 'text-default-500'
+                                        }`} 
+                                    />
+                                </div>
                                 {item.badge && (
                                     <Badge
                                         content={item.badge}
@@ -157,7 +162,7 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                             </div>
                             <span className={`
                                 text-xs font-semibold transition-all duration-200 
-                                ${isActive ? 'text-primary' : 'text-default-500'}
+                                ${isActive ? 'text-blue-600' : 'text-default-500'}
                             `}>
                                 {item.label}
                             </span>
@@ -175,7 +180,7 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                             className={`
                                 h-16 min-w-16 px-2 transition-all duration-300
                                 ${isActive 
-                                    ? 'bg-primary/15 border border-primary/30 shadow-lg scale-105' 
+                                    ? `${GRADIENT_PRESETS.accentCard} shadow-lg scale-105` 
                                     : 'bg-transparent hover:bg-white/5 hover:scale-105'
                                 }
                             `}
