@@ -22,6 +22,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Settings\AttendanceSettingController;
+use App\Http\Controllers\SystemMonitoringController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -278,6 +279,22 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
 // Test route for role controller
 Route::middleware(['auth', 'verified'])->get('/admin/roles-test', [RoleController::class, 'test'])->name('admin.roles.test');
 
+// System Monitoring Routes (Super Administrator only)
+Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(function () {
+    Route::get('/admin/system-monitoring', [SystemMonitoringController::class, 'index'])->name('admin.system-monitoring');
+    Route::post('/admin/errors/{errorId}/resolve', [SystemMonitoringController::class, 'resolveError'])->name('admin.errors.resolve');
+    Route::get('/admin/system-report', [SystemMonitoringController::class, 'exportReport'])->name('admin.system-report');
+    Route::get('/admin/optimization-report', [SystemMonitoringController::class, 'getOptimizationReport'])->name('admin.optimization-report');
+});
+
 Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
 
 require __DIR__.'/auth.php';
+
+Route::middleware(['security_headers'])->group(function () {
+    // Your routes
+});
+
+Route::middleware(['enhanced_rate_limit:100,1'])->group(function () {
+    // API routes that need rate limiting
+});

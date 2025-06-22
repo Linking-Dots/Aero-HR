@@ -10,12 +10,31 @@ import {
 import { Link, usePage } from "@inertiajs/react";
 import { useTheme } from "@mui/material/styles";
 import { GRADIENT_PRESETS } from '@/utils/gradientUtils.js';
+import GlassCard from '@/Components/GlassCard';
+
+// Utility to get theme primary color (shared with Header/PageHeader/Sidebar)
+function getThemePrimaryColor(theme) {
+  if (typeof window !== 'undefined') {
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary');
+    if (cssVar) return cssVar.trim();
+  }
+  return theme.palette.primary.main;
+}
+function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  const num = parseInt(c, 16);
+  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+}
 
 const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBarOpen }) => {
     const theme = useTheme();
     const { url } = usePage().props;
     const [activeTab, setActiveTab] = useState('dashboard');
     const bottomNavRef = useRef(null);
+    const themeColor = getThemePrimaryColor(theme);
+    const themeColorRgba = hexToRgba(themeColor, 0.5);
+    
 
     // Navigation items configuration
     const navItems = [
@@ -103,20 +122,22 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                 right: 0,
                 zIndex: 1200,
                 display: { xs: 'flex', md: 'none' },
-                backdropFilter: 'blur(20px) saturate(200%)',
-                background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
-                borderTop: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.1)',
+                
                 py: 1.5,
                 px: 2,
                 minHeight: 72
             }}
         >
+            <GlassCard>
             <div className="flex items-center justify-around w-full max-w-md mx-auto">
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id;
                     const IconComponent = item.icon;
-                    
+                    const activeStyle = isActive ? {
+                        color: themeColor,
+                        borderBottom: `3px solid ${themeColor}`,
+                    } : {};
+
                     if (item.action === 'sidebar') {
                         return (
                             <Button
@@ -142,15 +163,10 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                     const ButtonContent = (
                         <div className="flex flex-col items-center justify-center gap-1.5 py-1.5">
                             <div className="relative">
-                                <div className={`p-1 rounded-lg transition-all duration-300 ${
-                                    isActive ? GRADIENT_PRESETS.iconContainer : 'bg-transparent'
-                                }`}>
-                                    <IconComponent 
-                                        className={`w-5 h-5 transition-all duration-200 ${
-                                            isActive ? 'text-blue-600 scale-110' : 'text-default-500'
-                                        }`} 
-                                    />
-                                </div>
+                                <IconComponent 
+                                    className={`transition-all duration-200 ${isActive ? 'w-6 h-6 font-bold' : 'w-5 h-5'}`}
+                                    style={isActive ? { color: themeColor, fontWeight: 700 } : { color: '' }}
+                                />
                                 {item.badge && (
                                     <Badge
                                         content={item.badge}
@@ -160,10 +176,8 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                                     />
                                 )}
                             </div>
-                            <span className={`
-                                text-xs font-semibold transition-all duration-200 
-                                ${isActive ? 'text-blue-600' : 'text-default-500'}
-                            `}>
+                            <span className={`text-xs transition-all duration-200 ${isActive ? 'font-bold' : 'font-semibold'}`}
+                                  style={isActive ? { color: themeColor } : {}}>
                                 {item.label}
                             </span>
                         </div>
@@ -177,13 +191,8 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                             preserveState
                             preserveScroll
                             variant="light"
-                            className={`
-                                h-16 min-w-16 px-2 transition-all duration-300
-                                ${isActive 
-                                    ? `${GRADIENT_PRESETS.accentCard} shadow-lg scale-105` 
-                                    : 'bg-transparent hover:bg-white/5 hover:scale-105'
-                                }
-                            `}
+                            className={`h-16 min-w-16 px-2 transition-all duration-300 ${isActive ? 'scale-105' : 'bg-transparent hover:bg-white/5 hover:scale-105'}`}
+                            style={isActive ? activeStyle : {}}
                             onPress={() => handleItemPress(item)}
                             aria-label={`Navigate to ${item.label}`}
                             aria-current={isActive ? 'page' : undefined}
@@ -193,6 +202,7 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                     );
                 })}
             </div>
+            </GlassCard>
         </Box>
     );
 };

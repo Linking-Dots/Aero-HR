@@ -24,7 +24,23 @@ import {
   ClockIcon
 } from "@heroicons/react/24/outline";
 import GlassCard from "@/Components/GlassCard.jsx";
-import { GRADIENT_PRESETS, getTextGradientClasses } from '@/utils/gradientUtils.js';
+import { GRADIENT_PRESETS, getTextGradientClasses, getIconGradientClasses } from '@/utils/gradientUtils.js';
+
+// Utility to get theme primary color (shared with Header/PageHeader)
+function getThemePrimaryColor(theme) {
+  if (typeof window !== 'undefined') {
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary');
+    if (cssVar) return cssVar.trim();
+  }
+  return muiTheme.palette.primary.main;
+}
+// Convert hex to rgba
+function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  const num = parseInt(c, 16);
+  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+}
 
 // Custom hook for sidebar state management
 const useSidebarState = () => {
@@ -128,13 +144,20 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
     return { mainPages, settingsPages };
   }, [pages]);
 
+  const themeColor = getThemePrimaryColor(muiTheme);
+  const themeColorRgba = hexToRgba(themeColor, 0.5);
+
   const renderCompactMenuItem = useCallback((page, isSubMenu = false) => {
     const isActive = activePage === "/" + page.route;
     const hasActiveSubPage = page.subMenu?.some(
       subPage => "/" + subPage.route === activePage
     );
     const isExpanded = openSubMenus.has(page.name);
-
+    const activeStyle = isActive || hasActiveSubPage ? {
+      background: themeColorRgba,
+      borderLeft: `2px solid ${themeColor}`,
+      color: themeColor,
+    } : {};
     if (page.subMenu) {
       return (
         <div key={page.name} className="w-full">
@@ -142,42 +165,35 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
             variant="light"
             color={hasActiveSubPage ? "primary" : "default"}
             startContent={
-              <div className={hasActiveSubPage ? GRADIENT_PRESETS.iconContainer : 'p-1 rounded-md bg-white/5'}>
+              <div style={hasActiveSubPage ? { color: themeColor } : {}}>
                 {React.cloneElement(page.icon, { className: "w-3 h-3" })}
               </div>
             }
             endContent={
               <ChevronRightIcon 
-                className={`w-3 h-3 transition-all duration-200 ${
-                  isExpanded ? 'rotate-90 text-primary' : 'text-default-400'
-                }`}
+                className={`w-3 h-3 transition-all duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                style={isExpanded ? { color: themeColor } : {}}
               />
             }
-            className={`w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
-              hasActiveSubPage 
-                ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500` 
-                : 'hover:border-l-2 hover:border-blue-500/30'
-            }`}
+            className="w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
+            style={activeStyle}
             onPress={() => handleSubMenuToggle(page.name)}
             size="sm"
           >
             <div className="flex items-center justify-between w-full">
-              <span className={`text-sm font-medium ${hasActiveSubPage ? 'text-primary' : 'text-foreground'}`}>
+              <span className="text-sm font-medium" style={hasActiveSubPage ? { color: themeColor } : {}}>
                 {page.name}
-              </span>                <Chip
-                  size="sm"
-                  variant="flat"
-                  className={`text-xs h-4 min-w-4 px-1 transition-all duration-300 ${
-                    hasActiveSubPage 
-                      ? `${GRADIENT_PRESETS.accentCard} text-blue-600` 
-                      : 'bg-white/10 text-default-500'
-                  }`}
-                >
-                  {page.subMenu.length}
-                </Chip>
+              </span>
+              <Chip
+                size="sm"
+                variant="flat"
+                className="text-xs h-4 min-w-4 px-1 transition-all duration-300"
+                style={hasActiveSubPage ? { background: themeColorRgba, color: themeColor } : {}}
+              >
+                {page.subMenu.length}
+              </Chip>
             </div>
           </Button>
-          
           {/* Compact Submenu */}
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
             isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
@@ -195,19 +211,16 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
                     preserveScroll
                     variant="light"
                     startContent={
-                      <div className={isSubActive ? GRADIENT_PRESETS.iconContainer : 'p-0.5 rounded bg-white/5'}>
+                      <div style={isSubActive ? { color: themeColor } : {}}>
                         {React.cloneElement(subPage.icon, { className: "w-3 h-3" })}
                       </div>
                     }
-                    className={`w-full justify-start h-8 px-2 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
-                      isSubActive 
-                        ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500 text-blue-600` 
-                        : 'hover:border-l-2 hover:border-blue-500/30'
-                    }`}
+                    className="w-full justify-start h-8 px-2 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
+                    style={isSubActive ? { background: themeColorRgba, borderLeft: `2px solid ${themeColor}`, color: themeColor } : {}}
                     onPress={() => handlePageClick(subPage.name)}
                     size="sm"
                   >
-                    <span className={`text-xs font-medium ${isSubActive ? 'text-blue-600' : 'text-foreground'}`}>
+                    <span className="text-xs font-medium" style={isSubActive ? { color: themeColor } : {}}>
                       {subPage.name}
                     </span>
                   </Button>
@@ -218,7 +231,7 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
         </div>
       );
     }
-
+    // No submenu
     return (
       <Button
         key={page.name}
@@ -229,24 +242,21 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
         preserveScroll
         variant="light"
         startContent={
-          <div className={isActive ? GRADIENT_PRESETS.iconContainer : 'p-1 rounded-md bg-white/5'}>
+          <div style={isActive ? { color: themeColor } : {}}>
             {React.cloneElement(page.icon, { className: "w-3 h-3" })}
           </div>
         }
-        className={`w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 ${
-          isActive 
-            ? `${GRADIENT_PRESETS.accentCard} border-l-2 border-blue-500` 
-            : 'hover:border-l-2 hover:border-blue-500/30'
-        }`}
+        className="w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
+        style={isActive ? { background: themeColorRgba, borderLeft: `2px solid ${themeColor}`, color: themeColor } : {}}
         onPress={() => handlePageClick(page.name)}
         size="sm"
       >
-        <span className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-foreground'}`}>
+        <span className="text-sm font-medium" style={isActive ? { color: themeColor } : {}}>
           {page.name}
         </span>
       </Button>
     );
-  }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick]);
+  }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick, themeColor, themeColorRgba]);
 
   const renderMenuItem = useCallback((page, isSubMenu = false) => {
     const isActive = activePage === "/" + page.route;
@@ -269,8 +279,9 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
             endContent={
               <ChevronRightIcon 
                 className={`w-4 h-4 transition-all duration-300 ${
-                  isExpanded ? 'rotate-90 text-primary' : 'text-default-400'
+                  isExpanded ? 'rotate-90' : ''
                 }`}
+                style={isExpanded ? { color: themeColor } : {}}
               />
             }
             className={`w-full justify-start h-14 ${

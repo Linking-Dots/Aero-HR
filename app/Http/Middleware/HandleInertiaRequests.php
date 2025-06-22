@@ -21,9 +21,7 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): string|null
     {
         return parent::version($request);
-    }
-
-    /**
+    }    /**
      * Define the props that are shared by default.
      *
      * @return array<string, mixed>
@@ -36,6 +34,22 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? $request->user() : '',
                 'roles' => $request->user() ? $request->user()->roles->pluck('name')->toArray() : [],
                 'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name')->toArray() : [],
+            ],
+            
+            // Theme and UI Configuration
+            'theme' => [
+                'defaultTheme' => 'OCEAN',
+                'defaultBackground' => 'pattern-1',
+                'darkMode' => false,
+                'animations' => true,
+            ],
+            
+            // Application Configuration
+            'app' => [
+                'name' => config('app.name', 'DBEDC ERP'),
+                'version' => config('app.version', '1.0.0'),
+                'debug' => config('app.debug', false),
+                'environment' => config('app.env', 'production'),
             ],
             
             'url' => $request->getPathInfo(),

@@ -25,8 +25,7 @@ import { Squares2X2Icon } from '@heroicons/react/24/outline';
 // Function to create settings pages array with enhanced organization aligned with ISO standards
 export const getSettingsPages = (permissions = []) => {
     const settings = [];
-    
-    // Navigation
+    // 1. Navigation
     if (permissions.includes('dashboard.view')) {
         settings.push({
             name: 'Return to Dashboard', 
@@ -36,8 +35,7 @@ export const getSettingsPages = (permissions = []) => {
             priority: 1
         });
     }
-    
-    // ISO 9001 - Quality Management System Configuration
+    // 2. Organization
     if (permissions.includes('company.settings')) {
         settings.push({
             name: 'Organization Configuration', 
@@ -48,7 +46,6 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Configure organizational structure and company information'
         });
     }
-    
     if (permissions.includes('attendance.settings')) {
         settings.push({
             name: 'Time & Attendance Configuration', 
@@ -59,7 +56,6 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Configure attendance tracking and workforce management'
         });
     }
-    
     if (permissions.includes('leave-settings.view')) {
         settings.push({
             name: 'Leave Policy Management', 
@@ -70,8 +66,7 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Manage leave types and approval workflows'
         });
     }
-    
-    // ISO 27001 - Information Security Management
+    // 3. Security
     if (permissions.includes('roles.view')) {
         settings.push({
             name: 'Identity & Access Management', 
@@ -82,7 +77,6 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Manage user roles and permission system'
         });
     }
-    
     if (permissions.includes('users.view')) {
         settings.push({
             name: 'User Account Administration', 
@@ -93,164 +87,149 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Manage user accounts and access control'
         });
     }
-    
-    if (permissions.includes('audit.view')) {
-        settings.push({
-            name: 'Security Audit & Compliance', 
-            icon: <ShieldCheckIcon className="w-5 h-5" />, 
-            route: 'admin.audit.index',
-            category: 'security',
-            priority: 7,
-            description: 'View audit trails and compliance reports'
-        });
-    }
-    
-    // ISO 20000 - IT Service Management
-    if (permissions.includes('email.settings')) {
-        settings.push({
-            name: 'Communication Services', 
-            icon: <AtSymbolIcon className="w-5 h-5" />, 
-            route: 'admin.settings.email',
-            category: 'services',
-            priority: 8,
-            description: 'Configure email templates and communication services'
-        });
-    }
-    
-    if (permissions.includes('notification.settings')) {
-        settings.push({
-            name: 'Notification Management', 
-            icon: <BellIcon className="w-5 h-5" />, 
-            route: 'admin.settings.notifications',
-            category: 'services',
-            priority: 9,
-            description: 'Manage notification preferences and delivery channels'
-        });
-    }
-    
-    if (permissions.includes('settings.view')) {
-        settings.push({
-            name: 'Internal Messaging System', 
-            icon: <ChatBubbleLeftRightIcon className="w-5 h-5" />, 
-            route: 'admin.settings.toxbox',
-            category: 'services',
-            priority: 10,
-            description: 'Configure internal communication and messaging'
-        });
-    }
-    
-    // ISO 14001 - User Experience & Interface Management
-    if (permissions.includes('theme.settings')) {
-        settings.push({
-            name: 'User Interface & Branding', 
-            icon: <PhotoIcon className="w-5 h-5" />, 
-            route: 'admin.settings.theme',
-            category: 'interface',
-            priority: 11,
-            description: 'Customize application appearance and corporate branding'
-        });
-    }
-    
-    if (permissions.includes('localization.settings')) {
-        settings.push({
-            name: 'Regional & Localization Settings', 
-            icon: <ClockIcon className="w-5 h-5" />, 
-            route: 'admin.settings.localization',
-            category: 'interface',
-            priority: 12,
-            description: 'Configure language, timezone, and regional preferences'
-        });
-    }
-    
-    // Business Process Management
-    if (permissions.includes('performance.settings')) {
-        settings.push({
-            name: 'Performance Management Configuration', 
-            icon: <ChartBarIcon className="w-5 h-5" />, 
-            route: 'admin.settings.performance',
-            category: 'business-process',
-            priority: 13,
-            description: 'Configure performance evaluation and review processes'
-        });
-    }
-    
-    if (permissions.includes('approval.settings')) {
-        settings.push({
-            name: 'Workflow & Approval Management', 
-            icon: <HandThumbUpIcon className="w-5 h-5" />, 
-            route: 'admin.settings.approval',
-            category: 'business-process',
-            priority: 14,
-            description: 'Manage approval workflows and business processes'
-        });
-    }
-    
-    if (permissions.includes('invoice.settings')) {
-        settings.push({
-            name: 'Financial Process Configuration', 
-            icon: <PencilIcon className="w-5 h-5" />, 
-            route: 'admin.settings.invoice',
-            category: 'business-process',
-            priority: 15,
-            description: 'Configure invoicing and financial processes'
-        });
-    }
-    
-    if (permissions.includes('salary.settings')) {
-        settings.push({
-            name: 'Compensation & Benefits Management', 
-            icon: <CurrencyDollarIcon className="w-5 h-5" />, 
-            route: 'admin.settings.salary',
-            category: 'business-process',
-            priority: 16,
-            description: 'Manage payroll and compensation structures'
-        });
-    }
-    
-    // System Administration
-    if (permissions.includes('system.settings')) {
-        settings.push({
-            name: 'System Architecture Configuration', 
-            icon: <Cog8ToothIcon className="w-5 h-5" />, 
-            route: 'admin.settings.system',
-            category: 'system-administration',
-            priority: 17,
-            description: 'Advanced system configuration and maintenance'
-        });
-    }
-    
-    if (permissions.includes('leave-settings.view')) {
-        settings.push({
-            name: 'Policy Framework Management', 
-            icon: <WrenchScrewdriverIcon className="w-5 h-5" />, 
-            route: 'admin.settings.leave-types',
-            category: 'system-administration',
-            priority: 18,
-            description: 'Define and manage organizational policies'
-        });
-    }
-    
-    if (permissions.includes('system.settings')) {
-        settings.push({
-            name: 'Automated Process Management', 
-            icon: <RocketLaunchIcon className="w-5 h-5" />, 
-            route: 'admin.settings.cron',
-            category: 'system-administration',
-            priority: 19,
-            description: 'Configure automated tasks and scheduled operations'
-        });
-    }
-    
-    // Personal Security Settings (always available to authenticated users)
-    settings.push({
-        name: 'Personal Security Settings', 
-        icon: <LockClosedIcon className="w-5 h-5" />, 
-        route: 'profile.password',
-        category: 'personal-security',
-        priority: 20,
-        description: 'Update personal password and security preferences'
-    });
-    
+    // if (permissions.includes('audit.view')) {
+    //     settings.push({
+    //         name: 'Security Audit & Compliance', 
+    //         icon: <ShieldCheckIcon className="w-5 h-5" />, 
+    //         route: 'admin.audit.index',
+    //         category: 'security',
+    //         priority: 7,
+    //         description: 'View audit trails and compliance reports'
+    //     });
+    // }
+    // // 4. Services
+    // if (permissions.includes('email.settings')) {
+    //     settings.push({
+    //         name: 'Communication Services', 
+    //         icon: <AtSymbolIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.email',
+    //         category: 'services',
+    //         priority: 8,
+    //         description: 'Configure email templates and communication services'
+    //     });
+    // }
+    // if (permissions.includes('notification.settings')) {
+    //     settings.push({
+    //         name: 'Notification Management', 
+    //         icon: <BellIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.notifications',
+    //         category: 'services',
+    //         priority: 9,
+    //         description: 'Manage notification preferences and delivery channels'
+    //     });
+    // }
+    // if (permissions.includes('settings.view')) {
+    //     settings.push({
+    //         name: 'Internal Messaging System', 
+    //         icon: <ChatBubbleLeftRightIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.toxbox',
+    //         category: 'services',
+    //         priority: 10,
+    //         description: 'Configure internal communication and messaging'
+    //     });
+    // }
+    // // 5. Interface
+    // if (permissions.includes('theme.settings')) {
+    //     settings.push({
+    //         name: 'User Interface & Branding', 
+    //         icon: <PhotoIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.theme',
+    //         category: 'interface',
+    //         priority: 11,
+    //         description: 'Customize application appearance and corporate branding'
+    //     });
+    // }
+    // if (permissions.includes('localization.settings')) {
+    //     settings.push({
+    //         name: 'Regional & Localization Settings', 
+    //         icon: <ClockIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.localization',
+    //         category: 'interface',
+    //         priority: 12,
+    //         description: 'Configure language, timezone, and regional preferences'
+    //     });
+    // }
+    // // 6. Business Process
+    // if (permissions.includes('performance.settings')) {
+    //     settings.push({
+    //         name: 'Performance Management Configuration', 
+    //         icon: <ChartBarIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.performance',
+    //         category: 'business-process',
+    //         priority: 13,
+    //         description: 'Configure performance evaluation and review processes'
+    //     });
+    // }
+    // if (permissions.includes('approval.settings')) {
+    //     settings.push({
+    //         name: 'Workflow & Approval Management', 
+    //         icon: <HandThumbUpIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.approval',
+    //         category: 'business-process',
+    //         priority: 14,
+    //         description: 'Manage approval workflows and business processes'
+    //     });
+    // }
+    // if (permissions.includes('invoice.settings')) {
+    //     settings.push({
+    //         name: 'Financial Process Configuration', 
+    //         icon: <PencilIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.invoice',
+    //         category: 'business-process',
+    //         priority: 15,
+    //         description: 'Configure invoicing and financial processes'
+    //     });
+    // }
+    // if (permissions.includes('salary.settings')) {
+    //     settings.push({
+    //         name: 'Compensation & Benefits Management', 
+    //         icon: <CurrencyDollarIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.salary',
+    //         category: 'business-process',
+    //         priority: 16,
+    //         description: 'Manage payroll and compensation structures'
+    //     });
+    // }
+    // // 7. System Administration
+    // if (permissions.includes('system.settings')) {
+    //     settings.push({
+    //         name: 'System Architecture Configuration', 
+    //         icon: <Cog8ToothIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.system',
+    //         category: 'system-administration',
+    //         priority: 17,
+    //         description: 'Advanced system configuration and maintenance'
+    //     });
+    // }
+    // if (permissions.includes('leave-settings.view')) {
+    //     settings.push({
+    //         name: 'Policy Framework Management', 
+    //         icon: <WrenchScrewdriverIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.leave-types',
+    //         category: 'system-administration',
+    //         priority: 18,
+    //         description: 'Define and manage organizational policies'
+    //     });
+    // }
+    // if (permissions.includes('system.settings')) {
+    //     settings.push({
+    //         name: 'Automated Process Management', 
+    //         icon: <RocketLaunchIcon className="w-5 h-5" />, 
+    //         route: 'admin.settings.cron',
+    //         category: 'system-administration',
+    //         priority: 19,
+    //         description: 'Configure automated tasks and scheduled operations'
+    //     });
+    // }
+    // // 8. Personal Security
+    // settings.push({
+    //     name: 'Personal Security Settings', 
+    //     icon: <LockClosedIcon className="w-5 h-5" />, 
+    //     route: 'profile.password',
+    //     category: 'personal-security',
+    //     priority: 20,
+    //     description: 'Update personal password and security preferences'
+    // });
     return settings.sort((a, b) => a.priority - b.priority);
 };
 

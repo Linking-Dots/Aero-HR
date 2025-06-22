@@ -18,6 +18,7 @@ import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
 
 
+
 // Add this hook in your main App component or create a separate component
 const useAppLoader = () => {
     useEffect(() => {
@@ -37,7 +38,7 @@ function App({ children }) {
     useAppLoader();
     const { auth, url } = usePage().props;
 
-    const permissions = auth.permissions;    const [sideBarOpen, setSideBarOpen] = useState(() => {
+    const permissions = auth?.permissions || [];const [sideBarOpen, setSideBarOpen] = useState(() => {
         // Load sidebar state from localStorage
         const saved = localStorage.getItem('sidebar-open');
         return saved !== null ? JSON.parse(saved) : false;
@@ -67,7 +68,7 @@ function App({ children }) {
                               url.includes('settings') || 
                               url === '/settings';
         
-        return isSettingsPage ? getSettingsPages(permissions) : getPages(permissions);
+        return isSettingsPage ? getSettingsPages(permissions, auth) : getPages(permissions, auth);
     }, [url, permissions]);
 
     // Theme and media query
@@ -122,6 +123,7 @@ function App({ children }) {
     }, []);
 
     return (
+        
         <ThemeProvider theme={theme}>
             <ThemeSettingDrawer
                 toggleThemeColor={toggleThemeColor}
