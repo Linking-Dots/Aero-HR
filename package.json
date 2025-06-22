@@ -78,6 +78,7 @@
           "react-preloaders": "^3.0.3",
           "react-toastify": "^10.0.5",
           "recharts": "^2.15.3",
+          "rollup": "^4.44.0",
           "xlsx": "^0.18.5"
      }
 }
