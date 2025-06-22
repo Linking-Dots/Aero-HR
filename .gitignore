@@ -60,11 +60,9 @@ coverage/
 .nyc_output
 .phpunit.result.cache
 
-# Build outputs
-dist/
-build/
-public/mix-manifest.json
+
 
 # Temporary files
 tmp/
 temp/
+.idx/
