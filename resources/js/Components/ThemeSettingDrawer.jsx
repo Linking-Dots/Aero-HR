@@ -43,17 +43,38 @@ const ThemeSettingDrawer = ({
   const [selectedBackground, setSelectedBackground] = useState('solid');
   const [selectedFont, setSelectedFont] = useState('primary');
 
-  // Background pattern options
+  // Glassmorphism-inspired background pattern options
   const backgroundOptions = [
-    { id: 'solid', name: 'Solid Color', description: 'Clean solid background' },
-    { id: 'gradient', name: 'Gradient', description: 'Subtle themed gradient' },
-    { id: 'pattern-1', name: 'Abstract', description: 'Modern abstract pattern' },
-    { id: 'pattern-2', name: 'Dots', description: 'Minimal dot pattern' },
-    { id: 'pattern-3', name: 'Geometric', description: 'Geometric gradient' },
-    { id: 'pattern-4', name: 'Radial', description: 'Radial gradient circles' },
-    { id: 'pattern-5', name: 'Subtle', description: 'Very subtle pattern' },
-    { id: 'mesh', name: 'Mesh Grid', description: 'Clean mesh pattern' },
-    { id: 'waves', name: 'Waves', description: 'Flowing wave pattern' }
+    {
+      id: 'pattern-glass-1',
+      name: 'Abstract Blobs',
+      description: 'Colorful abstract blobs with glass overlay',
+      preview: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+    },
+    {
+      id: 'pattern-glass-2',
+      name: 'Soft Mesh',
+      description: 'Soft mesh gradient with glass effect',
+      preview: 'https://www.transparenttextures.com/patterns/cubes.png',
+    },
+    {
+      id: 'pattern-glass-3',
+      name: 'Vibrant Waves',
+      description: 'Vibrant abstract waves',
+      preview: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
+    },
+    {
+      id: 'pattern-glass-4',
+      name: 'Colorful Mesh',
+      description: 'Colorful glassy mesh gradient',
+      preview: 'https://www.transparenttextures.com/patterns/diamond-upholstery.png',
+    },
+    {
+      id: 'pattern-glass-5',
+      name: 'Aurora Glass',
+      description: 'Aurora glass effect',
+      preview: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=400&q=80',
+    },
   ];
 
   // Font family options
