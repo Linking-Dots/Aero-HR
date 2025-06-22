@@ -191,3 +191,54 @@ body {
     box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
     outline-color var(--theme-transition-fast) var(--theme-transition-easing);
 }
+
+/* Glassmorphism Abstract Backgrounds - Curated for Aero-HR */
+
+body {
+  /* Default: subtle frosted glass gradient */
+  background: linear-gradient(135deg, rgba(14,165,233,0.18) 0%, rgba(2,132,199,0.12) 100%),
+    linear-gradient(120deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
+  background-blend-mode: lighten, normal;
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+[data-background="pattern-glass-1"] body {
+  /* Abstract colorful blobs with glass overlay */
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+    linear-gradient(120deg, rgba(14,165,233,0.22) 0%, rgba(2,132,199,0.14) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+[data-background="pattern-glass-2"] body {
+  /* Soft mesh gradient with glass effect */
+  background: url('https://www.transparenttextures.com/patterns/cubes.png'),
+    linear-gradient(135deg, rgba(255,0,150,0.12) 0%, rgba(0,204,255,0.18) 100%);
+  background-blend-mode: overlay, lighten;
+  background-size: cover;
+}
+
+[data-background="pattern-glass-3"] body {
+  /* Vibrant abstract waves */
+  background: url('https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+    linear-gradient(120deg, rgba(255,255,255,0.5) 0%, rgba(14,165,233,0.12) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+[data-background="pattern-glass-4"] body {
+  /* Colorful glassy mesh gradient */
+  background: linear-gradient(120deg, rgba(0,204,255,0.18) 0%, rgba(255,0,150,0.12) 100%),
+    url('https://www.transparenttextures.com/patterns/diamond-upholstery.png');
+  background-blend-mode: overlay, lighten;
+  background-size: cover;
+}
+
+[data-background="pattern-glass-5"] body {
+  /* Aurora glass effect */
+  background: url('https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+    linear-gradient(120deg, rgba(0,204,255,0.10) 0%, rgba(255,0,150,0.10) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+/* All backgrounds are designed to complement glassmorphism UI and look great with frosted glass cards. */

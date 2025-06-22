@@ -103,7 +103,7 @@ const Header = React.memo(({
   const MobileHeader = () => (
     <Box sx={{ p: 2 }}>
       <Grow in>
-        <GlassCard className="shadow-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
+        <GlassCard>
           <Navbar
             shouldHideOnScroll
             maxWidth="full"
