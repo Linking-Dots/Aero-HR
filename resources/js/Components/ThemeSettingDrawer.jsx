@@ -39,10 +39,6 @@ const ThemeSettingDrawer = ({
 }) => {
   const theme = useTheme();
   
-  // Local state for background and font options
-  const [selectedBackground, setSelectedBackground] = useState('solid');
-  const [selectedFont, setSelectedFont] = useState('primary');
-
   // Glassmorphism-inspired background pattern options
   const backgroundOptions = [
     {
@@ -85,6 +81,14 @@ const ThemeSettingDrawer = ({
     { id: 'serif', name: 'Playfair Display', description: 'Elegant serif font', family: 'var(--font-serif)' }
   ];
   
+  // Set default to first option for background and font
+  const [selectedBackground, setSelectedBackground] = useState(() => {
+    return localStorage.getItem('aero-hr-background') || backgroundOptions[0].id;
+  });
+  const [selectedFont, setSelectedFont] = useState(() => {
+    return localStorage.getItem('aero-hr-font') || fontOptions[0].id;
+  });
+
   // Apply theme to document root when theme changes
   useEffect(() => {
     applyThemeToRoot(themeColor, darkMode);
@@ -105,10 +109,10 @@ const ThemeSettingDrawer = ({
 
   // Load saved preferences on mount
   useEffect(() => {
-    const savedBackground = localStorage.getItem('aero-hr-background') || 'solid';
-    const savedFont = localStorage.getItem('aero-hr-font') || 'primary';
-    setSelectedBackground(savedBackground);
-    setSelectedFont(savedFont);
+    const savedBackground = localStorage.getItem('aero-hr-background');
+    const savedFont = localStorage.getItem('aero-hr-font');
+    setSelectedBackground(savedBackground || backgroundOptions[0].id);
+    setSelectedFont(savedFont || fontOptions[0].id);
   }, []);
 
   // Save preferences when changed
@@ -332,76 +336,38 @@ const ThemeSettingDrawer = ({
               <WallpaperIcon sx={{ fontSize: 16 }} />
               Background Style
             </Typography>
-            
             <Card className="bg-white/5 backdrop-blur-md border border-white/10">
               <CardBody className="p-4">
-                <FormControl component="fieldset" sx={{ width: '100%' }}>
-                  <RadioGroup
-                    value={selectedBackground}
-                    onChange={(e) => setSelectedBackground(e.target.value)}
-                    sx={{ gap: 1 }}
-                  >
-                    {backgroundOptions.map((bg) => (
-                      <FormControlLabel
-                        key={bg.id}
-                        value={bg.id}
-                        control={
-                          <Radio 
-                            sx={{
-                              color: getCurrentTheme().primary,
-                              '&.Mui-checked': {
-                                color: getCurrentTheme().primary,
-                              },
-                              '& .MuiSvgIcon-root': {
-                                fontSize: 18,
-                              }
-                            }}
-                          />
-                        }
-                        label={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                            {/* Background Preview */}
-                            <Box sx={{
-                              width: 32,
-                              height: 20,
-                              borderRadius: 1,
-                              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'}`,
-                              overflow: 'hidden',
-                              position: 'relative',
-                              backgroundColor: bg.id === 'solid' ? 'var(--bg-color)' : 'transparent',
-                              backgroundImage: 
-                                bg.id === 'gradient' ? `linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.1), rgba(var(--theme-secondary-rgb), 0.1))` :
-                                bg.id === 'pattern-1' ? `var(--bg-pattern-1)` :
-                                bg.id === 'pattern-2' ? `var(--bg-pattern-2)` :
-                                bg.id === 'pattern-3' ? `var(--bg-pattern-3)` :
-                                bg.id === 'pattern-4' ? `var(--bg-pattern-4)` :
-                                bg.id === 'pattern-5' ? `var(--bg-pattern-5)` :
-                                bg.id === 'mesh' ? `var(--bg-pattern-mesh)` :
-                                bg.id === 'waves' ? `var(--bg-pattern-waves)` : 'none',
-                              backgroundSize: bg.id === 'waves' ? 'cover' : bg.id.includes('pattern') ? '50px 50px' : 'cover',
-                            }} />
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                                {bg.name}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                                {bg.description}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 1,
-                          borderRadius: 1,
-                          '&:hover': {
-                            backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
-                          }
-                        }}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                  {backgroundOptions.map((bg) => (
+                    <Box
+                      key={bg.id}
+                      onClick={() => setSelectedBackground(bg.id)}
+                      sx={{
+                        width: 56,
+                        height: 40,
+                        borderRadius: 2,
+                        border: selectedBackground === bg.id
+                          ? `2px solid ${getCurrentTheme().primary}`
+                          : `1px solid ${darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'}`,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        boxShadow: selectedBackground === bg.id ? `0 0 0 2px ${getCurrentTheme().primary}40` : undefined,
+                        position: 'relative',
+                        transition: 'all 0.2s',
+                        m: 0.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: `url(${bg.preview}) center/cover no-repeat`
+                      }}
+                    >
+                      {selectedBackground === bg.id && (
+                        <CheckIcon sx={{ position: 'absolute', top: 4, right: 4, color: 'white', fontSize: 18, zIndex: 2, background: `${getCurrentTheme().primary}99`, borderRadius: '50%' }} />
+                      )}
+                    </Box>
+                  ))}
+                </Box>
               </CardBody>
             </Card>
           </Box>
