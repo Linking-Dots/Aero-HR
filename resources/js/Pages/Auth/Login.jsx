@@ -31,6 +31,7 @@ import App from '@/Layouts/App.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 import { Input, Button } from "@heroui/react";
 import { Link as NextLink } from "@heroui/react";
+import { ensureCsrfCookie } from '@/utils/csrf';
 
 // Constants following ISO standards
 const FORM_CONFIG = {
@@ -134,6 +135,8 @@ const Login = () => {
         setErrors({});
 
         try {
+            await ensureCsrfCookie();
+
             await router.post('/login', {
                 email: formState.email.trim(),
                 password: formState.password

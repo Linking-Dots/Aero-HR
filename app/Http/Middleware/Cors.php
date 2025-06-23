@@ -15,9 +15,21 @@ class Cors
      */
     public function handle($request, Closure $next)
     {
-        return $next($request)
-            ->header('Access-Control-Allow-Origin', '*') // Or specific origin(s)
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        $response = $next($request);
+        $origin = $request->headers->get('Origin') ?? '*';
+        // Set allowed origins (replace with your domain in production)
+        $allowedOrigins = [
+            'https://yourdomain.com', // <-- Replace with your actual domain
+            'https://www.yourdomain.com',
+            // Add more if needed
+        ];
+        if (in_array($origin, $allowedOrigins)) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        }
+        // Always set credentials and allowed headers
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
+        return $response;
     }
 }
