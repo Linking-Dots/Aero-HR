@@ -17,18 +17,15 @@ class AttendanceSetting extends Model
         'late_mark_after',
         'early_leave_before',
         'overtime_after',
-     
-
-  
         'weekend_days',
     ];
 
     protected $casts = [
-      
+
         'weekend_days' => 'array',
-        'office_start_time' => 'datetime:H:i',
-        'office_end_time' => 'datetime:H:i',
-      
+        'office_start_time' => 'date:H:i',
+        'office_end_time' => 'date:H:i',
+
     ];
 
     // Add this method to handle default values
@@ -42,6 +39,4 @@ class AttendanceSetting extends Model
             }
         });
     }
-
-   
 }

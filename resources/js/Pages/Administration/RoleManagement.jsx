@@ -69,7 +69,7 @@ const RoleManagement = (props) => {
     const canManageSuperAdmin = !!props.can_manage_super_admin;
     const title = props.title;
 
-    console.log('RoleManagement Props:', {
+    console.log('RoleManagement Props Has:', {
         roles: initialRoles,
         permissions: initialPermissions,
         permissionsGrouped,

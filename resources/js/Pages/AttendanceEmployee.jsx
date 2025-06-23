@@ -113,6 +113,7 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                     // userId is automatically determined from auth in backend
                 }
             });
+            console.log('Monthly Stats Response:', statsResponse.data);
 
             if (statsResponse.data.success) {
                 setAttendanceStats(statsResponse.data.data);

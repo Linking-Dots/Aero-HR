@@ -93,6 +93,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             });
          
             if (response.status === 200) {
+                console.log(response)
                 setAttendances(response.data.attendances || []);
                 setTotalRows(response.data.total || 0);
                 setLastPage(response.data.last_page || 1);
@@ -499,7 +500,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             const headerData = [
                 [title], // Row 1: Title
                 [`Generated on: ${new Date().toLocaleString('en-US')}`], // Row 2: Generated date
-                [`Total Employees: ${combinedData.length} (Present: ${attendances.length}, Absent: ${filteredAbsentUsers.length})`], // Row 3: Total count
+                [`Total Employees: ${combinedData.length} (Present: ${totalRows}, Absent: ${filteredAbsentUsers.length})`], // Row 3: Total count
                 [], // Row 4: Empty row
                 // Row 5: Column headers
                 ['No.', 'Date', 'Employee Name', 'Employee ID', 'Designation', 'Phone', 'Clock In', 'Clock Out', 'Work Hours', 'Total Punches', 'Complete Punches', 'Status', 'Remarks']
@@ -626,7 +627,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString('en-US')}`, 14, 35);
-            doc.text(`Total Employees: ${attendances.length + filteredAbsentUsers.length} (Present: ${attendances.length}, Absent: ${filteredAbsentUsers.length})`, 14, 42);
+            doc.text(`Total Employees: ${attendances.length + filteredAbsentUsers.length} (Present: ${totalRows}, Absent: ${filteredAbsentUsers.length})`, 14, 42);
 
             // Prepare table data - combine present and absent users
             const tableData = [];
@@ -1000,7 +1001,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                     <div className="flex items-center gap-2">
                                                         <CheckCircleIcon className="w-4 h-4 text-success" />
                                                         <Typography variant="caption" color="textSecondary">
-                                                            Present: {attendances.length}
+                                                            Present: {totalRows}
                                                         </Typography>
                                                     </div>
                                                     {canViewAllAttendance && (
@@ -1014,7 +1015,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                     <div className="flex items-center gap-2">
                                                         <UserGroupIcon className="w-4 h-4 text-primary" />
                                                         <Typography variant="caption" color="textSecondary">
-                                                            Total: {attendances.length + absentUsers.length}
+                                                            Total: {totalRows + absentUsers.length}
                                                         </Typography>
                                                     </div>
                                                 </div>

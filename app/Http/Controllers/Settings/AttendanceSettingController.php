@@ -25,11 +25,18 @@ class AttendanceSettingController extends Controller
 
     public function updateSettings(Request $request)
     {
+        // Validate the request data
         $data = $request->validate([
             'office_start_time' => 'required',
             'office_end_time' => 'required',
-            // ... add all other validation rules as needed
+            'break_time_duration' => 'required|integer|min:0',
+            'late_mark_after' => 'required|integer|min:0',
+            'early_leave_before' => 'required|integer|min:0',
+            'overtime_after' => 'required|integer|min:0',
+            'weekend_days' => 'array',
+            'weekend_days.*' => 'string|in:saturday,sunday,monday,tuesday,wednesday,thursday,friday',
         ]);
+
         $settings = AttendanceSetting::first();
         if (!$settings) {
             $settings = AttendanceSetting::create($data);
@@ -66,7 +73,7 @@ class AttendanceSettingController extends Controller
     public function updateType(Request $request, $id)
     {
         $type = AttendanceType::findOrFail($id);
-        
+
         // Check if only config is being updated (for waypoint updates)
         if ($request->has('config') && count($request->all()) === 1) {
             // Only update config field
@@ -77,17 +84,17 @@ class AttendanceSettingController extends Controller
                 'config.waypoints.*.lat' => 'required_with:config.waypoints|numeric|between:-90,90',
                 'config.waypoints.*.lng' => 'required_with:config.waypoints|numeric|between:-180,180',
             ]);
-            
+
             $type->update([
                 'config' => $data['config']
             ]);
-            
+
             return response()->json([
                 'message' => 'Attendance type config updated successfully.',
                 'attendanceType' => $type->fresh(),
             ]);
         }
-        
+
         // Full update for all fields
         $data = $request->validate([
             'name' => 'sometimes|required|string',
@@ -103,7 +110,7 @@ class AttendanceSettingController extends Controller
             'priority' => 'sometimes|integer',
             'required_permissions' => 'nullable|array',
         ]);
-        
+
         // Ensure config and required_permissions are arrays
         if (isset($data['config'])) {
             $data['config'] = $data['config'] ?? [];
@@ -111,9 +118,9 @@ class AttendanceSettingController extends Controller
         if (isset($data['required_permissions'])) {
             $data['required_permissions'] = $data['required_permissions'] ?? [];
         }
-        
+
         $type->update($data);
-        
+
         return response()->json([
             'message' => 'Attendance type updated successfully.',
             'attendanceType' => $type->fresh(),
