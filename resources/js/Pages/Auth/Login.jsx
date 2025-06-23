@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Box,
     CardContent,
@@ -31,7 +31,6 @@ import App from '@/Layouts/App.jsx';
 import GlassCard from "@/Components/GlassCard.jsx";
 import { Input, Button } from "@heroui/react";
 import { Link as NextLink } from "@heroui/react";
-import { ensureCsrfCookie } from '@/utils/csrf';
 
 // Constants following ISO standards
 const FORM_CONFIG = {
@@ -57,14 +56,12 @@ const VALIDATION_MESSAGES = {
 const Login = () => {
     const theme = useTheme();
 
-    // State management following React best practices
-    const [formState, setFormState] = useState({
+    // Form handling with Inertia's useForm
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         email: '',
         password: '',
-        showPassword: false,
-        processing: false
     });
-    const [errors, setErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     // Component lifecycle
@@ -87,8 +84,8 @@ const Login = () => {
 
     // Memoized form validation
     const formValidation = useMemo(() => {
-        const emailError = validateEmail(formState.email);
-        const passwordError = validatePassword(formState.password);
+        const emailError = validateEmail(data.email);
+        const passwordError = validatePassword(data.password);
         
         return {
             isValid: !emailError && !passwordError,
@@ -97,66 +94,35 @@ const Login = () => {
                 password: passwordError
             }
         };
-    }, [formState.email, formState.password, validateEmail, validatePassword]);
+    }, [data.email, data.password, validateEmail, validatePassword]);
 
     // Form handlers with proper error handling
     const handleInputChange = useCallback((field, value) => {
-        setFormState(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setData(field, value);
 
         // Clear specific field error when user starts typing
         if (errors[field]) {
-            setErrors(prev => ({
-                ...prev,
-                [field]: undefined
-            }));
+            clearErrors(field);
         }
-    }, [errors]);
+    }, [errors, setData, clearErrors]);
 
     const togglePasswordVisibility = useCallback(() => {
-        setFormState(prev => ({
-            ...prev,
-            showPassword: !prev.showPassword
-        }));
+        setShowPassword((prev) => !prev);
     }, []);
 
-    const handleSubmit = useCallback(async (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         
         // Client-side validation
         if (!formValidation.isValid) {
-            setErrors(formValidation.errors);
             return;
         }
 
-        setFormState(prev => ({ ...prev, processing: true }));
-        setErrors({});
-
-        try {
-            await ensureCsrfCookie();
-
-            await router.post('/login', {
-                email: formState.email.trim(),
-                password: formState.password
-            }, {
-                preserveScroll: true,
-                onError: (serverErrors) => {
-                    setErrors(serverErrors);
-                },
-                onFinish: () => {
-                    setFormState(prev => ({ ...prev, processing: false }));
-                }
-            });
-        } catch (error) {
-            console.error('Login error:', error);
-            setErrors({ 
-                general: VALIDATION_MESSAGES.NETWORK_ERROR 
-            });
-            setFormState(prev => ({ ...prev, processing: false }));
-        }
-    }, [formState.email, formState.password, formValidation.isValid]);
+        post('/login', {
+            preserveScroll: true,
+            onSuccess: () => reset('password'),
+        });
+    }, [post, reset, formValidation.isValid]);
 
     const handleForgotPasswordClick = useCallback(() => {
         router.get(route('password.request'));
@@ -326,6 +292,7 @@ const Login = () => {
 
                                     {/* Login Form */}
                                     <form onSubmit={handleSubmit} noValidate autoComplete="on">
+                                        
                                         {/* Email Input */}
                                         <Box sx={{ mb: 3 }}>
                                             <Input
@@ -335,15 +302,15 @@ const Login = () => {
                                                 variant="underlined"
                                                 id="email"
                                                 name="email"
-                                                value={formState.email}
+                                                value={data.email}
                                                 onChange={(e) => handleInputChange('email', e.target.value)}
                                                 onClear={() => handleInputChange('email', '')}
                                                 required
                                                 autoFocus
                                                 autoComplete="email"
                                                 fullWidth
-                                                isInvalid={!!(errors.email || formValidation.errors.email)}
-                                                errorMessage={errors.email || formValidation.errors.email}
+                                                isInvalid={!!errors.email}
+                                                errorMessage={errors.email}
                                                 placeholder="Enter your email address"
                                                 labelPlacement="outside"
                                                 startContent={
@@ -393,18 +360,18 @@ const Login = () => {
                                                             }
                                                         }}
                                                     >
-                                                        {formState.showPassword ? 
+                                                        {showPassword ? 
                                                             <VisibilityOff sx={{ fontSize: 18 }} /> : 
                                                             <Visibility sx={{ fontSize: 18 }} />
                                                         }
                                                     </IconButton>
                                                 }
-                                                type={formState.showPassword ? "text" : "password"}
-                                                value={formState.password}
+                                                type={showPassword ? "text" : "password"}
+                                                value={data.password}
                                                 onChange={(e) => handleInputChange('password', e.target.value)}
                                                 required
-                                                isInvalid={!!(errors.password || formValidation.errors.password)}
-                                                errorMessage={errors.password || formValidation.errors.password}
+                                                isInvalid={!!errors.password}
+                                                errorMessage={errors.password}
                                                 labelPlacement="outside"
                                                 classNames={{
                                                     input: "text-sm",
@@ -426,13 +393,13 @@ const Login = () => {
                                                 fullWidth
                                                 size="lg"
                                                 type="submit"
-                                                isLoading={formState.processing}
-                                                disabled={formState.processing}
-                                                startContent={!formState.processing && <LoginIcon />}
+                                                isLoading={processing}
+                                                disabled={processing}
+                                                startContent={!processing && <LoginIcon />}
                                                 className="bg-gradient-to-r from-primary to-secondary text-white font-semibold"
                                                 style={{
                                                     height: '48px',
-                                                    background: formState.processing ? 
+                                                    background: processing ? 
                                                         alpha(theme.palette.action.disabled, 0.12) : 
                                                         `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                                     backdropFilter: 'blur(16px) saturate(200%)',
@@ -440,7 +407,7 @@ const Login = () => {
                                                     boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.3)}`
                                                 }}
                                             >
-                                                {formState.processing ? 'Signing In...' : 'Sign In'}
+                                                {processing ? 'Signing In...' : 'Sign In'}
                                             </Button>
                                         </Box>
 
