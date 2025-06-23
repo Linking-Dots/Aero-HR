@@ -96,7 +96,7 @@ export default function Dashboard({ auth }) {
                     }
                 >                    <Grid container>
                         {/* Punch Status Card - for employees and self-service users */}
-                        {hasAnyPermission(['attendance.own.punch', 'attendance.own.view']) &&
+                        {hasPermission(['attendance.own.punch', 'attendance.own.view']) &&
                             <Grid item xs={12} md={6}>
                                 <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
                             </Grid>
