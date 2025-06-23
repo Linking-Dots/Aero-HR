@@ -25,6 +25,10 @@ class AttendanceSetting extends Model
         'weekend_days' => 'array',
         'office_start_time' => 'date:H:i',
         'office_end_time' => 'date:H:i',
+        'late_mark_after' => 'integer',
+        'early_leave_before' => 'integer',
+        'overtime_after' => 'integer',
+        'break_time_duration' => 'integer',
 
     ];
 
