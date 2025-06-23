@@ -426,7 +426,8 @@ const RoleManagement = ({
     const openDeleteConfirmation = (role) => {
         setRoleToDelete(role);
         setConfirmDeleteOpen(true);
-    };    return (
+    };    
+    return (
         <>
             <Head title={title} />
             
@@ -548,400 +549,394 @@ const RoleManagement = ({
                 </Dialog>
             )}
 
-            <Box 
-                className="min-h-screen p-2 sm:p-4 md:p-6"
-                sx={{ 
-                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
-                }}
-            >
-                <Grow in timeout={800}>
-                    <div className="max-w-7xl mx-auto">                        <GlassCard>
-                            <PageHeader
-                                title="Role Management"
-                                subtitle="Manage roles, permissions, and access control"
-                                icon={<PresentationChartLineIcon className="w-8 h-8" />}
-                                variant="default"
-                                actionButtons={[
-                                    {
-                                        label: "Create Role",
-                                        icon: <PlusIcon className="w-4 h-4" />,
-                                        onPress: openModal,
-                                        className: "bg-gradient-to-r from-[rgba(var(--theme-primary-rgb),0.2)] to-[rgba(var(--theme-secondary-rgb),0.2)] hover:from-[rgba(var(--theme-primary-rgb),0.3)] hover:to-[rgba(var(--theme-secondary-rgb),0.3)] border border-[rgba(var(--theme-primary-rgb),0.3)]"
-                                    },
-                                    {
-                                        label: "Export",
-                                        icon: <DocumentArrowDownIcon className="w-4 h-4" />,
-                                        variant: "bordered",
-                                        className: "border-[rgba(var(--theme-success-rgb),0.3)] bg-[rgba(var(--theme-success-rgb),0.05)] hover:bg-[rgba(var(--theme-success-rgb),0.1)]"
-                                    }
-                                ]}
-                            >                                <div className="p-6">
-                                {/* Statistics Cards */}
-                                <StatsCards stats={statsData} />
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <Grow in>
+                    <GlassCard>
+                        <PageHeader
+                            title="Role Management"
+                            subtitle="Manage roles, permissions, and access control"
+                            icon={<PresentationChartLineIcon className="w-8 h-8" />}
+                            variant="default"
+                            actionButtons={[
+                                {
+                                    label: "Create Role",
+                                    icon: <PlusIcon className="w-4 h-4" />,
+                                    onPress: openModal,
+                                    className: "bg-gradient-to-r from-[rgba(var(--theme-primary-rgb),0.2)] to-[rgba(var(--theme-secondary-rgb),0.2)] hover:from-[rgba(var(--theme-primary-rgb),0.3)] hover:to-[rgba(var(--theme-secondary-rgb),0.3)] border border-[rgba(var(--theme-primary-rgb),0.3)]"
+                                },
+                                {
+                                    label: "Export",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
+                                    variant: "bordered",
+                                    className: "border-[rgba(var(--theme-success-rgb),0.3)] bg-[rgba(var(--theme-success-rgb),0.05)] hover:bg-[rgba(var(--theme-success-rgb),0.1)]"
+                                }
+                            ]}
+                        >                                <div className="p-6">
+                            {/* Statistics Cards */}
+                            <StatsCards stats={statsData} />
 
-                                {/* Filters Section */}
-                                <Fade in timeout={1200}>
-                                    <div className="mb-6">
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                                                <div className="w-full sm:flex-1">
-                                                    <Input
-                                                        label="Search Permissions"
-                                                        variant="bordered"
-                                                        placeholder="Search permissions by name or module..."
-                                                        value={searchQuery}
-                                                        onValueChange={handleSearchChange}
-                                                        startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
-                                                        classNames={{
-                                                            input: "bg-transparent",
-                                                            inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                        }}
-                                                        size={isMobile ? "sm" : "md"}
-                                                    />
-                                                </div>
-
-                                                <div className="flex gap-2 w-full sm:w-auto">
-                                                    <div className="flex-1 sm:min-w-[150px]">
-                                                        <select
-                                                            className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                                            value={moduleFilter}
-                                                            onChange={(e) => handleModuleFilterChange(e.target.value)}
-                                                        >
-                                                            <option value="all">All Modules</option>
-                                                            {modules.map(module => (
-                                                                <option key={module} value={module}>
-                                                                    {module}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
+                            {/* Filters Section */}
+                            <Fade in timeout={1200}>
+                                <div className="mb-6">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                                            <div className="w-full sm:flex-1">
+                                                <Input
+                                                    label="Search Permissions"
+                                                    variant="bordered"
+                                                    placeholder="Search permissions by name or module..."
+                                                    value={searchQuery}
+                                                    onValueChange={handleSearchChange}
+                                                    startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
+                                                    classNames={{
+                                                        input: "bg-transparent",
+                                                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                    }}
+                                                    size={isMobile ? "sm" : "md"}
+                                                />
                                             </div>
 
-                                            {/* Active Filters */}
-                                            {(searchQuery || moduleFilter !== 'all') && (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {searchQuery && (
-                                                        <Chip
-                                                            variant="flat"
-                                                            color="primary"
-                                                            size="sm"
-                                                            onClose={() => setSearchQuery('')}
-                                                        >
-                                                            Search: {searchQuery}
-                                                        </Chip>
-                                                    )}
-                                                    {moduleFilter !== 'all' && (
-                                                        <Chip
-                                                            variant="flat"
-                                                            color="secondary"
-                                                            size="sm"
-                                                            onClose={() => setModuleFilter('all')}
-                                                        >
-                                                            Module: {moduleFilter}
-                                                        </Chip>
-                                                    )}
+                                            <div className="flex gap-2 w-full sm:w-auto">
+                                                <div className="flex-1 sm:min-w-[150px]">
+                                                    <select
+                                                        className="w-full px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                        value={moduleFilter}
+                                                        onChange={(e) => handleModuleFilterChange(e.target.value)}
+                                                    >
+                                                        <option value="all">All Modules</option>
+                                                        {modules.map(module => (
+                                                            <option key={module} value={module}>
+                                                                {module}
+                                                            </option>
+                                                        ))}
+                                                    </select>
                                                 </div>
-                                            )}
+                                            </div>
+                                        </div>
+
+                                        {/* Active Filters */}
+                                        {(searchQuery || moduleFilter !== 'all') && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {searchQuery && (
+                                                    <Chip
+                                                        variant="flat"
+                                                        color="primary"
+                                                        size="sm"
+                                                        onClose={() => setSearchQuery('')}
+                                                    >
+                                                        Search: {searchQuery}
+                                                    </Chip>
+                                                )}
+                                                {moduleFilter !== 'all' && (
+                                                    <Chip
+                                                        variant="flat"
+                                                        color="secondary"
+                                                        size="sm"
+                                                        onClose={() => setModuleFilter('all')}
+                                                    >
+                                                        Module: {moduleFilter}
+                                                    </Chip>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </Fade>
+
+                            {/* Role and Permission Management Split Panel */}
+                            <Fade in timeout={1400}>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Roles Panel */}
+                                    <div className="lg:col-span-1">
+                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <Typography variant="h6" className="font-bold flex items-center gap-2">
+                                                    <UserGroupIcon className="w-5 h-5" />
+                                                    Roles ({roles.length})
+                                                </Typography>
+                                            </div>
+                                            
+                                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                                {roles.map((role) => (
+                                                    <div 
+                                                        key={role.id}
+                                                        className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                                                            activeRoleId === role.id 
+                                                                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/50' 
+                                                                : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                                        }`}
+                                                        onClick={() => handleRoleSelect(role.id)}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                                                                    activeRoleId === role.id 
+                                                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                                                                        : 'bg-gray-500'
+                                                                }`}>
+                                                                    {role.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <Typography variant="body2" className="font-medium">
+                                                                        {role.name}
+                                                                    </Typography>
+                                                                    <Typography variant="caption" color="textSecondary">
+                                                                        {getRolePermissions(role.id).length} permissions
+                                                                    </Typography>
+                                                                    {role.name === 'Super Administrator' && (
+                                                                        <Chip label="System" size="sm" className="ml-1" />
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {canManageRole(role) && (
+                                                                <div className="flex gap-1">
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            openEditDialog(role);
+                                                                        }}
+                                                                        className="text-gray-400 hover:text-blue-400"
+                                                                    >
+                                                                        <PencilSquareIcon className="w-4 h-4" />
+                                                                    </IconButton>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            openDeleteConfirmation(role);
+                                                                        }}
+                                                                        className="text-gray-400 hover:text-red-400"
+                                                                    >
+                                                                        <TrashIcon className="w-4 h-4" />
+                                                                    </IconButton>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </Fade>
 
-                                {/* Role and Permission Management Split Panel */}
-                                <Fade in timeout={1400}>
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* Roles Panel */}
-                                        <div className="lg:col-span-1">
-                                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <Typography variant="h6" className="font-bold flex items-center gap-2">
-                                                        <UserGroupIcon className="w-5 h-5" />
-                                                        Roles ({roles.length})
-                                                    </Typography>
-                                                </div>
-                                                
-                                                <div className="space-y-2 max-h-96 overflow-y-auto">
-                                                    {roles.map((role) => (
-                                                        <div 
-                                                            key={role.id}
-                                                            className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-                                                                activeRoleId === role.id 
-                                                                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/50' 
-                                                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                                                            }`}
-                                                            onClick={() => handleRoleSelect(role.id)}
-                                                        >
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                                                                        activeRoleId === role.id 
-                                                                            ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
-                                                                            : 'bg-gray-500'
-                                                                    }`}>
-                                                                        {role.name.charAt(0).toUpperCase()}
-                                                                    </div>
-                                                                    <div>
-                                                                        <Typography variant="body2" className="font-medium">
-                                                                            {role.name}
-                                                                        </Typography>
-                                                                        <Typography variant="caption" color="textSecondary">
-                                                                            {getRolePermissions(role.id).length} permissions
-                                                                        </Typography>
-                                                                        {role.name === 'Super Administrator' && (
-                                                                            <Chip label="System" size="sm" className="ml-1" />
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                {canManageRole(role) && (
-                                                                    <div className="flex gap-1">
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                openEditDialog(role);
-                                                                            }}
-                                                                            className="text-gray-400 hover:text-blue-400"
-                                                                        >
-                                                                            <PencilSquareIcon className="w-4 h-4" />
-                                                                        </IconButton>
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                openDeleteConfirmation(role);
-                                                                            }}
-                                                                            className="text-gray-400 hover:text-red-400"
-                                                                        >
-                                                                            <TrashIcon className="w-4 h-4" />
-                                                                        </IconButton>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
+                                    {/* Permissions Panel */}
+                                    <div className="lg:col-span-2">
+                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4">
+                                            {activeRole ? (
+                                                <>
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <Typography variant="h6" className="font-bold flex items-center gap-2">
+                                                            <KeyIcon className="w-5 h-5" />
+                                                            {activeRole.name} Permissions
+                                                        </Typography>
+                                                        <Chip 
+                                                            label={`${selectedPermissions.size} granted`}
+                                                            color="primary"
+                                                            variant="flat"
+                                                        />
+                                                    </div>                                                        <div className="max-h-96 overflow-y-auto space-y-3">
+                                                        {Object.entries(groupedPermissions).map(([module, moduleData]) => {
+                                                            const modulePermissions = moduleData.permissions;
+                                                            const grantedCount = modulePermissions.filter(perm => 
+                                                                roleHasPermission(activeRole.id, perm.name)
+                                                            ).length;
+                                                            const totalCount = modulePermissions.length;
+                                                            const hasAllPermissions = grantedCount === totalCount;
+                                                            const hasAnyPermissions = grantedCount > 0;
+                                                            const percentageGranted = totalCount > 0 ? Math.round((grantedCount / totalCount) * 100) : 0;
 
-                                        {/* Permissions Panel */}
-                                        <div className="lg:col-span-2">
-                                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4">
-                                                {activeRole ? (
-                                                    <>
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <Typography variant="h6" className="font-bold flex items-center gap-2">
-                                                                <KeyIcon className="w-5 h-5" />
-                                                                {activeRole.name} Permissions
-                                                            </Typography>
-                                                            <Chip 
-                                                                label={`${selectedPermissions.size} granted`}
-                                                                color="primary"
-                                                                variant="flat"
-                                                            />
-                                                        </div>                                                        <div className="max-h-96 overflow-y-auto space-y-3">
-                                                            {Object.entries(groupedPermissions).map(([module, moduleData]) => {
-                                                                const modulePermissions = moduleData.permissions;
-                                                                const grantedCount = modulePermissions.filter(perm => 
-                                                                    roleHasPermission(activeRole.id, perm.name)
-                                                                ).length;
-                                                                const totalCount = modulePermissions.length;
-                                                                const hasAllPermissions = grantedCount === totalCount;
-                                                                const hasAnyPermissions = grantedCount > 0;
-                                                                const percentageGranted = totalCount > 0 ? Math.round((grantedCount / totalCount) * 100) : 0;
-
-                                                                return (
-                                                                    <Accordion 
-                                                                        key={module}
-                                                                        sx={{
+                                                            return (
+                                                                <Accordion 
+                                                                    key={module}
+                                                                    sx={{
+                                                                        background: hasAnyPermissions 
+                                                                            ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(168, 85, 247, 0.15))' 
+                                                                            : 'rgba(255, 255, 255, 0.05)',
+                                                                        border: hasAnyPermissions 
+                                                                            ? '1px solid rgba(102, 126, 234, 0.3)' 
+                                                                            : '1px solid rgba(255, 255, 255, 0.1)',
+                                                                        borderRadius: '16px !important',
+                                                                        '&:before': { display: 'none' },
+                                                                        '&.Mui-expanded': {
                                                                             background: hasAnyPermissions 
-                                                                                ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(168, 85, 247, 0.15))' 
-                                                                                : 'rgba(255, 255, 255, 0.05)',
-                                                                            border: hasAnyPermissions 
-                                                                                ? '1px solid rgba(102, 126, 234, 0.3)' 
-                                                                                : '1px solid rgba(255, 255, 255, 0.1)',
-                                                                            borderRadius: '16px !important',
-                                                                            '&:before': { display: 'none' },
-                                                                            '&.Mui-expanded': {
-                                                                                background: hasAnyPermissions 
-                                                                                    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(168, 85, 247, 0.25))' 
-                                                                                    : 'rgba(255, 255, 255, 0.08)',
-                                                                                borderColor: hasAnyPermissions 
-                                                                                    ? 'rgba(102, 126, 234, 0.5)' 
-                                                                                    : 'rgba(255, 255, 255, 0.2)',
-                                                                            },
-                                                                            '&:hover': {
-                                                                                background: hasAnyPermissions 
-                                                                                    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(168, 85, 247, 0.2))' 
-                                                                                    : 'rgba(255, 255, 255, 0.08)',
+                                                                                ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(168, 85, 247, 0.25))' 
+                                                                                : 'rgba(255, 255, 255, 0.08)',
+                                                                            borderColor: hasAnyPermissions 
+                                                                                ? 'rgba(102, 126, 234, 0.5)' 
+                                                                                : 'rgba(255, 255, 255, 0.2)',
+                                                                        },
+                                                                        '&:hover': {
+                                                                            background: hasAnyPermissions 
+                                                                                ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(168, 85, 247, 0.2))' 
+                                                                                : 'rgba(255, 255, 255, 0.08)',
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <AccordionSummary
+                                                                        expandIcon={<ChevronDownIcon className="w-5 h-5 text-gray-400" />}
+                                                                        sx={{ 
+                                                                            borderRadius: '16px',
+                                                                            '&.Mui-expanded': { borderRadius: '16px 16px 0 0' },
+                                                                            minHeight: '64px',
+                                                                            '& .MuiAccordionSummary-content': {
+                                                                                margin: '12px 0',
+                                                                                alignItems: 'center'
                                                                             }
                                                                         }}
                                                                     >
-                                                                        <AccordionSummary
-                                                                            expandIcon={<ChevronDownIcon className="w-5 h-5 text-gray-400" />}
-                                                                            sx={{ 
-                                                                                borderRadius: '16px',
-                                                                                '&.Mui-expanded': { borderRadius: '16px 16px 0 0' },
-                                                                                minHeight: '64px',
-                                                                                '& .MuiAccordionSummary-content': {
-                                                                                    margin: '12px 0',
-                                                                                    alignItems: 'center'
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <div className="flex items-center justify-between w-full mr-4">
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                                                                                        hasAllPermissions 
-                                                                                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
-                                                                                            : hasAnyPermissions 
-                                                                                                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white' 
-                                                                                                : 'bg-gray-500/20 text-gray-400'
-                                                                                    }`}>
-                                                                                        {percentageGranted}%
-                                                                                    </div>                                                                        <div>
-                                                                                            <Typography variant="subtitle1" className="font-semibold text-white">
-                                                                                                {moduleData.name}
-                                                                                            </Typography>
-                                                                                            <Typography variant="caption" color="textSecondary" className="block">
-                                                                                                {moduleData.description}
-                                                                                            </Typography>
-                                                                                            <div className="flex items-center gap-2 mt-1">
-                                                                                                <Typography variant="caption" color="textSecondary">
-                                                                                                    {grantedCount} of {totalCount} permissions granted
-                                                                                                </Typography>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                </div>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <div className="text-right mr-2">
-                                                                                        <Typography variant="caption" color="textSecondary" className="block">
-                                                                                            Module Toggle
+                                                                        <div className="flex items-center justify-between w-full mr-4">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                                                                                    hasAllPermissions 
+                                                                                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                                                                                        : hasAnyPermissions 
+                                                                                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white' 
+                                                                                            : 'bg-gray-500/20 text-gray-400'
+                                                                                }`}>
+                                                                                    {percentageGranted}%
+                                                                                </div>                                                                        <div>
+                                                                                        <Typography variant="subtitle1" className="font-semibold text-white">
+                                                                                            {moduleData.name}
                                                                                         </Typography>
-                                                                                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                                            hasAllPermissions 
-                                                                                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                                                                                : hasAnyPermissions 
-                                                                                                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' 
-                                                                                                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                                                                                        }`}>
-                                                                                            {hasAllPermissions ? 'Full Access' : hasAnyPermissions ? 'Partial' : 'No Access'}
+                                                                                        <Typography variant="caption" color="textSecondary" className="block">
+                                                                                            {moduleData.description}
+                                                                                        </Typography>
+                                                                                        <div className="flex items-center gap-2 mt-1">
+                                                                                            <Typography variant="caption" color="textSecondary">
+                                                                                                {grantedCount} of {totalCount} permissions granted
+                                                                                            </Typography>
                                                                                         </div>
-                                                                                    </div>                                                                                    <Switch
-                                                                                        checked={hasAllPermissions}
-                                                                                        onChange={(e) => {
+                                                                                    </div>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="text-right mr-2">
+                                                                                    <Typography variant="caption" color="textSecondary" className="block">
+                                                                                        Module Toggle
+                                                                                    </Typography>
+                                                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                                        hasAllPermissions 
+                                                                                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                                                                            : hasAnyPermissions 
+                                                                                                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' 
+                                                                                                : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                                                    }`}>
+                                                                                        {hasAllPermissions ? 'Full Access' : hasAnyPermissions ? 'Partial' : 'No Access'}
+                                                                                    </div>
+                                                                                </div>                                                                                    <Switch
+                                                                                    checked={hasAllPermissions}
+                                                                                    onChange={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        toggleModulePermissions(module);
+                                                                                    }}
+                                                                                    disabled={isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin)}
+                                                                                    sx={{
+                                                                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                                                                            color: '#10b981',
+                                                                                            '&:hover': {
+                                                                                                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                                                                            },
+                                                                                        },
+                                                                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                                                                            backgroundColor: '#10b981',
+                                                                                        },
+                                                                                        '& .MuiSwitch-track': {
+                                                                                            backgroundColor: hasAnyPermissions ? '#f59e0b' : '#6b7280',
+                                                                                        }
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    </AccordionSummary>                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                            {modulePermissions.map((permission) => {
+                                                                                const isChecked = roleHasPermission(activeRole.id, permission.name);
+                                                                                const isDisabled = isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin);
+                                                                                
+                                                                                return (
+                                                                                    <div
+                                                                                        key={permission.id}
+                                                                                        className={`p-3 border rounded-xl transition-all duration-200 ${
+                                                                                            isDisabled 
+                                                                                                ? 'cursor-not-allowed opacity-50' 
+                                                                                                : 'cursor-pointer hover:bg-white/5'
+                                                                                        } ${
+                                                                                            isChecked 
+                                                                                                ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30' 
+                                                                                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                                                                        }`}
+                                                                                        onClick={(e) => {
+                                                                                            e.preventDefault();
                                                                                             e.stopPropagation();
-                                                                                            toggleModulePermissions(module);
-                                                                                        }}
-                                                                                        disabled={isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin)}
-                                                                                        sx={{
-                                                                                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                                                                                color: '#10b981',
-                                                                                                '&:hover': {
-                                                                                                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                                                                                                },
-                                                                                            },
-                                                                                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                                                                                backgroundColor: '#10b981',
-                                                                                            },
-                                                                                            '& .MuiSwitch-track': {
-                                                                                                backgroundColor: hasAnyPermissions ? '#f59e0b' : '#6b7280',
+                                                                                            if (!isDisabled) {
+                                                                                                togglePermission(permission.name);
                                                                                             }
                                                                                         }}
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                                                        </AccordionSummary>                                                                        <AccordionDetails sx={{ pt: 0, pb: 3, px: 3 }}>
-                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                                {modulePermissions.map((permission) => {
-                                                                                    const isChecked = roleHasPermission(activeRole.id, permission.name);
-                                                                                    const isDisabled = isLoading || (activeRole?.name === 'Super Administrator' && !canManageSuperAdmin);
-                                                                                    
-                                                                                    return (
-                                                                                        <div
-                                                                                            key={permission.id}
-                                                                                            className={`p-3 border rounded-xl transition-all duration-200 ${
-                                                                                                isDisabled 
-                                                                                                    ? 'cursor-not-allowed opacity-50' 
-                                                                                                    : 'cursor-pointer hover:bg-white/5'
-                                                                                            } ${
-                                                                                                isChecked 
-                                                                                                    ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30' 
-                                                                                                    : 'bg-white/5 border-white/10 hover:border-white/20'
-                                                                                            }`}
-                                                                                            onClick={(e) => {
-                                                                                                e.preventDefault();
-                                                                                                e.stopPropagation();
-                                                                                                if (!isDisabled) {
-                                                                                                    togglePermission(permission.name);
-                                                                                                }
-                                                                                            }}
-                                                                                        >
-                                                                                            <FormControlLabel
-                                                                                                control={
-                                                                                                    <Checkbox
-                                                                                                        checked={isChecked}
-                                                                                                        onChange={(e) => {
-                                                                                                            e.preventDefault();
-                                                                                                            e.stopPropagation();
-                                                                                                            if (!isDisabled) {
-                                                                                                                togglePermission(permission.name);
-                                                                                                            }
-                                                                                                        }}
-                                                                                                        disabled={isDisabled}
-                                                                                                        sx={{
-                                                                                                            color: isChecked ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
-                                                                                                            '&.Mui-checked': {
-                                                                                                                color: '#10b981',
-                                                                                                            },
-                                                                                                            '&:hover': {
-                                                                                                                backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                                                                                                            }
-                                                                                                        }}
-                                                                                                    />
-                                                                                                }
-                                                                                                label={                                                                                                    <div>
-                                                                                                        <Typography variant="body2" className={`font-medium ${
-                                                                                                            isChecked ? 'text-green-400' : 'text-white'
-                                                                                                        }`}>
-                                                                                                            {permission.display_name || permission.name}
-                                                                                                        </Typography>
-                                                                                                        <Typography variant="caption" className={`${
-                                                                                                            isChecked ? 'text-green-300/70' : 'text-gray-400'
-                                                                                                        }`}>
-                                                                                                            {permission.name}
-                                                                                                        </Typography>
-                                                                                                    </div>
-                                                                                                }
-                                                                                                className="m-0 w-full pointer-events-none"
-                                                                                            />
-                                                                                        </div>
-                                                                                    );
-                                                                                })}
-                                                                            </div>
-                                                                        </AccordionDetails>
-                                                                    </Accordion>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center h-48 text-center">
-                                                        <UserGroupIcon className="w-16 h-16 text-gray-400 mb-4" />
-                                                        <Typography variant="h6" color="textSecondary">
-                                                            Select a role to manage permissions
-                                                        </Typography>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            Choose a role from the left panel to view and edit its permissions                                                        </Typography>                                                    </div>
-                                                )}
-                                            </div>
+                                                                                    >
+                                                                                        <FormControlLabel
+                                                                                            control={
+                                                                                                <Checkbox
+                                                                                                    checked={isChecked}
+                                                                                                    onChange={(e) => {
+                                                                                                        e.preventDefault();
+                                                                                                        e.stopPropagation();
+                                                                                                        if (!isDisabled) {
+                                                                                                            togglePermission(permission.name);
+                                                                                                        }
+                                                                                                    }}
+                                                                                                    disabled={isDisabled}
+                                                                                                    sx={{
+                                                                                                        color: isChecked ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
+                                                                                                        '&.Mui-checked': {
+                                                                                                            color: '#10b981',
+                                                                                                        },
+                                                                                                        '&:hover': {
+                                                                                                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                                                                                        }
+                                                                                                    }}
+                                                                                                />
+                                                                                            }
+                                                                                            label={                                                                                                    <div>
+                                                                                                    <Typography variant="body2" className={`font-medium ${
+                                                                                                        isChecked ? 'text-green-400' : 'text-white'
+                                                                                                    }`}>
+                                                                                                        {permission.display_name || permission.name}
+                                                                                                    </Typography>
+                                                                                                    <Typography variant="caption" className={`${
+                                                                                                        isChecked ? 'text-green-300/70' : 'text-gray-400'
+                                                                                                    }`}>
+                                                                                                        {permission.name}
+                                                                                                    </Typography>
+                                                                                                </div>
+                                                                                            }
+                                                                                            className="m-0 w-full pointer-events-none"
+                                                                                        />
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </AccordionDetails>
+                                                                </Accordion>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center h-48 text-center">
+                                                    <UserGroupIcon className="w-16 h-16 text-gray-400 mb-4" />
+                                                    <Typography variant="h6" color="textSecondary">
+                                                        Select a role to manage permissions
+                                                    </Typography>
+                                                    <Typography variant="body2" color="textSecondary">
+                                                        Choose a role from the left panel to view and edit its permissions                                                        </Typography>                                                    </div>
+                                            )}
                                         </div>
                                     </div>
-                                </Fade>
-                            </div>
-                        </PageHeader>
-                    </GlassCard>
-                </div>
+                                </div>
+                            </Fade>
+                        </div>
+                    </PageHeader>
+                </GlassCard>
             </Grow>
         </Box>
     </>
