@@ -39,7 +39,7 @@ export default function Dashboard({ auth }) {
         return permissions.some(permission => hasPermission(permission));
     };    
 
-    const hasAllPermission = (permissions) => {
+    const hasEveryPermission = (permissions) => {
         return permissions.every(permission => hasPermission(permission));
     };    
     
@@ -102,7 +102,7 @@ export default function Dashboard({ auth }) {
                     }
                 >                    <Grid container>
                         {/* Punch Status Card - for employees and self-service users */}
-                        {hasAllPermission(['attendance.own.punch', 'attendance.own.view']) &&
+                        {hasEveryPermission(['attendance.own.punch', 'attendance.own.view']) &&
                             <Grid item xs={12} md={6}>
                                 <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
                             </Grid>
