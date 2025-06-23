@@ -56,16 +56,20 @@ import StatsCards from "@/Components/StatsCards.jsx";
 import { toast } from "react-toastify";
 import axios from 'axios';
 
+const normalizeArray = (arr) => Array.isArray(arr) ? [...arr] : [];
+const normalizeObject = (obj) => (obj && typeof obj === 'object' && !Array.isArray(obj)) ? { ...obj } : {};
 
-const RoleManagement = ({ 
-    title, 
-    roles: initialRoles = [], 
-    permissions: initialPermissions = [],
-    permissions_grouped: permissionsGrouped = {},
-    role_has_permissions: initialRolePermissions = [],
-    enterprise_modules: enterpriseModules = {},
-    can_manage_super_admin: canManageSuperAdmin = false
-}) => {    console.log('RoleManagement Props:', {
+const RoleManagement = (props) => {
+    // Defensive normalization for all incoming props (do this at the very top)
+    const initialRoles = normalizeArray(props.roles);
+    const initialPermissions = normalizeArray(props.permissions);
+    const permissionsGrouped = normalizeObject(props.permissions_grouped);
+    const initialRolePermissions = normalizeArray(props.role_has_permissions);
+    const enterpriseModules = normalizeObject(props.enterprise_modules);
+    const canManageSuperAdmin = !!props.can_manage_super_admin;
+    const title = props.title;
+
+    console.log('RoleManagement Props:', {
         roles: initialRoles,
         permissions: initialPermissions,
         permissionsGrouped,
@@ -80,7 +84,7 @@ const RoleManagement = ({
     const [roles, setRoles] = useState(initialRoles);
     const [permissions, setPermissions] = useState(initialPermissions);
     const [rolePermissions, setRolePermissions] = useState(initialRolePermissions);
-    const [activeRoleId, setActiveRoleId] = useState(roles.length > 0 ? roles[0].id : null);
+    const [activeRoleId, setActiveRoleId] = useState(initialRoles.length > 0 ? initialRoles[0].id : null);
     const [selectedPermissions, setSelectedPermissions] = useState(new Set());
     const [isLoading, setIsLoading] = useState(false);
     
@@ -99,18 +103,20 @@ const RoleManagement = ({
         permissions: [],
         hierarchy_level: 10
     });    // Get active role
-    const activeRole = roles.find(r => r.id === activeRoleId);
+    const activeRole = useMemo(() => roles.find(r => r.id === activeRoleId) || null, [roles, activeRoleId]);
 
     // Update selected permissions when active role changes
     useEffect(() => {
         if (activeRoleId) {
             const rolePerms = getRolePermissions(activeRoleId);
             setSelectedPermissions(new Set(rolePerms));
+        } else {
+            setSelectedPermissions(new Set());
         }
     }, [activeRoleId, rolePermissions]);    // Memoized statistics
     const stats = useMemo(() => ({
-        totalRoles: roles.length,
-        totalPermissions: permissions.length,
+        totalRoles: Array.isArray(roles) ? roles.length : 0,
+        totalPermissions: Array.isArray(permissions) ? permissions.length : 0,
         activeRole: activeRole?.name || 'None Selected',
         grantedPermissions: selectedPermissions.size
     }), [roles, permissions, activeRole, selectedPermissions]);
@@ -154,37 +160,32 @@ const RoleManagement = ({
         }
     ], [stats]);// Memoized filtered permissions - now using new structure
     const filteredPermissions = useMemo(() => {
-        if (!permissionsGrouped) return [];
-        
+        if (!permissionsGrouped || typeof permissionsGrouped !== 'object') return [];
         let filteredPerms = [];
-        
         Object.entries(permissionsGrouped).forEach(([moduleKey, moduleData]) => {
             if (moduleFilter === 'all' || moduleFilter === moduleKey) {
-                const modulePermissions = moduleData.permissions.filter(permission => {
+                const modulePermissions = Array.isArray(moduleData.permissions) ? moduleData.permissions.filter(permission => {
                     return searchQuery === '' || 
-                           permission.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           permission.display_name.toLowerCase().includes(searchQuery.toLowerCase());
-                });
+                        (permission.name && permission.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                        (permission.display_name && permission.display_name.toLowerCase().includes(searchQuery.toLowerCase()));
+                }) : [];
                 filteredPerms = [...filteredPerms, ...modulePermissions];
             }
         });
-        
         return filteredPerms;
     }, [permissionsGrouped, searchQuery, moduleFilter]);
 
     // Group permissions by module using new structure
     const groupedPermissions = useMemo(() => {
-        if (!permissionsGrouped) return {};
-        
+        if (!permissionsGrouped || typeof permissionsGrouped !== 'object') return {};
         const filtered = {};
         Object.entries(permissionsGrouped).forEach(([moduleKey, moduleData]) => {
             if (moduleFilter === 'all' || moduleFilter === moduleKey) {
-                const modulePermissions = moduleData.permissions.filter(permission => {
+                const modulePermissions = Array.isArray(moduleData.permissions) ? moduleData.permissions.filter(permission => {
                     return searchQuery === '' || 
-                           permission.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           permission.display_name.toLowerCase().includes(searchQuery.toLowerCase());
-                });
-                
+                        (permission.name && permission.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                        (permission.display_name && permission.display_name.toLowerCase().includes(searchQuery.toLowerCase()));
+                }) : [];
                 if (modulePermissions.length > 0) {
                     filtered[moduleKey] = {
                         ...moduleData,
@@ -193,28 +194,31 @@ const RoleManagement = ({
                 }
             }
         });
-        
         return filtered;
     }, [permissionsGrouped, searchQuery, moduleFilter]);
 
     // Get unique modules for filter
     const modules = useMemo(() => {
-        if (!permissionsGrouped) return [];
+        if (!permissionsGrouped || typeof permissionsGrouped !== 'object') return [];
         return Object.keys(permissionsGrouped).sort();
     }, [permissionsGrouped]);// Get role permissions
     const getRolePermissions = useCallback((roleId) => {
+        if (!Array.isArray(rolePermissions)) return [];
         return rolePermissions
-            .filter(rp => rp.role_id === roleId)
-            .map(rp => rp.permission_id);
+            .filter(rp => rp && rp.role_id === roleId)
+            .map(rp => rp.permission_id)
+            .filter(Boolean);
     }, [rolePermissions]);// Get permission by ID
     const getPermissionById = (permissionId) => {
-        return permissions.find(p => p.id === permissionId);
+        if (!Array.isArray(permissions)) return null;
+        return permissions.find(p => p.id === permissionId) || null;
     };
 
     // Check if role has permission
     const roleHasPermission = (roleId, permissionName) => {
-        const rolePerms = rolePermissions.filter(rp => rp.role_id === roleId);
-        const permission = permissions.find(p => p.name === permissionName);
+        if (!Array.isArray(rolePermissions) || !Array.isArray(permissions)) return false;
+        const rolePerms = rolePermissions.filter(rp => rp && rp.role_id === roleId);
+        const permission = permissions.find(p => p && p.name === permissionName);
         return permission && rolePerms.some(rp => rp.permission_id === permission.id);
     };    // Check if module has all permissions granted
     const moduleHasAllPermissions = useCallback((moduleKey) => {

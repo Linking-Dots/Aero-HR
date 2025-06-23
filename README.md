@@ -1,115 +1,52 @@
-# 🏗️ Centralized ERP for Expressway Development Company
-
-A modern ERP solution designed specifically for infrastructure and expressway development companies. This system provides a unified platform to streamline and digitize collaboration across departments like Engineering, HR, Finance, Inventory, and Communication.
-
-## 🌐 Live Demo
-
-🔗 [Visit Live ERP](https://erp.dhakabypass.com)
-
-> ⚠️ Note: Access to the live system may require credentials. Please contact the administrator for demo access.
-
 ---
 
-## 🧰 Tech Stack
+## 🐳 Dockerized Setup
 
-- **Backend**: Laravel
-- **Frontend**: Inertia.js + React.js
-- **Database**: MySQL
-- **Others**: Axios, Tailwind CSS, Laravel Sanctum (for auth)
-
----
-
-## 📦 Modules Overview
-
-- 👨‍💼 **Human Resources**  
-  Manage employee records, onboarding, roles, and departments.
-
-- 💵 **Payroll System**  
-  Generate monthly salary sheets, apply deductions, bonuses, and view payslips.
-
-- 📦 **Inventory Management**  
-  Track materials, stock levels, suppliers, and issue logs.
-
-- 🕒 **Attendance Tracking**  
-  Monitor employee attendance with manual entry or biometric integration.
-
-- 💰 **Finance**  
-  Budget control, expense tracking, and project-specific financial reporting.
-
-- 🗂️ **Document & Task Management** *(Optional)*  
-  Upload, approve, and track essential project documents or assign tasks.
-
----
-
-## 🚀 Getting Started (Local Development)
+You can run the entire ERP system—including backend (Laravel), frontend (React/Inertia.js), MySQL database, and Android Java build—using Docker Compose for a consistent, production-like environment.
 
 ### Prerequisites
 
-- PHP >= 8.1
-- Composer
-- Node.js & npm
-- MySQL or MariaDB
+- [Docker](https://docs.docker.com/get-docker/) (latest)
+- [Docker Compose](https://docs.docker.com/compose/) (v2+ recommended)
 
-### 1. Clone the Repo
+### 1. Environment Variables
+
+- Copy `.env.example` to `.env` and update database credentials as needed:
+  - `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` (see `docker-compose.yml`)
+- For production, change all default passwords!
+
+### 2. Build & Run
+
+From the project root, run:
 
 ```bash
-git clone https://github.com/Linking-Dots/Aero-HR.git
-cd erp-project
-````
-
-### 2. Backend Setup (Laravel)
-
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-
-# Update your .env with DB credentials
-php artisan migrate --seed
-php artisan serve
+docker compose up --build
 ```
 
-### 3. Frontend Setup (React via Inertia.js)
+This will build and start the following services:
 
-```bash
-npm install
-npm run dev
-```
+- **php-app** (Laravel backend + built frontend)
+  - PHP 8.2 FPM (Alpine)
+  - Composer 2.7, Node 20 (for asset build)
+  - Exposes port **9000** (php-fpm)
+- **java-android** (Android Java build)
+  - Eclipse Temurin JDK 17
+  - Exposes port **8080**
+- **mysql-db** (MySQL database)
+  - MySQL (latest)
+  - Exposes port **3306**
+  - Data persisted in `mysql-data` Docker volume
 
----
+### 3. Accessing the Application
 
-## 🛡️ Security & Authentication
+- The backend (php-fpm) runs on port **9000** inside the container. To serve HTTP traffic, you may need to add a web server (e.g., Nginx or Apache) as a reverse proxy, or use Laravel's built-in server for local development.
+- The MySQL database is available on **localhost:3306** (if you map ports).
+- The Android Java service exposes **8080** (adjust as needed for your workflow).
 
-* Role-based access control (RBAC)
-* Laravel Sanctum for secure SPA auth
-* Password-protected routes
-* Activity logging
+### 4. Special Notes
 
----
-
-## 🧪 Testing (optional)
-
-```bash
-php artisan test
-```
-
----
-
-## 🖼️ Screenshots
-
-*Screenshots coming soon...*
+- The Docker setup builds frontend assets automatically and ensures correct permissions for storage and cache directories.
+- For custom domains, SSL, or production deployment, further configuration is required.
+- If you add a web server container, link it to `php-app:9000`.
 
 ---
-
-## 📌 Future Improvements
-
-* 📊 Advanced analytics dashboard
-* 📱 Mobile-optimized frontend
-* 🧠 AI-based forecasting for finance
-* 📤 REST API for external integrations
-
----
-
-## 📄 License
-
-This project is for educational and demonstration purposes only. All rights reserved © 2025 by Emam Hosen.
