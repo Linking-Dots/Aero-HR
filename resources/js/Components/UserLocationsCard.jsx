@@ -40,10 +40,11 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-fullscreen/dist/Leaflet.fullscreen.js';
 import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
+import L from 'leaflet';
 import { usePage } from "@inertiajs/react";
 import GlassCard from "@/Components/GlassCard.jsx";
 import { Card, CardBody, CardHeader as HeroCardHeader } from "@heroui/react";
-import L from 'leaflet';
+
 
 // Constants following ISO standards
 const MAP_CONFIG = {
