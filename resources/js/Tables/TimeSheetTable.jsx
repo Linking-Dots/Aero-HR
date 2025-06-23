@@ -1103,7 +1103,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                         className="font-semibold text-blue-600 flex items-center gap-2"
                                                     >
                                                         <CheckCircleIcon className="w-5 h-5" />
-                                                        Present Employees ({attendances.length})
+                                                        Present Employees ({totalRows})
                                                     </Typography>
                                                 </Box>
                                                 <ScrollShadow
