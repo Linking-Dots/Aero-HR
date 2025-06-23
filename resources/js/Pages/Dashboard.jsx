@@ -37,7 +37,13 @@ export default function Dashboard({ auth }) {
     // Helper function to check if user has any of the specified permissions
     const hasAnyPermission = (permissions) => {
         return permissions.some(permission => hasPermission(permission));
-    };    const actionButtons = [
+    };    
+
+    const hasAllPermission = (permissions) => {
+        return permissions.every(permission => hasPermission(permission));
+    };    
+    
+    const actionButtons = [
         {
             label: "Today",
             icon: <CalendarDaysIcon className="w-4 h-4" />,
@@ -96,7 +102,7 @@ export default function Dashboard({ auth }) {
                     }
                 >                    <Grid container>
                         {/* Punch Status Card - for employees and self-service users */}
-                        {hasPermission(['attendance.own.punch', 'attendance.own.view']) &&
+                        {hasAllPermission(['attendance.own.punch', 'attendance.own.view']) &&
                             <Grid item xs={12} md={6}>
                                 <PunchStatusCard handlePunchSuccess={handlePunchSuccess} />
                             </Grid>
