@@ -15,7 +15,8 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-medialibrary": "^11.9",
         "spatie/laravel-permission": "^6.20",
-        "tightenco/ziggy": "^2.0"
+        "tightenco/ziggy": "^2.0",
+        "webklex/laravel-imap": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
