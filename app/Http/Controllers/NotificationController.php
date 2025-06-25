@@ -6,8 +6,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\User;
+
 class NotificationController extends Controller
 {
+    public function storeToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $user = auth()->user();
+        
+        if ($user) {
+            $user->device_token = $request->token;
+            $user->save();
+            
+            return response()->json(['success' => true, 'message' => 'Token stored successfully']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+    }
+
     public function sendPushNotification($token, $title, $body): \Illuminate\Http\JsonResponse
     {
 

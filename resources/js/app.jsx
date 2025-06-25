@@ -8,6 +8,7 @@ import axios from 'axios';
 import ErrorBoundary from './Components/ErrorBoundary/ErrorBoundary';
 import { AppStateProvider } from './Contexts/AppStateContext';
 
+
 // Enhanced axios configuration with interceptors
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;

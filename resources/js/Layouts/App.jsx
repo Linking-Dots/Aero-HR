@@ -18,10 +18,37 @@ import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
 
 
+import axios from 'axios';
 
-// Add this hook in your main App component or create a separate component
 const useAppLoader = () => {
     useEffect(() => {
+        const initializeFirebase = async () => {
+            try {
+                // Request notification permission and get token
+                const token = await requestNotificationPermission();
+                
+                // Send token to backend if we have one
+                if (token) {
+                    await axios.post('/api/notification-token', {
+                        token: token
+                    });
+                }
+
+                // Listen for incoming messages
+                onMessageListener().then((payload) => {
+                    const notification = new Notification(payload.notification.title, {
+                        body: payload.notification.body,
+                        icon: payload.notification.icon
+                    });
+                });
+            } catch (error) {
+                console.error('Error initializing Firebase:', error);
+            }
+        };
+
+        // Initialize Firebase when component mounts
+        initializeFirebase();
+
         // Signal that React app is ready
         if (window.AppLoader) {
             // Small delay to ensure all components are mounted

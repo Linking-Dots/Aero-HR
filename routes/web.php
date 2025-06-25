@@ -224,6 +224,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
+   
     Route::get('/tasks-all-se', [TaskController::class, 'allTasks'])->name('allTasksSE');
     Route::post('/tasks-filtered-se', [TaskController::class, 'filterTasks'])->name('filterTasksSE');
     Route::get('/tasks/se', [TaskController::class, 'showTasks'])->name('showTasksSE');

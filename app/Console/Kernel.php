@@ -12,7 +12,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-
+        // Send attendance reminders daily at 8:00 AM
+        $schedule->command('attendance:reminders')
+            ->dailyAt('08:00')
+            ->onFailure(function () {
+                Log::error('Attendance reminders failed to send');
+            });
     }
 
     /**

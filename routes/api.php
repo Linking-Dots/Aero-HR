@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\SystemMonitoringController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -48,6 +49,9 @@ Route::post('/log-error', function (Request $request) {
 })->middleware(['web']);
 
 // Performance logging endpoint
+
+// Notification token endpoint
+Route::post('/notification-token', [NotificationController::class, 'storeToken'])->middleware(['auth:sanctum']);
 Route::post('/log-performance', function (Request $request) {
     try {
         $validated = $request->validate([
