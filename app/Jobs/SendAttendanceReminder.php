@@ -46,7 +46,7 @@ class SendAttendanceReminder implements ShouldQueue
         }
 
         // Skip if user doesn't have device token
-        if (empty($this->user->device_token)) {
+        if (empty($this->user->fcm_token)) {
             return;
         }
 
@@ -58,8 +58,8 @@ class SendAttendanceReminder implements ShouldQueue
 
         // Send notification
         $fcmService->sendNotification(
-            $this->user->device_token,
-            'Office Attendance Reminder',
+            $this->user->fcm_token,
+            'Attendance Reminder',
             $message
         );
     }

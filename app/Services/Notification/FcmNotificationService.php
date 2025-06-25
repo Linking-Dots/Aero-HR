@@ -47,14 +47,14 @@ class FcmNotificationService
             }
 
             Log::error('FCM Notification Failed', [
-                'device_token' => $deviceToken,
+                'fcm_token' => $deviceToken,
                 'response' => $result
             ]);
 
             return false;
         } catch (\Exception $e) {
             Log::error('FCM Notification Error', [
-                'device_token' => $deviceToken,
+                'fcm_token' => $deviceToken,
                 'error' => $e->getMessage()
             ]);
             return false;

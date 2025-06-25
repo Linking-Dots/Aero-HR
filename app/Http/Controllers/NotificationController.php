@@ -19,7 +19,7 @@ class NotificationController extends Controller
         $user = auth()->user();
         
         if ($user) {
-            $user->device_token = $request->token;
+            $user->fcm_token = $request->token;
             $user->save();
             
             return response()->json(['success' => true, 'message' => 'Token stored successfully']);
