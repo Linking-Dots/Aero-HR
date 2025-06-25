@@ -25,7 +25,7 @@ class SendAttendanceReminders extends Command
         }
 
         // Get all active users
-        $users = User::where('status', 'active')->get();
+        $users = User::where('active', 1)->get();
 
         foreach ($users as $user) {
             SendAttendanceReminder::dispatch($user, $attendanceSetting);

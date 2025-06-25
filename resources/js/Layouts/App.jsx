@@ -20,45 +20,64 @@ import { applyThemeToRoot } from "@/utils/themeUtils.js";
 
 import axios from 'axios';
 
-const useAppLoader = () => {
+const useAppLoader = (auth) => {
     useEffect(() => {
+        let unsubscribeOnMessage = null;
+
         const initializeFirebase = async () => {
             try {
                 // Request notification permission and get token
                 const token = await requestNotificationPermission();
-                
-                // Send token to backend if we have one
                 if (token) {
-                    await axios.post('/api/notification-token', {
-                        token: token
-                    });
+                    try {
+                        const response = await axios.post(route('updateFcmToken'), { fcm_token: token });
+                        if (response.status === 200) {
+                            console.log('FCM Token Updated:', response.data.fcm_token);
+                        }
+                    } catch (error) {
+                        console.error('Failed to update FCM token:', error);
+                    }
+                } else {
+                    console.warn('Notification permission denied or no token retrieved.');
                 }
 
-                // Listen for incoming messages
-                onMessageListener().then((payload) => {
-                    const notification = new Notification(payload.notification.title, {
-                        body: payload.notification.body,
-                        icon: payload.notification.icon
-                    });
-                });
-            } catch (error) {
-                console.error('Error initializing Firebase:', error);
+                // Listen for foreground messages
+                unsubscribeOnMessage = onMessageListener()
+                    .then(payload => {
+                        console.log('Message received:', payload);
+                        const { title, body, icon } = payload.notification;
+
+                        // Display desktop notification
+                        if (Notification.permission === 'granted') {
+                            new Notification(title, { body, icon });
+                        }
+
+                        // Also show in-app alert (optional)
+                        alert(`${title}: ${body}`);
+                    })
+                    .catch(err => console.error('onMessageListener error:', err));
+            } catch (err) {
+                console.error('Firebase initialization error:', err);
             }
         };
 
-        // Initialize Firebase when component mounts
         initializeFirebase();
 
         // Signal that React app is ready
         if (window.AppLoader) {
-            // Small delay to ensure all components are mounted
             const timer = setTimeout(() => {
                 window.AppLoader.hideLoading();
             }, 200);
-            
             return () => clearTimeout(timer);
         }
-    }, []);
+
+        // Cleanup on unmount
+        return () => {
+            if (unsubscribeOnMessage && typeof unsubscribeOnMessage === 'function') {
+                unsubscribeOnMessage(); // Firebase unsubscribe (if using Firebase v9+ with listeners)
+            }
+        };
+    }, [auth]);
 };
 
 function App({ children }) {
@@ -69,7 +88,7 @@ function App({ children }) {
             axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
         }
     })
-    useAppLoader();
+    useAppLoader(auth);
     
 
     const permissions = auth?.permissions || [];const [sideBarOpen, setSideBarOpen] = useState(() => {
@@ -135,27 +154,9 @@ function App({ children }) {
         };
     }, []);
 
-    // FCM notification setup
-    useEffect(() => {
-        requestNotificationPermission().then(async token => {
-            try {
-                const response = await axios.post(route('updateFcmToken'), { fcm_token: token });
-                if (response.status === 200) {
-                    console.log(response.data.message, ': ', response.data.fcm_token);
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        });
 
-        onMessageListener()
-            .then(payload => {
-                console.log('Message received. ', payload);
-                alert(payload.notification.title + ": " + payload.notification.body);
-            })
-            .catch(err => console.log('failed: ', err));
-    }, []);
 
+        
     return (
         
         <ThemeProvider theme={theme}>

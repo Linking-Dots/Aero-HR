@@ -12,9 +12,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        // Test scheduler command runs every minute
+        $schedule->command('test:scheduler')
+            ->everyMinute()
+            ->onFailure(function () {
+                Log::error('Test scheduler failed');
+            });
+
         // Send attendance reminders daily at 8:00 AM
         $schedule->command('attendance:reminders')
-            ->dailyAt('14:15')
+            ->dailyAt('18:55')
             ->onFailure(function () {
                 Log::error('Attendance reminders failed to send');
             });
@@ -26,8 +33,6 @@ class Kernel extends ConsoleKernel
     protected function commands(): void
     {
         $this->load(__DIR__.'/Commands');
-
-        require base_path('routes/console.php');
     }
 
 
