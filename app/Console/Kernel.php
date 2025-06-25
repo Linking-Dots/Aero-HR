@@ -21,7 +21,7 @@ class Kernel extends ConsoleKernel
 
         // Send attendance reminders daily at 8:00 AM
         $schedule->command('attendance:reminders')
-            ->dailyAt('19:20')
+            ->dailyAt('09:00')
             ->onFailure(function () {
                 Log::error('Attendance reminders failed to send');
             });
