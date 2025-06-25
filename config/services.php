@@ -46,5 +46,9 @@ return [
     'mapbox' => [
         'token' => env('MAPBOX_ACCESS_TOKEN'),
     ],
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ],
 
 ];

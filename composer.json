@@ -2,13 +2,16 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "google/apiclient": "2.15.0",
         "guzzlehttp/guzzle": "^7.9",
         "inertiajs/inertia-laravel": "2.x-dev",
+        "kreait/laravel-firebase": "*",
         "laravel-notification-channels/webpush": "^9.0",
         "laravel/fortify": "^1.21",
         "laravel/framework": "^11.27.2",
