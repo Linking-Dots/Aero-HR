@@ -93,7 +93,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             });
          
             if (response.status === 200) {
-                console.log(response)
+            
                 setAttendances(response.data.attendances || []);
                 setTotalRows(response.data.total || 0);
                 setLastPage(response.data.last_page || 1);

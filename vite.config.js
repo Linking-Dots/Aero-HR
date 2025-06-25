@@ -7,6 +7,9 @@ import path from 'path';
 
 // Vite configuration
 export default defineConfig({
+    optimizeDeps: {
+    exclude: ['styled-components']
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],

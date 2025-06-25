@@ -69,13 +69,7 @@ const RoleManagement = (props) => {
     const canManageSuperAdmin = !!props.can_manage_super_admin;
     const title = props.title;
 
-    console.log('RoleManagement Props Has:', {
-        roles: initialRoles,
-        permissions: initialPermissions,
-        permissionsGrouped,
-        rolePermissions: initialRolePermissions,
-        canManageSuperAdmin
-    });
+
     
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -287,7 +281,7 @@ const RoleManagement = (props) => {
             const hasPermission = roleHasPermission(activeRole.id, permissionName);
             const action = hasPermission ? 'revoke' : 'grant';
 
-            console.log(`Toggling permission: ${permissionName}, action: ${action}, role: ${activeRole.name}`);
+          
 
             const response = await axios.post('/admin/roles/update-permission', {
                 role_id: activeRole.id,
@@ -333,7 +327,6 @@ const RoleManagement = (props) => {
 
         setIsLoading(true);
         try {
-            console.log(`Toggling module permissions for: ${module}, role: ${activeRole.name}`);
             
             const response = await axios.post('/admin/roles/update-module', {
                 roleId: activeRole.id,

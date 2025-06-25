@@ -137,8 +137,6 @@ createInertiaApp({
         }
     },
 }).then(r => {
-    console.log('Inertia React.js app created');
-    
     // Initialize application monitoring
     if (typeof window !== 'undefined') {
         // Monitor memory usage

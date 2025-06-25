@@ -43,32 +43,9 @@ export default function Dashboard({ auth }) {
         return permissions.every(permission => hasPermission(permission));
     };    
     
-    const actionButtons = [
-        {
-            label: "Today",
-            icon: <CalendarDaysIcon className="w-4 h-4" />,
-            onPress: () => {
-                const today = new Intl.DateTimeFormat('en-CA', {
-                    timeZone: 'Asia/Dhaka',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                }).format(new Date());
-                setSelectedDate(today);
-                setUpdateTimeSheet(prev => !prev);
-                setUpdateMap(prev => !prev);            },
-            className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
-        },
-        hasPermission('dashboard.view') && {
-            label: "Analytics",
-            icon: <ChartBarIcon className="w-4 h-4" />,
-            onPress: () => {
-                // Could navigate to analytics page or show modal
-                console.log("Analytics clicked");
-            },
-            className: "bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.8)] to-[rgba(var(--theme-success-rgb),1)] text-white font-medium hover:opacity-90"
-        }
-    ].filter(Boolean);    const handlePunchSuccess = () => {
+   
+    
+    const handlePunchSuccess = () => {
         setUpdateMap(prev => !prev);
         setUpdateTimeSheet(prev => !prev);
     };

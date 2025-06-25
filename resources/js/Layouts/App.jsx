@@ -16,6 +16,7 @@ import { HeroUIProvider } from "@heroui/react";
 import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
 import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
+import { usePerformance } from "@/hooks/usePerformance.jsx";
 
 
 import axios from 'axios';
@@ -89,6 +90,7 @@ function App({ children }) {
         }
     })
     useAppLoader(auth);
+    usePerformance();
     
 
     const permissions = auth?.permissions || [];const [sideBarOpen, setSideBarOpen] = useState(() => {

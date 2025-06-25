@@ -218,7 +218,8 @@ class AttendanceController extends Controller
 
     public function punch(Request $request)
     {
-        $user = auth()->user();
+
+        $user = Auth::user();
 
         // 1. Get the user's attendance type (with config)
         $attendanceType = $user->attendanceType; // Eloquent relation
