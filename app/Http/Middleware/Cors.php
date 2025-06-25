@@ -19,8 +19,11 @@ class Cors
         $origin = $request->headers->get('Origin') ?? '*';
         // Set allowed origins (replace with your domain in production)
         $allowedOrigins = [
-            'https://erp.dhakabypass.com/', // <-- Replace with your actual domain
+            'http://127.0.0.1:8000', // Development environment
+            'http://127.0.0.1:8000/', // Development environment
+            
             'https://erp.dhakabypass.com',
+            'https://erp.dhakabypass.com/',
             // Add more if needed
         ];
         if (in_array($origin, $allowedOrigins)) {
