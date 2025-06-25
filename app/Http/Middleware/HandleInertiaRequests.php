@@ -53,6 +53,7 @@ class HandleInertiaRequests extends Middleware
             ],
             
             'url' => $request->getPathInfo(),
+            'csrfToken' => session('csrfToken')
         ];
     }
 }

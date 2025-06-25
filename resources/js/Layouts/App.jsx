@@ -35,8 +35,15 @@ const useAppLoader = () => {
 };
 
 function App({ children }) {
+    const { auth, url, csrfToken } = usePage().props;
+    useEffect(() =>  {
+        if(csrfToken) {
+            document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', csrfToken);
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+        }
+    })
     useAppLoader();
-    const { auth, url } = usePage().props;
+    
 
     const permissions = auth?.permissions || [];const [sideBarOpen, setSideBarOpen] = useState(() => {
         // Load sidebar state from localStorage

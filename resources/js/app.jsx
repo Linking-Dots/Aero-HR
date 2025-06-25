@@ -6,8 +6,7 @@ import {createInertiaApp} from '@inertiajs/react';
 import {resolvePageComponent} from 'laravel-vite-plugin/inertia-helpers';
 import axios from 'axios';
 import ErrorBoundary from './Components/ErrorBoundary/ErrorBoundary';
-import { AppStateProvider } from './Context/AppStateContext';
-import { CsrfProvider } from './Contexts/CsrfContext';
+import { AppStateProvider } from './Contexts/AppStateContext';
 
 // Enhanced axios configuration with interceptors
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -91,9 +90,7 @@ createInertiaApp({
         root.render(
             <ErrorBoundary>
                 <AppStateProvider>
-                    <CsrfProvider>
-                        <App {...props} />
-                    </CsrfProvider>
+                    <App {...props} />
                 </AppStateProvider>
             </ErrorBoundary>
         );

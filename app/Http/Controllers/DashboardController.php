@@ -19,7 +19,8 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'user' => $user,
-            'status' => session('status')
+            'status' => session('status'),
+            'csrfToken' => session('csrfToken')
         ]);
     }
 
