@@ -58,8 +58,7 @@ if (ENABLE_MONITORING) {
                 });
             }
             if (error.response && error.response.status === 419) {
-                // Show a friendly message or redirect to login
-                alert('Your session has expired. Please refresh the page or log in again.');
+              
                 window.location.reload();
             }
             return Promise.reject(error);
