@@ -13,7 +13,7 @@ const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => (
         position: relative;
         width: 100%;
         height: 100%;
-       
+      
         border-radius: 2rem;
         background: rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(2px) saturate(180%);
@@ -23,7 +23,7 @@ const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => (
           0 4px 20px rgba(31, 38, 135, 0.08),
           inset 0 1px 8px rgba(255, 255, 255, 0.1),
           inset -4px -4px 8px rgba(255, 255, 255, 0.05);
-        filter: opacity(0.500) drop-shadow(0px 3px 6px rgba(0, 0, 0, 0.02));
+        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.02));
         transition: all 0.3s ease-in-out;
         overflow: hidden;
       `}
