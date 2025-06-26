@@ -258,32 +258,12 @@ function App({ children }) {
                                     width: '280px',
                                     transform: sideBarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
                                     transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    backgroundColor: 'background.paper',
-                                    boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
-                                    borderRight: '1px solid',
-                                    borderColor: 'divider',
+                                    
                                     overflowY: 'auto',
                                     overflowX: 'hidden',
                                     willChange: 'transform',
                                     backfaceVisibility: 'hidden',
-                                    WebkitFontSmoothing: 'subpixel-antialiased',
-                                    '&::-webkit-scrollbar': {
-                                        width: '4px',
-                                    },
-                                    '&::-webkit-scrollbar-track': {
-                                        background: 'transparent',
-                                    },
-                                    '&::-webkit-scrollbar-thumb': {
-                                        backgroundColor: 'rgba(0,0,0,0.1)',
-                                        borderRadius: '2px',
-                                    },
-                                    '@media (max-width: 899px)': {
-                                        display: 'block',
-                                    },
-                                    '@media (min-width: 900px)': {
-                                        display: 'block',
-                                        transform: sideBarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
-                                    },
+                                    
                                 }}
                             >
                                 {sidebarContent}
