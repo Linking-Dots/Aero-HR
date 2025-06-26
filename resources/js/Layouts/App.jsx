@@ -215,8 +215,28 @@ function App({ children }) {
                             display: 'flex',
                             flexDirection: 'row',
                             height: '100vh',
+                            overflow: 'hidden',
+                            position: 'relative'
                         }}
                     >                        {/* Mobile Sidebar Overlay */}
+                        {auth.user && isMobile && (
+                            <Box
+                                sx={{
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                    zIndex: 1199,
+                                    opacity: sideBarOpen ? 1 : 0,
+                                    visibility: sideBarOpen ? 'visible' : 'hidden',
+                                    transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    pointerEvents: sideBarOpen ? 'auto' : 'none',
+                                }}
+                                onClick={toggleSideBar}
+                            />
+                        )}                        {/* Mobile Sidebar */}
                         {auth.user && isMobile && (
                             <Box
                                 sx={{
@@ -226,12 +246,8 @@ function App({ children }) {
                                     width: '100vw',
                                     height: '100vh',
                                     zIndex: 1300,
-                                    visibility: sideBarOpen ? 'visible' : 'hidden',
-                                    opacity: sideBarOpen ? 1 : 0,
                                     transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    backgroundColor: sideBarOpen ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0)',
-                                    backdropFilter: sideBarOpen ? 'blur(4px)' : 'blur(0px)',
+                                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                     display: 'flex',
                                     pointerEvents: sideBarOpen ? 'auto' : 'none',
                                 }}
@@ -262,23 +278,41 @@ function App({ children }) {
                         {auth.user && (
                             <Box
                                 sx={{
-                                    display: { xs: 'none', md: 'block' },
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
                                     height: '100vh',
-                                    minWidth: sideBarOpen ? 'fit-content' : '0px',
-                                    width: sideBarOpen ? 'fit-content' : '0px',
-                                    maxWidth: sideBarOpen ? '300px' : '0px',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    flexDirection: 'column',
+                                    zIndex: 1200,
+                                    width: sideBarOpen ? '280px' : '72px',
+                                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
                                     overflow: 'hidden',
-                                    flexShrink: 0,
+                                    display: { xs: 'none', md: 'block' },
+                                    backgroundColor: 'background.paper',
+                                    boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+                                    borderRight: '1px solid',
+                                    borderColor: 'divider',
+                                    willChange: 'width',
                                 }}
                             >
                                 <Box
                                     sx={{
-                                        width: 'fit-content',
+                                        width: '280px',
                                         height: '100vh',
-                                        transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
-                                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: 0,
+                                        overflowX: 'hidden',
+                                        overflowY: 'auto',
+                                        '&::-webkit-scrollbar': {
+                                            width: '6px',
+                                        },
+                                        '&::-webkit-scrollbar-track': {
+                                            background: 'transparent',
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            backgroundColor: 'rgba(0,0,0,0.2)',
+                                            borderRadius: '3px',
+                                        },
                                     }}
                                 >
                                     <Sidebar 
@@ -298,6 +332,20 @@ function App({ children }) {
                                 pb: `${bottomNavHeight}px`,
                                 display: 'flex',
                                 flex: 1,
+                                transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                marginLeft: { 
+                                    xs: 0, 
+                                    md: sideBarOpen ? '280px' : '72px' 
+                                },
+                                width: { 
+                                    xs: '100%', 
+                                    md: sideBarOpen ? 'calc(100% - 280px)' : 'calc(100% - 72px)' 
+                                },
+                                minWidth: 0, // Prevent flex-shrink issues
+                                willChange: 'margin, width',
+                                backfaceVisibility: 'hidden',
+                                transform: 'translateZ(0)',
+                                WebkitFontSmoothing: 'subpixel-antialiased',
                                 flexDirection: 'column',
                                 height: '100vh',
                                 overflow: 'auto',
