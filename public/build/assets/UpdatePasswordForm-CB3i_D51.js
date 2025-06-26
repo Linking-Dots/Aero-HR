@@ -1,0 +1,1 @@
+import{r as s,x as a,j as e}from"./app-CYEuE872.js";import"./app-BSwxYvu8.js";const m=()=>{const[r,t]=s.useState(!1);return a({email:"",password:"",remember:!1}),e("div",{className:"auth-page-wrapper pt-5"})};export{m as default};

@@ -222,7 +222,8 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                                     className: "border-[rgba(var(--theme-success-rgb),0.3)] bg-[rgba(var(--theme-success-rgb),0.05)] hover:bg-[rgba(var(--theme-success-rgb),0.1)]"
                                 }
                             ]}
-                        >                            <div className="p-6">
+                        >
+                            <div className="p-6">
                                 {/* All Stats - Responsive Layout for 8 cards */}
                                 <StatsCards stats={allStatsData} className="mb-6" />
                                 

@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import StatsCards from '@/Components/StatsCards';
+
 import {
     Box,
     CardContent,
@@ -44,6 +46,7 @@ import L from 'leaflet';
 import { usePage } from "@inertiajs/react";
 import GlassCard from "@/Components/GlassCard.jsx";
 import { Card, CardBody, CardHeader as HeroCardHeader } from "@heroui/react";
+import PageHeader  from './PageHeader';
 
 
 // Constants following ISO standards
@@ -104,11 +107,12 @@ const RoutingMachine = React.memo(({ startLocation, endLocation, theme }) => {
 RoutingMachine.displayName = 'RoutingMachine';
 
 // Enhanced User Markers Component
-const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
+const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const map = useMap();
+    const prevLocationsRef = useRef([]);
 
     const fetchUserLocations = useCallback(async () => {
         if (!selectedDate) return;
@@ -120,17 +124,21 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
             const endpoint = route('getUserLocationsForDate', { date: selectedDate });
             const response = await fetch(endpoint);
             
-            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: Failed to fetch user locations`);
             }
 
             const data = await response.json();
-           
             const locations = Array.isArray(data.locations) ? data.locations : [];
             
-            setUsers(locations);
-            onUsersLoad?.(locations);
+            // Only update if locations have actually changed
+            const hasChanges = JSON.stringify(locations) !== JSON.stringify(prevLocationsRef.current);
+            
+            if (hasChanges) {
+                setUsers(locations);
+                prevLocationsRef.current = locations;
+                onUsersLoad?.(locations);
+            }
         } catch (error) {
             console.error('Error fetching user locations:', error);
             setError(error.message);
@@ -138,7 +146,7 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
         } finally {
             setLoading(false);
         }
-    }, [selectedDate, onUsersLoad]);
+    }, [selectedDate, onUsersLoad, lastUpdate]); // Add lastUpdate to dependencies
 
     useEffect(() => {
         fetchUserLocations();
@@ -392,28 +400,62 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme }) => {
 
 UserMarkers.displayName = 'UserMarkers';
 
+// Memoized user stats calculation
+const useUserStats = (users) => {
+    return useMemo(() => {
+        const userGroups = users.reduce((acc, location) => {
+            const userId = location.user_id;
+            if (!acc[userId]) acc[userId] = [];
+            acc[userId].push(location);
+            return acc;
+        }, {});
+
+        const uniqueUsers = Object.keys(userGroups);
+        const total = uniqueUsers.length;
+        let checkedIn = 0;
+        let completed = 0;
+
+        uniqueUsers.forEach(userId => {
+            const userLocations = userGroups[userId];
+            userLocations.sort((a, b) => {
+                if (!a.punchin_time) return 1;
+                if (!b.punchin_time) return -1;
+                return a.punchin_time.localeCompare(b.punchin_time);
+            });
+
+            const lastLocation = userLocations[userLocations.length - 1];
+            const hasPunchIn = userLocations.some(loc => loc.punchin_time);
+            
+            if (hasPunchIn) {
+                if (lastLocation.punchout_time) {
+                    completed++;
+                } else {
+                    checkedIn++;
+                }
+            }
+        });
+
+        return { checkedIn, completed, total };
+    }, [users]);
+};
+
 // Main Component
-const UserLocationsCard = ({ updateMap, selectedDate }) => {
+const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
     const theme = useTheme();
     const [users, setUsers] = useState([]);
-    const [mapKey, setMapKey] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState(null);
+    const [isPolling, setIsPolling] = useState(true);
+    const [mapKey, setMapKey] = useState(0);
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-
-    const handleUsersLoad = useCallback((loadedUsers) => {
-        setUsers(loadedUsers);
-        setLoading(false);
-    }, []);
-
-    const handleRefresh = useCallback(() => {
-        setMapKey(prev => prev + 1);
-        setLoading(true);
-    }, []);
-
+    const [lastChecked, setLastChecked] = useState(new Date());
+    const prevUsersRef = useRef([]);
+    const prevUpdateRef = useRef(null);
+    
+    // Memoize the formatted date to prevent unnecessary recalculations
     const formattedDate = useMemo(() => {
         if (!selectedDate) return 'Invalid Date';
-        
         try {
             return new Date(selectedDate).toLocaleString('en-US', {
                 weekday: 'long',
@@ -425,278 +467,250 @@ const UserLocationsCard = ({ updateMap, selectedDate }) => {
             return 'Invalid Date';
         }
     }, [selectedDate]);
+    
+    // Use the memoized user stats
+    const userStats = useUserStats(users);
 
-    const userStats = useMemo(() => {
-        // Group locations by user_id to get unique users
-        const userGroups = users.reduce((acc, location) => {
-            const userId = location.user_id;
-            if (!acc[userId]) {
-                acc[userId] = [];
-            }
-            acc[userId].push(location);
-            return acc;
-        }, {});
+    // Function to check for updates
+    const checkForUpdates = useCallback(async () => {
+        if (!selectedDate) return;
 
-        // Calculate stats based on unique users
-        const uniqueUsers = Object.keys(userGroups);
-        const total = uniqueUsers.length;
-        
-        let checkedIn = 0;
-        let completed = 0;
-
-        uniqueUsers.forEach(userId => {
-            const userLocations = userGroups[userId];
-            
-            // Sort by punch-in time to get the chronological order
-            userLocations.sort((a, b) => {
-                if (!a.punchin_time) return 1;
-                if (!b.punchin_time) return -1;
-                return a.punchin_time.localeCompare(b.punchin_time);
+        try {
+            const endpoint = route('check-user-locations-updates', { 
+                date: selectedDate.split('T')[0] // Ensure YYYY-MM-DD format
             });
+            
+            const response = await fetch(endpoint);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: Failed to check for updates`);
+            }
 
-            // Get the last location entry for this user
-            const lastLocation = userLocations[userLocations.length - 1];
+            const data = await response.json();
             
-            // Check if user has any punch-in
-            const hasPunchIn = userLocations.some(loc => loc.punchin_time);
-            
-            if (hasPunchIn) {
-                // If the last location has punchout_time, user is completed
-                // If the last location doesn't have punchout_time, user is still checked in
-                if (lastLocation.punchout_time) {
-                    completed++;
-                } else {
-                    checkedIn++;
+            // Only update if we have a new update timestamp
+            if (data.success && data.last_updated !== prevUpdateRef.current) {
+                if (data.last_updated) {
+                    prevUpdateRef.current = data.last_updated;
+                    handleRefresh();
+                    setLastUpdate(new Date());
                 }
             }
+            
+            setLastChecked(new Date());
+        } catch (error) {
+            console.error('Error checking for updates:', error);
+        }
+    }, [selectedDate]);
+
+    // Set up polling for updates
+    useEffect(() => {
+        if (!isPolling) return;
+
+        // Initial check
+        checkForUpdates();
+        
+        // Set up interval for polling (every 5 seconds)
+        const intervalId = setInterval(checkForUpdates, 5000);
+
+        // Clean up on unmount or when dependencies change
+        return () => clearInterval(intervalId);
+    }, [isPolling, checkForUpdates]);
+
+    // Format the last checked time for display
+    const lastCheckedText = useMemo(() => {
+        if (!lastChecked) return null;
+        return lastChecked.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
         });
+    }, [lastChecked]);
 
-        return { checkedIn, completed, total };
-    }, [users]);
+    const handleUsersLoad = useCallback((loadedUsers) => {
+        // Only update if users have actually changed
+        const usersChanged = JSON.stringify(loadedUsers) !== JSON.stringify(prevUsersRef.current);
+        if (usersChanged) {
+            setUsers(loadedUsers);
+            prevUsersRef.current = loadedUsers;
+        }
+        setLoading(false);
+    }, []);
 
-    return (        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+    const handleRefresh = useCallback(async () => {
+        try {
+            setLoading(true);
+            // Only update the map key if we're not already refreshing
+            setMapKey(prev => prev + 1);
+            // Update the last checked time
+            setLastChecked(new Date());
+            setLastUpdate(new Date());
+        } catch (error) {
+            console.error('Error refreshing map:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <Fade in timeout={800}>
                 <GlassCard sx={{ width: '100%', maxWidth: '100%' }}>
-                    {/* Header - Consistent with other pages */}
-                    <CardHeader
-                        title={
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                                    <MapIcon className="w-8 h-8 text-blue-600" />
-                                </div>
-                                <div>
+                    <PageHeader
+                        title="Team Locations"
+                        subtitle={formattedDate}
+                        icon={<MapIcon className="w-6 h-6" />}
+                        variant="gradient"
+                        actions={
+                            <div className="flex items-center gap-2">
+                                {lastCheckedText && (
                                     <Typography 
-                                        variant="h4" 
-                                        className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
-                                        sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
+                                        variant="caption" 
+                                        color="textSecondary"
+                                        className=" sm:block text-xs"
                                     >
-                                        Team Locations
+                                        Updated: {lastCheckedText}
                                     </Typography>
-                                    <Typography variant="body2" color="textSecondary">
-                                        {formattedDate}
-                                    </Typography>
-                                </div>
+                                )}
+                                
                             </div>
                         }
-                        action={
-                            <Tooltip title="Refresh Map">
-                                <IconButton 
-                                    onClick={handleRefresh}
-                                    sx={{
-                                        background: alpha(theme.palette.primary.main, 0.1),
-                                        backdropFilter: 'blur(10px)',
-                                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                                        '&:hover': {
-                                            background: alpha(theme.palette.primary.main, 0.2),
-                                            transform: 'scale(1.05)'
-                                        }
-                                    }}
-                                >
-                                    <Refresh color="primary" />
-                                </IconButton>
-                            </Tooltip>
-                        }                        sx={{ padding: '24px' }}
-                    />
-                    <Divider />                    {/* Stats Cards - Exact match with leave admin */}
-                    <Box sx={{ px: 3, pb: 2 }}>
-                        <div className="mb-6">
-                            <div className={`grid gap-4 ${
-                                isMobile 
-                                    ? 'grid-cols-1' 
-                                    : isTablet 
-                                        ? 'grid-cols-2' 
-                                        : 'grid-cols-3'
-                            }`}>
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                                    <HeroCardHeader className="pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Groups className="w-5 h-5 text-blue-600" />
-                                            <Typography 
-                                                variant={isMobile ? "subtitle1" : "h6"} 
-                                                className="font-semibold text-blue-600"
-                                            >
-                                                Total
-                                            </Typography>
-                                        </div>
-                                    </HeroCardHeader>
-                                    <CardBody className="pt-0">
-                                        <Typography 
-                                            variant={isMobile ? "h4" : "h3"} 
-                                            className="font-bold text-blue-600"
-                                        >
-                                            {userStats.total}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            Total users tracked
-                                        </Typography>
-                                    </CardBody>
-                                </Card>
-
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                                    <HeroCardHeader className="pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <AccessTime className="w-5 h-5 text-orange-600" />
-                                            <Typography 
-                                                variant={isMobile ? "subtitle1" : "h6"} 
-                                                className="font-semibold text-orange-600"
-                                            >
-                                                Active
-                                            </Typography>
-                                        </div>
-                                    </HeroCardHeader>
-                                    <CardBody className="pt-0">
-                                        <Typography 
-                                            variant={isMobile ? "h4" : "h3"} 
-                                            className="font-bold text-orange-600"
-                                        >
-                                            {userStats.checkedIn}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            Currently working
-                                        </Typography>
-                                    </CardBody>
-                                </Card>
-
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200">
-                                    <HeroCardHeader className="pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Place className="w-5 h-5 text-green-600" />
-                                            <Typography 
-                                                variant={isMobile ? "subtitle1" : "h6"} 
-                                                className="font-semibold text-green-600"
-                                            >
-                                                Completed
-                                            </Typography>
-                                        </div>
-                                    </HeroCardHeader>
-                                    <CardBody className="pt-0">
-                                        <Typography 
-                                            variant={isMobile ? "h4" : "h3"} 
-                                            className="font-bold text-green-600"
-                                        >
-                                            {userStats.completed}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            Finished workday
-                                        </Typography>
-                                    </CardBody>
-                                </Card>
-                            </div>
+                    >
+                        <Divider />
+                        
+                        {/* Stats Cards */}
+                        <div className="p-6">
+                            <StatsCards
+                                className="mb-6"
+                                stats={[
+                                    {
+                                        title: 'Total',
+                                        value: userStats.total,
+                                        icon: <Groups className="w-5 h-5" />,
+                                        color: 'text-blue-400',
+                                        description: 'Total users tracked',
+                                        iconBg: 'bg-blue-500/20',
+                                        valueColor: 'text-blue-400',
+                                    },
+                                    {
+                                        title: 'Active',
+                                        value: userStats.checkedIn,
+                                        icon: <AccessTime className="w-5 h-5" />,
+                                        color: 'text-orange-400',
+                                        description: 'Currently working',
+                                        iconBg: 'bg-orange-500/20',
+                                        valueColor: 'text-orange-400',
+                                    },
+                                    {
+                                        title: 'Completed',
+                                        value: userStats.completed,
+                                        icon: <Place className="w-5 h-5" />,
+                                        color: 'text-green-400',
+                                        description: 'Finished workday',
+                                        iconBg: 'bg-green-500/20',
+                                        valueColor: 'text-green-400',
+                                    }
+                                ]}
+                            
+                                compact={isMobile}
+                            />
                         </div>
-                    </Box>
+                        {/* Stats Cards END */}
 
-                    <CardContent sx={{ p: 3, pt: 0 }}>
-                        <Box 
-                            sx={{ 
-                                height: '70vh', 
-                                borderRadius: 4,
-                                overflow: 'hidden',
-                                border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                                boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                position: 'relative'
-                            }}
-                        >
-                            {loading && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        bottom: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: alpha(theme.palette.background.paper, 0.8),
-                                        backdropFilter: 'blur(10px)',
-                                        zIndex: 1000
-                                    }}
-                                >
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <CircularProgress size={40} thickness={4} />
-                                        <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-                                            Loading locations...
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-
-                            <MapContainer
-                                key={`${updateMap}-${mapKey}`}
-                                center={[PROJECT_LOCATIONS.primary.lat, PROJECT_LOCATIONS.primary.lng]}
-                                zoom={MAP_CONFIG.DEFAULT_ZOOM}
-                                minZoom={MAP_CONFIG.MIN_ZOOM}
-                                maxZoom={MAP_CONFIG.MAX_ZOOM}
-                                style={{ height: '100%', width: '100%' }}
-                                scrollWheelZoom={true}
-                                doubleClickZoom={true}
-                                dragging={true}
-                                touchZoom={true}
-                                fullscreenControl={true}
-                                attributionControl={false}
-                                zoomControl={false}
-                            >
-                                <TileLayer
-                                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                                    maxZoom={MAP_CONFIG.MAX_ZOOM}
-                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                />
-                                
-                                <RoutingMachine 
-                                    startLocation={PROJECT_LOCATIONS.route.start} 
-                                    endLocation={PROJECT_LOCATIONS.route.end}
-                                    theme={theme}
-                                />
-                                
-                                <UserMarkers 
-                                    selectedDate={selectedDate}
-                                    onUsersLoad={handleUsersLoad}
-                                    theme={theme}
-                                />
-                            </MapContainer>
-                        </Box>
-
-                        {users.length === 0 && !loading && (
-                            <Alert 
-                                severity="info" 
+                        <CardContent sx={{ p: 3, pt: 0 }}>
+                            <Box 
                                 sx={{ 
-                                    mt: 2,
-                                    background: alpha(theme.palette.info.main, 0.1),
-                                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                                    backdropFilter: 'blur(10px)',
-                                    borderRadius: 2
+                                    height: '70vh', 
+                                    borderRadius: 4,
+                                    overflow: 'hidden',
+                                    border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                    boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                    position: 'relative'
                                 }}
                             >
-                                <Typography variant="body2">
-                                    No user locations found for {formattedDate}
-                                </Typography>
-                            </Alert>
-                        )}
-                    </CardContent>
+                                {loading && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: alpha(theme.palette.background.paper, 0.8),
+                                            backdropFilter: 'blur(10px)',
+                                            zIndex: 1000
+                                        }}
+                                    >
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <CircularProgress size={40} thickness={4} />
+                                            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                                                Loading locations...
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                )}
+
+                                <MapContainer
+                                    key={`${updateMap}-${mapKey}`}
+                                    center={[PROJECT_LOCATIONS.primary.lat, PROJECT_LOCATIONS.primary.lng]}
+                                    zoom={MAP_CONFIG.DEFAULT_ZOOM}
+                                    minZoom={MAP_CONFIG.MIN_ZOOM}
+                                    maxZoom={MAP_CONFIG.MAX_ZOOM}
+                                    style={{ height: '100%', width: '100%' }}
+                                    scrollWheelZoom={true}
+                                    doubleClickZoom={true}
+                                    dragging={true}
+                                    touchZoom={true}
+                                    fullscreenControl={true}
+                                    attributionControl={false}
+                                    zoomControl={false}
+                                >
+                                    <TileLayer
+                                        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                        maxZoom={MAP_CONFIG.MAX_ZOOM}
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                    />
+                                    
+                                    <RoutingMachine 
+                                        startLocation={PROJECT_LOCATIONS.route.start} 
+                                        endLocation={PROJECT_LOCATIONS.route.end}
+                                        theme={theme}
+                                    />
+                                    
+                                    <UserMarkers 
+                                        selectedDate={selectedDate}
+                                        onUsersLoad={handleUsersLoad}
+                                        theme={theme}
+                                    />
+                                </MapContainer>
+                            </Box>
+
+                            {users.length === 0 && !loading && (
+                                <Alert 
+                                    severity="info" 
+                                    sx={{ 
+                                        mt: 2,
+                                        background: alpha(theme.palette.info.main, 0.1),
+                                        border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                                        backdropFilter: 'blur(10px)',
+                                        borderRadius: 2
+                                    }}
+                                >
+                                    <Typography variant="body2">
+                                        No user locations found for {formattedDate}
+                                    </Typography>
+                                </Alert>
+                            )}
+                        </CardContent>
+                    </PageHeader>
                 </GlassCard>
             </Fade>
         </Box>
     );
-};
+});
 
 export default UserLocationsCard;

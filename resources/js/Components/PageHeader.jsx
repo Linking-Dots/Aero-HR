@@ -17,7 +17,8 @@ const PageHeader = ({
     title, 
     subtitle, 
     icon, 
-    actionButtons = [], 
+    actionButtons = [],
+    actions,
     children,
     variant = 'default'
 }) => {
@@ -84,30 +85,36 @@ const PageHeader = ({
                         </div>
                         
                         {/* Action Buttons - Theme-aware */}
-                        {actionButtons.length > 0 && (
-                            <div className="flex gap-2 flex-wrap">
-                                {actionButtons.map((button, index) => (
-                                    <Button
-                                        key={index}
-                                        color={button.color || "primary"}
-                                        variant={button.variant || "flat"}
-                                        startContent={button.icon}
-                                        onPress={button.onPress}
-                                        isDisabled={button.isDisabled}
-                                        className={
-                                            button.className || getDefaultButtonStyles()
-                                        }
-                                        size={isMobile ? "sm" : "md"}
-                                        style={{
-                                            fontFamily: 'var(--font-current)',
-                                            transition: 'all var(--transition)',
-                                            ...button.style
-                                        }}
-                                    >
-                                        {button.label}
-                                    </Button>
-                                ))}
+                        {actions ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {actions}
                             </div>
+                        ) : (
+                            actionButtons.length > 0 && (
+                                <div className="flex gap-2 flex-wrap">
+                                    {actionButtons.map((button, index) => (
+                                        <Button
+                                            key={index}
+                                            color={button.color || "primary"}
+                                            variant={button.variant || "flat"}
+                                            startContent={button.icon}
+                                            onPress={button.onPress}
+                                            isDisabled={button.isDisabled}
+                                            className={
+                                                button.className || getDefaultButtonStyles()
+                                            }
+                                            size={isMobile ? "sm" : "md"}
+                                            style={{
+                                                fontFamily: 'var(--font-current)',
+                                                transition: 'all var(--transition)',
+                                                ...button.style
+                                            }}
+                                        >
+                                            {button.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )
                         )}
                     </div>
                 </div>

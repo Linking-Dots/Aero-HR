@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AttendanceSetting;
-use App\Services\Attendance\AttendanceValidatorFactory;
 use App\Models\Attendance;
+use App\Models\AttendanceSetting;
 use App\Models\Designation;
 use App\Models\Holiday;
 use App\Models\LeaveSetting;
 use App\Models\User;
+use App\Services\Attendance\AttendanceValidatorFactory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Validator as ValidatorFacade;
+use Log as LogFacade;
 use Inertia\Inertia;
 use Throwable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Collection;
 
 class AttendanceController extends Controller
 {
@@ -1279,5 +1282,115 @@ class AttendanceController extends Controller
         }
 
         return $weekendCount;
+    }
+    
+    /**
+     * Check for updates to user locations
+     *
+     * @param string $date The date to check for updates (Y-m-d format)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkForLocationUpdates($date)
+    {
+        try {
+            // Validate date format
+            $validated = Validator::make(
+                ['date' => $date],
+                ['date' => 'required|date_format:Y-m-d']
+            );
+
+            if ($validated->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid date format. Please use YYYY-MM-DD.',
+                ], 400);
+            }
+
+            // Get the most recent update timestamp for locations on the given date
+            $lastUpdate = \App\Models\Attendance::whereDate('date', $date)
+                ->max('updated_at');
+
+            // Convert the timestamp to a Carbon instance if it exists
+            $lastUpdateTime = $lastUpdate ? \Carbon\Carbon::parse($lastUpdate) : null;
+
+            return response()->json([
+                'success' => true,
+                'has_updates' => $lastUpdate !== null,
+                'last_updated' => $lastUpdateTime ? $lastUpdateTime->toIso8601String() : null
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error checking for location updates: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check for updates.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Check for timesheet updates
+     *
+     * @param string $date The date to check for updates (Y-m-d format)
+     * @param string $month The month to check for updates (YYYY-MM format)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkTimesheetUpdates($date, $month = null)
+    {
+        try {
+            // Validate date format
+            $validated = Validator::make(
+                [
+                    'date' => $date,
+                    'month' => $month
+                ],
+                [
+                    'date' => 'required|date_format:Y-m-d',
+                    'month' => 'nullable|date_format:Y-m'
+                ]
+            );
+
+            if ($validated->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid date format. Please use YYYY-MM-DD for date and YYYY-MM for month.',
+                ], 400);
+            }
+
+            $query = \App\Models\Attendance::query();
+            
+            // Check for updates on the specific date
+            $query->whereDate('date', $date);
+            
+            // If month is provided, also check for updates in that month
+            if ($month) {
+                $query->orWhere(function($q) use ($month) {
+                    $q->whereYear('date', '=', substr($month, 0, 4))
+                      ->whereMonth('date', '=', substr($month, 5, 2));
+                });
+            }
+            
+            // Get the most recent update timestamp
+            $lastUpdate = $query->max('updated_at');
+            
+            // Also check if there are any records for the date
+            $hasRecords = \App\Models\Attendance::whereDate('date', $date)->exists();
+
+            return response()->json([
+                'success' => true,
+                'has_updates' => $lastUpdate !== null,
+                'has_records' => $hasRecords,
+                'last_updated' => $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->toIso8601String() : null
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error checking for timesheet updates: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check for timesheet updates.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

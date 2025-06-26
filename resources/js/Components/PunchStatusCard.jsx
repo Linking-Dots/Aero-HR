@@ -71,7 +71,6 @@ const PunchStatusCard = () => {
     const [totalWorkTime, setTotalWorkTime] = useState('00:00:00');
     const [realtimeWorkTime, setRealtimeWorkTime] = useState('00:00:00');
     const [userOnLeave, setUserOnLeave] = useState(null);
-    const [locationData, setLocationData] = useState(null);
     const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [expandedSections, setExpandedSections] = useState({
@@ -107,7 +106,7 @@ const PunchStatusCard = () => {
     // Component initialization
     useEffect(() => {
         fetchCurrentStatus();
-        getCurrentLocation();
+        checkLocationConnectionStatus();
         checkNetworkStatus();
     }, []);
 
@@ -246,25 +245,50 @@ const PunchStatusCard = () => {
         }
     };
 
-    const getCurrentLocation = () => {
-        if (navigator.geolocation) {
+    // Function to just check and set location connection status
+    const checkLocationConnectionStatus = () => {
+        if (!navigator.geolocation) {
+            setConnectionStatus(prev => ({ ...prev, location: false }));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            () => {
+                setConnectionStatus(prev => ({ ...prev, location: true }));
+            },
+            (error) => {
+                console.error('Error checking location connection:', error);
+                setConnectionStatus(prev => ({ ...prev, location: false }));
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+    };
+
+    // Function to fetch and return location data when needed
+    const fetchLocationData = () => {
+        if (!navigator.geolocation) {
+            throw new Error('Geolocation is not supported by this browser');
+        }
+
+        return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setLocationData({
+                    const locationData = {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,
                         accuracy: position.coords.accuracy
-                    });
-                    setConnectionStatus(prev => ({ ...prev, location: true }));
+                    };
+                    resolve(locationData);
                 },
                 (error) => {
-                    console.error('Error getting location:', error);
-                    setConnectionStatus(prev => ({ ...prev, location: false }));
+                    console.error('Error getting location data:', error);
+                    reject(error);
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
             );
-        }
+        });
     };
+
 
     const checkNetworkStatus = () => {
         setConnectionStatus(prev => ({
@@ -300,6 +324,7 @@ const PunchStatusCard = () => {
         setLoading(true);
 
         try {
+            const locationData = await fetchLocationData();
             const deviceFingerprint = getDeviceFingerprint();
             
             let currentIp = 'Unknown';
