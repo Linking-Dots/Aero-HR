@@ -162,12 +162,21 @@ function App({ children }) {
     }, []);
     
     const toggleSideBar = useCallback(() => {
-        setSideBarOpen(prev => {
-            const newState = !prev;
-            localStorage.setItem('sidebar-open', JSON.stringify(newState));
-            return newState;
+        // Use requestAnimationFrame for smoother animation start
+        requestAnimationFrame(() => {
+            setSideBarOpen(prev => !prev);
         });
     }, []);
+
+    // Memoize sidebar content to prevent re-renders
+    const sidebarContent = useMemo(() => (
+        <Sidebar 
+            url={url} 
+            pages={pages} 
+            toggleSideBar={toggleSideBar}
+            sideBarOpen={sideBarOpen}
+        />
+    ), [url, pages, toggleSideBar, sideBarOpen]);
 
     // Inertia loading state
     useEffect(() => {
@@ -231,50 +240,13 @@ function App({ children }) {
                                     zIndex: 1199,
                                     opacity: sideBarOpen ? 1 : 0,
                                     visibility: sideBarOpen ? 'visible' : 'hidden',
-                                    transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    transition: 'opacity 0.2s ease',
                                     pointerEvents: sideBarOpen ? 'auto' : 'none',
                                 }}
                                 onClick={toggleSideBar}
                             />
-                        )}                        {/* Mobile Sidebar */}
-                        {auth.user && isMobile && (
-                            <Box
-                                sx={{
-                                    position: 'fixed',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100vw',
-                                    height: '100vh',
-                                    zIndex: 1300,
-                                    transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
-                                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    display: 'flex',
-                                    pointerEvents: sideBarOpen ? 'auto' : 'none',
-                                }}
-                                onClick={(e) => {
-                                    if (e.target === e.currentTarget) {
-                                        toggleSideBar();
-                                    }
-                                }}
-                            >                                <Box
-                                    sx={{
-                                        width: 'fit-content',
-                                        minWidth: '240px',
-                                        maxWidth: '280px',
-                                        height: '100vh',
-                                        transform: sideBarOpen ? 'translateX(0)' : 'translateX(-100%)',
-                                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    }}
-                                >
-                                    <Sidebar 
-                                        url={url} 
-                                        pages={pages} 
-                                        toggleSideBar={toggleSideBar}
-                                        sideBarOpen={sideBarOpen}
-                                    />
-                                </Box>
-                            </Box>
-                        )}                        {/* Desktop Sidebar Area */}
+                        )}
+                                         {/* Desktop Sidebar Area */}
                         {auth.user && (
                             <Box
                                 sx={{
@@ -283,45 +255,38 @@ function App({ children }) {
                                     left: 0,
                                     height: '100vh',
                                     zIndex: 1200,
-                                    width: sideBarOpen ? '280px' : '72px',
-                                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
-                                    overflow: 'hidden',
-                                    display: { xs: 'none', md: 'block' },
+                                    width: '280px',
+                                    transform: sideBarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
+                                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                     backgroundColor: 'background.paper',
-                                    boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+                                    boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
                                     borderRight: '1px solid',
                                     borderColor: 'divider',
-                                    willChange: 'width',
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    willChange: 'transform',
+                                    backfaceVisibility: 'hidden',
+                                    WebkitFontSmoothing: 'subpixel-antialiased',
+                                    '&::-webkit-scrollbar': {
+                                        width: '4px',
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        background: 'transparent',
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        backgroundColor: 'rgba(0,0,0,0.1)',
+                                        borderRadius: '2px',
+                                    },
+                                    '@media (max-width: 899px)': {
+                                        display: 'block',
+                                    },
+                                    '@media (min-width: 900px)': {
+                                        display: 'block',
+                                        transform: sideBarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
+                                    },
                                 }}
                             >
-                                <Box
-                                    sx={{
-                                        width: '280px',
-                                        height: '100vh',
-                                        position: 'absolute',
-                                        left: 0,
-                                        top: 0,
-                                        overflowX: 'hidden',
-                                        overflowY: 'auto',
-                                        '&::-webkit-scrollbar': {
-                                            width: '6px',
-                                        },
-                                        '&::-webkit-scrollbar-track': {
-                                            background: 'transparent',
-                                        },
-                                        '&::-webkit-scrollbar-thumb': {
-                                            backgroundColor: 'rgba(0,0,0,0.2)',
-                                            borderRadius: '3px',
-                                        },
-                                    }}
-                                >
-                                    <Sidebar 
-                                        url={url} 
-                                        pages={pages} 
-                                        toggleSideBar={toggleSideBar}
-                                        sideBarOpen={sideBarOpen}
-                                    />
-                                </Box>
+                                {sidebarContent}
                             </Box>
                         )}
 
@@ -332,20 +297,17 @@ function App({ children }) {
                                 pb: `${bottomNavHeight}px`,
                                 display: 'flex',
                                 flex: 1,
-                                transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                 marginLeft: { 
                                     xs: 0, 
-                                    md: sideBarOpen ? '280px' : '72px' 
+                                    md: sideBarOpen ? '280px' : '0' 
                                 },
                                 width: { 
                                     xs: '100%', 
-                                    md: sideBarOpen ? 'calc(100% - 280px)' : 'calc(100% - 72px)' 
+                                    md: sideBarOpen ? 'calc(100% - 280px)' : '100%' 
                                 },
                                 minWidth: 0, // Prevent flex-shrink issues
-                                willChange: 'margin, width',
-                                backfaceVisibility: 'hidden',
-                                transform: 'translateZ(0)',
-                                WebkitFontSmoothing: 'subpixel-antialiased',
+                                willChange: 'margin',
                                 flexDirection: 'column',
                                 height: '100vh',
                                 overflow: 'auto',
