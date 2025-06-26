@@ -93,24 +93,29 @@ function App({ children }) {
     usePerformance();
     
 
-    const permissions = auth?.permissions || [];const [sideBarOpen, setSideBarOpen] = useState(() => {
-        // Load sidebar state from localStorage
+    const permissions = auth?.permissions || [];
+    
+    // Initialize sidebar state with localStorage
+    const [sideBarOpen, setSideBarOpen] = useState(() => {
         const saved = localStorage.getItem('sidebar-open');
         return saved !== null ? JSON.parse(saved) : false;
     });
-    const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');    const [themeColor, setThemeColor] = useState(() => {
+    
+    // Initialize theme state with localStorage
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+    const [themeColor, setThemeColor] = useState(() => {
         const stored = localStorage.getItem('themeColor');
-        return stored
-            ? JSON.parse(stored)
-            : { 
-                name: "OCEAN", 
-                primary: "#0ea5e9", 
-                secondary: "#0284c7",
-                gradient: "from-sky-500 to-blue-600",
-                description: "Ocean Blue - Professional & Trustworthy"
-            };
+        return stored ? JSON.parse(stored) : {
+            name: "OCEAN", 
+            primary: "#0ea5e9", 
+            secondary: "#0284c7",
+            gradient: "from-sky-500 to-blue-600",
+            description: "Ocean Blue - Professional & Trustworthy"
+        };
     });
+    
+    const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
+
     const contentRef = useRef(null);
     const [bottomNavHeight, setBottomNavHeight] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -138,11 +143,31 @@ function App({ children }) {
         applyThemeToRoot(themeColor, darkMode);
     }, [darkMode, themeColor, sideBarOpen]);
 
-    // Toggle handlers (useCallback for stable references)
-    const toggleDarkMode = useCallback(() => setDarkMode(dm => !dm), []);
-    const toggleThemeColor = useCallback(color => setThemeColor(color), []);
-    const toggleThemeDrawer = useCallback(() => setThemeDrawerOpen(open => !open), []);
-    const toggleSideBar = useCallback(() => setSideBarOpen(open => !open), []);
+    // Memoize toggle handlers to prevent unnecessary re-renders
+    const toggleDarkMode = useCallback(() => {
+        setDarkMode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('darkMode', newValue);
+            return newValue;
+        });
+    }, []);
+    
+    const toggleThemeColor = useCallback((color) => {
+        setThemeColor(color);
+        localStorage.setItem('themeColor', JSON.stringify(color));
+    }, []);
+    
+    const toggleThemeDrawer = useCallback(() => {
+        setThemeDrawerOpen(prev => !prev);
+    }, []);
+    
+    const toggleSideBar = useCallback(() => {
+        setSideBarOpen(prev => {
+            const newState = !prev;
+            localStorage.setItem('sidebar-open', JSON.stringify(newState));
+            return newState;
+        });
+    }, []);
 
     // Inertia loading state
     useEffect(() => {

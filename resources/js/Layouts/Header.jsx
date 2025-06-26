@@ -83,7 +83,13 @@ const Header = React.memo(({
   toggleSideBar, 
   url, 
   pages 
-}) => {  const theme = useTheme(darkMode);
+}) => {
+  const theme = useTheme(darkMode);
+  
+  // Memoize the toggleSideBar function to prevent unnecessary re-renders
+  const memoizedToggleSideBar = React.useCallback(() => {
+    toggleSideBar();
+  }, [toggleSideBar]);
   const { auth } = usePage().props;
   const [activePage, setActivePage] = useState(url);
   const { isMobile, isTablet, isDesktop } = useDeviceType();
@@ -598,8 +604,8 @@ const Header = React.memo(({
 
   return (
     <>
-      {isMobile && <MobileHeader />}
-      {(isTablet || isDesktop) && <DesktopHeader />}
+      {isMobile && <MobileHeader toggleSideBar={memoizedToggleSideBar} />}
+      {(isTablet || isDesktop) && <DesktopHeader toggleSideBar={memoizedToggleSideBar} />}
     </>
   );
 });

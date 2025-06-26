@@ -79,7 +79,7 @@ const useSidebarState = () => {
   };
 };
 
-const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
+const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(muiTheme.breakpoints.down('md'));
@@ -542,6 +542,6 @@ const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
       </div>
     </Box>
   );
-};
+});
 
 export default Sidebar;
