@@ -1,23 +1,43 @@
 /** @jsxImportSource @emotion/react */
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { Card, Fade } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { css } from '@emotion/react';
 
 const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const controls = useAnimation();
+  const [cardRef, setCardRef] = useState(null);
+  const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
+
+  useEffect(() => {
+    controls.start({ opacity: 1, scale: 1, y: 0 });
+
+    if (!cardRef || !isTouchDevice) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        controls.start({ scale: entry.isIntersecting ? 1.02 : 1 });
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(cardRef);
+    return () => observer.disconnect();
+  }, [cardRef, controls, isTouchDevice]);
 
   return (
     <AnimatePresence>
       {show && (
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          animate={controls}
           exit={{ opacity: 0, scale: 0.9, y: -10 }}
           transition={{ type: 'spring', stiffness: 140, damping: 18 }}
-          whileHover={{ scale: 1.015 }}
+          whileHover={!isTouchDevice ? { scale: 1.02 } : {}}
+          ref={setCardRef}
           css={css`width: 100%; height: 100%;`}
         >
           <Fade in>
@@ -41,7 +61,7 @@ const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => {
                 `,
               }}
             >
-              {/* Layered Glass Overlay (no animation) */}
+              {/* Static layered overlay */}
               <div
                 css={css`
                   content: '';
@@ -63,7 +83,7 @@ const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => {
                 `}
               />
 
-              {/* Content Area */}
+              {/* Card content */}
               <div
                 css={css`
                   position: relative;
@@ -71,7 +91,7 @@ const GlassCard = forwardRef(({ children, show = true, ...props }, ref) => {
                   display: flex;
                   flex-direction: column;
                   height: 100%;
-                  padding: 1.5rem;
+               
                 `}
               >
                 {children}
