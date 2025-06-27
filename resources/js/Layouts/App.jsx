@@ -236,8 +236,9 @@ function App({ children }) {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                    zIndex: 1199,
+                               
+                                    
+                                    zIndex: 0,
                                     opacity: sideBarOpen ? 1 : 0,
                                     visibility: sideBarOpen ? 'visible' : 'hidden',
                                     transition: 'opacity 0.2s ease',

@@ -143,59 +143,24 @@ export const getThemeColor = (name) => {
 };
 
 /**
- * Convert hex color to RGB values
- * @param {string} hex - Hex color code
- * @returns {Object} RGB values
+ * Convert hex color to RGB string (industry standard)
+ * @param {string} hex - Hex color code (e.g. #0ea5e9)
+ * @returns {string} rgb value as 'r, g, b'
  */
 export const hexToRgb = (hex) => {
-  if (!hex || typeof hex !== 'string') {
-    return {
-      r: 14,
-      g: 165,
-      b: 233,
-      rgb: '14, 165, 233'
-    };
-  }
-  
+  if (!hex || typeof hex !== 'string') return '14, 165, 233';
   const cleanHex = hex.replace('#', '');
-  if (cleanHex.length !== 6) {
-    return {
-      r: 14,
-      g: 165,
-      b: 233,
-      rgb: '14, 165, 233'
-    };
-  }
-  
+  if (cleanHex.length !== 6) return '14, 165, 233';
   try {
     const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cleanHex);
-    if (!result) {
-      return {
-        r: 14,
-        g: 165,
-        b: 233,
-        rgb: '14, 165, 233'
-      };
-    }
-    
+    if (!result) return '14, 165, 233';
     const r = parseInt(result[1], 16);
     const g = parseInt(result[2], 16);
     const b = parseInt(result[3], 16);
-    
-    return {
-      r,
-      g,
-      b,
-      rgb: `${r}, ${g}, ${b}`
-    };
+    return `${r}, ${g}, ${b}`;
   } catch (error) {
     console.warn('Error converting hex to RGB:', error);
-    return {
-      r: 14,
-      g: 165,
-      b: 233,
-      rgb: '14, 165, 233'
-    };
+    return '14, 165, 233';
   }
 };
 
