@@ -402,12 +402,7 @@
             }
         };
 
-        // Service Worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js');
-            });
-        }
+        
 
         // Inertia.js progress and loading management
         document.addEventListener('DOMContentLoaded', function() {
