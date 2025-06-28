@@ -28,6 +28,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
+Route::get('/session-check', function () {
+    return response()->json(['authenticated' => auth()->check()]);
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');
@@ -37,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
     });
-    
+
     // Updates route - require updates permission
     Route::middleware(['permission:updates.view'])->get('/updates', [DashboardController::class, 'updates'])->name('updates');
 
@@ -56,7 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/attendance/attendance-today', [AttendanceController::class, 'getCurrentUserPunch'])->name('attendance.current-user-punch');
         Route::get('/get-current-user-attendance-for-date', [AttendanceController::class, 'getCurrentUserAttendanceForDate'])->name('getCurrentUserAttendanceForDate');
     });
-    
+
     // Punch routes - require punch permission
     Route::middleware(['permission:attendance.own.punch'])->group(function () {
         Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
@@ -75,11 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/daily-works-all', [DailyWorkController::class, 'all'])->name('dailyWorks.all');
         Route::get('/daily-works-summary', [DailyWorkSummaryController::class, 'index'])->name('daily-works-summary');
     });
-    
+
     Route::middleware(['permission:daily-works.create'])->group(function () {
         Route::post('/add-daily-work', [DailyWorkController::class, 'add'])->name('dailyWorks.add');
     });
-    
+
     Route::middleware(['permission:daily-works.update'])->group(function () {
         Route::post('/update-daily-work', [DailyWorkController::class, 'update'])->name('dailyWorks.update');
         Route::post('/update-rfi-file', [DailyWorkController::class, 'uploadRFIFile'])->name('dailyWorks.uploadRFI');
@@ -93,7 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/profile/{user}', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete');
-        
+
         //Education Routes:
         Route::post('/education/update', [EducationController::class, 'update'])->name('education.update');
         Route::delete('/education/delete', [EducationController::class, 'delete'])->name('education.delete');
@@ -108,7 +112,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Leave summary route
     Route::middleware(['permission:leaves.view,leaves.own.view'])->get('/leave-summary', [LeaveController::class, 'summary'])->name('leave.summary');
-
 });
 
 
@@ -120,20 +123,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/letters', [LetterController::class, 'index'])->name('letters');
         Route::get('/letters-paginate', [LetterController::class, 'paginate'])->name('letters.paginate');
     });
-    
+
     Route::middleware(['permission:letters.update'])->put('/letters-update', [LetterController::class, 'update'])->name('letters.update');    // Leave management routes
     Route::middleware(['permission:leaves.view'])->group(function () {
         Route::get('/leaves', [LeaveController::class, 'index2'])->name('leaves');
         Route::get('/leave-summary', [LeaveController::class, 'leaveSummary'])->name('leave-summary');
         Route::post('/leave-update-status', [LeaveController::class, 'updateStatus'])->name('leave-update-status');
     });
-    
+
     // Leave bulk operations (admin only)
     Route::middleware(['permission:leaves.approve'])->group(function () {
         Route::post('/leaves/bulk-approve', [LeaveController::class, 'bulkApprove'])->name('leaves.bulk-approve');
         Route::post('/leaves/bulk-reject', [LeaveController::class, 'bulkReject'])->name('leaves.bulk-reject');
     });
-    
+
     // Leave settings routes
     Route::middleware(['permission:leave-settings.update'])->group(function () {
         Route::get('/leave-settings', [LeaveSettingController::class, 'index'])->name('leave-settings');
@@ -161,9 +164,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [UserController::class, 'index2'])->name('users');
         Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
     });
-    
+
     Route::middleware(['permission:users.create'])->post('/users', [ProfileController::class, 'store'])->name('addUser');
-    
+
     Route::middleware(['permission:users.update'])->group(function () {
         Route::post('/user/{id}/update-department', [DepartmentController::class, 'updateUserDepartment'])->name('user.updateDepartment');
         Route::post('/user/{id}/update-designation', [DesignationController::class, 'updateUserDesignation'])->name('user.updateDesignation');
@@ -178,7 +181,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/company-settings', [CompanySettingController::class, 'index'])->name('admin.settings.company');
     });    // Legacy role routes (maintained for backward compatibility)
     Route::middleware(['permission:roles.view'])->get('/roles-permissions', [RoleController::class, 'getRolesAndPermissions'])->name('roles-settings');
-    
+
     // Document management routes
     Route::middleware(['permission:letters.view'])->get('/letters', [LetterController::class, 'index'])->name('letters');    // Attendance management routes
     Route::middleware(['permission:attendance.view'])->group(function () {
@@ -194,7 +197,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('check-timesheet-updates/{date}/{month?}', [AttendanceController::class, 'checkTimesheetUpdates'])
             ->name('check-timesheet-updates');
     });
-    
+
     // Employee attendance stats route
     Route::middleware(['permission:attendance.own.view'])->group(function () {
         Route::get('/attendance/my-monthly-stats', [AttendanceController::class, 'getMonthlyAttendanceStats'])->name('attendance.myMonthlyStats');
@@ -213,7 +216,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tasks-all', [TaskController::class, 'allTasks'])->name('allTasks');
         Route::post('/tasks-filtered', [TaskController::class, 'filterTasks'])->name('filterTasks');
     });
-    
+
     Route::middleware(['permission:tasks.create'])->post('/task/add', [TaskController::class, 'addTask'])->name('addTask');
 
     // Jurisdiction/Work location routes
@@ -221,7 +224,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/work-location', [JurisdictionController::class, 'showWorkLocations'])->name('showWorkLocations');
         Route::get('/work-location_json', [JurisdictionController::class, 'allWorkLocations'])->name('allWorkLocations');
     });
-    
+
     Route::middleware(['permission:jurisdiction.create'])->post('/work-locations/add', [JurisdictionController::class, 'addWorkLocation'])->name('addWorkLocation');
     Route::middleware(['permission:jurisdiction.delete'])->post('/work-locations/delete', [JurisdictionController::class, 'deleteWorkLocation'])->name('deleteWorkLocation');
     Route::middleware(['permission:jurisdiction.update'])->post('/work-locations/update', [JurisdictionController::class, 'updateWorkLocation'])->name('updateWorkLocation');
@@ -229,7 +232,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
-   
+
     Route::get('/tasks-all-se', [TaskController::class, 'allTasks'])->name('allTasksSE');
     Route::post('/tasks-filtered-se', [TaskController::class, 'filterTasks'])->name('filterTasksSE');
     Route::get('/tasks/se', [TaskController::class, 'showTasks'])->name('showTasksSE');
@@ -238,7 +241,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/task/update-status', [TaskController::class, 'updateTaskStatus'])->name('updateTaskStatus');
     Route::post('/task/assign', [TaskController::class, 'assignTask'])->name('assignTask');
     Route::post('/task/update-completion-date-time-se', [TaskController::class, 'updateCompletionDateTime'])->name('updateCompletionDateTimeSE');
-    Route::get('/tasks/daily-summary-se', [DailyWorkSummaryController::class, 'showDailySummary','title' => 'Daily Summary'])->name('showDailySummarySE');
+    Route::get('/tasks/daily-summary-se', [DailyWorkSummaryController::class, 'showDailySummary', 'title' => 'Daily Summary'])->name('showDailySummarySE');
     Route::post('/tasks/daily-summary-filtered-se', [DailyWorkSummaryController::class, 'filterSummary'])->name('filterSummarySE');
     Route::get('/get-latest-timestamp', [TaskController::class, 'getLatestTimestamp'])->name('getLatestTimestamp');
     Route::get('/tasks/daily-summary-json', [DailyWorkSummaryController::class, 'dailySummary'])->name('dailySummaryJSON');
@@ -249,7 +252,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports-json', [ReportController::class, 'allReports'])->name('allReports');
     Route::post('/reports/add', [ReportController::class, 'addReport'])->name('addReport');
     Route::post('/reports/delete', [ReportController::class, 'deleteReport'])->name('deleteReport');
-    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');    Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
+    Route::post('/reports/update', [ReportController::class, 'updateReport'])->name('updateReport');
+    Route::post('/tasks/attach-report', [TaskController::class, 'attachReport'])->name('attachReport');
+    Route::post('/tasks/detach-report', [TaskController::class, 'detachReport'])->name('detachReport');
 });
 
 // Enhanced Role Management Routes (with proper permission-based access control)
@@ -295,7 +300,7 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
 
 Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::middleware(['security_headers'])->group(function () {
     // Your routes

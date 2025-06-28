@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { Link } from '@inertiajs/react';
 import { Box, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
 import Header from "@/Layouts/Header.jsx";
 import Breadcrumb from "@/Components/Breadcrumb.jsx";
@@ -9,18 +10,18 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../../css/theme-transitions.css';
 import Sidebar from "@/Layouts/Sidebar.jsx";
-import SessionExpiredModal from '@/Components/SessionExpiredModal.jsx';
 import { Inertia } from '@inertiajs/inertia';
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
-import { HeroUIProvider } from "@heroui/react";
+import { HeroUIProvider, Button } from "@heroui/react";
+import SessionExpiredModal from '@/Components/SessionExpiredModal.jsx';
 import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
 import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
-import { applyThemeToRoot } from "@/utils/themeUtils.js";
-
 
 
 import axios from 'axios';
+
+
 
 
 
@@ -89,6 +90,7 @@ function App({ children }) {
 
 
     const permissions = auth?.permissions || [];
+
     
     // Initialize sidebar state with localStorage
     const [sideBarOpen, setSideBarOpen] = useState(() => {
@@ -98,17 +100,7 @@ function App({ children }) {
     
     // Initialize theme state with localStorage
     const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-    const [themeColor, setThemeColor] = useState(() => {
-        const stored = localStorage.getItem('themeColor');
-        return stored ? JSON.parse(stored) : {
-            name: "OCEAN", 
-            primary: "#0ea5e9", 
-            secondary: "#0284c7",
-            gradient: "from-sky-500 to-blue-600",
-            description: "Ocean Blue - Professional & Trustworthy"
-        };
-    });
-    
+    const [themeId, setThemeId] = useState(() => localStorage.getItem('themeId') || 'default');
     const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
 
     const contentRef = useRef(null);
@@ -127,8 +119,9 @@ function App({ children }) {
     }, [url, permissions]);
 
     // Theme and media query
-    const theme = useTheme(darkMode, themeColor);
+    const theme = useTheme(darkMode ? 'dark' : 'light', themeId);
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));    // Persist darkMode, themeColor, and sidebar state
+    
     
 
     // Memoize toggle handlers to prevent unnecessary re-renders
@@ -140,11 +133,11 @@ function App({ children }) {
         });
     }, []);
     
-    const toggleThemeColor = useCallback((color) => {
-        setThemeColor(color);
-        localStorage.setItem('themeColor', JSON.stringify(color));
+    const handleSetThemeId = useCallback((id) => {
+        setThemeId(id);
+        localStorage.setItem('themeId', id);
     }, []);
-    
+
     const toggleThemeDrawer = useCallback(() => {
         setThemeDrawerOpen(prev => !prev);
     }, []);
@@ -166,22 +159,23 @@ function App({ children }) {
         />
     ), [url, pages, toggleSideBar, sideBarOpen]);
 
+
+    
+
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode);
-        localStorage.setItem('themeColor', JSON.stringify(themeColor));
+        localStorage.setItem('themeId', themeId);
         localStorage.setItem('sidebar-open', JSON.stringify(sideBarOpen));
         
-        // Apply theme to document root
-        applyThemeToRoot(themeColor, darkMode);
-    }, [darkMode, themeColor, sideBarOpen]);
-    
+     
+    }, [darkMode, themeId, sideBarOpen]);
+
     useEffect(() => {
         if (!auth.user) {
             return;
         }
 
         const interval = setInterval(async () => {
-          
             try {
                 const response = await axios.get('/session-check');
                 if (!response.data.authenticated) {
@@ -193,12 +187,12 @@ function App({ children }) {
                 setSessionExpired(true);
                 clearInterval(interval);
             }
-        }, 5000); // Check every 30 seconds
+        }, 30000); // Check every 30 seconds
 
         return () => clearInterval(interval);
     }, [auth.user]);
-        
-      
+    
+  
     useEffect(() => {
         if (csrfToken) {
             document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', csrfToken);
@@ -222,27 +216,24 @@ function App({ children }) {
         };
     }, []);
 
-
     appRenderCount++;
     console.log('App render count:', appRenderCount);
 
-        
-    return (
-        
+            
+return (
         <ThemeProvider theme={theme}>
             <HeroUIProvider>
                 {sessionExpired && <SessionExpiredModal setSessionExpired={setSessionExpired}/>}
                 <ThemeSettingDrawer
-                    toggleThemeColor={toggleThemeColor}
-                    themeColor={themeColor}
+                    themeId={themeId}
+                    setThemeId={handleSetThemeId}
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
-                    toggleThemeDrawer={toggleThemeDrawer}
                     themeDrawerOpen={themeDrawerOpen}
-                />  
-                
+                    toggleThemeDrawer={toggleThemeDrawer}
+                />
                 <ToastContainer
-                    position="top-center"
+                    position="top-right"
                     autoClose={5000}
                     hideProgressBar={false}
                     newestOnTop={false}
@@ -251,7 +242,7 @@ function App({ children }) {
                     pauseOnFocusLoss
                     draggable
                     pauseOnHover
-                    theme="colored"
+                    theme={darkMode ? "dark" : "light"}
                 />
                 <CssBaseline />
                 <main id="app-main" className={darkMode ? "dark" : "light"}>
@@ -296,7 +287,6 @@ function App({ children }) {
                                 {sidebarContent}
                             </Box>
                         )}
-
                         {/* Main Content Area */}
                         <Box
                             ref={contentRef}
@@ -305,13 +295,13 @@ function App({ children }) {
                                 display: 'flex',
                                 flex: 1,
                                 transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                marginLeft: { 
-                                    xs: 0, 
-                                    md: sideBarOpen ? '280px' : '0' 
+                                marginLeft: {
+                                    xs: 0,
+                                    md: sideBarOpen ? '280px' : '0'
                                 },
-                                width: { 
-                                    xs: '100%', 
-                                    md: sideBarOpen ? 'calc(100% - 280px)' : '100%' 
+                                width: {
+                                    xs: '100%',
+                                    md: sideBarOpen ? `calc(100% - 280px)` : '100%'
                                 },
                                 minWidth: 0, // Prevent flex-shrink issues
                                 willChange: 'margin',

@@ -172,6 +172,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
         setCurrentLeave(null);
     }, []);
 
+    const handleEdit = useCallback((leave) => {
+        setCurrentLeave(leave);
+        openModal('edit_leave');
+    }, [openModal]);
+
     
 
     const handleSearch = useCallback((event) => {
@@ -215,6 +220,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             if (response.status === 200) {
                 const { leaves, leavesData, stats } = response.data;
+                console.log(leaves, leavesData, stats);
                 setLeaves(leaves.data);
                 setLeavesData(leavesData);
                 setTotalRows(leaves.total);
