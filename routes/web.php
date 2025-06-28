@@ -162,7 +162,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // User management routes
     Route::middleware(['permission:users.view'])->group(function () {
         Route::get('/users', [UserController::class, 'index2'])->name('users');
-        Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
     });
 
     Route::middleware(['permission:users.create'])->post('/users', [ProfileController::class, 'store'])->name('addUser');
@@ -298,7 +297,8 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
     Route::get('/admin/optimization-report', [SystemMonitoringController::class, 'getOptimizationReport'])->name('admin.optimization-report');
 });
 
-Route::post('/user/{id}/update-attendance-type', [UserController::class, 'updateUserAttendanceType'])->name('user.updateAttendanceType');
+
+Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
 
 require __DIR__ . '/auth.php';
 

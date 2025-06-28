@@ -109,7 +109,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
 
         try {
             const endpoint = route('check-timesheet-updates', { 
-                date: selectedDate.split('T')[0],
+                date: dayjs(selectedDate).format('YYYY-MM-DD'),
                 month: filterData.currentMonth
             });
             

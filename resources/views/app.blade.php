@@ -11,7 +11,6 @@
     <meta http-equiv="Expires" content="0" />
 
     <!-- Security & Performance -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
@@ -402,7 +401,7 @@
             }
         };
 
-        
+
 
         // Inertia.js progress and loading management
         document.addEventListener('DOMContentLoaded', function() {
