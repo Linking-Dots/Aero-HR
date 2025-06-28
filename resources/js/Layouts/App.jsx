@@ -207,7 +207,7 @@ function App({ children }) {
     }, [csrfToken]);
 
     useEffect(() => {
-        appLoader();
+        auth?.user && appLoader();
     }, [appLoader]);
 
     // Inertia loading state
