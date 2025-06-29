@@ -89,7 +89,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                 // Define status and remarks
                 if ($attendances->count() === 1) {
                     if ($incomplete) {
-                        $workTime = 'Still Working';
+                        $workTime = $dateIsToday ? 'Still Working' : 'Not Punched Out';
                         $status = 'Present';
                         $remarks = $dateIsToday ? 'Currently Working' : 'Not Punched Out';
                     } else {
