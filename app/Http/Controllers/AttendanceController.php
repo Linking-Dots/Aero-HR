@@ -21,6 +21,9 @@ use Validator as ValidatorFacade;
 use Log as LogFacade;
 use Inertia\Inertia;
 use Throwable;
+use PDF; // Barryvdh\DomPDF\Facade as PDF
+use App\Exports\AttendanceExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceController extends Controller
 {
@@ -1283,7 +1286,7 @@ class AttendanceController extends Controller
 
         return $weekendCount;
     }
-    
+
     /**
      * Check for updates to user locations
      *
@@ -1318,7 +1321,6 @@ class AttendanceController extends Controller
                 'has_updates' => $lastUpdate !== null,
                 'last_updated' => $lastUpdateTime ? $lastUpdateTime->toIso8601String() : null
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error checking for location updates: ' . $e->getMessage());
             return response()->json([
@@ -1328,7 +1330,7 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Check for timesheet updates
      *
@@ -1359,21 +1361,21 @@ class AttendanceController extends Controller
             }
 
             $query = \App\Models\Attendance::query();
-            
+
             // Check for updates on the specific date
             $query->whereDate('date', $date);
-            
+
             // If month is provided, also check for updates in that month
             if ($month) {
-                $query->orWhere(function($q) use ($month) {
+                $query->orWhere(function ($q) use ($month) {
                     $q->whereYear('date', '=', substr($month, 0, 4))
-                      ->whereMonth('date', '=', substr($month, 5, 2));
+                        ->whereMonth('date', '=', substr($month, 5, 2));
                 });
             }
-            
+
             // Get the most recent update timestamp
             $lastUpdate = $query->max('updated_at');
-            
+
             // Also check if there are any records for the date
             $hasRecords = \App\Models\Attendance::whereDate('date', $date)->exists();
 
@@ -1383,7 +1385,6 @@ class AttendanceController extends Controller
                 'has_records' => $hasRecords,
                 'last_updated' => $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->toIso8601String() : null
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error checking for timesheet updates: ' . $e->getMessage());
             return response()->json([
@@ -1392,5 +1393,24 @@ class AttendanceController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $date = $request->input('date');
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AttendanceExport($date), 'Daily\_Timesheet\_' . date('Y\_m\_d', strtotime($date)) . '.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $date = $request->input('date');
+        $users = User::with('designation')->get();
+        $rows = (new AttendanceExport($date))->collection();
+        $pdf = PDF::loadView('attendance_pdf', [
+            'title' => 'Daily Timesheet - ' . date('F d, Y', strtotime($date)),
+            'generatedOn' => now()->format('F d, Y h:i A'),
+            'rows' => $rows
+        ])->setPaper('a4', 'landscape');
+        return $pdf->download('Daily_Timesheet_' . date('Y_m_d', strtotime($date)) . '.pdf');
     }
 }

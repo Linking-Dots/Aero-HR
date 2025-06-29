@@ -66,7 +66,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/punchIn', [AttendanceController::class, 'punchIn'])->name('punchIn');
         Route::post('/punchOut', [AttendanceController::class, 'punchOut'])->name('punchOut');
         Route::post('/attendance/punch', [AttendanceController::class, 'punch'])->name('attendance.punch');
-    });    // General access routes (available to all authenticated users)
+    });
+
+    // General access routes (available to all authenticated users)
+    Route::get('/attendance/export/excel', [AttendanceController::class, 'exportExcel'])->name('attendance.exportExcel');
+    Route::get('/attendance/export/pdf', [AttendanceController::class, 'exportPdf'])->name('attendance.exportPdf');
     Route::get('/get-all-users-attendance-for-date', [AttendanceController::class, 'getAllUsersAttendanceForDate'])->name('getAllUsersAttendanceForDate');
     Route::get('/get-present-users-for-date', [AttendanceController::class, 'getPresentUsersForDate'])->name('getPresentUsersForDate');
     Route::get('/get-absent-users-for-date', [AttendanceController::class, 'getAbsentUsersForDate'])->name('getAbsentUsersForDate');

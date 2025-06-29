@@ -515,351 +515,50 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 return <TableCell className="text-xs sm:text-sm md:text-base">N/A</TableCell>;
         }
     };    // Excel download function
-    const downloadExcel = useCallback(() => {
-        try {
-            // Combine attendance and absent users data
-            const combinedData = [];
-            
-            // Add present employees
-            attendances.forEach((attendance, index) => {
-                const hours = Math.floor(attendance.total_work_minutes / 60);
-                const minutes = Math.floor(attendance.total_work_minutes % 60);
-                const workTime = attendance.total_work_minutes > 0 ? `${hours}h ${minutes}m` : 
-                    (attendance.has_incomplete_punch ? 'In Progress' : 'No work time');
-                
-                const status = attendance.complete_punches === attendance.punch_count && attendance.punch_count > 0 ? 'Complete' :
-                    (attendance.has_incomplete_punch ? 'In Progress' : 'Incomplete');
+    const exportExcel = useCallback(async () => { 
+        try { 
+            const response = await axios.get(route('attendance.exportExcel'), { params: { date: selectedDate }, responseType: 'blob', });
 
-                combinedData.push({
-                    'No.': combinedData.length + 1,
-                    'Date': new Date(attendance.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                    }),
-                    'Employee Name': attendance.user?.name || 'N/A',
-                    'Employee ID': attendance.user?.employee_id || 'N/A',
-                    'Designation': attendance.user?.designation_name || 'N/A',
-                    'Phone': attendance.user?.phone || 'N/A',                    'Clock In': attendance.punchin_time ? 
-                        formatTime(attendance.punchin_time, attendance.date) || 'Invalid time' : 'Not clocked in',
-                    'Clock Out': attendance.punchout_time ? 
-                        formatTime(attendance.punchout_time, attendance.date) || 'Invalid time' : 
-                        (attendance.punchin_time ? 
-                            (new Date(attendance.date).toDateString() === new Date().toDateString() ? 'Still working' : 'Not Punched Out') : 
-                            'Not started'),
-                    'Work Hours': workTime,
-                    'Total Punches': attendance.punch_count || 0,
-                    'Complete Punches': attendance.complete_punches || 0,
-                    'Status': status,
-                    'Remarks': status === 'Complete' ? 'Present - All punches complete' : 
-                              status === 'In Progress' ? 'Present - Currently working' : 
-                              'Present - Incomplete punches'                });
-            });
-
-            // Add absent employees
-            filteredAbsentUsers.forEach((user) => {
-                const userLeave = getUserLeave(user.id);
-                let remarks = 'Absent without leave';
-                
-                if (userLeave) {
-                    const leaveDuration = userLeave.from_date === userLeave.to_date 
-                        ? userLeave.from_date 
-                        : `${userLeave.from_date} to ${userLeave.to_date}`;
-                    remarks = `On ${userLeave.leave_type} Leave (${leaveDuration}) - Status: ${userLeave.status}`;
-                }
-
-                combinedData.push({
-                    'No.': combinedData.length + 1,
-                    'Date': new Date(selectedDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                    }),
-                    'Employee Name': user.name || 'N/A',
-                    'Employee ID': user.employee_id || 'N/A',
-                    'Designation': user.designation_name || 'N/A',
-                    'Phone': user.phone || 'N/A',
-                    'Clock In': 'Absent',
-                    'Clock Out': 'Absent',
-                    'Work Hours': '0h 0m',
-                    'Total Punches': 0,
-                    'Complete Punches': 0,
-                    'Status': 'Absent',
-                    'Remarks': remarks
-                });
-            });
-
-            // Create workbook and worksheet
-            const wb = XLSX.utils.book_new();
-            
-            // Add title and metadata first
-            const title = url === '/attendance-employee' 
-                ? `Employee Timesheet - ${new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`
-                : `Daily Timesheet - ${new Date(selectedDate).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-
-            // Create header data
-            const headerData = [
-                [title], // Row 1: Title
-                [`Generated on: ${new Date().toLocaleString('en-US')}`], // Row 2: Generated date
-                [`Total Employees: ${combinedData.length} (Present: ${totalRows}, Absent: ${filteredAbsentUsers.length})`], // Row 3: Total count
-                [], // Row 4: Empty row
-                // Row 5: Column headers
-                ['No.', 'Date', 'Employee Name', 'Employee ID', 'Designation', 'Phone', 'Clock In', 'Clock Out', 'Work Hours', 'Total Punches', 'Complete Punches', 'Status', 'Remarks']
-            ];
-
-            // Create data rows
-            const dataRows = combinedData.map(row => [
-                row['No.'],
-                row['Date'],
-                row['Employee Name'],
-                row['Employee ID'],
-                row['Designation'],
-                row['Phone'],
-                row['Clock In'],
-                row['Clock Out'],
-                row['Work Hours'],
-                row['Total Punches'],
-                row['Complete Punches'],
-                row['Status'],
-                row['Remarks']
-            ]);
-
-            // Combine header and data
-            const allData = [...headerData, ...dataRows];
-
-            // Create worksheet from the combined data
-            const ws = XLSX.utils.aoa_to_sheet(allData);
-
-            // Set column widths
-            const colWidths = [
-                { wch: 5 },   // No.
-                { wch: 12 },  // Date
-                { wch: 20 },  // Employee Name
-                { wch: 12 },  // Employee ID
-                { wch: 20 },  // Designation
-                { wch: 15 },  // Phone
-                { wch: 12 },  // Clock In
-                { wch: 12 },  // Clock Out
-                { wch: 12 },  // Work Hours
-                { wch: 12 },  // Total Punches
-                { wch: 15 },  // Complete Punches
-                { wch: 12 },  // Status
-                { wch: 40 }   // Remarks
-            ];
-            ws['!cols'] = colWidths;
-
-            // Merge cells for title and metadata
-            ws['!merges'] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }, // Title
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } }, // Generated on
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } }  // Total employees
-            ];
-
-            // Style the cells
-            const cellStyle = {
-                font: { bold: true, sz: 16 },
-                alignment: { horizontal: 'center' }
-            };
-
-            // Apply styles to title
-            if (ws['A1']) ws['A1'].s = cellStyle;
-
-            // Style header row
-            const headerCells = ['A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'I5', 'J5', 'K5', 'L5', 'M5'];
-            headerCells.forEach(cell => {
-                if (ws[cell]) {
-                    ws[cell].s = {
-                        font: { bold: true },
-                        fill: { fgColor: { rgb: 'E3F2FD' } },
-                        alignment: { horizontal: 'center' }
-                    };
-                }
-            });
-
-            // Color code absent users (starting from row 6)
-            const dataStartRow = 6;
-            combinedData.forEach((row, index) => {
-                const rowNum = dataStartRow + index;
-                if (row.Status === 'Absent') {
-                    // Color absent rows with light red background
-                    headerCells.forEach((_, colIndex) => {
-                        const cellAddress = XLSX.utils.encode_cell({ r: rowNum - 1, c: colIndex });
-                        if (ws[cellAddress]) {
-                            ws[cellAddress].s = {
-                                fill: { fgColor: { rgb: 'FFEBEE' } },
-                                font: { color: { rgb: 'D32F2F' } }
-                            };
-                        }
-                    });
-                }
-            });
-
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
-
-            // Generate filename
-            const filename = url === '/attendance-employee' 
-                ? `Employee_Timesheet_${dayjs(filterData.currentMonth).format('YYYY_MM')}.xlsx`
-                : `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.xlsx`;
-
-            // Download file
-            XLSX.writeFile(wb, filename);
-        } catch (error) {            console.error('Error generating Excel file:', error);
-            alert('Error generating Excel file. Please try again.');
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute(
+                'download',
+                `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.xlsx`
+            );
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error downloading Excel:', error);
+            alert('Failed to download attendance excel.');
         }
-    }, [attendances, filteredAbsentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);
+
+    }, [selectedDate]);
 
     // PDF download function
-    const downloadPDF = useCallback(() => {
-        try {
-            const doc = new jsPDF();
-            
-            // Title
-            const title = url === '/attendance-employee' 
-                ? `Employee Timesheet - ${new Date(filterData.currentMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`
-                : `Daily Timesheet - ${new Date(selectedDate).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-
-            // Add title
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-
-            // Add metadata
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Generated on: ${new Date().toLocaleString('en-US')}`, 14, 35);
-            doc.text(`Total Employees: ${attendances.length + filteredAbsentUsers.length} (Present: ${totalRows}, Absent: ${filteredAbsentUsers.length})`, 14, 42);
-
-            // Prepare table data - combine present and absent users
-            const tableData = [];
-            
-            // Add present employees
-            attendances.forEach((attendance, index) => {
-                const hours = Math.floor(attendance.total_work_minutes / 60);
-                const minutes = Math.floor(attendance.total_work_minutes % 60);
-                const workTime = attendance.total_work_minutes > 0 ? `${hours}h ${minutes}m` : 
-                    (attendance.has_incomplete_punch ? 'In Progress' : 'No work time');
-                
-                const status = attendance.complete_punches === attendance.punch_count && attendance.punch_count > 0 ? 'Complete' :
-                    (attendance.has_incomplete_punch ? 'In Progress' : 'Incomplete');
-                
-                const remarks = status === 'Complete' ? 'Present - All complete' : 
-                              status === 'In Progress' ? 'Present - Working' : 
-                              'Present - Incomplete';                tableData.push([
-                    tableData.length + 1,
-                    new Date(attendance.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                    }),
-                    attendance.user?.name || 'N/A',                    attendance.punchin_time ? 
-                        formatTime(attendance.punchin_time, attendance.date) || 'Invalid time' : 'Not clocked in',
-                    attendance.punchout_time ? 
-                        formatTime(attendance.punchout_time, attendance.date) || 'Invalid time' : 
-                        (attendance.punchin_time ? 
-                            (new Date(attendance.date).toDateString() === new Date().toDateString() ? 'Still working' : 'Not Punched Out') : 
-                            'Not started'),
-                    workTime,
-                    `${attendance.complete_punches}/${attendance.punch_count}`,
-                    remarks
-                ]);            });
-
-            // Add absent employees
-            filteredAbsentUsers.forEach((user) => {
-                const userLeave = getUserLeave(user.id);
-                let remarks = 'Absent without leave';
-                
-                if (userLeave) {
-                    remarks = `On ${userLeave.leave_type} Leave - ${userLeave.status}`;
-                }
-
-                tableData.push([
-                    tableData.length + 1,
-                    new Date(selectedDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                    }),
-                    user.name || 'N/A',
-                    'Absent',
-                    'Absent',
-                    '0h 0m',
-                    '0/0',
-                    remarks
-                ]);
-            });
-
-            // Add table using autoTable function directly
-            autoTable(doc, {
-                head: [['No.', 'Date', 'Employee', 'Clock In', 'Clock Out', 'Work Hours', 'Punches', 'Remarks']],
-                body: tableData,
-                startY: 50,
-                theme: 'grid',
-                styles: {
-                    fontSize: 7,
-                    cellPadding: 2,
-                    lineColor: [200, 200, 200],
-                    lineWidth: 0.5,
-                },
-                headStyles: {
-                    fillColor: [66, 139, 202],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 8,
-                },
-                alternateRowStyles: {
-                    fillColor: [245, 245, 245],
-                },
-                columnStyles: {
-                    0: { cellWidth: 12, halign: 'center' }, // No.
-                    1: { cellWidth: 20 }, // Date
-                    2: { cellWidth: 30 }, // Employee
-                    3: { cellWidth: 20 }, // Clock In
-                    4: { cellWidth: 20 }, // Clock Out
-                    5: { cellWidth: 18 }, // Work Hours
-                    6: { cellWidth: 15, halign: 'center' }, // Punches
-                    7: { cellWidth: 35 }, // Remarks
-                },
-                margin: { top: 10, left: 14, right: 14 },
-                didParseCell: function (data) {
-                    // Color absent users rows
-                    if (data.row.index >= 0) { // Skip header
-                        const rowData = tableData[data.row.index];
-                        if (rowData && rowData[7] && (rowData[7].includes('Absent') || rowData[7].includes('Leave'))) {
-                            data.cell.styles.fillColor = [255, 235, 238]; // Light red for absent
-                            data.cell.styles.textColor = [211, 47, 47]; // Dark red text
-                        }
-                    }
-                }
-            });
-
-            // Add footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.text(
-                    `Page ${i} of ${pageCount}`,
-                    doc.internal.pageSize.getWidth() - 30,
-                    doc.internal.pageSize.getHeight() - 10
-                );
-                doc.text(
-                    'Generated by Glass ERP System',
-                    14,
-                    doc.internal.pageSize.getHeight() - 10
-                );
-            }
-
-            // Generate filename
-            const filename = url === '/attendance-employee' 
-                ? `Employee_Timesheet_${dayjs(filterData.currentMonth).format('YYYY_MM')}.pdf`
-                : `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.pdf`;            // Download file
-            doc.save(filename);
-        } catch (error) {            console.error('Error generating PDF file:', error);
-            alert('Error generating PDF file. Please try again.');
+    const downloadPDF = useCallback(async () => {
+        try { 
+            const response = await axios.get(route('attendance.exportPdf'), { params:{date:selectedDate}, responseType:'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a'); link.href=url;
+            link.setAttribute(
+                'download',
+                `Daily_Timesheet_${dayjs(selectedDate).format('YYYY_MM_DD')}.pdf`
+            );
+            document.body.appendChild(link); 
+            link.click(); 
+            link.remove();
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            alert('Failed to download attendance pdf.');
         }
-    }, [attendances, filteredAbsentUsers, selectedDate, filterData, url, getUserLeave, formatTime]);    // Fetch attendance data when filters change
+        
+    },[selectedDate]);
+    // Fetch attendance data when filters change
+
+
     useEffect(() => {
         getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData);
         getAbsentUsersForDate(selectedDate, employee);
@@ -1057,7 +756,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                                         `} />
                                                                     }
                                                                     className="bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.1)] to-[rgba(var(--theme-success-rgb),0.2)] hover:from-[rgba(var(--theme-success-rgb),0.2)] hover:to-[rgba(var(--theme-success-rgb),0.3)] border border-[rgba(var(--theme-success-rgb),0.2)] backdrop-blur-sm"
-                                                                    onPress={downloadExcel}
+                                                                    onPress={exportExcel}
                                                                     isDisabled={!isLoaded || attendances.length === 0}
                                                                     style={{
                                                                         fontFamily: 'var(--font-current)',
