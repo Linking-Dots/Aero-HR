@@ -194,6 +194,13 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
+                $dataStartRow = 5;
+                $total = $sheet->getHighestDataRow();
+                $present = collect($sheet->toArray(null, true, false, true))
+                    ->slice(0, $total)
+                    ->where(12, '!=', 'Absent')
+                    ->count();
+                $absent = $total - $present;
                 $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
 
                 // ====== Title ======
@@ -208,13 +215,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                 $sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
 
                 // ====== Summary row ======
-                $dataStartRow = 5;
-                $total = $sheet->getHighestDataRow();
-                $present = collect($sheet->toArray(null, true, false, true))
-                    ->slice(0, $total)
-                    ->where(13, '!=', 'Absent')
-                    ->count();
-                $absent = $total - $present;
+
 
                 $sheet->mergeCells('A3:M3');
                 $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, Absent: {$absent})");
