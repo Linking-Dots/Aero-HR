@@ -45,9 +45,9 @@ const LeaveForm = ({
     const theme = useTheme();
     const [user_id, setUserId] = useState(currentLeave?.user_id || auth.user.id);
     // Initialize state variables
-    const [leaveTypes, setLeaveTypes] = useState(leavesData.leaveTypes || []);
-    const [leaveCounts, setLeaveCounts] = useState(leavesData.leaveCounts || []);
-    const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || (leaveTypes.length > 0 ? leaveTypes[0].type : ""));
+    const [leaveTypes, setLeaveTypes] = useState(leavesData?.leaveTypes || []);
+    const [leaveCounts, setLeaveCounts] = useState([]);
+    const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || "");
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? new Date().toISOString().split('T')[0] : date.toISOString().split('T')[0];
@@ -68,21 +68,37 @@ const LeaveForm = ({
     useEffect(() => {
         if (leavesData) {
             setLeaveTypes(leavesData.leaveTypes || []);
-            setLeaveCounts(leavesData.leaveCountsByUser[user_id] || []);
+            const userLeaveCounts = leavesData.leaveCountsByUser?.[user_id] || [];
+            setLeaveCounts(userLeaveCounts);
+            
+            // Set initial leave type if not set and we have leave types
+            if (leaveTypes.length > 0 && !leaveType) {
+                setLeaveType(leaveTypes[0].type);
+            }
         }
     }, [leavesData, user_id]);
 
+    // Update remaining leaves when user or leave type changes
     useEffect(() => {
-        // Find the days used for the selected leave type
-        const daysUsed = leaveCounts?.find((found) => found.leave_type === leaveType)?.days_used || 0;
+        if (!leaveType || !leaveCounts || !leaveTypes) return;
+        
+        // Find the leave count for the selected leave type
+        const leaveCount = leaveCounts.find(lc => lc.leave_type === leaveType);
+        const daysUsed = leaveCount?.days_used || 0;
         setDaysUsed(daysUsed);
 
-        // Calculate remaining leaves for the selected leave type
-        const selectedLeaveType = leaveTypes?.find((leave) => leave.type === leaveType);
+        // Find the leave type definition
+        const selectedLeaveType = leaveTypes.find(lt => lt.type === leaveType);
         if (selectedLeaveType) {
-            setRemainingLeaves(selectedLeaveType.days - daysUsed);
+            const remaining = selectedLeaveType.days - daysUsed;
+            setRemainingLeaves(remaining);
+            
+            // If editing and days exceed remaining, adjust the days count
+            if (currentLeave && daysCount > remaining) {
+                setDaysCount(remaining);
+            }
         }
-    }, [leaveType, leaveCounts, leaveTypes]);
+    }, [leaveType, leaveCounts, leaveTypes, currentLeave, daysCount]);
 
     useEffect(() => {
         // Function to calculate the number of days between two dates, inclusive of both start and end date
@@ -232,7 +248,7 @@ const LeaveForm = ({
     return (
         <GlassDialog open={open} onClose={closeModal} fullWidth maxWidth="sm">
             <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="h6">Add Leave</Typography>
+                <Typography variant="h6">{currentLeave ? 'Edit Leave' : 'Add Leave'}</Typography>
                 <IconButton
                     onClick={closeModal}
                     sx={{ position: 'absolute', top: 8, right: 16 }}
@@ -248,10 +264,11 @@ const LeaveForm = ({
                                 <InputLabel id="leave-type-label">Leave Type</InputLabel>
                                 <Select
                                     labelId="leave-type-label"
-                                    value={leaveType}
+                                    value={leaveType || ''}
                                     onChange={(e) => setLeaveType(e.target.value)}
                                     label="Leave Type"
                                     error={Boolean(errors.leaveType)}
+                                    disabled={!!currentLeave}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
@@ -260,16 +277,35 @@ const LeaveForm = ({
                                                 border: theme.glassCard.border,
                                                 borderRadius: 2,
                                                 boxShadow: theme.glassCard.boxShadow,
+                                                maxHeight: 300,
                                             },
                                         },
                                     }}
                                 >
                                     <MenuItem value="" disabled>Select Leave Type</MenuItem>
-                                    {leaveTypes.map((type) => (
-                                        <MenuItem key={type.id} value={type.type}>
-                                            {type.type} {type.days} Days
-                                        </MenuItem>
-                                    ))}
+                                    {leaveTypes.map((type) => {
+                                        const leaveCount = leaveCounts?.find(lc => lc.leave_type === type.type);
+                                        const remaining = leaveCount ? (type.days - leaveCount.days_used) : type.days;
+                                        const isDisabled = remaining <= 0;
+                                        
+                                        return (
+                                            <MenuItem 
+                                                key={type.id} 
+                                                value={type.type}
+                                                disabled={isDisabled}
+                                                title={isDisabled ? 'No remaining leaves available' : ''}
+                                            >
+                                                <Box display="flex" justifyContent="space-between" width="100%">
+                                                    <span>{type.type}</span>
+                                                    <span>
+                                                        {leaveCount ? 
+                                                            `${leaveCount.days_used} / ${type.days} days` : 
+                                                            `${type.days} days`}
+                                                    </span>
+                                                </Box>
+                                            </MenuItem>
+                                        );
+                                    })}
                                 </Select>
                                 <FormHelperText>{errors.leaveType}</FormHelperText>
                             </FormControl>
@@ -314,8 +350,15 @@ const LeaveForm = ({
                                 label="Remaining Leaves"
                                 type="text"
                                 fullWidth
-                                value={remainingLeaves}
-                                InputProps={{ readOnly: true }}
+                                value={`${remainingLeaves} day${remainingLeaves !== 1 ? 's' : ''}`}
+                                InputProps={{ 
+                                    readOnly: true,
+                                    endAdornment: (
+                                        <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                                            of {leaveTypes.find(lt => lt.type === leaveType)?.days || 0} total
+                                        </Typography>
+                                    )
+                                }}
                                 error={Boolean(errors.remainingLeaves)}
                                 helperText={errors.remainingLeaves}
                             />

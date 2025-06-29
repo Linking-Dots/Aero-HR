@@ -28,6 +28,7 @@ import {
     LinearProgress,
     Collapse
 } from '@mui/material';
+import GlassDialog from '@/Components/GlassDialog';
 import {
     AccessTime,
     LocationOn,
@@ -825,210 +826,134 @@ const PunchStatusCard = () => {
             </GlassCard>
 
             {/* Hero Session Info Dialog */}
-            <Dialog 
-                open={sessionDialogOpen} 
-                onClose={() => setSessionDialogOpen(false)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        backdropFilter: 'blur(20px) saturate(180%)',
-                        background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.primary.main, 0.05)})`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                        borderRadius: 4,
-                        boxShadow: `0 20px 40px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        m: 1,
-                        overflow: 'hidden'
-                    }
-                }}
-            >
-                {/* Hero Header */}
+            <GlassDialog open={sessionDialogOpen} onClose={() => setSessionDialogOpen(false)} maxWidth="sm" fullWidth>
+                {/* Compact Header */}
                 <Box
                     sx={{
-                        position: 'relative',
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                        color: 'white',
-                        p: 3,
-                        textAlign: 'center'
+                    p: 2,
+                    textAlign: 'center',
+                    position: 'relative',
+                    color: 'white',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
                     }}
                 >
                     <IconButton
-                        onClick={() => setSessionDialogOpen(false)}
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            color: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(10px)',
-                            '&:hover': {
-                                color: 'white',
-                                background: alpha(theme.palette.common.white, 0.1)
-                            }
-                        }}
+                    onClick={() => setSessionDialogOpen(false)}
+                    sx={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        color: 'rgba(255,255,255,0.8)',
+                        '&:hover': { color: '#fff', backgroundColor: alpha('#fff', 0.1) },
+                        p: 0.5
+                    }}
                     >
-                        <Close />
+                    <Close fontSize="small" />
                     </IconButton>
-
-                    <CheckCircle sx={{ fontSize: 48, mb: 1, opacity: 0.9 }} />
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                        Attendance Recorded
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Your attendance has been successfully captured
-                    </Typography>
+                    <CheckCircle sx={{ fontSize: 36, mb: 0.5, opacity: 0.9 }} />
+                    <Typography variant="subtitle1" fontWeight={700}>Attendance Recorded</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.85 }}>Attendance successfully captured</Typography>
                 </Box>
 
-                <DialogContent sx={{ p: 3 }}>
-                    {/* Session Information Cards */}
-                    <Grid container spacing={2}>
-                        {/* IP Address Card */}
-                        <Grid item xs={12} sm={6}>
-                            <Paper
-                                sx={{
-                                    p: 2.5,
-                                    textAlign: 'center',
-                                    background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)}, ${alpha(theme.palette.info.main, 0.05)})`,
-                                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                                    borderRadius: 3,
-                                    backdropFilter: 'blur(10px)',
-                                    transition: 'transform 0.2s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: `0 8px 25px ${alpha(theme.palette.info.main, 0.15)}`
-                                    }
-                                }}
+                {/* Body */}
+                <DialogContent sx={{ p: 2 }}>
+                    <Grid container spacing={1.5}>
+
+                        {/* IP Address */}
+                        <Grid item xs={6}>
+                            <Box
+                            sx={{
+                                p: 1.5,
+                                textAlign: 'center',
+                                borderRadius: 2,
+                                background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)}, ${alpha(theme.palette.info.main, 0.05)})`,
+                                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                                backdropFilter: 'blur(8px)'
+                            }}
                             >
-                                <Box
-                                    sx={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: '50%',
-                                        background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        mx: 'auto',
-                                        mb: 2
-                                    }}
-                                >
-                                    <Language sx={{ color: 'white', fontSize: 24 }} />
-                                </Box>
-                                <Typography variant="h6" color="info.main" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {sessionInfo.ip}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                    IP Address
-                                </Typography>
-                            </Paper>
+                            <Box sx={{
+                                width: 32, height: 32, mb: 1, mx: 'auto',
+                                borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`
+                            }}>
+                                <Language sx={{ color: 'white', fontSize: 18 }} />
+                            </Box>
+                            <Typography variant="subtitle2" fontWeight={600} color="info.main">{sessionInfo.ip}</Typography>
+                            <Typography variant="caption" color="text.secondary">IP Address</Typography>
+                            </Box>
                         </Grid>
 
-                        {/* GPS Accuracy Card */}
-                        <Grid item xs={12} sm={6}>
-                            <Paper
-                                sx={{
-                                    p: 2.5,
-                                    textAlign: 'center',
-                                    background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.main, 0.05)})`,
-                                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                    borderRadius: 3,
-                                    backdropFilter: 'blur(10px)',
-                                    transition: 'transform 0.2s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: `0 8px 25px ${alpha(theme.palette.success.main, 0.15)}`
-                                    }
-                                }}
+                        {/* GPS Accuracy */}
+                        <Grid item xs={6}>
+                            <Box
+                            sx={{
+                                p: 1.5,
+                                textAlign: 'center',
+                                borderRadius: 2,
+                                background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.main, 0.05)})`,
+                                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                                backdropFilter: 'blur(8px)'
+                            }}
                             >
-                                <Box
-                                    sx={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: '50%',
-                                        background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        mx: 'auto',
-                                        mb: 2
-                                    }}
-                                >
-                                    <GpsFixed sx={{ color: 'white', fontSize: 24 }} />
-                                </Box>
-                                <Typography variant="h6" color="success.main" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {sessionInfo.accuracy}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                    GPS Accuracy
-                                </Typography>
-                            </Paper>
+                            <Box sx={{
+                                width: 32, height: 32, mb: 1, mx: 'auto',
+                                borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`
+                            }}>
+                                <GpsFixed sx={{ color: 'white', fontSize: 18 }} />
+                            </Box>
+                            <Typography variant="subtitle2" fontWeight={600} color="success.main">{sessionInfo.accuracy}</Typography>
+                            <Typography variant="caption" color="text.secondary">GPS Accuracy</Typography>
+                            </Box>
                         </Grid>
                     </Grid>
 
                     {/* Timestamp */}
-                    <Paper
-                        sx={{
-                            mt: 2,
-                            p: 2,
-                            background: alpha(theme.palette.background.default, 0.5),
-                            border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                            borderRadius: 2,
-                            backdropFilter: 'blur(10px)'
-                        }}
+                    <Box
+                    sx={{
+                        mt: 2,
+                        py: 1,
+                        px: 2,
+                        borderRadius: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backdropFilter: 'blur(8px)',
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.main, 0.05)})`,
+                        border: `1px solid ${alpha(theme.palette.divider, 0.2)}`
+                    }}
                     >
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <AccessTime color="primary" sx={{ mr: 1, fontSize: 20 }} />
-                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                Recorded at: {sessionInfo.timestamp}
-                            </Typography>
-                        </Box>
-                    </Paper>
+                    <AccessTime sx={{ mr: 1, fontSize: 16 }} color="primary" />
+                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                        Recorded at: {sessionInfo.timestamp}
+                    </Typography>
+                    </Box>
                 </DialogContent>
 
-                <DialogActions sx={{ p: 3, pt: 0 }}>
-                    <Button 
-                        onClick={() => setSessionDialogOpen(false)} 
-                        variant="contained"
-                        fullWidth
-                        sx={{ 
-                            height: 48,
-                            borderRadius: 3,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                            backdropFilter: 'blur(16px) saturate(200%)',
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
-                            '&:hover': {
-                                background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-                                transform: 'translateY(-1px)',
-                                boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.4)}`,
-                            }
-                        }}
+                {/* Action */}
+                <DialogActions sx={{ px: 2, pb: 2 }}>
+                    <Button
+                    onClick={() => setSessionDialogOpen(false)}
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                        height: 42,
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                        '&:hover': {
+                        background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
+                        }
+                    }}
                     >
-                        Continue
+                    Continue
                     </Button>
                 </DialogActions>
-            </Dialog>
-
-            {/* Compact Refresh FAB */}
-            <Fab
-                size="small"
-                onClick={fetchCurrentStatus}
-                sx={{
-                    position: 'fixed',
-                    bottom: 16,
-                    right: 16,
-                    background: alpha(theme.palette.background.paper, 0.8),
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                    width: 40,
-                    height: 40,
-                    '&:hover': {
-                        background: alpha(theme.palette.primary.main, 0.1),
-                    }
-                }}
-            >
-                <Refresh sx={{ fontSize: 18 }} />
-            </Fab>
+            </GlassDialog>
         </Box>
     );
 };

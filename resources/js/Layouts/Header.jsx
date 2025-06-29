@@ -107,158 +107,151 @@ const Header = React.memo(({
   }, []);
   // Mobile Header Component
   const MobileHeader = () => (
-    <Box sx={{ p: 2 }}>
-      <Grow in>
-        <GlassCard>
-          <Navbar
-            shouldHideOnScroll
-            maxWidth="full"
-            height="70px"
-            classNames={{
-              base: "bg-transparent border-none shadow-none",
-              wrapper: "px-6 max-w-full",
-              content: "gap-4"
-            }}
-          >
-            {/* Left section */}
-            <NavbarContent justify="start" className="flex-grow">
-              <div className="flex items-center gap-4">
-                <Button
-                  isIconOnly
-                  variant="light"
-                  onPress={toggleSideBar}
-                  className="text-foreground hover:bg-white/10 transition-all duration-300 hover:scale-110"
-                  aria-label={sideBarOpen ? "Close sidebar" : "Open sidebar"}
-                >
-                  <Bars3Icon className="w-6 h-6" />
-                </Button>
-                <NavbarBrand>
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xl ${GRADIENT_PRESETS.iconContainer}`}>
-                        <Typography
-                          variant="h6"
-                          className="font-black text-white"
-                          style={{ fontFamily: 'Inter, sans-serif' }}
-                        >
-                          A
-                        </Typography>
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
-                    </div>
-                    <div className="hidden sm:block">
-                      <Typography
-                        variant="h6"
-                        className={`font-black ${GRADIENT_PRESETS.gradientText}`}
-                        style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.025em' }}
-                      >
-                        Aero Enterprise Suite
-                      </Typography>
-                      <Typography variant="caption" className="text-default-400 block leading-tight font-medium">
-                        Unified Enterprise Platform for HRM, CRM, ERP, POS, DMS, PMS, FMS & More
-                      </Typography>
-                    </div>
-                  </div>
-                </NavbarBrand>
+  <Box sx={{ px: 1.5, pt: 1.5 }}>
+    <Grow in>
+      <GlassCard>
+        <Navbar
+          shouldHideOnScroll
+          maxWidth="full"
+          height="60px"
+          classNames={{
+            base: "bg-transparent border-none shadow-none",
+            wrapper: "px-3 sm:px-6 max-w-full",
+            content: "gap-2"
+          }}
+        >
+          {/* Left: Logo + Sidebar */}
+          <NavbarContent justify="start" className="flex items-center gap-2">
+            <Button
+              isIconOnly
+              variant="light"
+              onPress={toggleSideBar}
+              className="text-foreground hover:bg-white/10 transition-all duration-300"
+              size="sm"
+              aria-label={sideBarOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              <Bars3Icon className="w-5 h-5" />
+            </Button>
+
+            {/* Logo & Name */}
+            <NavbarBrand className="flex items-center gap-2 min-w-0">
+              <div className="relative">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-xl ${GRADIENT_PRESETS.iconContainer}`}>
+                  <Typography variant="h6" className="text-white text-sm font-black">A</Typography>
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
               </div>
-            </NavbarContent>
 
-            {/* Center section - Search */}
-            <NavbarContent justify="center" className="hidden md:flex flex-1 max-w-md">
-              <Input
-                placeholder="Search anything..."
-                startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
-                endContent={
-                  <Kbd className="hidden lg:inline-block" keys={["command"]}>K</Kbd>
-                }
-                classNames={{
-                  base: "w-full",
-                  inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-300",
-                  input: "text-sm"
-                }}
-                size="sm"
-              />
-            </NavbarContent>
+              {/* Hide brand text on mobile */}
+              <div className="hidden sm:flex flex-col leading-tight">
+                <Typography variant="h6" className={`${GRADIENT_PRESETS.gradientText} font-black text-sm`}>
+                  Aero Enterprise
+                </Typography>
+                <Typography variant="caption" className="text-default-400 text-xs font-medium truncate">
+                  HRM, ERP, CRM & more
+                </Typography>
+              </div>
+            </NavbarBrand>
+          </NavbarContent>
 
-            {/* Right section */}
-            <NavbarContent justify="end" className="flex-grow-0 gap-2">
-              {/* Search button for mobile */}
+          {/* Center (only for md+ screen) */}
+          <NavbarContent justify="center" className="hidden md:flex flex-1 max-w-md">
+            <Input
+              placeholder="Search..."
+              startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
+              endContent={<Kbd className="hidden lg:inline-block" keys={["command"]}>K</Kbd>}
+              classNames={{
+                inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                input: "text-sm"
+              }}
+              size="sm"
+            />
+          </NavbarContent>
+
+          {/* Right Controls */}
+          <NavbarContent justify="end" className="flex items-center gap-1 min-w-0">
+            {/* Mobile Search */}
+            <Button
+              isIconOnly
+              variant="light"
+              className="md:hidden text-foreground hover:bg-white/10"
+              size="sm"
+            >
+              <MagnifyingGlassIcon className="w-5 h-5" />
+            </Button>
+
+            {/* Help */}
+            <Tooltip content="Help" placement="bottom">
               <Button
                 isIconOnly
                 variant="light"
-                className="md:hidden text-foreground hover:bg-white/10 transition-all duration-300"
+                className="text-foreground hover:bg-white/10"
                 size="sm"
               >
-                <MagnifyingGlassIcon className="w-5 h-5" />
+                <QuestionMarkCircleIcon className="w-5 h-5" />
               </Button>
+            </Tooltip>
 
-              {/* Help */}
-              <Tooltip content="Help & Support" placement="bottom">
+            {/* Notifications */}
+            <GlassDropdown placement="bottom-end">
+              <DropdownTrigger>
+                {/* ✅ Single React element inside */}
                 <Button
                   isIconOnly
                   variant="light"
-                  className="text-foreground hover:bg-white/10 transition-all duration-300"
+                  className="relative text-foreground hover:bg-white/10"
                   size="sm"
                 >
-                  <QuestionMarkCircleIcon className="w-5 h-5" />
-                </Button>
-              </Tooltip>
-
-              {/* Notifications */}
-              <GlassDropdown placement="bottom-end">
-                <DropdownTrigger>
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    className="text-foreground hover:bg-white/10 transition-all duration-300 relative"
+                  <BellIcon className="w-5 h-5" />
+                  <Badge
+                    content="12"
+                    color="danger"
                     size="sm"
-                  >
-                    <BellIcon className="w-5 h-5" />
-                    <Badge
-                      content="12"
-                      color="danger"
-                      size="sm"
-                      className="absolute -top-1 -right-1"
-                    />
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu className="w-80 p-0">
-                  <DropdownItem key="header" className="cursor-default">
-                    <div className="p-4 border-b border-divider">
-                      <Typography variant="h6" className="font-semibold">Notifications</Typography>
-                      <Typography variant="caption" className="text-default-500">You have 12 unread notifications</Typography>
-                    </div>
-                  </DropdownItem>
-                </DropdownMenu>
-              </GlassDropdown>
+                    className="absolute -top-1 -right-1"
+                  />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu className="w-80 p-0">
+                <DropdownItem key="header" className="cursor-default">
+                  <div className="p-4 border-b border-divider">
+                    <Typography variant="h6" className="font-semibold">Notifications</Typography>
+                    <Typography variant="caption" className="text-default-500">You have 12 unread notifications</Typography>
+                  </div>
+                </DropdownItem>
+              </DropdownMenu>
+            </GlassDropdown>
 
-              {/* Language Switcher - Placeholder Icon */}
-              <Button
-                isIconOnly
-                variant="light"
-                className="text-foreground hover:bg-white/10 transition-all duration-300"
-                size="sm"
-                aria-label="Change language"
-              >
-                <CommandLineIcon className="w-5 h-5" />
-              </Button>
+            {/* Language Switcher */}
+            <Button
+              isIconOnly
+              variant="light"
+              className="text-foreground hover:bg-white/10"
+              size="sm"
+              aria-label="Change language"
+            >
+              <CommandLineIcon className="w-5 h-5" />
+            </Button>
 
-              {/* User Menu */}
-              <GlassDropdown classNames={{
-                      content: "bg-white/10 backdrop-blur-md border border-white/20"
-                    }} placement="bottom-end">
-                <DropdownTrigger>
-                  <ProfileButton />
-                </DropdownTrigger>
-                {/* Shared Profile Menu for both Mobile and Desktop */}
-                <ProfileMenu />
-              </GlassDropdown>
-            </NavbarContent>
-          </Navbar>
-        </GlassCard>
-      </Grow>
-    </Box>
-  );
+            {/* User Menu */}
+            <GlassDropdown
+              classNames={{
+                content: "bg-white/10 backdrop-blur-md border border-white/20"
+              }}
+              placement="bottom-end"
+            >
+              <DropdownTrigger>
+                <ProfileButton size="sm" />
+              </DropdownTrigger>
+              <ProfileMenu />
+            </GlassDropdown>
+          </NavbarContent>
+        </Navbar>
+      </GlassCard>
+    </Grow>
+  </Box>
+);
+
+
 
   // Desktop Header Component
   const DesktopHeader = () => (
@@ -470,7 +463,7 @@ const Header = React.memo(({
                     <CommandLineIcon className="w-5 h-5" />
                   </Button>
                   {/* Profile Menu */}
-                  <Dropdown
+                  <GlassDropdown
                     placement="bottom-end"
                     classNames={{
                       content: "bg-white/10 backdrop-blur-md border border-white/20"
@@ -481,7 +474,7 @@ const Header = React.memo(({
                     </DropdownTrigger>
                     {/* Shared Profile Menu for both Mobile and Desktop */}
                     <ProfileMenu />
-                  </Dropdown>
+                  </GlassDropdown>
                 </Box>
               </Box>
             </Container>

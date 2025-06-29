@@ -146,15 +146,19 @@ const LeavesAdmin = ({ title, allUsers }) => {
         { key: 'new', label: 'New', value: 'new' }
     ], []);
 
-    const leaveTypeOptions = useMemo(() => [
-        { key: 'all', label: 'All Types', value: 'all' },
-        { key: 'annual', label: 'Annual Leave', value: 'annual' },
-        { key: 'sick', label: 'Sick Leave', value: 'sick' },
-        { key: 'maternity', label: 'Maternity Leave', value: 'maternity' },
-        { key: 'paternity', label: 'Paternity Leave', value: 'paternity' },
-        { key: 'emergency', label: 'Emergency Leave', value: 'emergency' },
-        { key: 'casual', label: 'Casual Leave', value: 'casual' }
-    ], []);
+    const leaveTypeOptions = useMemo(() => {
+        const defaultOptions = [{ key: 'all', label: 'All Types', value: 'all' }];
+        
+        if (!leavesData.leaveTypes) return defaultOptions;
+        
+        const dynamicOptions = leavesData.leaveTypes.map(leaveType => ({
+            key: leaveType.type.toLowerCase(),
+            label: leaveType.type,
+            value: leaveType.type.toLowerCase()
+        }));
+        
+        return [...defaultOptions, ...dynamicOptions];
+    }, [leavesData.leaveTypes]);
 
     // Modal handlers
     const openModal = useCallback((modalType) => {
@@ -414,199 +418,162 @@ const LeavesAdmin = ({ title, allUsers }) => {
                             ]}
                         >
                             <div className="p-6">
-                                    {/* Quick Stats */}
-                                    <StatsCards stats={statsData} />
-                                    
-                                    {/* Tabs for different views */}
-                                    <div className="mb-6">
-                                        <Tabs 
-                                            selectedKey={activeTab} 
-                                            onSelectionChange={handleTabChange}
-                                            variant="underlined"
-                                            className="mb-6"
-                                            classNames={{
-                                                tabList: "bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-1",
-                                                tab: "data-[selected=true]:bg-white/10 data-[selected=true]:text-primary",
-                                                cursor: "bg-primary/20 backdrop-blur-md"
-                                            }}
-                                        >
-                                            <Tab key="all" title="All Leaves" />
-                                            <Tab key="pending" title="Pending Approval" />
-                                            <Tab key="approved" title="Approved" />
-                                            <Tab key="rejected" title="Rejected" />
-                                        </Tabs>
-                                    </div>
-
-                                    {/* Filters Section - Matching Employee View */}
-                                    <div className="mb-6">
-                                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                                            <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                                <Input
-                                                    label="Month/Year"
-                                                    type="month"
-                                                    value={filters.selectedMonth}
-                                                    onChange={handleMonthChange}
-                                                    startContent={<CalendarIcon className="w-4 h-4" />}
-                                                    variant="bordered"
-                                                    classNames={{
-                                                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                    }}
-                                                    size={isMobile ? "sm" : "md"}
-                                                />
-                                            </div>
-                                            
-                                            <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                                <Input
-                                                    label="Search Employee"
-                                                    placeholder="Enter name or ID..."
-                                                    value={filters.employee}
-                                                    onChange={handleSearch}
-                                                    startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
-                                                    variant="bordered"
-                                                    classNames={{
-                                                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                    }}
-                                                    size={isMobile ? "sm" : "md"}
-                                                />
-                                            </div>
-                                            
-                                            <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                                <Select
-                                                    label="Leave Status"
-                                                    selectedKeys={[filters.status]}
-                                                    onSelectionChange={(keys) => handleFilterChange('status', Array.from(keys)[0])}
-                                                    variant="bordered"
-                                                    classNames={{
-                                                        trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                        popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
-                                                    }}
-                                                    size={isMobile ? "sm" : "md"}
-                                                >
-                                                    {statusOptions.map((option) => (
-                                                        <SelectItem key={option.key} value={option.value}>
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </Select>
-                                            </div>
-                                            
-                                            <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                                <Select
-                                                    label="Leave Type"
-                                                    selectedKeys={[filters.leaveType]}
-                                                    onSelectionChange={(keys) => handleFilterChange('leaveType', Array.from(keys)[0])}
-                                                    variant="bordered"
-                                                    classNames={{
-                                                        trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                        popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
-                                                    }}
-                                                    size={isMobile ? "sm" : "md"}
-                                                >
-                                                    {leaveTypeOptions.map((option) => (
-                                                        <SelectItem key={option.key} value={option.value}>
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </Select>
-                                            </div>
-                                            
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="flat"
-                                                    color="primary"
-                                                    size={isMobile ? "sm" : "md"}
-                                                    onPress={fetchLeavesData}
-                                                    isLoading={loading}
-                                                    startContent={!loading && <ChartBarIcon className="w-4 h-4" />}
-                                                >
-                                                    Refresh
-                                                </Button>
-                                            </div>
+                                {/* Quick Stats */}
+                                <StatsCards stats={statsData} />
+                                {/* Filters Section - Matching Employee View */}
+                                <div className="mb-6">
+                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                            <Input
+                                                label="Month/Year"
+                                                type="month"
+                                                value={filters.selectedMonth}
+                                                onChange={handleMonthChange}
+                                                startContent={<CalendarIcon className="w-4 h-4" />}
+                                                variant="bordered"
+                                                classNames={{
+                                                    inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                }}
+                                                size={isMobile ? "sm" : "md"}
+                                            />
+                                        </div>
+                                        
+                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                            <Input
+                                                label="Search Employee"
+                                                placeholder="Enter name or ID..."
+                                                value={filters.employee}
+                                                onChange={handleSearch}
+                                                startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
+                                                variant="bordered"
+                                                classNames={{
+                                                    inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                }}
+                                                size={isMobile ? "sm" : "md"}
+                                            />
+                                        </div>
+                                        
+                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                            <Select
+                                                label="Leave Status"
+                                                selectedKeys={[filters.status]}
+                                                onSelectionChange={(keys) => handleFilterChange('status', Array.from(keys)[0])}
+                                                variant="bordered"
+                                                classNames={{
+                                                    trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                    popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
+                                                }}
+                                                size={isMobile ? "sm" : "md"}
+                                            >
+                                                {statusOptions.map((option) => (
+                                                    <SelectItem key={option.key} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                        
+                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                            <Select
+                                                label="Leave Type"
+                                                selectedKeys={[filters.leaveType]}
+                                                onSelectionChange={(keys) => handleFilterChange('leaveType', Array.from(keys)[0])}
+                                                variant="bordered"
+                                                classNames={{
+                                                    trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                                    popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
+                                                }}
+                                                size={isMobile ? "sm" : "md"}
+                                            >
+                                                {leaveTypeOptions.map((option) => (
+                                                    <SelectItem key={option.key} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                        
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="flat"
+                                                color="primary"
+                                                size={isMobile ? "sm" : "md"}
+                                                onPress={fetchLeavesData}
+                                                isLoading={loading}
+                                                startContent={!loading && <ChartBarIcon className="w-4 h-4" />}
+                                            >
+                                                Refresh
+                                            </Button>
                                         </div>
                                     </div>
-
-                                    {/* Table Section */}
-                                    <div className="min-h-96">
-                                        <Typography variant="h6" className="mb-4 flex items-center gap-2">
-                                            <ChartBarIcon className="w-5 h-5" />
-                                            Leave Requests Management
-                                        </Typography>
-                                        
-                                        {loading ? (
-                                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                                <CardBody className="text-center py-12">
-                                                    <CircularProgress size={40} />
-                                                    <Typography className="mt-4" color="textSecondary">
-                                                        Loading leave data...
-                                                    </Typography>
-                                                </CardBody>
-                                            </Card>
-                                        ) : leaves && leaves.length > 0 ? (
-                                            <div className="overflow-hidden rounded-lg">
-                                                <LeaveEmployeeTable
-                                                    totalRows={totalRows}
-                                                    lastPage={lastPage}
-                                                    setCurrentPage={handlePageChange}
-                                                    setPerPage={handlePerPageChange}
-                                                    perPage={pagination.perPage}
-                                                    currentPage={pagination.currentPage}
-                                                    handleClickOpen={handleClickOpen}
-                                                    setCurrentLeave={setCurrentLeave}
-                                                    openModal={openModal}
-                                                    leaves={leaves}
-                                                    allUsers={allUsers}
-                                                    setLeaves={setLeaves}
-                                                    employee={filters.employee}
-                                                    selectedMonth={filters.selectedMonth}
-                                                    isAdminView={true}
-                                                    onBulkApprove={handleBulkApprove}
-                                                    onBulkReject={handleBulkReject}
-                                                    canApproveLeaves={canApproveLeaves}
-                                                    canEditLeaves={canEditLeaves}
-                                                    canDeleteLeaves={canDeleteLeaves}
-                                                />
-                                            </div>
-                                        ) : error ? (
-                                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                                <CardBody className="text-center py-12">
-                                                    <ExclamationTriangleIcon className="w-16 h-16 text-warning-500 mx-auto mb-4" />
-                                                    <Typography variant="h6" className="mb-2">
-                                                        No Data Found
-                                                    </Typography>
-                                                    <Typography color="textSecondary">
-                                                        {error}
-                                                    </Typography>
-                                                </CardBody>
-                                            </Card>
-                                        ) : (
-                                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                                <CardBody className="text-center py-12">
-                                                    <CalendarIcon className="w-16 h-16 text-default-400 mx-auto mb-4" />
-                                                    <Typography variant="h6" className="mb-2">
-                                                        No Leave Records Found
-                                                    </Typography>
-                                                    <Typography color="textSecondary">
-                                                        No leave records found for the selected criteria.
-                                                    </Typography>
-                                                </CardBody>
-                                            </Card>
-                                        )}
-                                    </div>
-                                
-                                {/* Mobile Add Button */}
-                                {isMobile && canCreateLeaves && (
-                                    <div className="fixed bottom-20 right-4 z-50">
-                                        <Button
-                                            color="primary"
-                                            size="lg"
-                                            isIconOnly
-                                            onPress={() => openModal('add_leave')}
-                                            className="shadow-lg"
-                                        >
-                                            <PlusIcon className="w-6 h-6" />
-                                        </Button>
-                                    </div>
-                                )}
+                                </div>
+                                {/* Table Section */}
+                                <div className="min-h-96">
+                                    <Typography variant="h6" className="mb-4 flex items-center gap-2">
+                                        <ChartBarIcon className="w-5 h-5" />
+                                        Leave Requests Management
+                                    </Typography>
+                                    
+                                    {loading ? (
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                            <CardBody className="text-center py-12">
+                                                <CircularProgress size={40} />
+                                                <Typography className="mt-4" color="textSecondary">
+                                                    Loading leave data...
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
+                                    ) : leaves && leaves.length > 0 ? (
+                                        <div className="overflow-hidden rounded-lg">
+                                            <LeaveEmployeeTable
+                                                totalRows={totalRows}
+                                                lastPage={lastPage}
+                                                setCurrentPage={handlePageChange}
+                                                setPerPage={handlePerPageChange}
+                                                perPage={pagination.perPage}
+                                                currentPage={pagination.currentPage}
+                                                handleClickOpen={handleClickOpen}
+                                                setCurrentLeave={setCurrentLeave}
+                                                openModal={openModal}
+                                                leaves={leaves}
+                                                allUsers={allUsers}
+                                                setLeaves={setLeaves}
+                                                employee={filters.employee}
+                                                selectedMonth={filters.selectedMonth}
+                                                isAdminView={true}
+                                                onBulkApprove={handleBulkApprove}
+                                                onBulkReject={handleBulkReject}
+                                                canApproveLeaves={canApproveLeaves}
+                                                canEditLeaves={canEditLeaves}
+                                                canDeleteLeaves={canDeleteLeaves}
+                                            />
+                                        </div>
+                                    ) : error ? (
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                            <CardBody className="text-center py-12">
+                                                <ExclamationTriangleIcon className="w-16 h-16 text-warning-500 mx-auto mb-4" />
+                                                <Typography variant="h6" className="mb-2">
+                                                    No Data Found
+                                                </Typography>
+                                                <Typography color="textSecondary">
+                                                    {error}
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
+                                    ) : (
+                                        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                            <CardBody className="text-center py-12">
+                                                <CalendarIcon className="w-16 h-16 text-default-400 mx-auto mb-4" />
+                                                <Typography variant="h6" className="mb-2">
+                                                    No Leave Records Found
+                                                </Typography>
+                                                <Typography color="textSecondary">
+                                                    No leave records found for the selected criteria.
+                                                </Typography>
+                                            </CardBody>
+                                        </Card>
+                                    )}
+                                </div>
                             </div>
                         </PageHeader>
                     </GlassCard>
