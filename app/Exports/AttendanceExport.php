@@ -194,13 +194,27 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $dataStartRow = 5;
-                $total = $sheet->getHighestDataRow()-1;
-                $present = collect($sheet->toArray(null, true, false, true))
-                    ->slice(0, $total)
-                    ->where(11, '!=', 'Absent')
-                    ->count();
-                $absent = $total - $present;
+                  $firstDataRow = 2;
+    $lastDataRow  = $sheet->getHighestDataRow();
+
+    /* 3. Pull only the data block (columns A-L, rows 2-N)      *
+     *    ─ $returnCellRef = true → every row is keyed by       *
+     *      column letters (‘A’, ‘B’, … ‘L’)                    */
+    $rows = collect(
+        $sheet->rangeToArray(
+            "A{$firstDataRow}:L{$lastDataRow}",
+            null,        // $nullValue
+            true,        // $calculateFormulas
+            false,       // $formatData
+            true         // $returnCellRef
+        )
+    );
+
+    /* 4. Quick counts based on the “Status” column (L) */
+    $present  = $rows->where('L', 'Present')->count();
+    $absent   = $rows->where('L', 'Absent')->count();
+    $onLeave  = $rows->where('L', 'On Leave')->count();
+    $total    = $rows->count();       
                 $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
 
                 // ====== Title ======
@@ -218,7 +232,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
 
 
                 $sheet->mergeCells('A3:M3');
-                $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, Absent: {$absent})");
+                $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, On Leave: {$onLeave}), Absent: {$absent})");
                 $sheet->getStyle('A3')->getAlignment()->setHorizontal('center');
 
                 // ====== Style the headers ======
