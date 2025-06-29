@@ -195,10 +195,10 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $dataStartRow = 5;
-                $total = $sheet->getHighestDataRow();
+                $total = $sheet->getHighestDataRow()-1;
                 $present = collect($sheet->toArray(null, true, false, true))
                     ->slice(0, $total)
-                    ->where(12, '!=', 'Absent')
+                    ->where(11, '!=', 'Absent')
                     ->count();
                 $absent = $total - $present;
                 $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
@@ -238,7 +238,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                     ->getAlignment()->setHorizontal('center');
 
                 // ====== Freeze pane after headers ======
-                $sheet->freezePane('A6');
+                $sheet->freezePane('A5');
             },
         ];
     }
