@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Exports;
@@ -12,6 +11,8 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Carbon\Carbon;
+use Log;
 
 class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
@@ -25,71 +26,154 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
 
     public function collection()
     {
-        // Fetch all users
-        $users = User::with(['designation'])->get();
-        $rows = collect();
+        $users = User::join('designations', 'users.designation', '=', 'designations.id')
+            ->select('users.*', 'designations.title as designation_title')
+            ->get();
 
-        foreach ($users as $idx => $user) {
-            $attendance = Attendance::where('user_id', $user->id)
+
+        $rows = collect();
+        $counter = 1;
+        $dateIsToday = now()->toDateString() === $this->date;
+
+        foreach ($users as $user) {
+            Log::info("User: {$user}");
+
+            $attendances = Attendance::where('user_id', $user->id)
                 ->whereDate('date', $this->date)
-                ->first();
+                ->orderBy('punchin')
+                ->get();
 
             $leave = Leave::where('user_id', $user->id)
                 ->whereDate('from_date', '<=', $this->date)
                 ->whereDate('to_date', '>=', $this->date)
                 ->first();
 
-            // Determine status and fields
-            if ($attendance) {
-                $in = $attendance->punchin_time ?
-                    $attendance->punchin_time->format('h:i A') : 'Not clocked in';
-                $out = $attendance->punchout_time ?
-                    $attendance->punchout_time->format('h:i A') : ($attendance->punchin_time ? 'Still working' : 'Not punched out');
-                $minutes = $attendance->total_work_minutes;
-                $hours = floor($minutes / 60);
-                $mins  = $minutes % 60;
-                $workTime = $minutes > 0 ? "{$hours}h {$mins}m" : ($attendance->has_incomplete_punch ? 'In Progress' : 'No work time');
-                $status = ($attendance->complete_punches === $attendance->punch_count && $attendance->punch_count > 0)
-                    ? 'Complete' : ($attendance->has_incomplete_punch ? 'In Progress' : 'Incomplete');
-                $remarks = $status === 'Complete'
-                    ? 'Present - All punches complete'
-                    : ($status === 'In Progress'
-                        ? 'Present - Currently working'
-                        : 'Present - Incomplete punches');
+            if ($attendances->count()) {
+                $firstIn = null;
+                $lastOut = null;
+                $totalMinutes = 0;
+                $completePunches = 0;
+                $incomplete = false;
+
+                foreach ($attendances as $attendance) {
+                    if ($attendance->punchin && !$firstIn) {
+                        $firstIn = $attendance->punchin;
+                    }
+
+                    if ($attendance->punchout) {
+                        $lastOut = $attendance->punchout;
+                    }
+
+                    if ($attendance->punchin && $attendance->punchout) {
+                        try {
+                            $inTime = Carbon::parse($attendance->punchin);
+                            $outTime = Carbon::parse($attendance->punchout);
+
+                            Log::info("Punch in: {$attendance->punchin}, Punch out: {$attendance->punchout}");
+
+                            // Handle if outTime is before inTime (e.g., overnight shifts)
+                            if ($outTime->lessThan($inTime)) {
+                                $outTime->addDay();
+                            }
+
+                            $totalMinutes += $inTime->diffInMinutes($outTime);
+                            Log::info("Total minutes: {$totalMinutes}");
+                            $completePunches++;
+                        } catch (\Exception $e) {
+                            Log::warning("Invalid punch time for user {$user->id} on {$this->date}: " . $e->getMessage());
+                        }
+                    }
+
+                    if ($attendance->punchin && !$attendance->punchout) {
+                        $incomplete = true;
+                    }
+                }
+
+                $in = $firstIn ? $firstIn->format('h:i A') : 'Not clocked in';
+                $out = $lastOut
+                    ? $lastOut->format('h:i A')
+                    : ($incomplete
+                        ? ($dateIsToday ? 'Still working' : 'No punchout')
+                        : 'Not punched out');
+
+                $workTime = $totalMinutes > 0
+                    ? intval($totalMinutes / 60) . 'h ' . ($totalMinutes % 60) . 'm'
+                    : '0h 0m';
+
+                if ($incomplete && !$lastOut) {
+                    $workTime .= ' + Still Working';
+                }
+
+                $status = $completePunches === $attendances->count()
+                    ? 'Complete'
+                    : ($incomplete ? 'Still Working' : 'Incomplete');
+
+                $remarks = match ($status) {
+                    'Complete' => 'Present - All punches complete',
+                    'Still Working' => 'Present - Currently working',
+                    default => 'Present - Incomplete punches',
+                };
+
+                $rows->push([
+                    'No.'              => $counter++,
+                    'Date'             => date('M d, Y', strtotime($this->date)),
+                    'Employee Name'    => $user->name,
+                    'Employee ID'      => $user->employee_id,
+                    'Designation'      => $user->designation_title ?? 'N/A',
+                    'Phone'            => $user->phone,
+                    'Clock In'         => $in,
+                    'Clock Out'        => $out,
+                    'Work Hours'       => $workTime,
+                    'Total Punches'    => $attendances->count(),
+                    'Complete Punches' => $completePunches,
+                    'Status'           => $status,
+                    'Remarks'          => $remarks,
+                ]);
             } elseif ($leave) {
-                $in = $out = 'On Leave';
-                $workTime = '0h 0m';
-                $status = 'On Leave';
                 $duration = $leave->from_date->eq($leave->to_date)
                     ? $this->date
-                    : $leave->from_date->format('Y-m-d') . ' to ' . $leave->to_date->format('Y-m-d');
-                $remarks = "On {$leave->leave_type} Leave ({$duration}) - Status: {$leave->status}";
-            } else {
-                $in = $out = 'Absent';
-                $workTime = '0h 0m';
-                $status = 'Absent';
-                $remarks = 'Absent without leave';
-            }
+                    : $leave->from_date->format('Y-m-d') . " to " . $leave->to_date->format('Y-m-d');
 
-            $rows->push([
-                'No.'              => $idx + 1,
-                'Date'             => date('M d, Y', strtotime($this->date)),
-                'Employee Name'    => $user->name,
-                'Employee ID'      => $user->employee_id,
-                'Designation'      => $user->designation->name ?? 'N/A',
-                'Phone'            => $user->phone,
-                'Clock In'         => $in,
-                'Clock Out'        => $out,
-                'Work Hours'       => $workTime,
-                'Total Punches'    => $attendance->punch_count ?? 0,
-                'Complete Punches' => $attendance->complete_punches ?? 0,
-                'Status'           => $status,
-                'Remarks'          => $remarks,
-            ]);
+                $remarks = "On {$leave->leave_type} Leave ({$duration}) - Status: {$leave->status}";
+
+                $rows->push([
+                    'No.'              => $counter++,
+                    'Date'             => date('M d, Y', strtotime($this->date)),
+                    'Employee Name'    => $user->name,
+                    'Employee ID'      => $user->employee_id,
+                    'Designation'      => $user->designation_title ?? 'N/A',
+                    'Phone'            => $user->phone,
+                    'Clock In'         => 'On Leave',
+                    'Clock Out'        => 'On Leave',
+                    'Work Hours'       => '0h 0m',
+                    'Total Punches'    => 0,
+                    'Complete Punches' => 0,
+                    'Status'           => 'On Leave',
+                    'Remarks'          => $remarks,
+                ]);
+            } else {
+                $rows->push([
+                    'No.'              => $counter++,
+                    'Date'             => date('M d, Y', strtotime($this->date)),
+                    'Employee Name'    => $user->name,
+                    'Employee ID'      => $user->employee_id,
+                    'Designation'      => $user->designation_title ?? 'N/A',
+                    'Phone'            => $user->phone,
+                    'Clock In'         => 'Absent',
+                    'Clock Out'        => 'Absent',
+                    'Work Hours'       => '0h 0m',
+                    'Total Punches'    => 0,
+                    'Complete Punches' => 0,
+                    'Status'           => 'Absent',
+                    'Remarks'          => 'Absent without leave',
+                ]);
+            }
         }
 
         return $rows;
     }
+
+
 
     public function headings(): array
     {
@@ -106,54 +190,61 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
             'Total Punches',
             'Complete Punches',
             'Status',
-            'Remarks',
+            'Remarks'
         ];
     }
+
+
 
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
+                $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
 
-                // Title row
-                $title = "Daily Timesheet - " . date('F d, Y', strtotime($this->date));
+                // ====== Title ======
                 $sheet->mergeCells('A1:M1');
-                $sheet->setCellValue('A1', $title);
+                $sheet->setCellValue('A1', 'Daily Timesheet - ' . date('F d, Y', strtotime($this->date)));
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
 
-                // Generated date
+                // ====== Generated on ======
                 $sheet->mergeCells('A2:M2');
                 $sheet->setCellValue('A2', 'Generated on: ' . now()->format('F d, Y h:i A'));
                 $sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
 
-                // Summary row
-                $total = $sheet->getHighestDataRow() - 3;
+                // ====== Summary row ======
+                $dataStartRow = 5;
+                $total = $sheet->getHighestDataRow();
                 $present = collect($sheet->toArray(null, true, false, true))
-                    ->slice(4, $total)
-                    ->where(12, '!=', 'Absent')->count();
+                    ->slice(0, $total)
+                    ->where(13, '!=', 'Absent')
+                    ->count();
                 $absent = $total - $present;
+
                 $sheet->mergeCells('A3:M3');
-                $sheet->setCellValue(
-                    'A3',
-                    "Total Employees: {$total} (Present: {$present}, Absent: {$absent})"
-                );
+                $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, Absent: {$absent})");
                 $sheet->getStyle('A3')->getAlignment()->setHorizontal('center');
 
-                // Header styling
-                $sheet->getStyle('A5:M5')->getFont()->setBold(true);
-                $sheet->getStyle('A5:M5')->getFill()
+                // ====== Style the headers ======
+                $sheet->getStyle('A4:M4')->getFont()->setBold(true);
+                $sheet->getStyle('A4:M4')->getFill()
                     ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                     ->getStartColor()->setARGB('E3F2FD');
-                $sheet->freezePane('A6');
+                $sheet->getStyle('A4:M4')->getAlignment()->setHorizontal('center');
 
-                // Borders
+                // ====== Borders for the full range ======
                 $highestRow = $sheet->getHighestRow();
                 $highestCol = $sheet->getHighestColumn();
                 $sheet->getStyle("A1:{$highestCol}{$highestRow}")
                     ->getBorders()->getAllBorders()
                     ->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("A1:{$highestCol}{$highestRow}")
+                    ->getAlignment()->setHorizontal('center');
+
+                // ====== Freeze pane after headers ======
+                $sheet->freezePane('A6');
             },
         ];
     }

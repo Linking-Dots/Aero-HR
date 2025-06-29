@@ -1398,7 +1398,7 @@ class AttendanceController extends Controller
     public function exportExcel(Request $request)
     {
         $date = $request->input('date');
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AttendanceExport($date), 'Daily\_Timesheet\_' . date('Y\_m\_d', strtotime($date)) . '.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AttendanceExport($date), 'Daily_Timesheet_' . date('Y_m_d', strtotime($date)) . '.xlsx');
     }
 
     public function exportPdf(Request $request)
