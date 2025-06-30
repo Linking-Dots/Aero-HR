@@ -101,10 +101,6 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         generated_at: null
     });
 
-
-
-
-
     // Get the number of days in the current month
     const daysInMonth = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-01`).daysInMonth();
 
@@ -113,18 +109,27 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             ...prevState,
             [key]: value,
         }));
-    }, []);    const fetchData = async (page, perPage, filterData) => {
+    }, []);
+    
+    const fetchData = async (page = 1, perPage = 30, filterData) => {
         setLoading(true);
 
         try {
+            const currentMonth = filterData.currentMonth
+                ? dayjs(filterData.currentMonth).format('MM')
+                : dayjs().format('MM');
+            const currentYear = filterData.currentMonth
+                ? dayjs(filterData.currentMonth).year()
+                : dayjs().year();
+
             // Fetch attendance data
             const response = await axios.get(route('attendancesAdmin.paginate'), {
                 params: {
                     page,
                     perPage,
                     employee: employee,
-                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : '',
-                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
+                    currentYear,
+                    currentMonth,
                 }
             });
 
@@ -134,20 +139,19 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             setLeaveTypes(response.data.leaveTypes);
             setLeaveCounts(response.data.leaveCounts);
 
-            // Fetch enhanced monthly statistics
+            // Fetch stats (optional but aligned)
             const statsResponse = await axios.get(route('attendance.monthlyStats'), {
                 params: {
-                    currentYear: filterData.currentMonth ? dayjs(filterData.currentMonth).year() : dayjs().year(),
-                    currentMonth: filterData.currentMonth ? dayjs(filterData.currentMonth).format('MM') : dayjs().format('MM'),
+                    currentYear,
+                    currentMonth,
                 }
             });
 
             if (statsResponse.data.success) {
                 setAttendanceStats(statsResponse.data.data);
             }
-
         } catch (error) {
-            console.error(error)
+            console.error(error);
             toast.error('Failed to fetch data.', {
                 icon: '🔴',
                 style: {
@@ -157,11 +161,13 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                     color: theme.palette.text.primary,
                 }
             });
-
         } finally {
             setLoading(false);
         }
-    };    const handleSearch = (event) => {
+    };
+
+    
+    const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setEmployee(value);
     };
@@ -175,126 +181,59 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         setCurrentPage(page);
     };
 
+
     const exportToExcel = async () => {
-        const promise = new Promise((resolve, reject) => {
-            try {
-                // Prepare export data
-                const exportData = allUsers.map((user, index) => {
-                    const userAttendance = attendanceData.find((record) => record.user_id === user.id) || {};
-                    const attendanceRow = {
-                        sl: index + 1,
-                        name: user.name,
-                    };
+        try {
+            const currentMonth = filterData.currentMonth
+                ? dayjs(filterData.currentMonth).format('YYYY-MM')
+                : dayjs().format('YYYY-MM');
+          
+            const response = await axios.get(route('attendance.exportAdminExcel'), { params: { month: currentMonth }, responseType: 'blob', });
+           
 
-                    // Attendance data for each day of the month
-                    for (let i = 0; i < daysInMonth; i++) {
-                        const day = i + 1;
-                        const dateKey = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-${day}`).format('YYYY-MM-DD');
-                        attendanceRow[`day-${day}`] = userAttendance[dateKey] || '▼';
-                    }
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Admin_Attendance_${currentMonth}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download attendance sheet.');
+        }
+    };
 
-                    // Adding leave counts
-                    leaveTypes.forEach((type) => {
-                        attendanceRow[type.type] = leaveCounts[user.id]?.[type.type] || 0;
-                    });
+    const exportToPdf = async () => {
+        try {
+            const currentMonth = filterData.currentMonth
+                ? dayjs(filterData.currentMonth).format('YYYY-MM')
+                : dayjs().format('YYYY-MM');
 
-                    return attendanceRow;
-                });
+            const response = await axios.get(route('attendance.exportAdminPdf'), {
+                params: { month: currentMonth },
+                responseType: 'blob',
+            });
 
-                // Define columns with proper labels
-                const columns = [
-                    { label: 'Sl', key: 'sl' },
-                    { label: 'Name', key: 'name' },
-                    ...Array.from({ length: daysInMonth }, (_, i) => {
-                        const day = i + 1;
-                        return {
-                            label: `${day}`,
-                            key: `day-${day}`,
-                        };
-                    }),
-                    ...leaveTypes.map((type) => ({
-                        label: type.type,
-                        key: type.type,
-                    })),
-                ];
+            // Create a blob link for download
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Admin_Attendance_${currentMonth}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('PDF download failed:', error);
+            alert('Failed to download attendance PDF.');
+        }
+    };
 
-                // Create worksheet with headers
-                const worksheet = XLSX.utils.json_to_sheet(exportData, { header: columns.map(col => col.key) });
-
-                // Add headers (labels) manually to the worksheet
-                columns.forEach((col, index) => {
-                    const cellAddress = XLSX.utils.encode_cell({ c: index, r: 0 });
-                    worksheet[cellAddress].v = col.label;
-                });
-
-                // Create and download Excel file
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
-                XLSX.writeFile(workbook, 'AttendanceData.xlsx');
-
-                // Notify success
-                resolve('Export successful!');
-            } catch (error) {
-                // Handle any errors that occur during the export process
-                reject('Failed to export data. Please try again.');
-                console.error("Error exporting data to Excel:", error);
-            }
-        });
-
-        toast.promise(
-            promise,
-            {
-                pending: {
-                    render() {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <CircularProgress />
-                                <span style={{ marginLeft: '8px' }}>Exporting data to Excel ...</span>
-                            </div>
-                        );
-                    },
-                    icon: false,
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
-                },
-                success: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data}
-                            </>
-                        );
-                    },
-                    icon: '🟢',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
-                },
-                error: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data}
-                            </>
-                        );
-                    },
-                    icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary
-                    }
-                }
-            }
-        );    };    // Prepare all stats data for StatsCards component - Combined into one array
+    
+    // Prepare all stats data for StatsCards component - Combined into one array
     const allStatsData = useMemo(() => [
         {            title: "Total Employees",
             value: attendanceStats.totalEmployees,
@@ -372,11 +311,13 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         }
     ], [attendanceStats]);
 
+    
 
 
 
     return (
-        <>            <Head title={title} />
+        <>
+            <Head title={title} />
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
@@ -385,15 +326,26 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                             subtitle="Monitor and manage employee attendance records"
                             icon={<PresentationChartLineIcon className="w-8 h-8" />}
                             variant="default"
-                            actionButtons={auth.roles.includes('Administrator') ? [
+                            actionButtons={[
                                 {
-                                    label: "Export",
-                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
+                                    label: "Excel",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-primary" />,
                                     variant: "bordered",
                                     onPress: exportToExcel,
-                                    className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
-                                }
-                            ] : []}                        >                            <div className="p-6">
+                                    className:
+                                    "border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary",
+                                },
+                                {
+                                    label: "PDF",
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-rose-600" />,
+                                    variant: "bordered",
+                                    onPress: exportToPdf,
+                                    className:
+                                    "border-rose-600/30 bg-rose-600/5 hover:bg-rose-600/10 text-rose-600",
+                                },
+                            ]}
+                        >
+                            <div className="p-6">
                                 {/* All Stats - Responsive Layout for 9 cards */}
                                 <StatsCards 
                                     stats={allStatsData} 

@@ -8,22 +8,17 @@ use App\Models\Designation;
 use App\Models\Holiday;
 use App\Models\LeaveSetting;
 use App\Models\User;
-use App\Services\Attendance\AttendanceValidatorFactory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Validator as ValidatorFacade;
-use Log as LogFacade;
 use Inertia\Inertia;
 use Throwable;
 use PDF; // Barryvdh\DomPDF\Facade as PDF
 use App\Exports\AttendanceExport;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AttendanceAdminExport;
 
 class AttendanceController extends Controller
 {
@@ -45,34 +40,39 @@ class AttendanceController extends Controller
     {
         try {
             $perPage = (int) $request->get('perPage', 30);
-            $page = $request->get('employee') != '' ? 1 : (int) $request->get('page', 1);
+            $page = (int) $request->get('page', 1);
             $employee = $request->get('employee');
             $currentMonth = $request->get('currentMonth');
             $currentYear = $request->get('currentYear');
 
             $users = $this->getEmployeeUsersWithAttendanceAndLeaves($currentYear, $currentMonth);
-
             $leaveTypes = LeaveSetting::all();
             $holidays = $this->getHolidaysForMonth($currentYear, $currentMonth);
             $leaveCountsArray = $this->getLeaveCountsArray($currentYear, $currentMonth);
 
+            // Map user data to attendance
             $attendances = $users->map(function ($user) use ($currentYear, $currentMonth, $holidays, $leaveTypes) {
                 return $this->getUserAttendanceData($user, $currentYear, $currentMonth, $holidays, $leaveTypes);
             });
 
-            $sortedAttendances = $attendances->sortBy('user_id');
-            $paginatedAttendances = $sortedAttendances->slice(($page - 1) * $perPage, $perPage)->values();
-
-            if ($employee) {
-                $paginatedAttendances = $paginatedAttendances->filter(function ($attendance) use ($employee) {
+            // Filter first (before pagination)
+            if (!empty($employee)) {
+                $attendances = $attendances->filter(function ($attendance) use ($employee) {
                     return stripos($attendance['name'], $employee) !== false;
-                })->values();
+                });
+                $page = 1; // Reset page if filtered
             }
+
+            $sortedAttendances = $attendances->sortBy('user_id')->values();
+            $total = $sortedAttendances->count();
+            $lastPage = ceil($total / $perPage);
+            $paginated = $sortedAttendances->slice(($page - 1) * $perPage, $perPage)->values();
+
             return response()->json([
-                'data' => $paginatedAttendances,
-                'total' => (int) $sortedAttendances->count(),
-                'page' => (int) $page,
-                'last_page' => (int) ceil($sortedAttendances->count() / $perPage),
+                'data' => $paginated,
+                'total' => $total,
+                'page' => $page,
+                'last_page' => $lastPage,
                 'leaveTypes' => $leaveTypes,
                 'leaveCounts' => $leaveCountsArray,
             ]);
@@ -81,6 +81,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'An error occurred while fetching attendance data.'], 500);
         }
     }
+
 
     private function getEmployeeUsersWithAttendanceAndLeaves($year, $month)
     {
@@ -152,37 +153,103 @@ class AttendanceController extends Controller
         return $leaveCountsArray;
     }
 
-    private function getUserAttendanceData($user, $year, $month, $holidays, $leaveTypes)
+    public function getUserAttendanceData($user, $year, $month, $holidays, $leaveTypes)
     {
         $daysInMonth = Carbon::create($year, $month)->daysInMonth;
-        $attendanceData = ['user_id' => $user->id, 'employee_id' => $user->employee_id, 'name' => $user->name, 'profile_image' => $user->profile_image];
+        $attendanceData = [
+            'user_id'      => $user->id,
+            'employee_id'  => $user->employee_id,
+            'name'         => $user->name,
+            'profile_image' => $user->profile_image,
+        ];
 
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $date = Carbon::create($year, $month, $day)->toDateString();
-            $attendance = $user->attendances->firstWhere('date', $date);
-            $holiday = $holidays->first(function ($holiday) use ($date) {
-                return Carbon::parse($date)->between($holiday->from_date, $holiday->to_date);
-            });
 
-            if ($holiday && $attendance && $attendance->punchin) {
-                $attendanceData[$date] = '√';
-            } elseif ($holiday) {
-                $attendanceData[$date] = '#';
-            } else {
-                $leave = $user->leaves->first(function ($leave) use ($date) {
-                    return Carbon::parse($date)->between($leave->from_date, $leave->to_date);
-                });
+            $attendancesForDate = $user->attendances
+                ->filter(fn($a) => Carbon::parse($a->date)->toDateString() === $date)
+                ->sortBy('punchin');
 
-                if ($leave) {
-                    $leaveType = $leaveTypes->firstWhere('type', $leave->leave_type);
-                    $attendanceData[$date] = $leaveType ? $leaveType->symbol : '√';
+            $holiday = $holidays->first(fn($h) => Carbon::parse($date)->between($h->from_date, $h->to_date));
+            $leave = $user->leaves
+                ->first(fn($l) => Carbon::parse($date)->between($l->from_date, $l->to_date));
+
+            // Defaults
+            $symbol = '▼';
+            $punchIn = null;
+            $punchOut = null;
+            $totalWorkHours = '00:00';
+            $remarks = 'Absent';
+
+            if ($holiday && !$leave) {
+                if ($attendancesForDate->isNotEmpty()) {
+                    $first = $attendancesForDate->first();
+                    $last = $attendancesForDate->count() === 1 ? $first : $attendancesForDate->reverse()->first(fn($item) => $item->punchout !== null);
+
+                    $totalMinutes = 0;
+                    foreach ($attendancesForDate as $attendance) {
+                        if ($attendance->punchin && $attendance->punchout) {
+                            $in = Carbon::parse($attendance->punchin);
+                            $out = Carbon::parse($attendance->punchout);
+                            if ($out->lt($in)) $out->addDay();
+                            $totalMinutes += $in->diffInMinutes($out);
+                        }
+                    }
+
+                    $hours = floor($totalMinutes / 60);
+                    $mins = $totalMinutes % 60;
+                    $totalWorkHours = sprintf('%02d:%02d', $hours, $mins);
+                    $symbol = '√';
+                    $remarks = $totalMinutes > 0 ? 'Present on Holiday' : ((now()->toDateString() === $date) ? 'Currently Working' : 'Not Punched Out');
+                    $punchIn = $first->punchin;
+                    $punchOut = $last->punchout;
                 } else {
-                    $attendanceData[$date] = $attendance && $attendance->punchin ? '√' : '▼';
+                    $symbol = '#';
+                    $remarks = 'Holiday';
                 }
+            } elseif ($leave) {
+                $symbol = $leaveTypes->firstWhere('type', $leave->leave_type)->symbol ?? '/';
+                $remarks = 'On Leave';
+            } elseif ($attendancesForDate->isNotEmpty()) {
+                $first = $attendancesForDate->first();
+                $last = $attendancesForDate->count() === 1 ? $first : $attendancesForDate->reverse()->first(fn($item) => $item->punchout !== null);
+
+                $totalMinutes = 0;
+                foreach ($attendancesForDate as $attendance) {
+                    if ($attendance->punchin && $attendance->punchout) {
+                        $in = Carbon::parse($attendance->punchin);
+                        $out = Carbon::parse($attendance->punchout);
+                        if ($out->lt($in)) $out->addDay();
+                        $totalMinutes += $in->diffInMinutes($out);
+                    }
+                }
+
+                $hours = floor($totalMinutes / 60);
+                $mins = $totalMinutes % 60;
+                $totalWorkHours = sprintf('%02d:%02d', $hours, $mins);
+                $symbol = '√';
+                $remarks = $totalMinutes > 0 ? 'Present' : ((now()->toDateString() === $date) ? 'Currently Working' : 'Not Punched Out');
+                $punchIn = $first->punchin;
+                $punchOut = $last->punchout;
+            } elseif ($holiday && !$attendancesForDate->isNotEmpty()) {
+                $symbol = '#';
+                $remarks = 'Holiday';
             }
+
+            $attendanceData[$date] = [
+                'status' => $symbol,
+                'punch_in' => $punchIn,
+                'punch_out' => $punchOut,
+                'total_work_hours' => $totalWorkHours,
+                'remarks' => $remarks,
+            ];
         }
+
         return $attendanceData;
     }
+
+
+
 
     public function updateAttendance(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -1412,5 +1479,46 @@ class AttendanceController extends Controller
             'rows' => $rows
         ])->setPaper('a4', 'landscape');
         return $pdf->download('Daily_Timesheet_' . date('Y_m_d', strtotime($date)) . '.pdf');
+    }
+
+
+
+
+    public function exportAdminExcel(Request $request)
+    {
+        $month = $request->get('month');
+        return (new AttendanceAdminExport())->export($month);
+    }
+
+
+
+    public function exportAdminPdf(Request $request)
+    {
+        $month = $request->get('month');
+        $from = Carbon::parse($month . '-01');
+        $to = $from->copy()->endOfMonth();
+        $monthName = $from->format('F Y');
+
+        $users = User::with(['attendances', 'leaves'])->role('Employee')->where('active', 1)->get();
+        $leaveTypes = LeaveSetting::all();
+        $holidays = Holiday::all();
+
+        $attendanceData = [];
+        foreach ($users as $user) {
+            $attendanceData[] = $this->getUserAttendanceData($user, $from->year, $from->month, $holidays, collect($leaveTypes));
+        }
+
+        // You can build a custom view file for formatting the PDF layout
+        $pdf = PDF::loadView('attendance_admin_pdf', [
+            'monthName'      => $monthName,
+            'from'           => $from,
+            'to'             => $to,
+            'users'          => $users,
+            'attendanceData' => $attendanceData,
+            'leaveTypes'     => $leaveTypes,
+        ])->setPaper('A4', 'landscape');
+
+        $fileName = "DBEDC_Attendance_{$monthName}.pdf";
+        return $pdf->download($fileName);
     }
 }
