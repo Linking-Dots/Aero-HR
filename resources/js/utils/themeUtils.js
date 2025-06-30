@@ -513,6 +513,109 @@ export const getThemeGradient = (themeColor, gradientType = 'primary', direction
   return gradientClasses[themeColor.name]?.[gradientType] || gradientClasses['OCEAN'][gradientType];
 };
 
+/**
+ * Get responsive glass card styles for consistent theming
+ * @param {boolean} darkMode - Dark mode flag
+ * @param {string} variant - Card variant (statistic, updates, default)
+ * @param {string} size - Size variant (sm, md, lg)
+ * @returns {Object} CSS-in-JS styles object
+ */
+export const getGlassCardStyles = (darkMode = false, variant = 'default', size = 'md') => {
+  const baseStyles = {
+    position: 'relative',
+    borderRadius: 16,
+    backdropFilter: 'blur(10px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    overflow: 'hidden',
+    isolation: 'isolate',
+  };
+
+  const sizeStyles = {
+    sm: {
+      padding: '12px 16px',
+      borderRadius: 12,
+    },
+    md: {
+      padding: '16px 20px',
+      borderRadius: 16,
+    },
+    lg: {
+      padding: '20px 24px',
+      borderRadius: 20,
+    }
+  };
+
+  const variantStyles = {
+    default: darkMode ? {
+      background: 'rgba(15, 20, 25, 0.12)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
+      color: 'rgba(255, 255, 255, 0.95)',
+    } : {
+      background: 'rgba(255, 255, 255, 0.65)',
+      border: '1px solid rgba(255, 255, 255, 0.7)',
+      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
+      color: 'rgba(0, 0, 0, 0.85)',
+    },
+    statistic: darkMode ? {
+      background: 'rgba(15, 20, 25, 0.12)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
+      color: 'rgba(255, 255, 255, 0.95)',
+    } : {
+      background: 'rgba(255, 255, 255, 0.65)',
+      border: '1px solid rgba(255, 255, 255, 0.7)',
+      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
+      color: 'rgba(0, 0, 0, 0.85)',
+    },
+    updates: darkMode ? {
+      background: 'rgba(15, 20, 25, 0.12)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
+      color: 'rgba(255, 255, 255, 0.95)',
+    } : {
+      background: 'rgba(255, 255, 255, 0.65)',
+      border: '1px solid rgba(255, 255, 255, 0.7)',
+      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
+      color: 'rgba(0, 0, 0, 0.85)',
+    }
+  };
+
+  return {
+    ...baseStyles,
+    ...sizeStyles[size],
+    ...variantStyles[variant],
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      background: darkMode 
+        ? 'rgba(15, 20, 25, 0.18)'
+        : 'rgba(255, 255, 255, 0.75)',
+      boxShadow: darkMode
+        ? '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 8px rgba(255, 255, 255, 0.06)'
+        : '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 8px rgba(255, 255, 255, 0.6)',
+    }
+  };
+};
+
+/**
+ * Get responsive breakpoint styles
+ * @param {Object} styles - Styles object with breakpoint keys (xs, sm, md, lg, xl)
+ * @returns {Object} MUI responsive styles object
+ */
+export const getResponsiveStyles = (styles) => {
+  const breakpoints = ['xs', 'sm', 'md', 'lg', 'xl'];
+  const responsiveStyles = {};
+  
+  breakpoints.forEach(bp => {
+    if (styles[bp]) {
+      responsiveStyles[bp] = styles[bp];
+    }
+  });
+  
+  return responsiveStyles;
+};
+
 export default {
   THEME_COLORS,
   getThemeColor,

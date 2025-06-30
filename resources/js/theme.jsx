@@ -89,23 +89,23 @@ const useTheme = (
                                 background: darkMode
                                     ? 'rgba(15, 20, 25, 0.15)'
                                     : 'rgba(255, 255, 255, 0.6)',
-                                backdropFilter: 'blur(5px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(5px) saturate(180%)',
+                                backdropFilter: 'blur(8px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(8px) saturate(180%)',
                                 border: darkMode
                                     ? '1px solid rgba(255, 255, 255, 0.1)'
                                     : '1px solid rgba(255, 255, 255, 0.6)',
                                 boxShadow: darkMode
-                                    ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 2px 12px rgba(255, 255, 255, 0.05)'
-                                    : '0 8px 32px rgba(31, 38, 135, 0.1), inset 0 2px 12px rgba(255, 255, 255, 0.4)',
-                                transition: 'all 0.3s ease-in-out',
+                                    ? '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 2px 12px rgba(255, 255, 255, 0.05)'
+                                    : '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 2px 12px rgba(255, 255, 255, 0.4)',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                 color: darkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)',
                                 overflow: 'hidden',
                                 isolation: 'isolate',
                                 '&:hover': {
-                                    transform: 'scale(1.015)',
+                                    transform: 'translateY(-2px) scale(1.005)',
                                     boxShadow: darkMode
-                                        ? '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 2px 12px rgba(255, 255, 255, 0.08)'
-                                        : '0 12px 40px rgba(31, 38, 135, 0.15), inset 0 2px 12px rgba(255, 255, 255, 0.5)',
+                                        ? '0 12px 40px rgba(0, 0, 0, 0.35), inset 0 2px 12px rgba(255, 255, 255, 0.08)'
+                                        : '0 12px 40px rgba(31, 38, 135, 0.18), inset 0 2px 12px rgba(255, 255, 255, 0.5)',
                                 },
                                 '&::before': {
                                     content: '""',
@@ -117,12 +117,78 @@ const useTheme = (
                                     borderRadius: 16,
                                     padding: '1px',
                                     background: darkMode
-                                        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))'
+                                        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06))'
                                         : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))',
                                     WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                                     WebkitMaskComposite: 'xor',
                                     maskComposite: 'exclude',
                                     pointerEvents: 'none',
+                                },
+                            },
+                        },
+                        {
+                            props: { variant: 'statistic' },
+                            style: {
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: 16,
+                                background: darkMode
+                                    ? 'rgba(15, 20, 25, 0.12)'
+                                    : 'rgba(255, 255, 255, 0.65)',
+                                backdropFilter: 'blur(10px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                                border: darkMode
+                                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                                    : '1px solid rgba(255, 255, 255, 0.7)',
+                                boxShadow: darkMode
+                                    ? '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)'
+                                    : '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                color: darkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.85)',
+                                overflow: 'hidden',
+                                isolation: 'isolate',
+                                '&:hover': {
+                                    transform: 'translateY(-1px)',
+                                    background: darkMode
+                                        ? 'rgba(15, 20, 25, 0.18)'
+                                        : 'rgba(255, 255, 255, 0.75)',
+                                    boxShadow: darkMode
+                                        ? '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 8px rgba(255, 255, 255, 0.06)'
+                                        : '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 8px rgba(255, 255, 255, 0.6)',
+                                },
+                            },
+                        },
+                        {
+                            props: { variant: 'updates' },
+                            style: {
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: 16,
+                                background: darkMode
+                                    ? 'rgba(15, 20, 25, 0.12)'
+                                    : 'rgba(255, 255, 255, 0.65)',
+                                backdropFilter: 'blur(10px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                                border: darkMode
+                                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                                    : '1px solid rgba(255, 255, 255, 0.7)',
+                                boxShadow: darkMode
+                                    ? '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)'
+                                    : '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                color: darkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.85)',
+                                overflow: 'hidden',
+                                isolation: 'isolate',
+                                '&:hover': {
+                                    transform: 'translateY(-1px)',
+                                    background: darkMode
+                                        ? 'rgba(15, 20, 25, 0.18)'
+                                        : 'rgba(255, 255, 255, 0.75)',
+                                    boxShadow: darkMode
+                                        ? '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 8px rgba(255, 255, 255, 0.06)'
+                                        : '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 8px rgba(255, 255, 255, 0.6)',
                                 },
                             },
                         },
@@ -193,20 +259,24 @@ const useTheme = (
             },
             glassCard: darkMode
                 ? {
-                    backdropFilter: 'blur(5px) saturate(180%)',
-                    background: 'rgba(15, 20, 25, 0.15)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 2px 12px rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(10px) saturate(180%)',
+                    background: 'rgba(15, 20, 25, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
                     borderRadius: 16,
-                    borderHighlight: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderHighlight: '1px solid rgba(255, 255, 255, 0.15)',
+                    hoverBackground: 'rgba(15, 20, 25, 0.18)',
+                    hoverBoxShadow: '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 8px rgba(255, 255, 255, 0.06)',
                 }
                 : {
-                    backdropFilter: 'blur(5px) saturate(180%)',
-                    background: 'rgba(255, 255, 255, 0.6)',
-                    border: '1px solid rgba(255, 255, 255, 0.6)',
-                    boxShadow: '0 8px 32px rgba(31, 38, 135, 0.1), inset 0 2px 12px rgba(255, 255, 255, 0.4)',
+                    backdropFilter: 'blur(10px) saturate(180%)',
+                    background: 'rgba(255, 255, 255, 0.65)',
+                    border: '1px solid rgba(255, 255, 255, 0.7)',
+                    boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
                     borderRadius: 16,
-                    borderHighlight: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderHighlight: '1px solid rgba(255, 255, 255, 0.5)',
+                    hoverBackground: 'rgba(255, 255, 255, 0.75)',
+                    hoverBoxShadow: '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 8px rgba(255, 255, 255, 0.6)',
                 },
             colors: {
                 primary: themeObj.primary,

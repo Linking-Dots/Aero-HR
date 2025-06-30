@@ -14,7 +14,7 @@ import { Skeleton, Card } from '@heroui/react';
 
 const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId, variant = 'default' }) => (
     <Grow in timeout={300}>
-        <GlassCard variant={variant} elevation="medium" sx={{ height: '100%' }}>
+        <GlassCard variant="statistic" elevation="medium" sx={{ height: '100%' }}>
             <CardContent sx={{ 
                 p: { xs: 2, sm: 3 },
                 height: '100%',
