@@ -78,8 +78,22 @@ const ThemeSettingDrawer = ({
     { id: 'primary', name: 'Inter', description: 'Modern sans-serif (Default)', family: 'var(--font-primary)' },
     { id: 'secondary', name: 'Fredoka', description: 'Friendly rounded font', family: 'var(--font-secondary)' },
     { id: 'mono', name: 'JetBrains Mono', description: 'Developer monospace', family: 'var(--font-mono)' },
-    { id: 'serif', name: 'Playfair Display', description: 'Elegant serif font', family: 'var(--font-serif)' }
+    { id: 'serif', name: 'Playfair Display', description: 'Elegant serif font', family: 'var(--font-serif)' },
+    { id: 'poppins', name: 'Poppins', description: 'Geometric sans-serif', family: '"Poppins", sans-serif' },
+    { id: 'nunito', name: 'Nunito', description: 'Rounded sans-serif', family: '"Nunito", sans-serif' }
   ];
+
+  // Glass morphism intensity options
+  const glassIntensityOptions = [
+    { id: 'subtle', name: 'Subtle', blur: '8px', opacity: 0.7 },
+    { id: 'medium', name: 'Medium', blur: '16px', opacity: 0.8 },
+    { id: 'strong', name: 'Strong', blur: '24px', opacity: 0.9 },
+    { id: 'ultra', name: 'Ultra', blur: '32px', opacity: 0.95 }
+  ];
+
+  const [glassIntensity, setGlassIntensity] = useState(() => {
+    return localStorage.getItem('aero-hr-glass-intensity') || 'medium';
+  });
 
   // Set default to first option for background and font
   const [selectedBackground, setSelectedBackground] = useState(() => {
