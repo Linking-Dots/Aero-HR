@@ -36,45 +36,38 @@ class AttendanceAdminExport
         $sheet->getDefaultRowDimension()->setRowHeight(25);
 
         $headerTitle = 'Dhaka Bypass Expressway Development Company Ltd. Attendance Record-DBEDC Site Office Employee';
-        $sheet->mergeCells("A1:AK1");
         $sheet->setCellValue('A1', $headerTitle);
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells("A1:Z1"); // Adjusted
 
-        $sheet->mergeCells("A3:AK3");
-        $sheet->setCellValue('A3', $monthName);
-        $sheet->getStyle('A3')->getFont()->setBold(true);
-        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->setCellValue('A2', $monthName);
+        $sheet->getStyle('A2')->getFont()->setBold(true);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells("A2:Z2"); // Adjusted
 
-        $sheet->setCellValue('A5', 'SL');
-        $sheet->mergeCells("A5:A6");
-        $sheet->getStyle('A5')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-
-        $sheet->setCellValue('B5', 'Name');
-        $sheet->mergeCells("B5:B6");
-        $sheet->getStyle('B5')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        // Header
+        $sheet->setCellValue('A4', 'SL');
+        $sheet->setCellValue('B4', 'Name');
 
         $col = 'C';
         $dateMap = [];
         for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
             $label = $date->format('d') . ' - ' . $date->format('D');
-            $sheet->setCellValue("{$col}5", $label);
-            $sheet->mergeCells("{$col}5:{$col}6");
-            $sheet->getStyle("{$col}5")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->setCellValue("{$col}4", $label);
+            $sheet->getStyle("{$col}4")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $dateMap[$col] = $date->toDateString();
             $col++;
         }
 
         foreach ($leaveTypes as $leaveType) {
-            $sheet->setCellValue("{$col}5", $leaveType->type);
-            $sheet->setCellValue("{$col}6", '');
+            $sheet->setCellValue("{$col}4", $leaveType->type);
             $col++;
         }
 
-        $sheet->setCellValue("{$col}5", 'Remark');
-        $sheet->setCellValue("{$col}6", '');
+        $sheet->setCellValue("{$col}4", 'Remark');
 
-        $row = 7;
+        $row = 5;
         foreach ($users as $index => $user) {
             $attendanceRecord = app('App\\Http\\Controllers\\AttendanceController')->getUserAttendanceData($user, $from->year, $from->month, $holidays, collect($leaveTypes));
 
@@ -87,14 +80,12 @@ class AttendanceAdminExport
             foreach ($dateMap as $colKey => $dateString) {
                 $dayStatus = $attendanceRecord[$dateString]['status'] ?? '#';
                 $remarks = $attendanceRecord[$dateString]['remarks'] ?? '';
-
                 $sheet->setCellValue("{$colKey}{$row}", $dayStatus);
 
                 if ($remarks === 'On Leave' && isset($symbolToTypeMap[$dayStatus])) {
                     $leaveType = $symbolToTypeMap[$dayStatus];
                     $leaveCounts[$leaveType]++;
                 }
-
                 $colCursor++;
             }
 
@@ -110,11 +101,12 @@ class AttendanceAdminExport
 
         $lastCol = $sheet->getHighestColumn();
         $lastRow = $sheet->getHighestRow();
-        $sheet->getStyle("A5:{$lastCol}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle("A5:{$lastCol}6")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE0E0E0');
-        $sheet->getStyle("A5:{$lastCol}6")->getFont()->setBold(true);
+        $sheet->getStyle("A4:{$lastCol}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("A4:{$lastCol}4")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE0E0E0');
+        $sheet->getStyle("A4:{$lastCol}4")->getFont()->setBold(true);
 
-        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+        // Fix range for autosize
+        for ($col = 'A'; $col !== $this->nextExcelColumn($lastCol); $col = $this->nextExcelColumn($col)) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -124,5 +116,21 @@ class AttendanceAdminExport
         $writer->save($tempFile);
 
         return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+    }
+
+    private function nextExcelColumn($col)
+    {
+        $letters = str_split($col);
+        $len = count($letters);
+        for ($i = $len - 1; $i >= 0; $i--) {
+            if ($letters[$i] !== 'Z') {
+                $letters[$i] = chr(ord($letters[$i]) + 1);
+                for ($j = $i + 1; $j < $len; $j++) {
+                    $letters[$j] = 'A';
+                }
+                return implode('', $letters);
+            }
+        }
+        return 'A' . str_repeat('A', $len);
     }
 }
