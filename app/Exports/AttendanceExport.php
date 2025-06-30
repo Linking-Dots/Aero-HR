@@ -36,8 +36,6 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
         $dateIsToday = now()->toDateString() === $this->date;
 
         foreach ($users as $user) {
-            Log::info("User: {$user}");
-
             $attendances = Attendance::where('user_id', $user->id)
                 ->whereDate('date', $this->date)
                 ->orderBy('punchin')
@@ -59,29 +57,16 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                     if ($attendance->punchin && !$firstIn) {
                         $firstIn = $attendance->punchin;
                     }
-
                     if ($attendance->punchout) {
                         $lastOut = $attendance->punchout;
                     }
 
                     if ($attendance->punchin && $attendance->punchout) {
-                        try {
-                            $inTime = Carbon::parse($attendance->punchin);
-                            $outTime = Carbon::parse($attendance->punchout);
-
-                            Log::info("Punch in: {$attendance->punchin}, Punch out: {$attendance->punchout}");
-
-                            // Handle if outTime is before inTime (e.g., overnight shifts)
-                            if ($outTime->lessThan($inTime)) {
-                                $outTime->addDay();
-                            }
-
-                            $totalMinutes += $inTime->diffInMinutes($outTime);
-                            Log::info("Total minutes: {$totalMinutes}");
-                            $completePunches++;
-                        } catch (\Exception $e) {
-                            Log::warning("Invalid punch time for user {$user->id} on {$this->date}: " . $e->getMessage());
-                        }
+                        $inTime = Carbon::parse($attendance->punchin);
+                        $outTime = Carbon::parse($attendance->punchout);
+                        if ($outTime->lt($inTime)) $outTime->addDay();
+                        $totalMinutes += $inTime->diffInMinutes($outTime);
+                        $completePunches++;
                     }
 
                     if ($attendance->punchin && !$attendance->punchout) {
@@ -89,30 +74,38 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                     }
                 }
 
-                $in = $firstIn ? $firstIn->format('h:i A') : 'Not clocked in';
+                // Format work hours
+                $workTime = $totalMinutes > 0
+                    ? intval($totalMinutes / 60) . 'h ' . ($totalMinutes % 60) . 'm'
+                    : '';
+
+                $in = $firstIn ? Carbon::parse($firstIn)->format('h:i A') : 'Not clocked in';
                 $out = $lastOut
-                    ? $lastOut->format('h:i A')
+                    ? Carbon::parse($lastOut)->format('h:i A')
                     : ($incomplete
                         ? ($dateIsToday ? 'Still working' : 'No punchout')
                         : 'Not punched out');
 
-                $workTime = $totalMinutes > 0
-                    ? intval($totalMinutes / 60) . 'h ' . ($totalMinutes % 60) . 'm'
-                    : '0h 0m';
-
-                if ($incomplete && !$lastOut) {
-                    $workTime .= ' + Still Working';
+                // Define status and remarks
+                if ($attendances->count() === 1) {
+                    if ($incomplete) {
+                        $workTime = $dateIsToday ? 'Still Working' : 'Not Punched Out';
+                        $status = 'Present';
+                        $remarks = $dateIsToday ? 'Currently Working' : 'Not Punched Out';
+                    } else {
+                        $status = 'Present';
+                        $remarks = 'All punches complete';
+                    }
+                } elseif ($completePunches === $attendances->count()) {
+                    $status = 'Present';
+                    $remarks = 'All punches complete';
+                } else {
+                    $status = 'Present';
+                    $remarks = 'Incomplete punches';
+                    if ($incomplete && $dateIsToday) {
+                        $workTime .= ' + Currently Working';
+                    }
                 }
-
-                $status = $completePunches === $attendances->count()
-                    ? 'Complete'
-                    : ($incomplete ? 'Still Working' : 'Incomplete');
-
-                $remarks = match ($status) {
-                    'Complete' => 'Present - All punches complete',
-                    'Still Working' => 'Present - Currently working',
-                    default => 'Present - Incomplete punches',
-                };
 
                 $rows->push([
                     'No.'              => $counter++,
@@ -123,7 +116,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                     'Phone'            => $user->phone,
                     'Clock In'         => $in,
                     'Clock Out'        => $out,
-                    'Work Hours'       => $workTime,
+                    'Work Hours'       => $workTime ?: '0h 0m',
                     'Total Punches'    => $attendances->count(),
                     'Complete Punches' => $completePunches,
                     'Status'           => $status,
@@ -201,6 +194,27 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
+                  $firstDataRow = 2;
+    $lastDataRow  = $sheet->getHighestDataRow();
+
+    /* 3. Pull only the data block (columns A-L, rows 2-N)      *
+     *    ─ $returnCellRef = true → every row is keyed by       *
+     *      column letters (‘A’, ‘B’, … ‘L’)                    */
+    $rows = collect(
+        $sheet->rangeToArray(
+            "A{$firstDataRow}:L{$lastDataRow}",
+            null,        // $nullValue
+            true,        // $calculateFormulas
+            false,       // $formatData
+            true         // $returnCellRef
+        )
+    );
+
+    /* 4. Quick counts based on the “Status” column (L) */
+    $present  = $rows->where('L', 'Present')->count();
+    $absent   = $rows->where('L', 'Absent')->count();
+    $onLeave  = $rows->where('L', 'On Leave')->count();
+    $total    = $rows->count();       
                 $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
 
                 // ====== Title ======
@@ -215,16 +229,10 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                 $sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
 
                 // ====== Summary row ======
-                $dataStartRow = 5;
-                $total = $sheet->getHighestDataRow();
-                $present = collect($sheet->toArray(null, true, false, true))
-                    ->slice(0, $total)
-                    ->where(13, '!=', 'Absent')
-                    ->count();
-                $absent = $total - $present;
+
 
                 $sheet->mergeCells('A3:M3');
-                $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, Absent: {$absent})");
+                $sheet->setCellValue('A3', "Total Employees: {$total} (Present: {$present}, On Leave: {$onLeave}), Absent: {$absent})");
                 $sheet->getStyle('A3')->getAlignment()->setHorizontal('center');
 
                 // ====== Style the headers ======
@@ -244,7 +252,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                     ->getAlignment()->setHorizontal('center');
 
                 // ====== Freeze pane after headers ======
-                $sheet->freezePane('A6');
+                $sheet->freezePane('A5');
             },
         ];
     }
