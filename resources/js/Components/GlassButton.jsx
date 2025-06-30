@@ -1,4 +1,3 @@
-
 import React, { forwardRef, useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -23,7 +22,7 @@ const GlassButton = forwardRef(({
     const handleStorageChange = () => {
       setDarkMode(localStorage.getItem('darkMode') === 'true');
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -46,7 +45,7 @@ const GlassButton = forwardRef(({
     const baseStyles = darkMode 
       ? 'bg-gradient-to-br from-slate-900/70 to-slate-800/50' 
       : 'bg-gradient-to-br from-white/80 to-white/60';
-    
+
     const borderStyles = darkMode
       ? 'border border-white/20'
       : 'border border-white/40';
@@ -131,11 +130,12 @@ const GlassButton = forwardRef(({
           position: 'relative',
           zIndex: 2
         },
-        '&:hover::before': {
-          background: darkMode 
-            ? 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)',
-        }
+        '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: darkMode 
+          ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
+          : '0 20px 40px rgba(31, 38, 135, 0.15)',
+      },
       }}
       {...props}
     >

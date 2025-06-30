@@ -24,7 +24,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
         const handleStorageChange = () => {
             setDarkMode(localStorage.getItem('darkMode') === 'true');
         };
-        
+
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
@@ -32,7 +32,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
     // Enhanced grid layout calculation that scales with any number of cards
     const getGridCols = () => {
         if (gridCols) return gridCols;
-        
+
         const count = stats.length;
           if (isMobile) {
             // Mobile: Compact vertical layout - optimized for any number of cards
@@ -42,7 +42,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
             if (count <= 10) return 'grid-cols-2'; // 2 columns for 7-10 items
             return 'grid-cols-3'; // 3 columns for 11+ items on mobile for extreme cases
         }
-        
+
         if (isTablet) {
             // Tablet: Balance between compactness and readability
             if (count <= 2) return 'grid-cols-2';
@@ -51,7 +51,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
             if (count <= 9) return 'grid-cols-3'; // Keep 3 columns for 7-9 items
             return 'grid-cols-4'; // 4 columns for 10+ items
         }
-        
+
         if (isLargeTablet) {
             // Large tablet: More space available
             if (count <= 2) return 'grid-cols-2';
@@ -60,7 +60,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
             if (count <= 8) return 'grid-cols-4'; // 4x2 grid for 7-8 items
             return 'grid-cols-4'; // Max 4 columns for 9+ items
         }
-        
+
         // Desktop: Optimal layout for larger screens
         if (count <= 2) return `grid-cols-${count}`;
         if (count <= 4) return 'grid-cols-4';
@@ -73,21 +73,21 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
     // Enhanced card styling with glass effects
     const getCardClasses = () => {
         const count = stats.length;
-        
+
         const getVariantStyles = () => {
             switch (variant) {
                 case 'elevated':
                     return darkMode
-                        ? 'bg-gradient-to-br from-slate-900/70 to-slate-800/50 border-white/15 hover:from-slate-800/80 hover:to-slate-700/60'
-                        : 'bg-gradient-to-br from-white/80 to-white/60 border-white/40 hover:from-white/90 hover:to-white/70';
+                        ? 'bg-gradient-to-br from-slate-900/70 to-slate-800/50 border-white/15'
+                        : 'bg-gradient-to-br from-white/80 to-white/60 border-white/40';
                 case 'accent':
                     return darkMode
-                        ? 'bg-gradient-to-br from-blue-900/50 to-purple-900/40 border-blue-500/25 hover:from-blue-800/60 hover:to-purple-800/50'
-                        : 'bg-gradient-to-br from-blue-50/90 to-purple-50/70 border-blue-200/50 hover:from-blue-100/95 hover:to-purple-100/75';
+                        ? 'bg-gradient-to-br from-blue-900/50 to-purple-900/40 border-blue-500/25'
+                        : 'bg-gradient-to-br from-blue-50/90 to-purple-50/70 border-blue-200/50';
                 default:
                     return darkMode
-                        ? 'bg-gradient-to-br from-slate-900/60 to-slate-800/40 border-white/10 hover:from-slate-800/70 hover:to-slate-700/50'
-                        : 'bg-gradient-to-br from-white/70 to-white/50 border-white/30 hover:from-white/80 hover:to-white/60';
+                        ? 'bg-gradient-to-br from-slate-900/60 to-slate-800/40 border-white/10'
+                        : 'bg-gradient-to-br from-white/70 to-white/50 border-white/30';
             }
         };
 
@@ -98,7 +98,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
             : 'shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/15';
         const transitionClasses = 'transition-all duration-300 ease-out hover:scale-[1.02] hover:border-white/20';
         const roundingClasses = 'rounded-2xl border';
-        
+
         let sizeClasses = '';
         if (isMobile) {
             sizeClasses = count > 6 ? 'min-h-[80px]' : 'min-h-[100px]';
@@ -107,7 +107,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
         } else {
             sizeClasses = count > 10 ? 'min-h-[100px]' : 'min-h-[120px]';
         }
-        
+
         return `${variantClasses} ${backdropClasses} ${shadowClasses} ${transitionClasses} ${roundingClasses} ${sizeClasses} relative overflow-hidden`;
     };    if (!stats || stats.length === 0) return null;
 
@@ -213,7 +213,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                                             </Typography>
                                         </div>
                                     </CardHeader>
-                                    
+
                                     <CardBody className={`pt-0 ${isMobile ? 'p-3' : 'p-4'}`}>
                                         <Typography 
                                             variant={isMobile ? "h5" : "h4"} 

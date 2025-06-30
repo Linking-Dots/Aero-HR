@@ -18,7 +18,7 @@ const GlassDropdown = forwardRef(({
     const handleStorageChange = () => {
       setDarkMode(localStorage.getItem('darkMode') === 'true');
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -58,7 +58,7 @@ const GlassDropdown = forwardRef(({
 
   const getElevationShadow = () => {
     const shadowBase = darkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(31, 38, 135, 0.2)';
-    
+
     switch (elevation) {
       case 'low':
         return `0 4px 12px ${shadowBase}`;
@@ -117,10 +117,10 @@ const GlassDropdown = forwardRef(({
           margin: '2px 0',
           transition: 'all 0.2s ease-out',
           '&:hover': {
-            background: darkMode 
-              ? 'rgba(255, 255, 255, 0.08)' 
-              : 'rgba(0, 0, 0, 0.04)',
-            transform: 'translateX(4px)',
+            transform: 'translateY(-1px)',
+            boxShadow: darkMode 
+              ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
+              : '0 20px 40px rgba(31, 38, 135, 0.15)',
           }
         }
       }}

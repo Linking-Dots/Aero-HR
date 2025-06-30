@@ -30,7 +30,7 @@ const GlassDialog = forwardRef(({
     const handleStorageChange = () => {
       setDarkMode(localStorage.getItem('darkMode') === 'true');
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -119,7 +119,13 @@ const GlassDialog = forwardRef(({
           '& > *': {
             position: 'relative',
             zIndex: 2
-          }
+          },
+          '&:hover': {
+            transform: 'scale(1.005)',
+            boxShadow: darkMode 
+              ? '0 25px 50px rgba(0, 0, 0, 0.4)' 
+              : '0 25px 50px rgba(31, 38, 135, 0.2)',
+          },
         }
       }}
       BackdropProps={{

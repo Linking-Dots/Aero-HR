@@ -113,17 +113,17 @@ const StatisticsWidgets = () => {
     useEffect(() => {
         let isMounted = true;
         const controller = new AbortController();
-        
+
         const fetchStatistics = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                
+
                 const response = await axios.get(route('stats'), {
                     signal: controller.signal,
                     timeout: 10000 // 10 second timeout
                 });
-                
+
                 if (isMounted && response.data?.statistics) {
                     setStatistics(response.data.statistics);
                 } else {
@@ -244,7 +244,7 @@ const StatisticsWidgets = () => {
                         lg={6}
                         xl={6}
                         key={stat.id}
-                        
+
                     >
                         <StatisticCard
                             title={stat.title}

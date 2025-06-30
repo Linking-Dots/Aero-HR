@@ -63,9 +63,7 @@ const GlassCard = forwardRef(({
   const getHoverStyles = () => {
     if (!hover) return '';
     
-    return darkMode
-      ? 'hover:bg-gradient-to-br hover:from-slate-800/70 hover:to-slate-700/50 hover:border-white/20 hover:shadow-2xl hover:scale-[1.01]'
-      : 'hover:bg-gradient-to-br hover:from-white/80 hover:to-white/60 hover:border-white/40 hover:shadow-2xl hover:scale-[1.01]';
+    return 'hover:shadow-2xl hover:scale-[1.01]';
   };
 
   return (

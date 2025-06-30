@@ -1,4 +1,3 @@
-
 import React, { forwardRef, useState, useEffect } from 'react';
 import { TextField, InputAdornment } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -20,7 +19,7 @@ const GlassInput = forwardRef(({
     const handleStorageChange = () => {
       setDarkMode(localStorage.getItem('darkMode') === 'true');
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -91,7 +90,9 @@ const GlassInput = forwardRef(({
             borderWidth: '1px',
           },
           '&:hover fieldset': {
-            borderColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.6)',
+            boxShadow: darkMode 
+              ? '0 8px 32px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 32px rgba(31, 38, 135, 0.1)',
           },
           '&.Mui-focused fieldset': {
             borderColor: darkMode ? 'rgba(59,130,246,0.6)' : 'rgba(59,130,246,0.8)',
