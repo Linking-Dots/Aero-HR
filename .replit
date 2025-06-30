@@ -11,3 +11,8 @@ run = ["sh", "-c", "npm run dev"]
 localPort = 5173
 externalPort = 5173
 exposeLocalhost = true
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+exposeLocalhost = true
