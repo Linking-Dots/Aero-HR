@@ -12,16 +12,14 @@ import {
 import axios from 'axios';
 import { Skeleton, Card } from '@heroui/react';
 
-const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId, variant = 'default' }) => (
+const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId }) => (
     <Grow in timeout={300}>
-        <GlassCard variant="statistic" elevation="medium" sx={{ height: '100%' }}>
+        <GlassCard sx={{ height: '100%' }}>
             <CardContent sx={{ 
                 p: { xs: 2, sm: 3 },
                 height: '100%',
                 display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                zIndex: 2
+                flexDirection: 'column'
             }}>
                 <Skeleton 
                     className="rounded-lg" 
@@ -113,17 +111,17 @@ const StatisticsWidgets = () => {
     useEffect(() => {
         let isMounted = true;
         const controller = new AbortController();
-
+        
         const fetchStatistics = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
+                
                 const response = await axios.get(route('stats'), {
                     signal: controller.signal,
                     timeout: 10000 // 10 second timeout
                 });
-
+                
                 if (isMounted && response.data?.statistics) {
                     setStatistics(response.data.statistics);
                 } else {
@@ -244,7 +242,7 @@ const StatisticsWidgets = () => {
                         lg={6}
                         xl={6}
                         key={stat.id}
-
+                        
                     >
                         <StatisticCard
                             title={stat.title}

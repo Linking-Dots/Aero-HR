@@ -8,18 +8,15 @@ export const THEME_COLORS = [
     name: "OCEAN", 
     primary: "#0ea5e9", 
     secondary: "#0284c7",
-    accent: "#06b6d4",
     gradient: "from-sky-500 to-blue-600",
     description: "Ocean Blue - Professional & Trustworthy",
-    category: "Professional",
     gradients: {
       primary: "from-sky-400 to-sky-600",
       secondary: "from-blue-400 to-blue-600",
       accent: "from-cyan-400 to-blue-600",
       light: "from-sky-100 to-blue-100",
       dark: "from-sky-800 to-blue-900",
-      subtle: "from-sky-50 to-blue-50",
-      neon: "from-cyan-400 via-blue-500 to-indigo-600"
+      subtle: "from-sky-50 to-blue-50"
     },
     tailwind: {
       primary: "sky-500",
@@ -27,131 +24,6 @@ export const THEME_COLORS = [
       bg: "bg-sky-500/10",
       text: "text-sky-600",
       border: "border-sky-500/30"
-    }
-  },
-  { 
-    name: "SUNSET", 
-    primary: "#f97316", 
-    secondary: "#ea580c",
-    accent: "#f59e0b",
-    gradient: "from-orange-500 to-red-500",
-    description: "Sunset Orange - Warm & Energetic",
-    category: "Vibrant",
-    gradients: {
-      primary: "from-orange-400 to-orange-600",
-      secondary: "from-red-400 to-red-600",
-      accent: "from-amber-400 to-orange-600",
-      light: "from-orange-100 to-red-100",
-      dark: "from-orange-800 to-red-900",
-      subtle: "from-orange-50 to-red-50",
-      neon: "from-yellow-400 via-orange-500 to-red-600"
-    },
-    tailwind: {
-      primary: "orange-500",
-      secondary: "red-600",
-      bg: "bg-orange-500/10",
-      text: "text-orange-600",
-      border: "border-orange-500/30"
-    }
-  },
-  { 
-    name: "FOREST", 
-    primary: "#059669", 
-    secondary: "#047857",
-    accent: "#10b981",
-    gradient: "from-emerald-500 to-green-600",
-    description: "Forest Green - Natural & Growth",
-    category: "Nature",
-    gradients: {
-      primary: "from-emerald-400 to-emerald-600",
-      secondary: "from-green-400 to-green-600",
-      accent: "from-teal-400 to-emerald-600",
-      light: "from-emerald-100 to-green-100",
-      dark: "from-emerald-800 to-green-900",
-      subtle: "from-emerald-50 to-green-50",
-      neon: "from-lime-400 via-emerald-500 to-green-600"
-    },
-    tailwind: {
-      primary: "emerald-500",
-      secondary: "green-600",
-      bg: "bg-emerald-500/10",
-      text: "text-emerald-600",
-      border: "border-emerald-500/30"
-    }
-  },
-  { 
-    name: "ROYAL", 
-    primary: "#7c3aed", 
-    secondary: "#6d28d9",
-    accent: "#8b5cf6",
-    gradient: "from-violet-500 to-purple-600",
-    description: "Royal Purple - Luxury & Creativity",
-    category: "Premium",
-    gradients: {
-      primary: "from-violet-400 to-violet-600",
-      secondary: "from-purple-400 to-purple-600",
-      accent: "from-indigo-400 to-purple-600",
-      light: "from-violet-100 to-purple-100",
-      dark: "from-violet-800 to-purple-900",
-      subtle: "from-violet-50 to-purple-50",
-      neon: "from-fuchsia-400 via-violet-500 to-purple-600"
-    },
-    tailwind: {
-      primary: "violet-500",
-      secondary: "purple-600",
-      bg: "bg-violet-500/10",
-      text: "text-violet-600",
-      border: "border-violet-500/30"
-    }
-  },
-  { 
-    name: "CHERRY", 
-    primary: "#e11d48", 
-    secondary: "#be185d",
-    accent: "#f43f5e",
-    gradient: "from-rose-500 to-pink-600",
-    description: "Cherry Blossom - Elegant & Passionate",
-    category: "Elegant",
-    gradients: {
-      primary: "from-rose-400 to-rose-600",
-      secondary: "from-pink-400 to-pink-600",
-      accent: "from-red-400 to-pink-600",
-      light: "from-rose-100 to-pink-100",
-      dark: "from-rose-800 to-pink-900",
-      subtle: "from-rose-50 to-pink-50",
-      neon: "from-pink-400 via-rose-500 to-red-600"
-    },
-    tailwind: {
-      primary: "rose-500",
-      secondary: "pink-600",
-      bg: "bg-rose-500/10",
-      text: "text-rose-600",
-      border: "border-rose-500/30"
-    }
-  },
-  { 
-    name: "MIDNIGHT", 
-    primary: "#475569", 
-    secondary: "#334155",
-    accent: "#64748b",
-    gradient: "from-slate-500 to-gray-600",
-    description: "Midnight Slate - Sophisticated & Minimal",
-    category: "Minimal",
-    gradients: {
-      primary: "from-slate-400 to-slate-600",
-      secondary: "from-gray-400 to-gray-600",
-      accent: "from-zinc-400 to-slate-600",
-      light: "from-slate-100 to-gray-100",
-      dark: "from-slate-800 to-gray-900",
-      subtle: "from-slate-50 to-gray-50",
-      neon: "from-slate-400 via-gray-500 to-zinc-600"
-    },
-    tailwind: {
-      primary: "slate-500",
-      secondary: "gray-600",
-      bg: "bg-slate-500/10",
-      text: "text-slate-600",
-      border: "border-slate-500/30"
     }
   },  { 
     name: "EMERALD", 
@@ -511,109 +383,6 @@ export const getThemeGradient = (themeColor, gradientType = 'primary', direction
   };
 
   return gradientClasses[themeColor.name]?.[gradientType] || gradientClasses['OCEAN'][gradientType];
-};
-
-/**
- * Get responsive glass card styles for consistent theming
- * @param {boolean} darkMode - Dark mode flag
- * @param {string} variant - Card variant (statistic, updates, default)
- * @param {string} size - Size variant (sm, md, lg)
- * @returns {Object} CSS-in-JS styles object
- */
-export const getGlassCardStyles = (darkMode = false, variant = 'default', size = 'md') => {
-  const baseStyles = {
-    position: 'relative',
-    borderRadius: 16,
-    backdropFilter: 'blur(10px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    overflow: 'hidden',
-    isolation: 'isolate',
-  };
-
-  const sizeStyles = {
-    sm: {
-      padding: '12px 16px',
-      borderRadius: 12,
-    },
-    md: {
-      padding: '16px 20px',
-      borderRadius: 16,
-    },
-    lg: {
-      padding: '20px 24px',
-      borderRadius: 20,
-    }
-  };
-
-  const variantStyles = {
-    default: darkMode ? {
-      background: 'rgba(15, 20, 25, 0.12)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
-      color: 'rgba(255, 255, 255, 0.95)',
-    } : {
-      background: 'rgba(255, 255, 255, 0.65)',
-      border: '1px solid rgba(255, 255, 255, 0.7)',
-      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
-      color: 'rgba(0, 0, 0, 0.85)',
-    },
-    statistic: darkMode ? {
-      background: 'rgba(15, 20, 25, 0.12)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
-      color: 'rgba(255, 255, 255, 0.95)',
-    } : {
-      background: 'rgba(255, 255, 255, 0.65)',
-      border: '1px solid rgba(255, 255, 255, 0.7)',
-      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
-      color: 'rgba(0, 0, 0, 0.85)',
-    },
-    updates: darkMode ? {
-      background: 'rgba(15, 20, 25, 0.12)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.2), inset 0 1px 8px rgba(255, 255, 255, 0.04)',
-      color: 'rgba(255, 255, 255, 0.95)',
-    } : {
-      background: 'rgba(255, 255, 255, 0.65)',
-      border: '1px solid rgba(255, 255, 255, 0.7)',
-      boxShadow: '0 6px 25px rgba(31, 38, 135, 0.08), inset 0 1px 8px rgba(255, 255, 255, 0.5)',
-      color: 'rgba(0, 0, 0, 0.85)',
-    }
-  };
-
-  return {
-    ...baseStyles,
-    ...sizeStyles[size],
-    ...variantStyles[variant],
-    '&:hover': {
-      transform: 'translateY(-1px)',
-      background: darkMode 
-        ? 'rgba(15, 20, 25, 0.18)'
-        : 'rgba(255, 255, 255, 0.75)',
-      boxShadow: darkMode
-        ? '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 8px rgba(255, 255, 255, 0.06)'
-        : '0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 8px rgba(255, 255, 255, 0.6)',
-    }
-  };
-};
-
-/**
- * Get responsive breakpoint styles
- * @param {Object} styles - Styles object with breakpoint keys (xs, sm, md, lg, xl)
- * @returns {Object} MUI responsive styles object
- */
-export const getResponsiveStyles = (styles) => {
-  const breakpoints = ['xs', 'sm', 'md', 'lg', 'xl'];
-  const responsiveStyles = {};
-  
-  breakpoints.forEach(bp => {
-    if (styles[bp]) {
-      responsiveStyles[bp] = styles[bp];
-    }
-  });
-  
-  return responsiveStyles;
 };
 
 export default {

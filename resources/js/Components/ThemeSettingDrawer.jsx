@@ -38,7 +38,7 @@ const ThemeSettingDrawer = ({
   toggleDarkMode 
 }) => {
   const theme = useTheme();
-
+  
   // Glassmorphism-inspired background pattern options
   const backgroundOptions = [
     {
@@ -78,23 +78,9 @@ const ThemeSettingDrawer = ({
     { id: 'primary', name: 'Inter', description: 'Modern sans-serif (Default)', family: 'var(--font-primary)' },
     { id: 'secondary', name: 'Fredoka', description: 'Friendly rounded font', family: 'var(--font-secondary)' },
     { id: 'mono', name: 'JetBrains Mono', description: 'Developer monospace', family: 'var(--font-mono)' },
-    { id: 'serif', name: 'Playfair Display', description: 'Elegant serif font', family: 'var(--font-serif)' },
-    { id: 'poppins', name: 'Poppins', description: 'Geometric sans-serif', family: '"Poppins", sans-serif' },
-    { id: 'nunito', name: 'Nunito', description: 'Rounded sans-serif', family: '"Nunito", sans-serif' }
+    { id: 'serif', name: 'Playfair Display', description: 'Elegant serif font', family: 'var(--font-serif)' }
   ];
-
-  // Glass morphism intensity options
-  const glassIntensityOptions = [
-    { id: 'subtle', name: 'Subtle', blur: '8px', opacity: 0.7 },
-    { id: 'medium', name: 'Medium', blur: '16px', opacity: 0.8 },
-    { id: 'strong', name: 'Strong', blur: '24px', opacity: 0.9 },
-    { id: 'ultra', name: 'Ultra', blur: '32px', opacity: 0.95 }
-  ];
-
-  const [glassIntensity, setGlassIntensity] = useState(() => {
-    return localStorage.getItem('aero-hr-glass-intensity') || 'medium';
-  });
-
+  
   // Set default to first option for background and font
   const [selectedBackground, setSelectedBackground] = useState(() => {
     return localStorage.getItem('aero-hr-background') || backgroundOptions[0].id;
@@ -137,7 +123,7 @@ const ThemeSettingDrawer = ({
   useEffect(() => {
     localStorage.setItem('aero-hr-font', selectedFont);
   }, [selectedFont]);
-
+  
   const getCurrentTheme = () => {
     return THEME_COLORS.find(color => color.name === themeColor.name) || THEME_COLORS[0];
   };
@@ -207,18 +193,9 @@ const ThemeSettingDrawer = ({
               <BrushIcon sx={{ fontSize: 16 }} />
               Appearance Mode
             </Typography>
-
-            <Card className={`${darkMode ? 'bg-gradient-to-br from-slate-900/40 to-slate-800/30' : 'bg-gradient-to-br from-white/50 to-white/30'} backdrop-blur-xl saturate-180 border ${darkMode ? 'border-white/10' : 'border-white/30'} rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}>
-              <CardBody className="p-4 relative">
-                <div 
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{
-                    background: darkMode 
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)'
-                      : 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
-                  }}
-                />
-                <div className="relative z-10">
+            
+            <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+              <CardBody className="p-4">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {darkMode ? 
@@ -247,7 +224,6 @@ const ThemeSettingDrawer = ({
                     }}
                   />
                 </Box>
-                </div>
               </CardBody>
             </Card>
           </Box>
@@ -265,7 +241,7 @@ const ThemeSettingDrawer = ({
               <ColorLensIcon sx={{ fontSize: 16 }} />
               Color Palette
             </Typography>
-
+            
             <Box sx={{ display: 'grid', gap: 2 }}>
               {THEME_COLORS.map((color, index) => {
                 const isSelected = color.name === themeColor.name;
@@ -310,7 +286,7 @@ const ThemeSettingDrawer = ({
                             opacity: 0.7
                           }} />
                         </Box>
-
+                        
                         {/* Color Info */}
                         <Box sx={{ flex: 1 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
@@ -360,17 +336,8 @@ const ThemeSettingDrawer = ({
               <WallpaperIcon sx={{ fontSize: 16 }} />
               Background Style
             </Typography>
-            <Card className={`${darkMode ? 'bg-gradient-to-br from-slate-900/40 to-slate-800/30' : 'bg-gradient-to-br from-white/50 to-white/30'} backdrop-blur-xl saturate-180 border ${darkMode ? 'border-white/10' : 'border-white/30'} rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}>
-              <CardBody className="p-4 relative">
-                <div 
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{
-                    background: darkMode 
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)'
-                      : 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
-                  }}
-                />
-                <div className="relative z-10">
+            <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+              <CardBody className="p-4">
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                   {backgroundOptions.map((bg) => (
                     <Box
@@ -401,7 +368,6 @@ const ThemeSettingDrawer = ({
                     </Box>
                   ))}
                 </Box>
-                </div>
               </CardBody>
             </Card>
           </Box>
@@ -419,18 +385,9 @@ const ThemeSettingDrawer = ({
               <TextFieldsIcon sx={{ fontSize: 16 }} />
               Typography
             </Typography>
-
-            <Card className={`${darkMode ? 'bg-gradient-to-br from-slate-900/40 to-slate-800/30' : 'bg-gradient-to-br from-white/50 to-white/30'} backdrop-blur-xl saturate-180 border ${darkMode ? 'border-white/10' : 'border-white/30'} rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}>
-              <CardBody className="p-4 relative">
-                <div 
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{
-                    background: darkMode 
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)'
-                      : 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
-                  }}
-                />
-                <div className="relative z-10">
+            
+            <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+              <CardBody className="p-4">
                 <FormControl component="fieldset" sx={{ width: '100%' }}>
                   <RadioGroup
                     value={selectedFont}
@@ -508,7 +465,6 @@ const ThemeSettingDrawer = ({
                     ))}
                   </RadioGroup>
                 </FormControl>
-                </div>
               </CardBody>
             </Card>
           </Box>
