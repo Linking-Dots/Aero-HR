@@ -1,7 +1,7 @@
 import React from 'react';
-import { Typography, useMediaQuery, useTheme } from '@mui/material';
-import { Button, Divider } from "@heroui/react";
-import { GRADIENT_PRESETS, getIconGradientClasses, getTextGradientClasses } from '@/utils/gradientUtils.js';
+import {Typography, useMediaQuery, useTheme} from '@mui/material';
+import {Button, Divider} from "@heroui/react";
+import {GRADIENT_PRESETS} from '@/utils/gradientUtils.js';
 
 /**
  * Theme-aware consistent page header component
@@ -13,17 +13,18 @@ import { GRADIENT_PRESETS, getIconGradientClasses, getTextGradientClasses } from
  * @param {React.ReactNode} props.children - Additional content to render below header
  * @param {string} props.variant - Header variant: 'default', 'minimal', 'gradient'
  */
-const PageHeader = ({ 
-    title, 
-    subtitle, 
-    icon, 
-    actionButtons = [],
-    actions,
-    children,
-    variant = 'default'
-}) => {
+const PageHeader = ({
+                        title,
+                        subtitle,
+                        icon,
+                        actionButtons = [],
+                        actions,
+                        children,
+                        variant = 'default'
+                    }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));    const getHeaderStyles = () => {
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const getHeaderStyles = () => {
         switch (variant) {
             case 'minimal':
                 return "bg-white/10 backdrop-blur-md border-b border-white/10";
@@ -32,11 +33,14 @@ const PageHeader = ({
             default:
                 return GRADIENT_PRESETS.pageHeader;
         }
-    };    const getIconStyles = () => {
+    };
+    const getIconStyles = () => {
         return "p-3 rounded-xl " + GRADIENT_PRESETS.iconContainer + " backdrop-blur-sm";
-    };    const getTitleStyles = () => {
+    };
+    const getTitleStyles = () => {
         return GRADIENT_PRESETS.gradientText;
-    };const getDefaultButtonStyles = () => {
+    };
+    const getDefaultButtonStyles = () => {
         return GRADIENT_PRESETS.secondaryButton + " transition-all duration-300";
     };
 
@@ -50,16 +54,16 @@ const PageHeader = ({
                             {icon && (
                                 <div className={getIconStyles()}>
                                     {React.cloneElement(icon, {
-                                        style: { 
+                                        style: {
                                             color: 'var(--theme-primary)',
-                                            ...icon.props.style 
+                                            ...icon.props.style
                                         }
                                     })}
                                 </div>
                             )}
                             <div>
-                                <Typography 
-                                    variant={isMobile ? "h5" : "h4"} 
+                                <Typography
+                                    variant={isMobile ? "h5" : "h4"}
                                     className={getTitleStyles()}
                                     style={{
                                         fontFamily: 'var(--font-current)',
@@ -69,9 +73,9 @@ const PageHeader = ({
                                     {title}
                                 </Typography>
                                 {subtitle && (
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
                                             color: 'text.secondary',
                                             fontFamily: 'var(--font-current)',
                                             transition: 'all var(--transition)',
@@ -83,7 +87,7 @@ const PageHeader = ({
                                 )}
                             </div>
                         </div>
-                        
+
                         {/* Action Buttons - Theme-aware */}
                         {actions ? (
                             <div className="flex items-center gap-2 flex-wrap">
@@ -100,6 +104,7 @@ const PageHeader = ({
                                             startContent={button.icon}
                                             onPress={button.onPress}
                                             isDisabled={button.isDisabled}
+                                            isLoading={button.isLoading}
                                             className={
                                                 button.className || getDefaultButtonStyles()
                                             }
@@ -119,16 +124,16 @@ const PageHeader = ({
                     </div>
                 </div>
             </div>
-            
+
             {/* Divider - Theme-aware */}
-            <Divider 
-                className="border-[rgba(var(--theme-primary-rgb),0.1)]" 
-                style={{ transition: 'all var(--transition)' }}
+            <Divider
+                className="border-[rgba(var(--theme-primary-rgb),0.1)]"
+                style={{transition: 'all var(--transition)'}}
             />
-            
+
             {/* Additional content */}
             {children && (
-                <div className="theme-aware-content" style={{ transition: 'all var(--transition)' }}>
+                <div className="theme-aware-content" style={{transition: 'all var(--transition)'}}>
                     {children}
                 </div>
             )}

@@ -1,44 +1,20 @@
-import React, {useState, useEffect, useCallback, useMemo} from 'react';
-import {Head, usePage} from '@inertiajs/react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Head} from '@inertiajs/react';
+import {Box, Grow, useMediaQuery, useTheme,} from '@mui/material';
+import {Input, Pagination} from "@heroui/react";
 import {
-    Box,
-    Typography,
-    CircularProgress,
-    Grow,
-    useTheme,
-    useMediaQuery,
-    Grid,
-} from '@mui/material';
-import { 
-    Select, 
-    SelectItem, 
-    Card, 
-    CardBody, 
-    CardHeader,
-    Divider,
-    Chip,
-    Button,
-    Input,
-    Pagination
-} from "@heroui/react";
-import { 
-    CalendarIcon, 
-    ChartBarIcon, 
-    ClockIcon,
-    UserIcon,
-    PlusIcon,
-    FunnelIcon,
-    DocumentArrowDownIcon,
-    Cog6ToothIcon,
+    CalendarIcon,
+    ChartBarIcon,
     CheckCircleIcon,
-    XCircleIcon,
+    ClockIcon,
+    DocumentArrowDownIcon,
     ExclamationTriangleIcon,
+    PresentationChartLineIcon,
     UserGroupIcon,
-    PresentationChartLineIcon
+    UserIcon,
+    XCircleIcon
 } from "@heroicons/react/24/outline";
-import { 
-    MagnifyingGlassIcon 
-} from '@heroicons/react/24/solid';
+import {MagnifyingGlassIcon} from '@heroicons/react/24/solid';
 import GlassCard from '@/Components/GlassCard.jsx';
 import PageHeader from '@/Components/PageHeader.jsx';
 import StatsCards from '@/Components/StatsCards.jsx';
@@ -47,14 +23,14 @@ import AttendanceAdminTable from '@/Tables/AttendanceAdminTable.jsx';
 import axios from "axios";
 import {toast} from "react-toastify";
 import dayjs from "dayjs";
-import * as XLSX from 'xlsx';
 
-const AttendanceAdmin = React.memo(({ title, allUsers }) => {
+
+const AttendanceAdmin = React.memo(({title}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
     const [loading, setLoading] = useState(false);
-    const {auth} = usePage().props;
+
     const [attendanceData, setAttendanceData] = useState([]);
     const [leaveCounts, setLeaveCounts] = useState([]);
     const [leaveTypes, setLeaveTypes] = useState([]);
@@ -64,6 +40,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
     const [employee, setEmployee] = useState('');
     const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
+    const [downloading, setDownloading] = useState('');
 
     const [filterData, setFilterData] = useState({
         currentMonth: dayjs().format('YYYY-MM'),
@@ -75,34 +52,32 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         totalDaysInMonth: 0,
         holidaysCount: 0,
         weekendsCount: 0,
-        
+
         // Attendance metrics
         presentDays: 0,
         absentDays: 0,
         lateArrivals: 0,
         attendancePercentage: 0,
-        
+
         // Work time metrics
         averageWorkHours: 0,
         overtimeHours: 0,
         totalWorkHours: 0,
-        
+
         // Leave metrics
         totalLeaveDays: 0,
         leaveBreakdown: {},
-        
+
         // Today's stats
         presentToday: 0,
         absentToday: 0,
         lateToday: 0,
-        
+
         // Meta
         month: '',
         generated_at: null
     });
 
-    // Get the number of days in the current month
-    const daysInMonth = dayjs(`${filterData.currentYear}-${filterData.currentMonth}-01`).daysInMonth();
 
     const handleFilterChange = useCallback((key, value) => {
         setFilterData(prevState => ({
@@ -110,7 +85,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             [key]: value,
         }));
     }, []);
-    
+
     const fetchData = async (page = 1, perPage = 30, filterData) => {
         setLoading(true);
 
@@ -166,14 +141,14 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         }
     };
 
-    
+
     const handleSearch = (event) => {
         const value = event.target.value.toLowerCase();
         setEmployee(value);
     };
 
     useEffect(() => {
-        fetchData(currentPage, perPage, filterData);
+        fetchData(currentPage, perPage, filterData).then(r => '');
     }, [currentPage, perPage, filterData, employee]);
 
 
@@ -183,13 +158,17 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
 
 
     const exportToExcel = async () => {
+        setDownloading('excel');
         try {
             const currentMonth = filterData.currentMonth
                 ? dayjs(filterData.currentMonth).format('YYYY-MM')
                 : dayjs().format('YYYY-MM');
-          
-            const response = await axios.get(route('attendance.exportAdminExcel'), { params: { month: currentMonth }, responseType: 'blob', });
-           
+
+            const response = await axios.get(route('attendance.exportAdminExcel'), {
+                params: {month: currentMonth},
+                responseType: 'blob',
+            });
+
 
             // Create blob link to download
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -198,54 +177,62 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
             link.download = `Admin_Attendance_${currentMonth}.xlsx`;
             document.body.appendChild(link);
             link.click();
+            setDownloading('');
             link.remove();
             window.URL.revokeObjectURL(url);
+
         } catch (error) {
             console.error('Download failed:', error);
+            setDownloading('');
             alert('Failed to download attendance sheet.');
         }
     };
 
     const exportToPdf = async () => {
+        setDownloading('pdf');
         try {
             const currentMonth = filterData.currentMonth
                 ? dayjs(filterData.currentMonth).format('YYYY-MM')
                 : dayjs().format('YYYY-MM');
 
             const response = await axios.get(route('attendance.exportAdminPdf'), {
-                params: { month: currentMonth },
+                params: {month: currentMonth},
                 responseType: 'blob',
             });
 
             // Create a blob link for download
-            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const url = window.URL.createObjectURL(new Blob([response.data], {type: 'application/pdf'}));
             const link = document.createElement('a');
             link.href = url;
             link.download = `Admin_Attendance_${currentMonth}.pdf`;
             document.body.appendChild(link);
             link.click();
+            setDownloading('');
             link.remove();
             window.URL.revokeObjectURL(url);
+
         } catch (error) {
             console.error('PDF download failed:', error);
+            setDownloading('');
             alert('Failed to download attendance PDF.');
         }
     };
 
-    
+
     // Prepare all stats data for StatsCards component - Combined into one array
     const allStatsData = useMemo(() => [
-        {            title: "Total Employees",
+        {
+            title: "Total Employees",
             value: attendanceStats.totalEmployees,
-            icon: <UserGroupIcon />,
+            icon: <UserGroupIcon/>,
             color: "text-blue-400",
             iconBg: "bg-blue-500/20",
             description: "Active employees"
         },
         {
-            title: "Working Days", 
+            title: "Working Days",
             value: attendanceStats.totalWorkingDays,
-            icon: <CalendarIcon />,
+            icon: <CalendarIcon/>,
             color: "text-indigo-600",
             iconBg: "bg-indigo-500/20",
             description: `This month (${attendanceStats.month})`
@@ -253,27 +240,27 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         {
             title: "Present Today",
             value: attendanceStats.presentToday,
-            icon: <CheckCircleIcon />,
+            icon: <CheckCircleIcon/>,
             color: "text-green-400",
-            iconBg: "bg-green-500/20", 
-            description: attendanceStats.presentToday > 0 
+            iconBg: "bg-green-500/20",
+            description: attendanceStats.presentToday > 0
                 ? `${((attendanceStats.presentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% of employees`
                 : 'No attendance yet'
         },
         {
             title: "Absent Today",
             value: attendanceStats.absentToday,
-            icon: <XCircleIcon />,
+            icon: <XCircleIcon/>,
             color: "text-red-400",
             iconBg: "bg-red-500/20",
-            description: attendanceStats.absentToday > 0 
+            description: attendanceStats.absentToday > 0
                 ? `${((attendanceStats.absentToday / attendanceStats.totalEmployees) * 100).toFixed(1)}% absent`
                 : 'All present'
         },
         {
             title: "Late Today",
             value: attendanceStats.lateToday,
-            icon: <ExclamationTriangleIcon />,
+            icon: <ExclamationTriangleIcon/>,
             color: "text-orange-400",
             iconBg: "bg-orange-500/20",
             description: "Late arrivals today"
@@ -281,14 +268,14 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         {
             title: "Attendance Rate",
             value: `${attendanceStats.attendancePercentage}%`,
-            icon: <ChartBarIcon />,
+            icon: <ChartBarIcon/>,
             color: "text-emerald-600",
             iconBg: "bg-emerald-500/20",
             description: "Monthly average"
-        },        {
-            title: "Avg Work Hours", 
+        }, {
+            title: "Avg Work Hours",
             value: `${attendanceStats.averageWorkHours}h`,
-            icon: <ClockIcon />,
+            icon: <ClockIcon/>,
             color: "text-blue-400",
             iconBg: "bg-blue-500/20",
             description: "Daily average this month"
@@ -296,62 +283,61 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
         {
             title: "Overtime",
             value: `${attendanceStats.overtimeHours}h`,
-            icon: <ClockIcon />,
+            icon: <ClockIcon/>,
             color: "text-purple-400",
-            iconBg: "bg-purple-500/20", 
+            iconBg: "bg-purple-500/20",
             description: "Total overtime this month"
         },
         {
             title: "Leave Days",
             value: attendanceStats.totalLeaveDays,
-            icon: <UserIcon />,
+            icon: <UserIcon/>,
             color: "text-amber-600",
             iconBg: "bg-amber-500/20",
             description: "Total leaves this month"
         }
-    ], [attendanceStats]);
-
-    
-
+    ], [attendanceStats.totalEmployees, attendanceStats.totalWorkingDays, attendanceStats.month, attendanceStats.presentToday, attendanceStats.absentToday, attendanceStats.lateToday, attendanceStats.attendancePercentage, attendanceStats.averageWorkHours, attendanceStats.overtimeHours, attendanceStats.totalLeaveDays]);
 
 
     return (
         <>
-            <Head title={title} />
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <Head title={title}/>
+            <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
                 <Grow in>
                     <GlassCard>
                         <PageHeader
                             title="Attendance Management"
                             subtitle="Monitor and manage employee attendance records"
-                            icon={<PresentationChartLineIcon className="w-8 h-8" />}
+                            icon={<PresentationChartLineIcon className="w-8 h-8"/>}
                             variant="default"
                             actionButtons={[
                                 {
                                     label: "Excel",
-                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-primary" />,
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-primary"/>,
                                     variant: "bordered",
                                     onPress: exportToExcel,
+                                    isLoading: downloading === 'excel',
                                     className:
-                                    "border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary",
+                                        "border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary",
                                 },
                                 {
                                     label: "PDF",
-                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-rose-600" />,
+                                    icon: <DocumentArrowDownIcon className="w-4 h-4 text-rose-600"/>,
                                     variant: "bordered",
                                     onPress: exportToPdf,
+                                    isLoading: downloading === 'pdf',
                                     className:
-                                    "border-rose-600/30 bg-rose-600/5 hover:bg-rose-600/10 text-rose-600",
+                                        "border-rose-600/30 bg-rose-600/5 hover:bg-rose-600/10 text-rose-600",
                                 },
                             ]}
                         >
                             <div className="p-6">
                                 {/* All Stats - Responsive Layout for 9 cards */}
-                                <StatsCards 
-                                    stats={allStatsData} 
+                                <StatsCards
+                                    stats={allStatsData}
                                     className="mb-6"
                                 />
-                                
+
                                 {/* Filters Section */}
                                 <div className="mb-6">
                                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
@@ -362,7 +348,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                                 value={employee}
                                                 onChange={handleSearch}
                                                 placeholder="Enter employee name..."
-                                                startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
+                                                startContent={<MagnifyingGlassIcon className="w-4 h-4"/>}
                                                 variant="bordered"
                                                 classNames={{
                                                     inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
@@ -370,14 +356,14 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                                 size={isMobile ? "sm" : "md"}
                                             />
                                         </div>
-                                        
+
                                         <div className="w-full sm:w-auto sm:min-w-[200px]">
                                             <Input
                                                 label="Month/Year"
                                                 type="month"
                                                 value={filterData.currentMonth}
                                                 onChange={(e) => handleFilterChange('currentMonth', e.target.value)}
-                                                startContent={<CalendarIcon className="w-4 h-4" />}
+                                                startContent={<CalendarIcon className="w-4 h-4"/>}
                                                 variant="bordered"
                                                 classNames={{
                                                     inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
@@ -398,7 +384,7 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                         leaveCounts={leaveCounts}
                                         loading={loading}
                                     />
-                                    
+
                                     {/* Pagination */}
                                     {totalRows >= 30 && (
                                         <div className="py-4 px-2 flex justify-center items-center">
@@ -416,7 +402,9 @@ const AttendanceAdmin = React.memo(({ title, allUsers }) => {
                                                     wrapper: "bg-white/10 backdrop-blur-md border-white/20",
                                                     item: "bg-white/5 border-white/10",
                                                     cursor: "bg-primary/20 backdrop-blur-md"
-                                                }}                                            />                                        </div>
+                                                }}
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             </div>
