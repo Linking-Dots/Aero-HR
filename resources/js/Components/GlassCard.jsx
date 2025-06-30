@@ -1,24 +1,24 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { Card, Fade } from '@mui/material';
 
-const GlassCard = forwardRef(({ 
-  children, 
-  show = true, 
-  elevation = 0,
-  variant = 'glass',
-  ...props 
-}, ref) => (
-  <Fade in={show} timeout={600}>
+const GlassCard = ({ children, className = '', hover = true, ...props }) => {
+  const [darkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+
+  return (
     <Card
-      ref={ref}
-      elevation={elevation}
-      variant={variant}
+      className={`
+        ${GLASS_STYLES.base} 
+        ${darkMode ? GLASS_STYLES.dark : GLASS_STYLES.light} 
+        ${hover ? 'hover:backdrop-blur-3xl hover:shadow-2xl hover:scale-[1.01] transition-all duration-300' : ''}
+        glass-card
+        ${className}
+      `}
       {...props}
     >
       {children}
     </Card>
-  </Fade>
-));
+  );
+};
 
 GlassCard.displayName = 'GlassCard';
 

@@ -1,3 +1,4 @@
+
 /* Global Theme Transitions - Enhanced Smooth Theme Switching */
 
 :root {
@@ -7,14 +8,21 @@
   --theme-primary-rgb: 14, 165, 233;
   --theme-secondary-rgb: 2, 132, 199;
   
-  /* Transition Variables */
+  /* Enhanced Transition Variables */
   --theme-transition-duration: 0.4s;
-  --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-transition-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --theme-transition-fast: 0.2s;
   --theme-transition-slow: 0.6s;
+  --theme-transition-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Glass Effect Variables */
+  --glass-blur: 24px;
+  --glass-saturation: 180%;
+  --glass-border-opacity: 0.2;
+  --glass-bg-opacity: 0.1;
 }
 
-/* Global Smooth Transitions */
+/* Global Smooth Transitions with Enhanced Performance */
 * {
   transition: 
     background-color var(--theme-transition-duration) var(--theme-transition-easing),
@@ -24,6 +32,7 @@
     backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
     transform var(--theme-transition-fast) var(--theme-transition-easing),
     opacity var(--theme-transition-fast) var(--theme-transition-easing);
+  will-change: background-color, border-color, color, transform, opacity;
 }
 
 /* Smooth Theme Color Transitions */
@@ -31,7 +40,7 @@
   transition: all var(--theme-transition-duration) var(--theme-transition-easing);
 }
 
-/* Dark/Light Mode Transitions */
+/* Enhanced Dark/Light Mode Transitions */
 [data-theme-mode="dark"] {
   color-scheme: dark;
 }
@@ -40,127 +49,173 @@
   color-scheme: light;
 }
 
-/* Gradient Transitions */
-.bg-gradient-to-r,
-.bg-gradient-to-br,
-.bg-gradient-to-l,
-.bg-gradient-to-tr {
-  transition: background var(--theme-transition-duration) var(--theme-transition-easing);
-}
-
-/* Component-Specific Transitions */
+/* Improved Component-Specific Transitions */
 .MuiButton-root {
   transition: 
     background-color var(--theme-transition-fast) var(--theme-transition-easing),
     color var(--theme-transition-fast) var(--theme-transition-easing),
     border-color var(--theme-transition-fast) var(--theme-transition-easing),
     box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
-    transform 0.15s var(--theme-transition-easing) !important;
+    transform var(--theme-transition-fast) var(--theme-transition-spring) !important;
+}
+
+.MuiButton-root:hover {
+  transform: translateY(-1px) scale(1.02);
 }
 
 .MuiCard-root {
   transition: 
     background-color var(--theme-transition-duration) var(--theme-transition-easing),
     border-color var(--theme-transition-duration) var(--theme-transition-easing),
-    box-shadow var(--theme-transition-duration) var(--theme-transition-easing) !important;
+    box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-easing) !important;
 }
 
-.MuiDrawer-paper {
-  transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
-    border-color var(--theme-transition-duration) var(--theme-transition-easing) !important;
+.MuiCard-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(var(--theme-primary-rgb), 0.15);
 }
 
-/* Glass Card Transitions */
+/* Enhanced Glass Card Transitions */
 .glass-card {
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition: 
     background var(--theme-transition-duration) var(--theme-transition-easing),
     backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
     border-color var(--theme-transition-duration) var(--theme-transition-easing),
-    box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
+    box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-easing);
 }
 
-/* Sidebar Transitions */
+.glass-card:hover {
+  backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(calc(var(--glass-saturation) + 20%));
+  transform: translateY(-1px);
+}
+
+/* Enhanced Sidebar Transitions */
 .sidebar-content {
   transition: 
     background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    color var(--theme-transition-duration) var(--theme-transition-easing);
+    color var(--theme-transition-duration) var(--theme-transition-easing),
+    transform var(--theme-transition-duration) var(--theme-transition-easing);
 }
 
-/* Header Transitions */
+/* Enhanced Header Transitions */
 .header-content {
   transition: 
     background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+    backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-easing);
 }
 
-/* Hero UI Component Transitions */
-[data-slot="base"],
-[data-slot="wrapper"],
-[data-slot="content"] {
+/* Enhanced Navigation Item Transitions */
+.nav-item {
+  position: relative;
   transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    border-color var(--theme-transition-duration) var(--theme-transition-easing),
-    color var(--theme-transition-duration) var(--theme-transition-easing);
+    background-color var(--theme-transition-fast) var(--theme-transition-easing),
+    color var(--theme-transition-fast) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-spring);
 }
 
-/* Theme-specific Color Transitions */
-.text-primary {
-  color: rgb(var(--theme-primary-rgb)) !important;
-  transition: color var(--theme-transition-duration) var(--theme-transition-easing);
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.1) 0%, rgba(var(--theme-secondary-rgb), 0.1) 100%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--theme-transition-fast) var(--theme-transition-easing);
+  z-index: -1;
 }
 
-.bg-primary {
-  background-color: rgb(var(--theme-primary-rgb)) !important;
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+.nav-item:hover::before {
+  opacity: 1;
 }
 
-.border-primary {
-  border-color: rgb(var(--theme-primary-rgb)) !important;
-  transition: border-color var(--theme-transition-duration) var(--theme-transition-easing);
+.nav-item:hover {
+  transform: translateX(4px);
 }
 
-/* Reduce Motion for Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0.1s !important;
-    animation-duration: 0.1s !important;
-  }
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.15) 0%, rgba(var(--theme-secondary-rgb), 0.1) 100%);
+  border-left: 3px solid rgb(var(--theme-primary-rgb));
+  color: rgb(var(--theme-primary-rgb));
 }
 
-/* Enhanced Dark Mode Transition */
-html {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+/* Enhanced Bottom Navigation Transitions */
+.bottom-nav-item {
+  transition: 
+    background-color var(--theme-transition-fast) var(--theme-transition-easing),
+    color var(--theme-transition-fast) var(--theme-transition-easing),
+    transform var(--theme-transition-fast) var(--theme-transition-spring);
 }
 
+.bottom-nav-item:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.bottom-nav-item.active {
+  color: rgb(var(--theme-primary-rgb));
+  background: rgba(var(--theme-primary-rgb), 0.1);
+}
+
+/* Enhanced Background Patterns with Better Transitions */
 body {
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.08) 0%, rgba(var(--theme-secondary-rgb), 0.05) 100%),
+              linear-gradient(120deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
+  background-blend-mode: lighten, normal;
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: background var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+[data-background="pattern-glass-1"] body {
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+              linear-gradient(120deg, rgba(var(--theme-primary-rgb), 0.12) 0%, rgba(var(--theme-secondary-rgb), 0.08) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+[data-background="pattern-glass-2"] body {
+  background: radial-gradient(circle at 25% 25%, rgba(var(--theme-primary-rgb), 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 75% 75%, rgba(var(--theme-secondary-rgb), 0.1) 0%, transparent 50%),
+              linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(var(--theme-primary-rgb), 0.05) 100%);
+}
+
+[data-background="pattern-glass-3"] body {
+  background: url('https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+              linear-gradient(120deg, rgba(255,255,255,0.6) 0%, rgba(var(--theme-primary-rgb), 0.08) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+[data-background="pattern-glass-4"] body {
+  background: linear-gradient(45deg, rgba(var(--theme-primary-rgb), 0.05) 25%, transparent 25%),
+              linear-gradient(-45deg, rgba(var(--theme-secondary-rgb), 0.05) 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, rgba(var(--theme-primary-rgb), 0.05) 75%),
+              linear-gradient(-45deg, transparent 75%, rgba(var(--theme-secondary-rgb), 0.05) 75%);
+  background-size: 60px 60px;
+  background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
+}
+
+[data-background="pattern-glass-5"] body {
+  background: url('https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
+              linear-gradient(120deg, rgba(var(--theme-primary-rgb), 0.06) 0%, rgba(var(--theme-secondary-rgb), 0.06) 100%);
+  background-blend-mode: overlay, lighten;
+}
+
+/* Enhanced Focus and Interaction States */
+:focus-visible {
+  outline: 2px solid rgba(var(--theme-primary-rgb), 0.6);
+  outline-offset: 2px;
   transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    color var(--theme-transition-duration) var(--theme-transition-easing);
+    box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
+    outline-color var(--theme-transition-fast) var(--theme-transition-easing);
 }
 
-/* Toast Container Transitions */
-.Toastify__toast-container {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
-}
-
-.Toastify__toast {
-  transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-easing),
-    color var(--theme-transition-duration) var(--theme-transition-easing);
-}
-
-/* Scrollbar Transitions */
-::-webkit-scrollbar-track {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
-}
-
-::-webkit-scrollbar-thumb {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
-}
-
-/* Special Transition Classes */
+/* Performance Optimizations */
 .theme-transition-fast {
   transition-duration: var(--theme-transition-fast) !important;
 }
@@ -173,72 +228,50 @@ body {
   transition: none !important;
 }
 
-/* Loading State Transitions */
 .theme-loading {
   pointer-events: none;
   opacity: 0.8;
   transition: opacity var(--theme-transition-fast) var(--theme-transition-easing);
 }
 
-/* Smooth Backdrop Filter Transitions */
-[style*="backdrop-filter"] {
-  transition: backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+/* Enhanced Scroll Transitions */
+.scroll-smooth {
+  scroll-behavior: smooth;
 }
 
-/* Improved Focus Transitions */
-:focus-visible {
-  transition: 
-    box-shadow var(--theme-transition-fast) var(--theme-transition-easing),
-    outline-color var(--theme-transition-fast) var(--theme-transition-easing);
+/* Improved Animation Performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01s !important;
+    animation-duration: 0.01s !important;
+  }
 }
 
-/* Glassmorphism Abstract Backgrounds - Curated for Aero-HR */
-
-body {
-  /* Default: subtle frosted glass gradient */
-  background: linear-gradient(135deg, rgba(14,165,233,0.18) 0%, rgba(2,132,199,0.12) 100%),
-    linear-gradient(120deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
-  background-blend-mode: lighten, normal;
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 768px) {
+  :root {
+    --theme-transition-duration: 0.3s;
+    --theme-transition-fast: 0.15s;
+  }
 }
 
-[data-background="pattern-glass-1"] body {
-  /* Abstract colorful blobs with glass overlay */
-  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
-    linear-gradient(120deg, rgba(14,165,233,0.22) 0%, rgba(2,132,199,0.14) 100%);
-  background-blend-mode: overlay, lighten;
+/* Loading State Improvements */
+.theme-switching {
+  transition: opacity var(--theme-transition-duration) var(--theme-transition-easing);
+  opacity: 0.9;
 }
 
-[data-background="pattern-glass-2"] body {
-  /* Soft mesh gradient with glass effect */
-  background: url('https://www.transparenttextures.com/patterns/cubes.png'),
-    linear-gradient(135deg, rgba(255,0,150,0.12) 0%, rgba(0,204,255,0.18) 100%);
-  background-blend-mode: overlay, lighten;
-  background-size: cover;
+/* Enhanced Glass Effects */
+.glass-effect {
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  background: rgba(255, 255, 255, var(--glass-bg-opacity));
+  border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-[data-background="pattern-glass-3"] body {
-  /* Vibrant abstract waves */
-  background: url('https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
-    linear-gradient(120deg, rgba(255,255,255,0.5) 0%, rgba(14,165,233,0.12) 100%);
-  background-blend-mode: overlay, lighten;
+[data-theme-mode="dark"] .glass-effect {
+  background: rgba(0, 0, 0, var(--glass-bg-opacity));
+  border: 1px solid rgba(255, 255, 255, calc(var(--glass-border-opacity) * 0.5));
 }
-
-[data-background="pattern-glass-4"] body {
-  /* Colorful glassy mesh gradient */
-  background: linear-gradient(120deg, rgba(0,204,255,0.18) 0%, rgba(255,0,150,0.12) 100%),
-    url('https://www.transparenttextures.com/patterns/diamond-upholstery.png');
-  background-blend-mode: overlay, lighten;
-  background-size: cover;
-}
-
-[data-background="pattern-glass-5"] body {
-  /* Aurora glass effect */
-  background: url('https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat,
-    linear-gradient(120deg, rgba(0,204,255,0.10) 0%, rgba(255,0,150,0.10) 100%);
-  background-blend-mode: overlay, lighten;
-}
-
-/* All backgrounds are designed to complement glassmorphism UI and look great with frosted glass cards. */

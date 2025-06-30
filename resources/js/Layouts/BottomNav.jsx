@@ -191,8 +191,16 @@ const BottomNav = ({ auth, contentRef, setBottomNavHeight, toggleSideBar, sideBa
                             preserveState
                             preserveScroll
                             variant="light"
-                            className={`h-16 min-w-16 px-2 transition-all duration-300 ${isActive ? 'scale-105' : 'bg-transparent hover:bg-white/5 hover:scale-105'}`}
-                            style={isActive ? activeStyle : {}}
+                            className={`bottom-nav-item h-16 min-w-16 px-2 transition-all duration-300 hover:backdrop-blur-xl ${
+                                isActive 
+                                    ? 'scale-105 shadow-lg' 
+                                    : 'bg-transparent hover:bg-white/10 hover:scale-105 hover:shadow-md'
+                            }`}
+                            style={isActive ? {
+                                ...activeStyle,
+                                background: `linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.15) 0%, rgba(var(--theme-secondary-rgb), 0.1) 100%)`,
+                                boxShadow: `0 4px 16px rgba(var(--theme-primary-rgb), 0.2)`,
+                            } : {}}
                             onPress={() => handleItemPress(item)}
                             aria-label={`Navigate to ${item.label}`}
                             aria-current={isActive ? 'page' : undefined}

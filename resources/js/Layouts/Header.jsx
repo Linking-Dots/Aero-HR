@@ -108,16 +108,16 @@ const Header = React.memo(({
   // Mobile Header Component
   const MobileHeader = () => (
   <Box sx={{ px: 1.5, pt: 1.5 }}>
-    <Grow in>
-      <GlassCard>
+    <Grow in timeout={600}>
+      <GlassCard className="header-content transition-all duration-300 hover:backdrop-blur-3xl">
         <Navbar
           shouldHideOnScroll
           maxWidth="full"
-          height="60px"
+          height="64px"
           classNames={{
             base: "bg-transparent border-none shadow-none",
-            wrapper: "px-3 sm:px-6 max-w-full",
-            content: "gap-2"
+            wrapper: "px-4 sm:px-6 max-w-full",
+            content: "gap-3"
           }}
         >
           {/* Left: Logo + Sidebar */}
@@ -255,16 +255,16 @@ const Header = React.memo(({
 
   // Desktop Header Component
   const DesktopHeader = () => (
-    <Slide appear={false} direction="down" in={!trigger}>
+    <Slide appear={false} direction="down" in={!trigger} timeout={400}>
       <Box sx={{ p: 2 }}>
-        <Grow in>
-          <GlassCard>
+        <Grow in timeout={600}>
+          <GlassCard className="header-content transition-all duration-500 hover:backdrop-blur-3xl hover:shadow-2xl">
             <Container maxWidth="xl">
               <Box sx={{
                 display: 'flex',
                 alignItems: 'center',
-                py: 2,
-                gap: 2
+                py: 2.5,
+                gap: 3
               }}>
                 {/* Logo and Menu Toggle */}
                 <Box sx={{

@@ -84,7 +84,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(muiTheme.breakpoints.down('md'));
   const { auth } = usePage().props;
-  
+
   const {
     openSubMenus,
     setOpenSubMenus,
@@ -95,7 +95,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
   const [activePage, setActivePage] = useState(url);  // Update active page when URL changes
   useEffect(() => {
     setActivePage(url);
-    
+
     // Auto-expand parent menu if a submenu item is active
     pages.forEach(page => {
       if (page.subMenu) {
@@ -121,10 +121,10 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
       } else {
         newSet.add(pageName);
       }
-      
+
       // Save to localStorage
       saveSubMenuState(newSet);
-      
+
       return newSet;
     });
   }, [saveSubMenuState]);
@@ -140,7 +140,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
   const groupedPages = useMemo(() => {
     const mainPages = pages.filter(page => !page.category || page.category === 'main');
     const settingsPages = pages.filter(page => page.category === 'settings');
-    
+
     return { mainPages, settingsPages };
   }, [pages]);
 
@@ -162,24 +162,24 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
       return (
         <div key={page.name} className="w-full">
           <Button
-            variant="light"
-            color={hasActiveSubPage ? "primary" : "default"}
-            startContent={
-              <div style={hasActiveSubPage ? { color: themeColor } : {}}>
-                {React.cloneElement(page.icon, { className: "w-3 h-3" })}
-              </div>
-            }
-            endContent={
-              <ChevronRightIcon 
-                className={`w-3 h-3 transition-all duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                style={isExpanded ? { color: themeColor } : {}}
-              />
-            }
-            className="w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
-            style={activeStyle}
-            onPress={() => handleSubMenuToggle(page.name)}
-            size="sm"
-          >
+              variant="light"
+              color={hasActiveSubPage ? "primary" : "default"}
+              startContent={
+                <div style={hasActiveSubPage ? { color: themeColor } : {}}>
+                  {React.cloneElement(page.icon, { className: "w-3 h-3" })}
+                </div>
+              }
+              endContent={
+                <ChevronRightIcon 
+                  className={`w-3 h-3 transition-all duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                  style={isExpanded ? { color: themeColor } : {}}
+                />
+              }
+              className="nav-item w-full justify-start h-10 px-3 bg-transparent hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-md rounded-xl"
+              style={activeStyle}
+              onPress={() => handleSubMenuToggle(page.name)}
+              size="sm"
+            >
             <div className="flex items-center justify-between w-full">
               <span className="text-sm font-medium" style={hasActiveSubPage ? { color: themeColor } : {}}>
                 {page.name}
@@ -316,7 +316,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
               </Chip>
             </div>
           </Button>
-          
+
           {/* Submenu Items with Animation */}
           <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
             isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
@@ -433,7 +433,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
               <XMarkIcon className="w-3 h-3" />
             </Button>
           </div>
-          
+
           {/* Compact User Info - Using PageHeader theming */}
           {auth.user && (
             <div className={`p-2 rounded-lg backdrop-blur-sm transition-all duration-300 ${GRADIENT_PRESETS.accentCard}`}>
@@ -478,7 +478,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
           </Button>
 
           <Divider className="bg-white/10 my-2" />
-          
+
           {/* Main Navigation - Compact */}
           {groupedPages.mainPages.length > 0 && (
             <div className="space-y-1">
