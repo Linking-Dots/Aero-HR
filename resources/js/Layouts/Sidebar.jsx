@@ -1,123 +1,191 @@
-import React, {useEffect, useState} from 'react';
-import {Box, CardHeader, Collapse, List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
-import {useTheme} from '@mui/material/styles';
-import {ExpandLess, ExpandMore} from '@mui/icons-material';
-import {Link, usePage} from "@inertiajs/react";
-import GlassCard from "@/Components/GlassCard.jsx";
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
-import {getPages} from '@/Props/pages.jsx';
-import {getSettingsPages} from "@/Props/settings.jsx";
 
-const Sidebar = ({toggleSideBar, pages, url}) => {
+import React, { useEffect, useState } from 'react';
+import { Box, CardHeader, Collapse, List, ListItem, ListItemIcon, ListItemText, IconButton, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { ExpandLess, ExpandMore, Close as CloseIcon } from '@mui/icons-material';
+import { Link, usePage } from "@inertiajs/react";
+import GlassCard from "@/Components/GlassCard.jsx";
+import logo from '../../../public/assets/images/logo.png';
+
+const Sidebar = ({ toggleSideBar, pages, url, sideBarOpen }) => {
     const theme = useTheme();
     const [openSubMenu, setOpenSubMenu] = useState(null);
     const [activePage, setActivePage] = useState(url);
 
-
+    useEffect(() => {
+        setActivePage(url);
+    }, [url]);
 
     const handleOpenSubMenu = (pageName) => {
         setOpenSubMenu(prev => prev === pageName ? null : pageName);
     };
 
-    const handleClick = (pageName) => {
-        setActivePage(pageName);
-        handleOpenSubMenu(pageName);
+    const handleMenuItemClick = (route) => {
+        setActivePage(`/${route}`);
     };
+
+    if (!sideBarOpen) return null;
 
     return (
         <Box sx={{ p: 2, height: '100%' }}>
-            <GlassCard>
-                <CardHeader />
+            <GlassCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* Sidebar Header */}
+                <CardHeader 
+                    sx={{ 
+                        position: 'relative',
+                        pb: 1,
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
+                    title={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                                component="img"
+                                alt="Logo"
+                                src={logo}
+                                sx={{ height: '32px', width: '32px' }}
+                            />
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    color: theme.palette.text.primary,
+                                    fontFamily: 'monospace',
+                                    fontWeight: 700,
+                                    letterSpacing: '.2rem',
+                                }}
+                            >
+                                DBEDC
+                            </Typography>
+                        </Box>
+                    }
+                />
+                
                 <IconButton
                     sx={{
                         position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        color: theme.palette.text.primary,
                         zIndex: 1,
-                        top: 8, // Adjust as needed
-                        right: 8, // Adjust as needed
-                        color: theme.palette.text.primary
                     }}
-                    size="large"
+                    size="small"
                     onClick={toggleSideBar}
                 >
                     <CloseIcon />
                 </IconButton>
-                <List>
-                    {pages.map((page) => (
-                        page.subMenu ? (
-                            <div key={page.name}>
-                                <ListItem
-                                    button
-                                    onClick={() => handleClick(page.name)}
-                                    sx={{
-                                        backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
-                                    }}
-                                >
-                                    <ListItemIcon>{page.icon}</ListItemIcon>
-                                    <ListItemText primary={page.name} />
-                                    {page.subMenu ? (openSubMenu === page.name ? <ExpandLess /> : <ExpandMore />) : null}
-                                </ListItem>
-                                {page.subMenu && (
+
+                {/* Navigation List */}
+                <Box sx={{ flex: 1, overflow: 'auto', pt: 1 }}>
+                    <List dense>
+                        {pages.map((page) => (
+                            page.subMenu ? (
+                                <Box key={page.name}>
+                                    <ListItem
+                                        button
+                                        onClick={() => handleOpenSubMenu(page.name)}
+                                        sx={{
+                                            mb: 0.5,
+                                            borderRadius: 1,
+                                            backgroundColor: page.subMenu.find(subPage => `/${subPage.route}` === activePage)
+                                                ? theme.palette.action.selected 
+                                                : 'transparent',
+                                            '&:hover': {
+                                                backgroundColor: theme.palette.action.hover,
+                                            },
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                    >
+                                        <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.primary }}>
+                                            {page.icon}
+                                        </ListItemIcon>
+                                        <ListItemText 
+                                            primary={page.name}
+                                            primaryTypographyProps={{
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                            }}
+                                        />
+                                        {openSubMenu === page.name ? <ExpandLess /> : <ExpandMore />}
+                                    </ListItem>
+                                    
                                     <Collapse in={openSubMenu === page.name} timeout="auto" unmountOnExit>
                                         <List component="div" disablePadding>
                                             {page.subMenu.map((subPage) => (
-                                                <Link
-                                                    as={'a'}
+                                                <ListItem
+                                                    key={subPage.name}
+                                                    component={Link}
                                                     href={route(subPage.route)}
                                                     method={subPage.method || undefined}
-                                                    key={subPage.name}
-                                                    style={{
-                                                        alignItems: 'center',
+                                                    onClick={() => handleMenuItemClick(subPage.route)}
+                                                    button
+                                                    sx={{
+                                                        pl: 4,
+                                                        mb: 0.25,
+                                                        ml: 1,
+                                                        borderRadius: 1,
+                                                        backgroundColor: activePage === `/${subPage.route}`
+                                                            ? theme.palette.action.selected 
+                                                            : 'transparent',
+                                                        '&:hover': {
+                                                            backgroundColor: theme.palette.action.hover,
+                                                        },
+                                                        transition: 'all 0.2s ease',
                                                         color: theme.palette.text.primary,
-                                                        textDecoration: 'none'
+                                                        textDecoration: 'none',
                                                     }}
                                                 >
-                                                    <ListItem
-                                                        onClick={() => setActivePage(subPage.name)}
-                                                        sx={{
-                                                            pl: 3,
-                                                            backgroundColor: activePage === subPage.name ? theme.palette.action.selected : 'transparent',
+                                                    <ListItemIcon sx={{ minWidth: 36, color: theme.palette.text.secondary }}>
+                                                        {subPage.icon}
+                                                    </ListItemIcon>
+                                                    <ListItemText 
+                                                        primary={subPage.name}
+                                                        primaryTypographyProps={{
+                                                            fontSize: '0.8125rem',
                                                         }}
-                                                        button
-                                                    >
-                                                        <ListItemIcon>{subPage.icon}</ListItemIcon>
-                                                        <ListItemText primary={subPage.name} />
-                                                    </ListItem>
-                                                </Link>
+                                                    />
+                                                </ListItem>
                                             ))}
                                         </List>
                                     </Collapse>
-                                )}
-                            </div>
-                        ) : (
-                            <Link
-                                as={'a'}
-                                href={route(page.route)}
-                                method={page.method || undefined}
-                                key={page.name}
-                                style={{
-                                    alignItems: 'center',
-                                    color: theme.palette.text.primary,
-                                    textDecoration: 'none'
-                                }}
-                            >
+                                </Box>
+                            ) : (
                                 <ListItem
+                                    key={page.name}
+                                    component={Link}
+                                    href={route(page.route)}
+                                    method={page.method || undefined}
+                                    onClick={() => handleMenuItemClick(page.route)}
                                     button
-                                    onClick={() => setActivePage(page.name)}
                                     sx={{
-                                        backgroundColor: activePage === page.name ? theme.palette.action.selected : 'transparent',
+                                        mb: 0.5,
+                                        borderRadius: 1,
+                                        backgroundColor: activePage === `/${page.route}`
+                                            ? theme.palette.action.selected 
+                                            : 'transparent',
+                                        '&:hover': {
+                                            backgroundColor: theme.palette.action.hover,
+                                        },
+                                        transition: 'all 0.2s ease',
+                                        color: theme.palette.text.primary,
+                                        textDecoration: 'none',
                                     }}
                                 >
-                                    <ListItemIcon>{page.icon}</ListItemIcon>
-                                    <ListItemText primary={page.name} />
+                                    <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.primary }}>
+                                        {page.icon}
+                                    </ListItemIcon>
+                                    <ListItemText 
+                                        primary={page.name}
+                                        primaryTypographyProps={{
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                        }}
+                                    />
                                 </ListItem>
-                            </Link>
-                        )
-                    ))}
-                </List>
+                            )
+                        ))}
+                    </List>
+                </Box>
             </GlassCard>
         </Box>
-
     );
 };
 
