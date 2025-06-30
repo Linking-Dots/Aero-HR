@@ -12,11 +12,22 @@ import { Card, CardHeader, CardBody } from "@heroui/react";
  * @param {boolean} props.animate - Whether to apply staggered animation (default: true)
  * @param {boolean} props.compact - Use compact layout for smaller cards (default: false)
  */
-const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, compact = false }) => {
+const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, compact = false, variant = 'default' }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
     const isLargeTablet = useMediaQuery(theme.breakpoints.down('lg'));
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+
+    // Listen for theme changes
+    useEffect(() => {
+        const handleStorageChange = () => {
+            setDarkMode(localStorage.getItem('darkMode') === 'true');
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     // Enhanced grid layout calculation that scales with any number of cards
     const getGridCols = () => {
@@ -59,32 +70,45 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
         return 'grid-cols-5'; // 5 columns for 13+ items
     };
 
-    // Dynamic card sizing based on count and screen size
+    // Enhanced card styling with glass effects
     const getCardClasses = () => {
         const count = stats.length;
-        let baseClasses = "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200";
         
+        const getVariantStyles = () => {
+            switch (variant) {
+                case 'elevated':
+                    return darkMode
+                        ? 'bg-gradient-to-br from-slate-900/70 to-slate-800/50 border-white/15 hover:from-slate-800/80 hover:to-slate-700/60'
+                        : 'bg-gradient-to-br from-white/80 to-white/60 border-white/40 hover:from-white/90 hover:to-white/70';
+                case 'accent':
+                    return darkMode
+                        ? 'bg-gradient-to-br from-blue-900/50 to-purple-900/40 border-blue-500/25 hover:from-blue-800/60 hover:to-purple-800/50'
+                        : 'bg-gradient-to-br from-blue-50/90 to-purple-50/70 border-blue-200/50 hover:from-blue-100/95 hover:to-purple-100/75';
+                default:
+                    return darkMode
+                        ? 'bg-gradient-to-br from-slate-900/60 to-slate-800/40 border-white/10 hover:from-slate-800/70 hover:to-slate-700/50'
+                        : 'bg-gradient-to-br from-white/70 to-white/50 border-white/30 hover:from-white/80 hover:to-white/60';
+            }
+        };
+
+        const variantClasses = getVariantStyles();
+        const backdropClasses = 'backdrop-blur-xl saturate-180';
+        const shadowClasses = darkMode 
+            ? 'shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30' 
+            : 'shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/15';
+        const transitionClasses = 'transition-all duration-300 ease-out hover:scale-[1.02] hover:border-white/20';
+        const roundingClasses = 'rounded-2xl border';
+        
+        let sizeClasses = '';
         if (isMobile) {
-            // Mobile: More compact cards for better fit
-            if (count > 6) {
-                return `${baseClasses} min-h-[80px]`; // Very compact on mobile for many cards
-            }
-            return `${baseClasses} min-h-[100px]`; // Standard mobile height
+            sizeClasses = count > 6 ? 'min-h-[80px]' : 'min-h-[100px]';
+        } else if (isTablet) {
+            sizeClasses = count > 8 ? 'min-h-[90px]' : 'min-h-[110px]';
+        } else {
+            sizeClasses = count > 10 ? 'min-h-[100px]' : 'min-h-[120px]';
         }
         
-        if (isTablet) {
-            // Tablet: Balanced sizing
-            if (count > 8) {
-                return `${baseClasses} min-h-[90px]`; // Compact for many cards
-            }
-            return `${baseClasses} min-h-[110px]`; // Standard tablet height
-        }
-        
-        // Desktop: Full-size cards
-        if (count > 10) {
-            return `${baseClasses} min-h-[100px]`; // Slightly compact for many cards
-        }
-        return `${baseClasses} min-h-[120px]`; // Standard desktop height
+        return `${variantClasses} ${backdropClasses} ${shadowClasses} ${transitionClasses} ${roundingClasses} ${sizeClasses} relative overflow-hidden`;
     };    if (!stats || stats.length === 0) return null;
 
     return (
@@ -106,14 +130,28 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                         <Card 
                             key={index}
                             className={getCardClasses()}
-                            style={animate ? {
-                                animationDelay: `${index * 100}ms`,
-                                animationDuration: '0.6s',
-                                animationFillMode: 'both',
-                                animationName: 'fadeInUp',
+                            style={{
+                                position: 'relative',
+                                ...(animate ? {
+                                    animationDelay: `${index * 100}ms`,
+                                    animationDuration: '0.6s',
+                                    animationFillMode: 'both',
+                                    animationName: 'fadeInUp',
+                                } : {}),
                                 ...customStyle
-                            } : customStyle}
+                            }}
                         >
+                            {/* Glass overlay effect */}
+                            <div 
+                                className="absolute inset-0 pointer-events-none rounded-2xl"
+                                style={{
+                                    background: darkMode 
+                                        ? 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)'
+                                        : 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%)',
+                                    zIndex: 1
+                                }}
+                            />
+                            <div className="relative z-10">
                             {isMobile && stats.length > 6 ? (
                                 // Ultra-compact mobile layout for many cards
                                 <CardBody className="p-3">
@@ -199,6 +237,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                                     </CardBody>
                                 </>
                             )}
+                            </div>
                         </Card>
                     );
                 })}

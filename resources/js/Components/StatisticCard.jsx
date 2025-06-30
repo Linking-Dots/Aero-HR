@@ -12,14 +12,16 @@ import {
 import axios from 'axios';
 import { Skeleton, Card } from '@heroui/react';
 
-const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId }) => (
+const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId, variant = 'default' }) => (
     <Grow in timeout={300}>
-        <GlassCard sx={{ height: '100%' }}>
+        <GlassCard variant={variant} elevation="medium" sx={{ height: '100%' }}>
             <CardContent sx={{ 
                 p: { xs: 2, sm: 3 },
                 height: '100%',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                position: 'relative',
+                zIndex: 2
             }}>
                 <Skeleton 
                     className="rounded-lg" 
