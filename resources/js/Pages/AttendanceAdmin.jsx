@@ -375,7 +375,7 @@ const AttendanceAdmin = React.memo(({title}) => {
                                 </div>
 
                                 {/* Attendance Table */}
-                                <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-4">
+                                <Box>
                                     <AttendanceAdminTable
                                         attendanceData={attendanceData}
                                         currentYear={filterData.currentYear}
@@ -406,7 +406,7 @@ const AttendanceAdmin = React.memo(({title}) => {
                                             />
                                         </div>
                                     )}
-                                </div>
+                                </Box>
                             </div>
                         </PageHeader>
                     </GlassCard>

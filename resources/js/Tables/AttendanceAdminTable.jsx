@@ -100,7 +100,7 @@ const AttendanceAdminTable = ({
                                   }) => {
         return (
             <GlassCard className="mb-4" shadow="sm">
-                <CardContent className="p-4">
+                <CardContent>
                     {/* User Info */}
                     <Box className="flex items-center gap-3 mb-4">
                         <User
@@ -219,7 +219,7 @@ const AttendanceAdminTable = ({
 
     if (isMobile) {
         return (
-            <Box>
+            <>
                 <CardHeader
                     title={
                         <Box className="flex items-center gap-3">
@@ -231,7 +231,7 @@ const AttendanceAdminTable = ({
                     }
                 />
                 <Divider/>
-                <CardContent>
+                <CardContent sx={{p: 0}}>
                     <ScrollShadow className="max-h-[70vh]">
                         {attendanceData.map((data, index) => (
                             <MobileAttendanceCard
@@ -247,7 +247,7 @@ const AttendanceAdminTable = ({
                         ))}
                     </ScrollShadow>
                 </CardContent>
-            </Box>
+            </>
         );
     }
 
