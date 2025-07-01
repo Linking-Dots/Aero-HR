@@ -81,6 +81,23 @@ class LeaveController extends Controller
         }
     }
 
+    public function stats(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $stats = $this->queryService->getLeaveStatistics($request);
+
+            return response()->json([
+                'stats' => $stats,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'error' => 'An error occurred while retrieving leave data.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function create(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = $this->validationService->validateLeaveRequest($request);

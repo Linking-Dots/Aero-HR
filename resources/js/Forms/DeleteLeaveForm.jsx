@@ -5,7 +5,7 @@ import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 
 
-const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized }) => {
+const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized, fetchLeavesStats }) => {
     const theme = useTheme();
 
     const handleDelete = () => {
@@ -19,12 +19,14 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
                     if (deleteLeaveOptimized) {
                         deleteLeaveOptimized(leaveId);
                         setTotalRows(prev => prev - 1);
+                        fetchLeavesStats();
                     } else {
                         setLeavesData(response.data.leavesData);
                         setTotalRows(response.data.leaves.total);
                         setLastPage(response.data.leaves.last_page);
                         setLeaves(response.data.leaves.data);
                         setError(false);
+                        fetchLeavesStats();
                     }
 
                     resolve('Leave application deleted successfully');

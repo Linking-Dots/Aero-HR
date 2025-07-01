@@ -274,7 +274,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     );
   };
   const leaveTableRef = useRef(null);
-  const [currentLeave, setCurrentLeave] = useState(null);
+
   return (
     <>
       <Head title={title} />

@@ -79,7 +79,8 @@ const LeaveEmployeeTable = React.forwardRef(({
     onBulkReject,
     canApproveLeaves = false,
     canEditLeaves = false,
-    canDeleteLeaves = false
+    canDeleteLeaves = false,
+    fetchLeavesStats 
 }, ref) => {
     const { auth } = usePage().props;
     const theme = useTheme();
@@ -134,39 +135,8 @@ const LeaveEmployeeTable = React.forwardRef(({
         }
     }, [setCurrentPage]);
 
-    // Optimized data manipulation functions
-    const sortLeavesByFromDate = useCallback((leavesArray) => {
-        return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
-    }, []);
+    
 
-    const addLeaveOptimized = useCallback((newLeave) => {
-        setLeaves(prevLeaves => {
-            const updatedLeaves = [...prevLeaves, newLeave];
-            return sortLeavesByFromDate(updatedLeaves);
-        });
-    }, [sortLeavesByFromDate]);
-
-    const updateLeaveOptimized = useCallback((updatedLeave) => {
-        setLeaves(prevLeaves => {
-            const updatedLeaves = prevLeaves.map(leave => 
-                leave.id === updatedLeave.id ? updatedLeave : leave
-            );
-            return sortLeavesByFromDate(updatedLeaves);
-        });
-    }, [sortLeavesByFromDate]);
-
-    const deleteLeaveOptimized = useCallback((leaveId) => {
-        setLeaves(prevLeaves => {
-            return prevLeaves.filter(leave => leave.id !== leaveId);
-        });
-    }, []);
-
-    // Expose functions via ref
-    React.useImperativeHandle(ref, () => ({
-        addLeaveOptimized,
-        updateLeaveOptimized,
-        deleteLeaveOptimized
-    }), [addLeaveOptimized, updateLeaveOptimized, deleteLeaveOptimized]);
 
     const updateLeaveStatus = useCallback(async (leave, newStatus) => {
         if (isUpdating) return;
@@ -187,6 +157,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                             l.id === leave.id ? { ...l, status: newStatus } : l
                         );
                     });
+                    fetchLeavesStats();
                     resolve(response.data.message || "Leave status updated successfully");
                 }
             } catch (error) {

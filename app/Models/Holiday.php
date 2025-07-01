@@ -20,4 +20,9 @@ class Holiday extends Model
         'from_date',
         'to_date',
     ];
+
+    protected $casts = [
+        'from_date' => 'date',
+        'to_date' => 'date',
+    ];
 }

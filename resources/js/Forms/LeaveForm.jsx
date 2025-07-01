@@ -40,7 +40,8 @@ const LeaveForm = ({
                        employee,
                        selectedMonth,
                        addLeaveOptimized,
-                       updateLeaveOptimized
+                       updateLeaveOptimized,
+                       fetchLeavesStats
 }) => {
 
     const {auth} = usePage().props;
@@ -185,9 +186,11 @@ const LeaveForm = ({
                     if (currentLeave && updateLeaveOptimized && response.data.leave) {
                         // Update existing leave
                         updateLeaveOptimized(response.data.leave);
+                        fetchLeavesStats();
                     } else if (addLeaveOptimized && response.data.leave) {
                         // Add new leave
                         addLeaveOptimized(response.data.leave);
+                        fetchLeavesStats();
                         // Update totals for new leave
                         setTotalRows(prev => prev + 1);
                     }

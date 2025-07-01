@@ -82,8 +82,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
         currentPage: 1
     });
 
-    // Active tab for leave management sections
-    const [activeTab, setActiveTab] = useState('all');
 
     // Filter handlers
     const handleFilterChange = useCallback((filterKey, filterValue) => {
@@ -108,17 +106,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
         }));
     }, []);
 
-    // Handle tab change and sync with status filter
-    const handleTabChange = useCallback((tab) => {
-        setActiveTab(tab);
-        const statusMap = {
-            'all': 'all',
-            'pending': 'pending',
-            'approved': 'approved',
-            'rejected': 'rejected'
-        };
-        handleFilterChange('status', statusMap[tab] || 'all');
-    }, [handleFilterChange]);
 
     // Quick stats state
     const [leaveStats, setLeaveStats] = useState({
@@ -168,17 +155,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
         setModalStates(prev => ({ ...prev, [modalType]: true }));
     }, []);
 
-    const handleClose = useCallback(() => {
-        setModalStates({ add_leave: false, edit_leave: false, delete_leave: false });
-        setCurrentLeave(null);
-    }, []);
-
-    const handleEdit = useCallback((leave) => {
-        setCurrentLeave(leave);
-        openModal('edit_leave');
-    }, [openModal]);
-
-
 
     const handleSearch = useCallback((event) => {
         handleFilterChange('employee', event.target.value.toLowerCase());
@@ -220,14 +196,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
             });
 
             if (response.status === 200) {
+               
                 const { leaves, leavesData, stats } = response.data;
-                console.log(leaves, leavesData, stats);
                 setLeaves(leaves.data);
                 setLeavesData(leavesData);
                 setTotalRows(leaves.total);
                 setLastPage(leaves.last_page);
-
-                // Update stats if provided
                 if (stats) {
                     setLeaveStats(stats);
                 }
@@ -248,7 +222,33 @@ const LeavesAdmin = ({ title, allUsers }) => {
             setLeaves(false);
             setLoading(false);
         }
-    }, [filters, pagination]);
+    }, [filters]);
+
+    const fetchLeavesStats = useCallback(async () => {
+        try {
+            const response = await axios.get(route('leaves.stats'), {
+                params: {
+                    
+                    month: filters.selectedMonth,
+                    
+                },
+            });
+
+            if (response.status === 200) {
+                const { stats } = response.data;
+                setLeaveStats(stats);
+            }
+
+        } catch (error) {
+            console.error('Error fetching leaves data:', error.response);
+            if (error.response?.status === 404) {
+                setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
+            } else {
+                setError('Error retrieving leaves data. Please try again.');
+            }
+            setLoading(false);
+        }
+    }, [filters]);
 
     // Bulk actions for admin
     const handleBulkApprove = useCallback(async (selectedLeaves) => {
@@ -287,11 +287,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         }
     }, [canApproveLeaves, fetchLeavesData]);
 
-    useEffect(() => {
-        if (canManageLeaves) {
-            fetchLeavesData();
-        }
-    }, [fetchLeavesData, canManageLeaves]);
+    
 
     // Prepare stats data for StatsCards component
     const statsData = useMemo(() => [
@@ -362,6 +358,45 @@ const LeavesAdmin = ({ title, allUsers }) => {
         setModalStates(prev => ({ ...prev, [modalType]: false }));
     }, []);
 
+    // Optimized data manipulation functions
+    const sortLeavesByFromDate = useCallback((leavesArray) => {
+        return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+    }, []);
+
+    const addLeaveOptimized = useCallback((newLeave) => {
+        setLeaves(prevLeaves => {
+            const updatedLeaves = [...prevLeaves, newLeave];
+            return sortLeavesByFromDate(updatedLeaves);
+        });
+    }, [sortLeavesByFromDate]);
+
+    const updateLeaveOptimized = useCallback((updatedLeave) => {
+        setLeaves(prevLeaves => {
+            const updatedLeaves = prevLeaves.map(leave => 
+                leave.id === updatedLeave.id ? updatedLeave : leave
+            );
+            return sortLeavesByFromDate(updatedLeaves);
+        });
+    }, [sortLeavesByFromDate]);
+
+    const deleteLeaveOptimized = useCallback((leaveId) => {
+        setLeaves(prevLeaves => {
+            return prevLeaves.filter(leave => leave.id !== leaveId);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (canManageLeaves) {
+            fetchLeavesData();
+        }
+    }, [fetchLeavesStats,canManageLeaves]);
+
+    useEffect(() => {
+        if (canManageLeaves) {
+            fetchLeavesStats();
+        }
+    }, [canManageLeaves]);
+
 
     return (
         <>
@@ -382,7 +417,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     handleMonthChange={handleMonthChange}
                     employee={filters.employee}
                     selectedMonth={filters.selectedMonth}
-                    addLeaveOptimized={leaveTableRef.current?.addLeaveOptimized}
+                    addLeaveOptimized={addLeaveOptimized}
+                    fetchLeavesStats={fetchLeavesStats}
 
                 />
             )}
@@ -400,7 +436,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     handleMonthChange={handleMonthChange}
                     employee={filters.employee}
                     selectedMonth={filters.selectedMonth}
-                    updateLeaveOptimized={leaveTableRef.current?.updateLeaveOptimized}
+                    updateLeaveOptimized={updateLeaveOptimized}
+                    fetchLeavesStats={fetchLeavesStats}
 
                 />
             )}
@@ -413,7 +450,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     setLeaves={setLeaves}
                     setTotalRows={setTotalRows}
                     setLastPage={setLastPage}
-                    deleteLeaveOptimized={leaveTableRef.current?.deleteLeaveOptimized}
+                    deleteLeaveOptimized={deleteLeaveOptimized}
+                    fetchLeavesStats={fetchLeavesStats}
                 />
             )}
 
@@ -569,7 +607,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 onBulkReject={handleBulkReject}
                                                 canApproveLeaves={canApproveLeaves}
                                                 canEditLeaves={canEditLeaves}
-                                                canDeleteLeaves={canDeleteLeaves}
+                                                    canDeleteLeaves={canDeleteLeaves}
+                                                    fetchLeavesStats={fetchLeavesStats}
                                             />
                                         </div>
                                     ) : error ? (

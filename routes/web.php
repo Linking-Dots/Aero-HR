@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/leave-update', [LeaveController::class, 'update'])->name('leave-update');
         Route::delete('/leave-delete', [LeaveController::class, 'delete'])->name('leave-delete');
         Route::get('/leaves-paginate', [LeaveController::class, 'paginate'])->name('leaves.paginate');
+        Route::get('/leaves-stats', [LeaveController::class, 'stats'])->name('leaves.stats');
     });
 
     // Attendance self-service routes
