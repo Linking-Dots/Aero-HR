@@ -129,7 +129,9 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     const handlePageChange = useCallback((page) => {
-        setCurrentPage(page);
+        if (setCurrentPage) {
+            setCurrentPage(page);
+        }
     }, [setCurrentPage]);
 
     // Optimized data manipulation functions

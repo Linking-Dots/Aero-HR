@@ -128,10 +128,10 @@ const LeavesEmployee = ({ title, allUsers }) => {
     setLoading(true);
     try {
       const { page, perPage } = pagination;
-      const { employee, year } = filters;
+      const { year } = filters;
 
       const response = await axios.get(route('leaves.paginate'), {
-        params: { page, perPage, employee, year },
+        params: { page, perPage, year },
         timeout: 10000, // 10 second timeout
       });
 
@@ -153,6 +153,11 @@ const LeavesEmployee = ({ title, allUsers }) => {
       setLoading(false);
     }
   }, [pagination.page, pagination.perPage, filters]);
+
+  // Handle pagination changes
+  const handlePageChange = useCallback((newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  }, []);
 
   // Effect for data fetching
   useEffect(() => {
@@ -269,13 +274,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     );
   };
   const leaveTableRef = useRef(null);
-    const [totalRows, setTotalRows] = useState(0);
-    const [lastPage, setLastPage] = useState(0);
-    const [perPage, setPerPage] = useState(30);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [selectedMonth, setSelectedMonth] = useState(dayjs().format('YYYY-MM'));
-    const [employee, setEmployee] = useState('');
-    const [currentLeave, setCurrentLeave] = useState(null);
+  const [currentLeave, setCurrentLeave] = useState(null);
   return (
     <>
       <Head title={title} />
@@ -384,13 +383,13 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         setCurrentLeave={handleSetCurrentLeave}
                         openModal={openModal}
                         setLeaves={setLeaves}
-                        setCurrentPage={setCurrentPage}
-                        currentPage={currentPage}
-                        totalRows={totalRows}
-                        lastPage={lastPage}
-                        perPage={perPage}
-                        selectedMonth={selectedMonth}
-                        employee={employee}
+                        setCurrentPage={handlePageChange}
+                        currentPage={pagination.page}
+                        totalRows={pagination.total}
+                        lastPage={pagination.lastPage}
+                        perPage={pagination.perPage}
+                        selectedMonth={filters.selectedMonth}
+                        employee={''}
                         isAdminView={false}
                     />
                     </div>
