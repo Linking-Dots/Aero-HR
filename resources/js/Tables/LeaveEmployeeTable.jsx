@@ -216,8 +216,8 @@ const LeaveEmployeeTable = ({
         const statusConf = statusConfig[leave.status] || statusConfig['New'];
 
         return (
-            <GlassCard className="mb-3" shadow="sm">
-                <CardContent className="p-4">
+            <GlassCard className="mb-2" shadow="sm">
+                <CardContent className="p-3">
                     <Box className="flex items-start justify-between mb-3">
                         <Box className="flex items-center gap-3 flex-1">
                             {isAdminView && (
@@ -347,18 +347,25 @@ const LeaveEmployeeTable = ({
         
         switch (columnKey) {
             case "employee":
-                const avatarSize = isLargeScreen ? 'md' : 'sm';
                 return (
                     <TableCell className="whitespace-nowrap">
                         <User
                             avatarProps={{
                                 radius: "lg",
-                                size: avatarSize,
+                                size: "sm",
                                 src: user?.profile_image,
-                                fallback: <UserIcon className="w-6 h-6" />
+                                fallback: <UserIcon className="w-4 h-4" />
                             }}
-                            description={user?.phone}
-                            name={user?.name}
+                            description={
+                                <Typography variant="caption" className="text-xs">
+                                    {user?.phone}
+                                </Typography>
+                            }
+                            name={
+                                <Typography variant="body2" className="text-sm font-medium">
+                                    {user?.name}
+                                </Typography>
+                            }
                         />
                     </TableCell>
                 );
@@ -366,9 +373,9 @@ const LeaveEmployeeTable = ({
             case "leave_type":
                 return (
                     <TableCell>
-                        <Box className="flex items-center gap-2">
-                            <DocumentTextIcon className="w-4 h-4 text-primary" />
-                            <Typography variant="body2" fontWeight="medium">
+                        <Box className="flex items-center gap-1">
+                            <DocumentTextIcon className="w-3 h-3 text-primary" />
+                            <Typography variant="body2" className="text-sm font-medium">
                                 {leave.leave_type}
                             </Typography>
                         </Box>
@@ -379,14 +386,14 @@ const LeaveEmployeeTable = ({
             case "to_date":
                 return (
                     <TableCell>
-                        <Box className="flex items-center gap-2">
-                            <CalendarDaysIcon className="w-4 h-4 text-default-500" />
-                            <Box className="flex flex-col">
-                                <Typography variant="body2">
+                        <Box className="flex items-center gap-1">
+                            <CalendarDaysIcon className="w-3 h-3 text-default-500" />
+                            <Box>
+                                <Typography variant="body2" className="text-sm">
                                     {formatDate(leave[columnKey])}
                                 </Typography>
                                 {columnKey === "from_date" && (
-                                    <Typography variant="caption" color="textSecondary">
+                                    <Typography variant="caption" className="text-xs" color="textSecondary">
                                         {getLeaveDuration(leave.from_date, leave.to_date)}
                                     </Typography>
                                 )}
@@ -441,8 +448,8 @@ const LeaveEmployeeTable = ({
                     <TableCell>
                         <MuiTooltip title={leave.reason || "No reason provided"}>
                             <Typography 
-                                variant="body2" 
-                                className="max-w-xs truncate cursor-help"
+                                variant="caption" 
+                                className="max-w-xs truncate cursor-help text-xs"
                                 color="textSecondary"
                             >
                                 {leave.reason || "No reason provided"}
@@ -539,67 +546,24 @@ const LeaveEmployeeTable = ({
 
     return (
         <Box sx={{ maxHeight: "84vh", overflowY: "auto" }}>
-            {/* Bulk Actions Bar for Admin */}
-            {isAdminView && selectedLeaves.size > 0 && (
-                <Card className="mb-4 bg-primary-50 border border-primary-200">
-                    <CardBody className="py-3">
-                        <Box className="flex items-center justify-between">
-                            <Typography variant="body2" className="text-primary-700">
-                                {selectedLeaves.size} leave{selectedLeaves.size > 1 ? 's' : ''} selected
-                            </Typography>
-                            <Box className="flex gap-2">
-                                {canApproveLeaves && (
-                                    <>
-                                        <Button
-                                            size="sm"
-                                            color="success"
-                                            variant="flat"
-                                            startContent={<CheckCircleIcon className="w-4 h-4" />}
-                                            onPress={() => onBulkApprove && onBulkApprove(Array.from(selectedLeaves))}
-                                        >
-                                            Approve Selected
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            color="danger"
-                                            variant="flat"
-                                            startContent={<XCircleIcon className="w-4 h-4" />}
-                                            onPress={() => onBulkReject && onBulkReject(Array.from(selectedLeaves))}
-                                        >
-                                            Reject Selected
-                                        </Button>
-                                    </>
-                                )}
-                                <Button
-                                    size="sm"
-                                    variant="light"
-                                    onPress={() => setSelectedLeaves(new Set())}
-                                >
-                                    Clear Selection
-                                </Button>
-                            </Box>
-                        </Box>
-                    </CardBody>
-                </Card>
-            )}
+            
             
             <ScrollShadow className="max-h-[70vh]">
                 <Table
                     isStriped
-                    selectionMode={isAdminView ? "multiple" : "none"}
-                    selectionBehavior="toggle"
-                    selectedKeys={selectedLeaves}
-                    onSelectionChange={setSelectedLeaves}
-                    isCompact={!isLargeScreen}
+                    selectionMode="none"
+                    isCompact
                     isHeaderSticky
                     removeWrapper
                     aria-label="Leave Management Table"
                     classNames={{
-                        wrapper: "min-h-[222px]",
-                        table: "min-h-[400px]",
-                        thead: "[&>tr]:first:shadow-small",
+                        wrapper: "min-h-[200px]",
+                        table: "min-h-[300px]",
+                        thead: "[&>tr]:first:shadow-small bg-default-100/80",
                         tbody: "divide-y divide-default-200/50",
-                        tr: "group hover:bg-default-50/50 transition-colors"
+                        tr: "group hover:bg-default-50/50 transition-colors h-12",
+                        td: "py-2 px-3 text-sm",
+                        th: "py-2 px-3 text-xs font-semibold"
                     }}
                 >
                     <TableHeader columns={columns}>
@@ -607,11 +571,11 @@ const LeaveEmployeeTable = ({
                             <TableColumn 
                                 key={column.uid} 
                                 align={column.uid === "actions" ? "center" : "start"}
-                                className="bg-default-100/50 backdrop-blur-md"
+                                className="bg-default-100/80 backdrop-blur-md"
                             >
-                                <Box className="flex items-center gap-2">
-                                    {column.icon && <column.icon className="w-4 h-4" />}
-                                    <span>{column.name}</span>
+                                <Box className="flex items-center gap-1">
+                                    {column.icon && <column.icon className="w-3 h-3" />}
+                                    <span className="text-xs font-semibold">{column.name}</span>
                                 </Box>
                             </TableColumn>
                         )}

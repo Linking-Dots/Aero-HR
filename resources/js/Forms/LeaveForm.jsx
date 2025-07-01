@@ -50,7 +50,20 @@ const LeaveForm = ({
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || "");
     const formatDate = (dateString) => {
         if (!dateString) return new Date().toISOString().split('T')[0];
-        const date = new Date(dateString);
+        
+        // Handle date string properly to avoid timezone issues
+        if (typeof dateString === 'string' && dateString.includes('T')) {
+            // Already ISO format
+            return dateString.split('T')[0];
+        }
+        
+        // For date strings like 'YYYY-MM-DD', return as-is
+        if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dateString;
+        }
+        
+        // For other formats, parse carefully
+        const date = new Date(dateString + 'T00:00:00');
         return isNaN(date.getTime()) ? new Date().toISOString().split('T')[0] : date.toISOString().split('T')[0];
     };
     
