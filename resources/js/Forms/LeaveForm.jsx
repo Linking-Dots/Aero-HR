@@ -62,9 +62,17 @@ const LeaveForm = ({
             return dateString;
         }
         
-        // For other formats, parse carefully
-        const date = new Date(dateString + 'T00:00:00');
-        return isNaN(date.getTime()) ? new Date().toISOString().split('T')[0] : date.toISOString().split('T')[0];
+        // For other formats, parse without adding time to avoid timezone shift
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        // Use UTC methods to prevent timezone conversion
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
     
     const [fromDate, setFromDate] = useState(currentLeave?.from_date ? formatDate(currentLeave.from_date) : '');
@@ -290,7 +298,7 @@ const LeaveForm = ({
                                     onChange={(e) => setLeaveType(e.target.value)}
                                     label="Leave Type"
                                     error={Boolean(errors.leaveType)}
-                                    disabled={!!currentLeave}
+                                    disabled={false}
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
