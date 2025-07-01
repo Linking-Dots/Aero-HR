@@ -46,10 +46,10 @@ import {
     EllipsisVerticalIcon,
     PencilIcon,
     TrashIcon,
-    CheckCircleIcon,
-    XCircleIcon,
-    ExclamationTriangleIcon,
-    ClockIcon as ClockIconOutline
+    ClockIcon as ClockIconOutline,
+    SunIcon,
+    HeartIcon,
+    BriefcaseIcon,
 } from '@heroicons/react/24/outline';
 import {
     CheckCircleIcon as CheckCircleSolid,
@@ -59,6 +59,8 @@ import {
 } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import GlassCard from "@/Components/GlassCard";
+
+
 
 const LeaveEmployeeTable = React.forwardRef(({
     leaves,
@@ -126,6 +128,21 @@ const LeaveEmployeeTable = React.forwardRef(({
             icon: XCircleSolid,
             bgColor: alpha(theme.palette.error.main, 0.1),
             textColor: theme.palette.error.main
+        }
+    };
+
+    const getLeaveTypeIcon = (type) => {
+        switch (type?.toLowerCase()) {
+            case "casual":
+                return <BriefcaseIcon className="w-3 h-3 text-blue-500" />;
+            case "weekend":
+                return <SunIcon className="w-3 h-3 text-yellow-500" />;
+            case "sick":
+                return <HeartIcon className="w-3 h-3 text-red-500" />;
+            case "earned":
+                return <ClockIcon className="w-3 h-3 text-green-500" />;
+            default:
+                return <DocumentTextIcon className="w-3 h-3 text-primary" />;
         }
     };
 
@@ -266,6 +283,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                                 key="edit"
                                                 startContent={<PencilIcon className="w-4 h-4" />}
                                                 onPress={() => {
+                                                    console.log(leave);
                                                     setCurrentLeave(leave);
                                                     openModal("edit_leave");
                                                 }}
@@ -354,6 +372,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     const renderCell = useCallback((leave, columnKey) => {
+        
         const user = getUserInfo(leave.user_id);
 
         switch (columnKey) {
@@ -385,14 +404,13 @@ const LeaveEmployeeTable = React.forwardRef(({
                 return (
                     <TableCell>
                         <Box className="flex items-center gap-1">
-                            <DocumentTextIcon className="w-3 h-3 text-primary" />
-                            <Typography variant="body2" className="text-sm font-medium">
+                            {getLeaveTypeIcon(leave.leave_type)}
+                            <Typography variant="body2" className="text-sm font-medium capitalize">
                                 {leave.leave_type}
                             </Typography>
                         </Box>
                     </TableCell>
                 );
-
             case "from_date":
             case "to_date":
                 return (
@@ -470,6 +488,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                 );
 
             case "actions":
+                console.log(leave)
                 return (
                     <TableCell>
                         <Box className="flex items-center gap-1">
@@ -478,6 +497,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                     <IconButton
                                         size="small"
                                         onClick={() => {
+                                            console.log(leave);
                                             setCurrentLeave(leave);
                                             openModal("edit_leave");
                                         }}

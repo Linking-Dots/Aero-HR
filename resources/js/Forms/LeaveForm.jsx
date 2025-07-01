@@ -43,6 +43,7 @@ const LeaveForm = ({
                        updateLeaveOptimized,
                        fetchLeavesStats
 }) => {
+   
 
     const {auth} = usePage().props;
     const theme = useTheme();
@@ -185,6 +186,7 @@ const LeaveForm = ({
                     // Use optimized data manipulation instead of full reload
                     if (currentLeave && updateLeaveOptimized && response.data.leave) {
                         // Update existing leave
+                        console.log(response.data.leave)
                         updateLeaveOptimized(response.data.leave);
                         fetchLeavesStats();
                     } else if (addLeaveOptimized && response.data.leave) {

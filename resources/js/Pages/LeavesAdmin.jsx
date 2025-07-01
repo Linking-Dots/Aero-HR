@@ -197,14 +197,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             if (response.status === 200) {
                
-                const { leaves, leavesData, stats } = response.data;
+                const { leaves, leavesData } = response.data;
                 setLeaves(leaves.data);
                 setLeavesData(leavesData);
                 setTotalRows(leaves.total);
                 setLastPage(leaves.last_page);
-                if (stats) {
-                    setLeaveStats(stats);
-                }
+                
 
                 setError('');
                 setLoading(false);
@@ -363,21 +361,40 @@ const LeavesAdmin = ({ title, allUsers }) => {
         return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
     }, []);
 
+  
+
     const addLeaveOptimized = useCallback((newLeave) => {
+        const leaveMonth = dayjs(newLeave.from_date).format('YYYY-MM');
+
+        const isSameMonth = leaveMonth === filters.selectedMonth;
+        const isSameEmployee = !filters.employee || String(filters.employee) === String(newLeave.user_id);
+
+        if (!isSameMonth || !isSameEmployee) return;
+
         setLeaves(prevLeaves => {
             const updatedLeaves = [...prevLeaves, newLeave];
             return sortLeavesByFromDate(updatedLeaves);
         });
-    }, [sortLeavesByFromDate]);
+    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee]);
 
     const updateLeaveOptimized = useCallback((updatedLeave) => {
+        const leaveMonth = dayjs(updatedLeave.from_date).format('YYYY-MM');
+
+        const isSameMonth = leaveMonth === filters.selectedMonth;
+        const isSameEmployee = !filters.employee || String(filters.employee) === String(updatedLeave.user_id);
+
+        if (!isSameMonth || !isSameEmployee) return;
+
         setLeaves(prevLeaves => {
-            const updatedLeaves = prevLeaves.map(leave => 
+            const updatedLeaves = prevLeaves.map(leave =>
                 leave.id === updatedLeave.id ? updatedLeave : leave
             );
             return sortLeavesByFromDate(updatedLeaves);
         });
-    }, [sortLeavesByFromDate]);
+    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee]);
+
+
+
 
     const deleteLeaveOptimized = useCallback((leaveId) => {
         setLeaves(prevLeaves => {
@@ -395,7 +412,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         if (canManageLeaves) {
             fetchLeavesStats();
         }
-    }, [canManageLeaves]);
+    }, [fetchLeavesData, canManageLeaves]);
 
 
     return (

@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Models\LeaveSetting;
 
 class LeaveController extends Controller
 {
@@ -131,7 +132,15 @@ class LeaveController extends Controller
 
             return response()->json([
                 'message' => 'Leave application submitted successfully',
-                'leave' => $newLeave->load('employee'), // Load the employee relationship
+                'leave' => array_merge(
+                    $newLeave->load('employee')->toArray(),
+                    [
+                        'month' => $newLeave->from_date->format('F'),
+                        'year' => $newLeave->from_date->year,
+                        'leave_type' => LeaveSetting::find($newLeave->leave_type)?->type,
+                    ]
+                ),
+
                 'leavesData' => $leaveData['leavesData'],
                 'leaves' => $leaveData['leaveRecords'],
             ]);
@@ -160,7 +169,14 @@ class LeaveController extends Controller
 
             return response()->json([
                 'message' => 'Leave application updated successfully',
-                'leave' => $updatedLeave->load('employee'), // Load the employee relationship
+                'leave' => array_merge(
+                    $updatedLeave->load('employee')->toArray(),
+                    [
+                        'month' => $updatedLeave->from_date->format('F'),
+                        'year' => $updatedLeave->from_date->year,
+                        'leave_type' => LeaveSetting::find($updatedLeave->leave_type)?->type,
+                    ]
+                ),
                 'leaves' => $leaveData['leaveRecords'],
                 'leavesData' => $leaveData['leavesData'],
             ]);
