@@ -314,10 +314,12 @@ function App({ children }) {
                                     md: sideBarOpen ? 'calc(100% - 280px)' : '100%' 
                                 },
                                 minWidth: 0, // Prevent flex-shrink issues
+                                maxWidth: '100vw', // Prevent overflow issues
                                 willChange: 'margin',
                                 flexDirection: 'column',
                                 height: '100vh',
                                 overflow: 'auto',
+                                position: 'relative', // Ensure proper stacking context
                             }}
                         >
                             {auth.user && (

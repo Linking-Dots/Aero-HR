@@ -2,6 +2,23 @@ import { createTheme } from '@mui/material/styles';
 import { useMemo } from "react";
 import { getThemeColor, generateThemeProperties, hexToRgb } from './utils/themeUtils';
 
+// Utility to get theme primary color (shared across components)
+export function getThemePrimaryColor(theme) {
+  if (typeof window !== 'undefined') {
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary');
+    if (cssVar) return cssVar.trim();
+  }
+  return theme?.palette?.primary?.main || '#0ea5e9';
+}
+
+// Convert hex to rgba utility
+export function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  const num = parseInt(c, 16);
+  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+}
+
 /**
  * useTheme - MUI theme generator using standardized theme color objects
  * Ensures consistency with THEME_COLORS, backgrounds, and font theming.
@@ -131,61 +148,54 @@ const useTheme = (
                 MuiDialog: {
                     styleOverrides: {
                         root: {
-                        // container styles
-                        backdropFilter: 'blur(2px)', // optional container blur
+                            backdropFilter: 'blur(2px)',
                         },
                         paper: {
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        position: 'relative',
-                        transition: 'all 0.3s ease-in-out',
+                            borderRadius: 16,
+                            overflow: 'hidden',
+                            position: 'relative',
+                            transition: 'all 0.3s ease-in-out',
                         }
                     },
                     variants: [
                         {
-                        props: { variant: 'glass' },
-                        style: {
-                            '& .MuiPaper-root': {
-                            background: darkMode
-                                ? 'rgba(15, 20, 25, 0.15)'
-                                : 'rgba(255, 255, 255, 0.6)',
-                            backdropFilter: 'blur(12px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                            border: darkMode
-                                ? '1px solid rgba(255, 255, 255, 0.1)'
-                                : '1px solid rgba(255, 255, 255, 0.6)',
-                            boxShadow: darkMode
-                                ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 2px 12px rgba(255, 255, 255, 0.05)'
-                                : '0 8px 32px rgba(31, 38, 135, 0.1), inset 0 2px 12px rgba(255, 255, 255, 0.4)',
-                            color: darkMode
-                                ? 'rgba(255, 255, 255, 0.9)'
-                                : 'rgba(0, 0, 0, 0.8)',
-                            isolation: 'isolate',
-                            '&:hover': {
-                                transform: 'scale(1.015)',
-                                boxShadow: darkMode
-                                ? '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 2px 12px rgba(255, 255, 255, 0.08)'
-                                : '0 12px 40px rgba(31, 38, 135, 0.15), inset 0 2px 12px rgba(255, 255, 255, 0.5)',
-                            },
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                borderRadius: 16,
-                                padding: '1px',
-                                background: darkMode
-                                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))'
-                                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))',
-                                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                WebkitMaskComposite: 'xor',
-                                maskComposite: 'exclude',
-                                pointerEvents: 'none',
-                            },
+                            props: { variant: 'glass' },
+                            style: {
+                                '& .MuiPaper-root': {
+                                    background: darkMode
+                                        ? 'rgba(15, 20, 25, 0.15)'
+                                        : 'rgba(255, 255, 255, 0.6)',
+                                    backdropFilter: 'blur(12px) saturate(180%)',
+                                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                                    border: darkMode
+                                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                                        : '1px solid rgba(255, 255, 255, 0.6)',
+                                    boxShadow: darkMode
+                                        ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 2px 12px rgba(255, 255, 255, 0.05)'
+                                        : '0 8px 32px rgba(31, 38, 135, 0.1), inset 0 2px 12px rgba(255, 255, 255, 0.4)',
+                                    color: darkMode
+                                        ? 'rgba(255, 255, 255, 0.9)'
+                                        : 'rgba(0, 0, 0, 0.8)',
+                                    isolation: 'isolate',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        borderRadius: 16,
+                                        padding: '1px',
+                                        background: darkMode
+                                            ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))'
+                                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))',
+                                        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                        WebkitMaskComposite: 'xor',
+                                        maskComposite: 'exclude',
+                                        pointerEvents: 'none',
+                                    },
+                                }
                             }
-                        }
                         }
                     ]
                 },

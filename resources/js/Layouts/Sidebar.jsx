@@ -25,22 +25,7 @@ import {
 } from "@heroicons/react/24/outline";
 import GlassCard from "@/Components/GlassCard.jsx";
 import { GRADIENT_PRESETS, getTextGradientClasses, getIconGradientClasses } from '@/utils/gradientUtils.js';
-
-// Utility to get theme primary color (shared with Header/PageHeader)
-function getThemePrimaryColor(theme) {
-  if (typeof window !== 'undefined') {
-    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary');
-    if (cssVar) return cssVar.trim();
-  }
-  return muiTheme.palette.primary.main;
-}
-// Convert hex to rgba
-function hexToRgba(hex, alpha) {
-  let c = hex.replace('#', '');
-  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-  const num = parseInt(c, 16);
-  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
-}
+import { getThemePrimaryColor, hexToRgba } from '@/theme.jsx';
 
 // Custom hook for sidebar state management
 const useSidebarState = () => {

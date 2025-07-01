@@ -37,7 +37,7 @@ import {
 
 import logo from '../../../public/assets/images/logo.png';
 import GlassCard from '@/Components/GlassCard.jsx';
-import useTheme from '@/theme.jsx';
+import useTheme, { getThemePrimaryColor, hexToRgba } from '@/theme.jsx';
 import { GRADIENT_PRESETS, getTextGradientClasses, getIconGradientClasses, getCardGradientClasses } from '@/utils/gradientUtils.js';
 
 const useDeviceType = () => {
@@ -606,12 +606,3 @@ const Header = React.memo(({
 Header.displayName = 'Header';
 
 export default Header;
-// Utility to get theme primary color (shared with PageHeader)
-function getThemePrimaryColor(theme) {
-  // Try to get CSS variable if set, else fallback to theme.palette.primary.main
-  if (typeof window !== 'undefined') {
-    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary');
-    if (cssVar) return cssVar.trim();
-  }
-  return theme.palette.primary.main;
-}
