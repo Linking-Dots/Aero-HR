@@ -126,7 +126,7 @@ const AttendanceAdminTable = ({
                     <Divider className="my-3"/>
 
                     {/* Attendance Grid */}
-                    <Box className="grid grid-cols-7 gap-1 mb-4">
+                    <Box className="grid grid-cols-7 sm:grid-cols-7 xs:grid-cols-4 grid-cols-3 gap-1 mb-4">
                         {Array.from({length: daysInMonth}, (_, i) => {
                             const day = i + 1;
                             const dateKey = dayjs(`${currentYear}-${currentMonth}-${day}`).format('YYYY-MM-DD');
