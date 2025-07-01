@@ -355,9 +355,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
         edit_leave: false,
         delete_leave: false,
     });
-    const [allUsers, setAllUsers] = useState([]);
-    const [leavesData, setLeavesData] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
     const leaveTableRef = useRef(null);
 
     const openModalNew = useCallback((modalType) => {
