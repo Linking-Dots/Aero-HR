@@ -95,7 +95,7 @@ const PunchStatusCard = () => {
         const timer = setInterval(() => {
             const now = new Date();
             setCurrentTime(now);
-            
+
             // Calculate real-time work hours if user is punched in
             if (currentStatus === 'punched_in' && todayPunches.length > 0) {
                 calculateRealtimeWorkTime(now);
@@ -113,11 +113,11 @@ const PunchStatusCard = () => {
 
     const calculateRealtimeWorkTime = (currentTime) => {
         let totalSeconds = 0;
-        
+
         todayPunches.forEach((punch, index) => {
             if (punch.punchin_time) {
                 let punchInTime;
-                
+
                 // Handle different date/time formats
                 if (typeof punch.punchin_time === 'string' && punch.punchin_time.includes(':') && !punch.punchin_time.includes('T')) {
                     // For time strings like "09:30:00", create a date object for today
@@ -129,17 +129,17 @@ const PunchStatusCard = () => {
                     // For ISO datetime strings or timestamps
                     punchInTime = new Date(punch.punchin_time);
                 }
-                
+
                 // Validate the punch in time
                 if (isNaN(punchInTime.getTime())) {
                     console.warn('Invalid punch in time:', punch.punchin_time);
                     return; // Skip this punch if invalid
                 }
-                
+
                 if (punch.punchout_time) {
                     // Completed session
                     let punchOutTime;
-                    
+
                     if (typeof punch.punchout_time === 'string' && punch.punchout_time.includes(':') && !punch.punchout_time.includes('T')) {
                         // For time strings like "17:30:00", create a date object for today
                         const today = new Date();
@@ -150,13 +150,13 @@ const PunchStatusCard = () => {
                         // For ISO datetime strings or timestamps
                         punchOutTime = new Date(punch.punchout_time);
                     }
-                    
+
                     // Validate the punch out time
                     if (isNaN(punchOutTime.getTime())) {
                         console.warn('Invalid punch out time:', punch.punchout_time);
                         return; // Skip this punch if invalid
                     }
-                    
+
                     const sessionSeconds = Math.floor((punchOutTime - punchInTime) / 1000);
                     if (sessionSeconds > 0) {
                         totalSeconds += sessionSeconds;
@@ -170,17 +170,17 @@ const PunchStatusCard = () => {
                 }
             }
         });
-        
+
         // Ensure totalSeconds is a valid number
         if (isNaN(totalSeconds) || totalSeconds < 0) {
             totalSeconds = 0;
         }
-        
+
         // Convert total seconds to HH:MM:SS format
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        
+
         const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         setRealtimeWorkTime(formattedTime);
     };
@@ -189,17 +189,17 @@ const PunchStatusCard = () => {
         try {
             const response = await axios.get(route('attendance.current-user-punch'));
             const data = response.data;
-            
+
             setTodayPunches(data.punches || []);
             setTotalWorkTime(data.total_production_time || '00:00:00');
             setUserOnLeave(data.isUserOnLeave);
-            
+
             // Determine current status
             if (data.punches && data.punches.length > 0) {
                 const lastPunch = data.punches[data.punches.length - 1];
                 const status = lastPunch.punchout_time ? 'punched_out' : 'punched_in';
                 setCurrentStatus(status);
-                
+
                 // Initialize real-time calculation
                 if (status === 'punched_in') {
                     // Wait a bit for state to update, then calculate
@@ -226,7 +226,7 @@ const PunchStatusCard = () => {
                                 }
                             }
                         });
-                        
+
                         const hours = Math.floor(totalSeconds / 3600);
                         const minutes = Math.floor((totalSeconds % 3600) / 60);
                         const secs = totalSeconds % 60;
@@ -305,7 +305,7 @@ const PunchStatusCard = () => {
         ctx.textBaseline = 'top';
         ctx.font = '14px Arial';
         ctx.fillText('Device fingerprint', 2, 2);
-        
+
         return {
             userAgent: navigator.userAgent,
             screen: `${screen.width}x${screen.height}`,
@@ -327,7 +327,7 @@ const PunchStatusCard = () => {
         try {
             const locationData = await fetchLocationData();
             const deviceFingerprint = getDeviceFingerprint();
-            
+
             let currentIp = 'Unknown';
             try {
                 const ipResponse = await axios.get(route('getClientIp'));
@@ -335,15 +335,15 @@ const PunchStatusCard = () => {
             } catch (ipError) {
                 console.warn('Could not fetch IP address:', ipError);
             }
-            
+
             // Update session info for dialog
             setSessionInfo({
                 ip: currentIp,
                 accuracy: locationData?.accuracy ? `${Math.round(locationData.accuracy)}m` : 'N/A',
                 timestamp: new Date().toLocaleString()
             });
-           
-            
+
+
             const context = {
                 lat: locationData?.latitude,
                 lng: locationData?.longitude,
@@ -356,7 +356,7 @@ const PunchStatusCard = () => {
             };
 
             const response = await axios.post(route('attendance.punch'), context);
-            
+
             if (response.data.status === 'success') {
                 toast.success(response.data.message, {
                     style: {
@@ -366,10 +366,10 @@ const PunchStatusCard = () => {
                         color: theme.palette.text.primary,
                     }
                 });
-                
+
                 // Show session info dialog on success
                 setSessionDialogOpen(true);
-                
+
                 await fetchCurrentStatus();
             } else {
                 toast.error(response.data.message);
@@ -384,7 +384,7 @@ const PunchStatusCard = () => {
                         color: theme.palette.text.primary,
                     }
                 });
-            
+
         } finally {
             setLoading(false);
         }
@@ -421,42 +421,45 @@ const PunchStatusCard = () => {
     };
 
     const formatTime = (timeString) => {
-        if (!timeString) return '--:--';
-        
+        if (!timeString) return null;
+
         try {
-            // Handle different time string formats
             let date;
-            
-            // If it's already a time string (HH:MM:SS format)
             if (typeof timeString === 'string' && timeString.includes(':') && !timeString.includes('T')) {
-                // For time strings like "09:30:00", create a date object for today
                 const today = new Date();
                 const [hours, minutes, seconds] = timeString.split(':');
-                date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, seconds || 0);
+                date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                    parseInt(hours), parseInt(minutes), parseInt(seconds || 0));
             } else {
-                // For ISO datetime strings or timestamps
                 date = new Date(timeString);
             }
-            
-            // Check if the date is valid
+
             if (isNaN(date.getTime())) {
-                return timeString; // Return original string if can't parse
+                console.warn('Invalid date:', timeString);
+                return null;
             }
-            
-            return date.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
+
+            return date;
         } catch (error) {
-            console.warn('Error formatting time:', timeString, error);
-            return timeString; // Return original string if error occurs
+            console.warn('Error formatting time:', error);
+            return null;
         }
+    };
+
+    const displayTime = (timeString) => {
+        const date = formatTime(timeString);
+        if (!date) return '--:--';
+
+        return date.toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
     };
 
     const formatLocation = (locationData) => {
         if (!locationData) return 'Location not available';
-        
+
         try {
             // Handle object format: {lat: 23.8845952, lng: 90.4986624, address: "", timestamp: "..."}
             if (typeof locationData === 'object' && locationData.lat && locationData.lng) {
@@ -465,7 +468,7 @@ const PunchStatusCard = () => {
                 }
                 return `${locationData.lat.toFixed(4)}, ${locationData.lng.toFixed(4)}`;
             }
-            
+
             // Handle string format (legacy data or JSON strings)
             if (typeof locationData === 'string') {
                 // Try to parse as JSON first
@@ -482,7 +485,7 @@ const PunchStatusCard = () => {
                     return locationData.substring(0, 30);
                 }
             }
-            
+
             return 'Location not available';
         } catch (error) {
             console.warn('Error formatting location:', locationData, error);
@@ -495,7 +498,7 @@ const PunchStatusCard = () => {
             {/* Compact Hero Status Card */}
             <GlassCard>
                 <CardContent sx={{ p: 2, textAlign: 'center', position: 'relative' }}>
-                    
+
 
                     {/* Compact Header with User & Time */}
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -531,7 +534,7 @@ const PunchStatusCard = () => {
                                     )}
                                 </Avatar>
                             </Badge>
-                            
+
                             <Box sx={{ ml: 2, textAlign: 'left' }}>
                                 <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem', lineHeight: 1.2 }}>
                                     {user?.name}
@@ -776,11 +779,11 @@ const PunchStatusCard = () => {
                                                     primary={
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                                                             <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                                                                In: {formatTime(punch.punchin_time || punch.punch_in_time || punch.time_in)}
+                                                                In: {displayTime(punch.punchin_time || punch.punch_in_time || punch.time_in)}
                                                             </Typography>
                                                             {(punch.punchout_time || punch.punch_out_time || punch.time_out) && (
                                                                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                                                                    Out: {formatTime(punch.punchout_time || punch.punch_out_time || punch.time_out)}
+                                                                    Out: {displayTime(punch.punchout_time || punch.punch_out_time || punch.time_out)}
                                                                 </Typography>
                                                             )}
                                                             {punch.duration && (

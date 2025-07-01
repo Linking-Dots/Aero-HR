@@ -164,15 +164,22 @@ class AttendanceController extends Controller
         ];
 
         for ($day = 1; $day <= $daysInMonth; $day++) {
-            $date = Carbon::create($year, $month, $day)->toDateString();
+            $date = Carbon::create($year, $month, $day);
+            $dateString = $date->toDateString();
 
             $attendancesForDate = $user->attendances
-                ->filter(fn($a) => Carbon::parse($a->date)->toDateString() === $date)
+                ->filter(fn($a) => Carbon::parse($a->date)->isSameDay($date))
                 ->sortBy('punchin');
 
-            $holiday = $holidays->first(fn($h) => Carbon::parse($date)->between($h->from_date, $h->to_date));
+            $holiday = $holidays->first(fn($h) => $date->between(
+                Carbon::parse($h->from_date)->startOfDay(), 
+                Carbon::parse($h->to_date)->endOfDay()
+            ));
             $leave = $user->leaves
-                ->first(fn($l) => Carbon::parse($date)->between($l->from_date, $l->to_date));
+                ->first(fn($l) => $date->between(
+                    Carbon::parse($l->from_date)->startOfDay(), 
+                    Carbon::parse($l->to_date)->endOfDay()
+                ));
 
             // Defaults
             $symbol = '▼';
@@ -228,7 +235,7 @@ class AttendanceController extends Controller
                 $mins = $totalMinutes % 60;
                 $totalWorkHours = sprintf('%02d:%02d', $hours, $mins);
                 $symbol = '√';
-                $remarks = $totalMinutes > 0 ? 'Present' : ((now()->toDateString() === $date) ? 'Currently Working' : 'Not Punched Out');
+                $remarks = $totalMinutes > 0 ? 'Present' : ($date->isToday() ? 'Currently Working' : 'Not Punched Out');
                 $punchIn = $first->punchin;
                 $punchOut = $last->punchout;
             } elseif ($holiday && !$attendancesForDate->isNotEmpty()) {
@@ -236,7 +243,7 @@ class AttendanceController extends Controller
                 $remarks = 'Holiday';
             }
 
-            $attendanceData[$date] = [
+            $attendanceData[$dateString] = [
                 'status' => $symbol,
                 'punch_in' => $punchIn,
                 'punch_out' => $punchOut,
@@ -291,7 +298,6 @@ class AttendanceController extends Controller
 
     public function punch(Request $request)
     {
-
         $user = Auth::user();
 
         // 1. Get the user's attendance type (with config)
@@ -302,6 +308,34 @@ class AttendanceController extends Controller
                 'status' => 'error',
                 'message' => 'No active attendance type assigned to user.',
             ], 422);
+        }
+
+        // 2. Check for existing punch status today
+        $today = Carbon::today();
+        $latestAttendance = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->latest('punchin')
+            ->first();
+
+        // Validate punch state
+        if ($latestAttendance) {
+            if (!$latestAttendance->punchout) {
+                // User is currently punched in, this should be a punch out
+                if (!$request->has('punch_type') || $request->get('punch_type') !== 'out') {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'You are already punched in. Please punch out first.',
+                    ], 422);
+                }
+            } else {
+                // User last punched out, this should be a punch in
+                if ($request->has('punch_type') && $request->get('punch_type') === 'out') {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'You are not currently punched in.',
+                    ], 422);
+                }
+            }
         }
 
         // 2. Validate attendance based on type configuration
