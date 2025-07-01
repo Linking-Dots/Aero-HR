@@ -317,26 +317,8 @@ class AttendanceController extends Controller
             ->latest('punchin')
             ->first();
 
-        // Validate punch state
-        if ($latestAttendance) {
-            if (!$latestAttendance->punchout) {
-                // User is currently punched in, this should be a punch out
-                if (!$request->has('punch_type') || $request->get('punch_type') !== 'out') {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'You are already punched in. Please punch out first.',
-                    ], 422);
-                }
-            } else {
-                // User last punched out, this should be a punch in
-                if ($request->has('punch_type') && $request->get('punch_type') === 'out') {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'You are not currently punched in.',
-                    ], 422);
-                }
-            }
-        }
+        // The punch service will handle the logic automatically
+        // No need for manual punch_type validation here
 
         // 2. Validate attendance based on type configuration
         $validation = $this->validateAttendanceType($attendanceType, $request);
