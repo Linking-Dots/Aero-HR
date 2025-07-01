@@ -300,7 +300,7 @@ const AttendanceAdmin = React.memo(({title}) => {
 
 
     return (
-        <>
+        <Box>
             <Head title={title}/>
             <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
                 <Grow in>
@@ -412,7 +412,7 @@ const AttendanceAdmin = React.memo(({title}) => {
                     </GlassCard>
                 </Grow>
             </Box>
-        </>
+        </Box>
     );
 });
 AttendanceAdmin.layout = (page) => <App>{page}</App>;

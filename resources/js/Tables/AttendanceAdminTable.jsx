@@ -36,7 +36,7 @@ const AttendanceAdminTable = ({
                                   leaveCounts,
                                   onRefresh
                               }) => {
-    console.log(attendanceData)
+    
 
     const theme = useTheme();
     const isLargeScreen = useMediaQuery('(min-width: 1025px)');
@@ -128,7 +128,6 @@ const AttendanceAdminTable = ({
                     {/* Attendance Grid */}
                     <Box className="grid grid-cols-7 sm:grid-cols-7 xs:grid-cols-4 grid-cols-3 gap-1 mb-4">
                         {Array.from({ length: daysInMonth }, (_, i) => {
-                            console.log(data)
                             const day = i + 1;
                             const dateKey = dayjs(`${currentYear}-${currentMonth}-${day}`).format('YYYY-MM-DD');
                             const cellData = data[dateKey];
