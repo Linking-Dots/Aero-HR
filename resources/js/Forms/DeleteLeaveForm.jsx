@@ -5,9 +5,9 @@ import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 
 
-const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, setLeaves, setTotalRows, setLastPage, setError }) => {
+const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized }) => {
     const theme = useTheme();
- 
+
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -16,13 +16,17 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
 
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
-                    
-                    
-                    setLeavesData(response.data.leavesData);
-                    setTotalRows(response.data.leaves.total);
-                    setLastPage(response.data.leaves.last_page);
-                    setLeaves(response.data.leaves.data);
-                    setError(false);
+                    if (deleteLeaveOptimized) {
+                        deleteLeaveOptimized(leaveIdToDelete);
+                        setTotalRows(prev => prev - 1);
+                    } else {
+                        setLeavesData(response.data.leavesData);
+                        setTotalRows(response.data.leaves.total);
+                        setLastPage(response.data.leaves.last_page);
+                        setLeaves(response.data.leaves.data);
+                        setError(false);
+                    }
+
                     resolve('Leave application deleted successfully');
                 }
             } catch (error) {
@@ -31,7 +35,7 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
                     const { leavesData } = error.response.data;
                     setLeavesData(leavesData)
                     setError(error.response?.data?.message || 'Error retrieving data.');
-                 
+
                 }
                 reject(error.response.data.error || 'Failed to delete leave application');
             } finally {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import {
     Box,
@@ -57,7 +57,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-    
+
     // State management - Enhanced for admin view
     const [loading, setLoading] = useState(false);
     const [openModalType, setOpenModalType] = useState(null);
@@ -68,7 +68,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
-    
+
     // Enhanced filters for admin view
     const [filters, setFilters] = useState({
         employee: '',
@@ -77,13 +77,13 @@ const LeavesAdmin = ({ title, allUsers }) => {
         leaveType: 'all',
         department: 'all'
     });
-    
+
     // Pagination
     const [pagination, setPagination] = useState({
         perPage: 30,
         currentPage: 1
     });
-    
+
     // Active tab for leave management sections
     const [activeTab, setActiveTab] = useState('all');
 
@@ -102,7 +102,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
             ...prev,
             [filterKey]: filterValue
         }));
-        
+
         // Reset pagination when filters change
         setPagination(prev => ({
             ...prev,
@@ -121,7 +121,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         };
         handleFilterChange('status', statusMap[tab] || 'all');
     }, [handleFilterChange]);
-    
+
     // Quick stats state
     const [leaveStats, setLeaveStats] = useState({
         pending: 0,
@@ -148,15 +148,15 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     const leaveTypeOptions = useMemo(() => {
         const defaultOptions = [{ key: 'all', label: 'All Types', value: 'all' }];
-        
+
         if (!leavesData.leaveTypes) return defaultOptions;
-        
+
         const dynamicOptions = leavesData.leaveTypes.map(leaveType => ({
             key: leaveType.type.toLowerCase(),
             label: leaveType.type,
             value: leaveType.type.toLowerCase()
         }));
-        
+
         return [...defaultOptions, ...dynamicOptions];
     }, [leavesData.leaveTypes]);
 
@@ -181,7 +181,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         openModal('edit_leave');
     }, [openModal]);
 
-    
+
 
     const handleSearch = useCallback((event) => {
         handleFilterChange('employee', event.target.value.toLowerCase());
@@ -229,16 +229,16 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 setLeavesData(leavesData);
                 setTotalRows(leaves.total);
                 setLastPage(leaves.last_page);
-                
+
                 // Update stats if provided
                 if (stats) {
                     setLeaveStats(stats);
                 }
-                
+
                 setError('');
                 setLoading(false);
             }
-            
+
         } catch (error) {
             console.error('Error fetching leaves data:', error.response);
             if (error.response?.status === 404) {
@@ -256,12 +256,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
     // Bulk actions for admin
     const handleBulkApprove = useCallback(async (selectedLeaves) => {
         if (!canApproveLeaves) return;
-        
+
         try {
             const response = await axios.post(route('leaves.bulk-approve'), {
                 leave_ids: selectedLeaves
             });
-            
+
             if (response.status === 200) {
                 fetchLeavesData();
                 toast.success('Selected leaves approved successfully');
@@ -274,12 +274,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     const handleBulkReject = useCallback(async (selectedLeaves) => {
         if (!canApproveLeaves) return;
-        
+
         try {
             const response = await axios.post(route('leaves.bulk-reject'), {
                 leave_ids: selectedLeaves
             });
-            
+
             if (response.status === 200) {
                 fetchLeavesData();
                 toast.success('Selected leaves rejected successfully');
@@ -350,7 +350,23 @@ const LeavesAdmin = ({ title, allUsers }) => {
             </Box>
         );
     }
+    const [modalStates, setModalStates] = useState({
+        add_leave: false,
+        edit_leave: false,
+        delete_leave: false,
+    });
+    const [allUsers, setAllUsers] = useState([]);
+    const [leavesData, setLeavesData] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const leaveTableRef = useRef(null);
 
+    const openModalNew = useCallback((modalType) => {
+        setModalStates(prev => ({ ...prev, [modalType]: true }));
+    }, []);
+
+    const closeModal = useCallback((modalType) => {
+        setModalStates(prev => ({ ...prev, [modalType]: false }));
+    }, []);
 
 
     return (
@@ -358,39 +374,52 @@ const LeavesAdmin = ({ title, allUsers }) => {
             <Head title={title} />
 
             {/* Modals - Enhanced for admin */}
-            {['add_leave', 'edit_leave'].includes(openModalType) && (
+            {modalStates.add_leave && (
                 <LeaveForm
+                    open={modalStates.add_leave}
+                    closeModal={() => closeModal("add_leave")}
+                    leavesData={leavesData}
+                    setLeavesData={setLeavesData}
+                    currentLeave={null}
+                    allUsers={allUsers}
                     setTotalRows={setTotalRows}
                     setLastPage={setLastPage}
                     setLeaves={setLeaves}
-                    perPage={pagination.perPage}
-                    employee={filters.employee}
-                    currentPage={pagination.currentPage}
-                    selectedMonth={filters.selectedMonth}
-                    allUsers={allUsers}
-                    open={true}
-                    setLeavesData={setLeavesData}
-                    closeModal={handleClose}
-                    leavesData={leavesData}
-                    currentLeave={openModalType === 'edit_leave' ? currentLeave : null}
                     handleMonthChange={handleMonthChange}
-                    isAdminView={true}
-                    canApproveLeaves={canApproveLeaves}
+                    employee={filters.employee}
+                    selectedMonth={filters.selectedMonth}
+                    addLeaveOptimized={leaveTableRef.current?.addLeaveOptimized}
+
+                />
+            )}
+            {modalStates.edit_leave && (
+                <LeaveForm
+                    open={modalStates.edit_leave}
+                    closeModal={() => closeModal("edit_leave")}
+                    leavesData={leavesData}
+                    setLeavesData={setLeavesData}
+                    currentLeave={currentLeave}
+                    allUsers={allUsers}
+                    setTotalRows={setTotalRows}
+                    setLastPage={setLastPage}
+                    setLeaves={setLeaves}
+                    handleMonthChange={handleMonthChange}
+                    employee={filters.employee}
+                    selectedMonth={filters.selectedMonth}
+                    updateLeaveOptimized={leaveTableRef.current?.updateLeaveOptimized}
+
                 />
             )}
 
-            {openModalType === 'delete_leave' && (
+            {modalStates.delete_leave && (
                 <DeleteLeaveForm
+                    open={modalStates.delete_leave}
+                    closeModal={() => closeModal("delete_leave")}
+                    leaveId={currentLeave?.id}
+                    setLeaves={setLeaves}
                     setTotalRows={setTotalRows}
                     setLastPage={setLastPage}
-                    setLeaves={setLeaves}
-                    perPage={pagination.perPage}
-                    open={true}
-                    handleClose={handleClose}
-                    leaveIdToDelete={leaveIdToDelete}
-                    setLeavesData={setLeavesData}
-                    setError={setError}
-                    setLoading={setLoading}
+                    deleteLeaveOptimized={leaveTableRef.current?.deleteLeaveOptimized}
                 />
             )}
 
@@ -437,7 +466,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 size={isMobile ? "sm" : "md"}
                                             />
                                         </div>
-                                        
+
                                         <div className="w-full sm:w-auto sm:min-w-[200px]">
                                             <Input
                                                 label="Search Employee"
@@ -452,7 +481,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 size={isMobile ? "sm" : "md"}
                                             />
                                         </div>
-                                        
+
                                         <div className="w-full sm:w-auto sm:min-w-[200px]">
                                             <Select
                                                 label="Leave Status"
@@ -472,7 +501,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 ))}
                                             </Select>
                                         </div>
-                                        
+
                                         <div className="w-full sm:w-auto sm:min-w-[200px]">
                                             <Select
                                                 label="Leave Type"
@@ -492,7 +521,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 ))}
                                             </Select>
                                         </div>
-                                        
+
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="flat"
@@ -513,7 +542,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                         <ChartBarIcon className="w-5 h-5" />
                                         Leave Requests Management
                                     </Typography>
-                                    
+
                                     {loading ? (
                                         <Card className="bg-white/10 backdrop-blur-md border-white/20">
                                             <CardBody className="text-center py-12">
@@ -526,6 +555,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                     ) : leaves && leaves.length > 0 ? (
                                         <div className="overflow-hidden rounded-lg">
                                             <LeaveEmployeeTable
+                                                ref={leaveTableRef}
                                                 totalRows={totalRows}
                                                 lastPage={lastPage}
                                                 setCurrentPage={handlePageChange}

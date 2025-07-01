@@ -60,7 +60,7 @@ import {
 import axios from 'axios';
 import GlassCard from "@/Components/GlassCard";
 
-const LeaveEmployeeTable = ({
+const LeaveEmployeeTable = React.forwardRef(({
     leaves,
     allUsers,
     handleClickOpen,
@@ -80,7 +80,7 @@ const LeaveEmployeeTable = ({
     canApproveLeaves = false,
     canEditLeaves = false,
     canDeleteLeaves = false
-}) => {
+}, ref) => {
     const { auth } = usePage().props;
     const theme = useTheme();
     const isLargeScreen = useMediaQuery('(min-width: 1025px)');
@@ -131,6 +131,40 @@ const LeaveEmployeeTable = ({
     const handlePageChange = useCallback((page) => {
         setCurrentPage(page);
     }, [setCurrentPage]);
+
+    // Optimized data manipulation functions
+    const sortLeavesByFromDate = useCallback((leavesArray) => {
+        return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+    }, []);
+
+    const addLeaveOptimized = useCallback((newLeave) => {
+        setLeaves(prevLeaves => {
+            const updatedLeaves = [...prevLeaves, newLeave];
+            return sortLeavesByFromDate(updatedLeaves);
+        });
+    }, [sortLeavesByFromDate]);
+
+    const updateLeaveOptimized = useCallback((updatedLeave) => {
+        setLeaves(prevLeaves => {
+            const updatedLeaves = prevLeaves.map(leave => 
+                leave.id === updatedLeave.id ? updatedLeave : leave
+            );
+            return sortLeavesByFromDate(updatedLeaves);
+        });
+    }, [sortLeavesByFromDate]);
+
+    const deleteLeaveOptimized = useCallback((leaveId) => {
+        setLeaves(prevLeaves => {
+            return prevLeaves.filter(leave => leave.id !== leaveId);
+        });
+    }, []);
+
+    // Expose functions via ref
+    React.useImperativeHandle(ref, () => ({
+        addLeaveOptimized,
+        updateLeaveOptimized,
+        deleteLeaveOptimized
+    }), [addLeaveOptimized, updateLeaveOptimized, deleteLeaveOptimized]);
 
     const updateLeaveStatus = useCallback(async (leave, newStatus) => {
         if (isUpdating) return;
@@ -624,6 +658,8 @@ const LeaveEmployeeTable = ({
             )}
         </Box>
     );
-};
+});
+
+LeaveEmployeeTable.displayName = 'LeaveEmployeeTable';
 
 export default LeaveEmployeeTable;

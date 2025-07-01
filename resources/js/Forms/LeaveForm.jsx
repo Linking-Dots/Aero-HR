@@ -38,7 +38,9 @@ const LeaveForm = ({
                        setLeaves,
                        handleMonthChange,
                        employee,
-                       selectedMonth
+                       selectedMonth,
+                       addLeaveOptimized,
+                       updateLeaveOptimized
 }) => {
 
     const {auth} = usePage().props;
@@ -179,11 +181,20 @@ const LeaveForm = ({
     
 
                 if (response.status === 200) {
+                    // Update leave data
                     setLeavesData(response.data.leavesData);
-                    setTotalRows(response.data.leaves.total);
-                    setLastPage(response.data.leaves.last_page);
-                    setLeaves(response.data.leaves.data);
-                    handleMonthChange({target: {value: fromDate.slice(0, 7)}});
+                    
+                    // Use optimized data manipulation instead of full reload
+                    if (currentLeave && updateLeaveOptimized) {
+                        // Update existing leave
+                        updateLeaveOptimized(response.data.leave);
+                    } else if (addLeaveOptimized) {
+                        // Add new leave
+                        addLeaveOptimized(response.data.leave);
+                        // Update totals for new leave
+                        setTotalRows(prev => prev + 1);
+                    }
+                    
                     closeModal();
                     resolve([response.data.message || 'Leave application submitted successfully']);
                 }

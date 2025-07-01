@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import {
   Box,
@@ -37,7 +37,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   // State management
   const [loading, setLoading] = useState(false);
   const [leaves, setLeaves] = useState([]);
@@ -81,7 +81,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
       ...previousFilters, 
       [filterKey]: filterValue 
     }));
-    
+
     // Reset pagination when year filter changes
     if (filterKey === 'year') {
       setPagination(previousPagination => ({ 
@@ -108,15 +108,15 @@ const LeavesEmployee = ({ title, allUsers }) => {
     try {
       const { page, perPage } = pagination;
       const { employee, year } = filters;
-      
+
       const response = await axios.get(route('leaves.paginate'), {
         params: { page, perPage, employee, year },
         timeout: 10000, // 10 second timeout
       });
-      
+
       if (response.status === 200) {
         const { leaves: leavesPage, leavesData: responseData } = response.data;
-        
+
         setLeaves(leavesPage.data || []);
         setLeavesData(responseData || { leaveTypes: [], leaveCountsByUser: {} });
         setPagination(previousPagination => ({
@@ -187,7 +187,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
           const usedDays = leaveCount.days_used || 0;
           const remainingDays = leaveCount.remaining_days || 0;
           const totalDays = usedDays + remainingDays;
-          
+
           return (
             <Card 
               key={type} 
@@ -246,7 +246,12 @@ const LeavesEmployee = ({ title, allUsers }) => {
         })}
       </div>
     );
-  };  return (
+  };
+  const [allUsers, setAllUsers] = useState([]);
+    const [leavesData, setLeavesData] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const leaveTableRef = useRef(null);
+  return (
     <>
       <Head title={title} />
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>        <Grow in>
@@ -274,7 +279,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
               ]}
             >
               <div className="p-6">
-              
+
                 {/* Filters Section - Matching LeavesAdmin */}
                 <div className="mb-6">
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
@@ -303,7 +308,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         ))}
                       </Select>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="flat"
@@ -334,7 +339,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                     <CalendarIcon className="w-5 h-5" />
                     Leave History
                   </Typography>
-                  
+
                   {loading ? (
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
                       <CardBody className="text-center py-12">
@@ -347,15 +352,22 @@ const LeavesEmployee = ({ title, allUsers }) => {
                   ) : leaves.length > 0 ? (
                     <div className="overflow-hidden rounded-lg">
                       <LeaveEmployeeTable
+                        ref={leaveTableRef}
                         leaves={leaves}
                         allUsers={allUsers}
-                        onDelete={(id) => handleOpenModal('delete', id)}
-                        onEdit={(leave) => handleOpenModal('edit', leave.id)}
-                        pagination={pagination}
-                        onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-                        isMobile={isMobile}
+                        handleClickOpen={handleClickOpen}
+                        setCurrentLeave={setCurrentLeave}
+                        openModal={openModal}
                         setLeaves={setLeaves}
-                      />
+                        setCurrentPage={setCurrentPage}
+                        currentPage={currentPage}
+                        totalRows={totalRows}
+                        lastPage={lastPage}
+                        perPage={perPage}
+                        selectedMonth={selectedMonth}
+                        employee={employee}
+                        isAdminView={false}
+                    />
                     </div>
                   ) : (
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
