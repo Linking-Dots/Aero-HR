@@ -101,7 +101,7 @@ class LeaveController extends Controller
             }
 
             // Create new leave
-            $this->crudService->createLeave($request->all());
+            $newLeave = $this->crudService->createLeave($request->all());
 
             $leaveData = $this->queryService->getLeaveRecords(
                 $request,
@@ -114,6 +114,7 @@ class LeaveController extends Controller
 
             return response()->json([
                 'message' => 'Leave application submitted successfully',
+                'leave' => $newLeave->load('employee'), // Load the employee relationship
                 'leavesData' => $leaveData['leavesData'],
                 'leaves' => $leaveData['leaveRecords'],
             ]);
@@ -129,7 +130,7 @@ class LeaveController extends Controller
     public function update(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-            $this->crudService->updateLeave($request->input('id'), $request->all());
+            $updatedLeave = $this->crudService->updateLeave($request->input('id'), $request->all());
 
             $leaveData = $this->queryService->getLeaveRecords(
                 $request,
@@ -142,6 +143,7 @@ class LeaveController extends Controller
 
             return response()->json([
                 'message' => 'Leave application updated successfully',
+                'leave' => $updatedLeave->load('employee'), // Load the employee relationship
                 'leaves' => $leaveData['leaveRecords'],
                 'leavesData' => $leaveData['leavesData'],
             ]);

@@ -182,10 +182,10 @@ const LeaveForm = ({
                     setLeavesData(response.data.leavesData);
                     
                     // Use optimized data manipulation instead of full reload
-                    if (currentLeave && updateLeaveOptimized) {
+                    if (currentLeave && updateLeaveOptimized && response.data.leave) {
                         // Update existing leave
                         updateLeaveOptimized(response.data.leave);
-                    } else if (addLeaveOptimized) {
+                    } else if (addLeaveOptimized && response.data.leave) {
                         // Add new leave
                         addLeaveOptimized(response.data.leave);
                         // Update totals for new leave
