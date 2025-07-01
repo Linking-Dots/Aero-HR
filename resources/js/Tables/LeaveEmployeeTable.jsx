@@ -243,7 +243,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     const getUserInfo = (userId) => {
-        return allUsers.find((u) => String(u.id) === String(userId));
+        return allUsers?.find((u) => String(u.id) === String(userId)) || { name: 'Unknown User', phone: '' };
     };
 
     // Mobile card component for better mobile experience

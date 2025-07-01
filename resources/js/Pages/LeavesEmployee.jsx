@@ -108,13 +108,19 @@ const LeavesEmployee = ({ title, allUsers }) => {
     setModalStates({ add_leave: false, edit_leave: false, delete_leave: false });
   }, []);
 
+  const openModal = useCallback((modalType) => {
+    setModalStates(prev => ({ ...prev, [modalType]: true }));
+  }, []);
+
   const handleClickOpen = useCallback((leaveId, modalType) => {
     setCurrentLeave({ id: leaveId });
     setModalStates(prev => ({ ...prev, [modalType]: true }));
   }, []);
 
-  const setCurrentLeave = useCallback((leave) => {
-    // Implementation for setting current leave
+  const [currentLeave, setCurrentLeave] = useState(null);
+
+  const handleSetCurrentLeave = useCallback((leave) => {
+    setCurrentLeave(leave);
   }, []);
 
   // Fetch leaves data with error handling
@@ -373,9 +379,9 @@ const LeavesEmployee = ({ title, allUsers }) => {
                       <LeaveEmployeeTable
                         ref={leaveTableRef}
                         leaves={leaves}
-                        allUsers={allUsers}
+                        allUsers={allUsers || []}
                         handleClickOpen={handleClickOpen}
-                        setCurrentLeave={setCurrentLeave}
+                        setCurrentLeave={handleSetCurrentLeave}
                         openModal={openModal}
                         setLeaves={setLeaves}
                         setCurrentPage={setCurrentPage}

@@ -53,9 +53,9 @@ const LeaveForm = ({
     const formatDate = (dateString) => {
         if (!dateString) return new Date().toISOString().split('T')[0];
         
-        // Handle date string properly to avoid timezone issues
+        // Handle ISO datetime strings with timezone (e.g., "2025-07-17T18:00:00.000000Z")
         if (typeof dateString === 'string' && dateString.includes('T')) {
-            // Already ISO format
+            // Extract just the date part from ISO datetime
             return dateString.split('T')[0];
         }
         
@@ -64,17 +64,14 @@ const LeaveForm = ({
             return dateString;
         }
         
-        // For other formats, parse without adding time to avoid timezone shift
+        // For other formats, create date object and extract date part
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
             return new Date().toISOString().split('T')[0];
         }
         
-        // Use UTC methods to prevent timezone conversion
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        // Extract date part from the original date string without timezone conversion
+        return date.toISOString().split('T')[0];
     };
     
     const [fromDate, setFromDate] = useState(currentLeave?.from_date ? formatDate(currentLeave.from_date) : '');
