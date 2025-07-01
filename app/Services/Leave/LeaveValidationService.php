@@ -14,11 +14,12 @@ class LeaveValidationService
     {
         return [
             'id' => 'nullable|exists:leaves,id',
-            'user_id' => 'nullable|exists:users,id',
+            'user_id' => 'required|exists:users,id',
             'leaveType' => 'required|exists:leave_settings,type',
-            'fromDate' => 'required|date',
+            'fromDate' => 'required|date|after_or_equal:today',
             'toDate' => 'required|date|after_or_equal:fromDate',
-            'leaveReason' => 'required|string|max:255',
+            'daysCount' => 'required|integer|min:1',
+            'leaveReason' => 'required|string|max:500',
             'status' => 'nullable|in:New,Pending,Approved,Declined',
         ];
     }

@@ -62,12 +62,14 @@ class LeaveCrudService
             ]);
 
             return [
+                'success' => true,
                 'updated' => true,
                 'message' => 'Leave application status updated to ' . $status,
             ];
         }
 
         return [
+            'success' => false,
             'updated' => false,
             'message' => 'Leave status remains unchanged.',
         ];

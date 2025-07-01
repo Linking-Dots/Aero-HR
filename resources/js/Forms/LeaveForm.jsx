@@ -49,12 +49,13 @@ const LeaveForm = ({
     const [leaveCounts, setLeaveCounts] = useState([]);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || "");
     const formatDate = (dateString) => {
+        if (!dateString) return new Date().toISOString().split('T')[0];
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? new Date().toISOString().split('T')[0] : date.toISOString().split('T')[0];
     };
     
-    const [fromDate, setFromDate] = useState(formatDate(currentLeave?.from_date));
-    const [toDate, setToDate] = useState(formatDate(currentLeave?.to_date));
+    const [fromDate, setFromDate] = useState(currentLeave?.from_date ? formatDate(currentLeave.from_date) : '');
+    const [toDate, setToDate] = useState(currentLeave?.to_date ? formatDate(currentLeave.to_date) : '');
     const [daysCount, setDaysCount] = useState(currentLeave?.no_of_days || '');
     const [remainingLeaves, setRemainingLeaves] = useState(''); // Default remaining leaves
     const [leaveReason, setLeaveReason] = useState(currentLeave?.reason ||'');
@@ -71,12 +72,20 @@ const LeaveForm = ({
             const userLeaveCounts = leavesData.leaveCountsByUser?.[user_id] || [];
             setLeaveCounts(userLeaveCounts);
             
-            // Set initial leave type if not set and we have leave types
-            if (leaveTypes.length > 0 && !leaveType) {
+            // Set initial leave type if not set and we have leave types (only for new leaves)
+            if (leaveTypes.length > 0 && !leaveType && !currentLeave) {
                 setLeaveType(leaveTypes[0].type);
             }
+            
+            // For edit mode, ensure leave type is set from current leave
+            if (currentLeave && !leaveType) {
+                const leaveTypeFromSettings = leavesData.leaveTypes?.find(lt => lt.id === currentLeave.leave_type);
+                if (leaveTypeFromSettings) {
+                    setLeaveType(leaveTypeFromSettings.type);
+                }
+            }
         }
-    }, [leavesData, user_id]);
+    }, [leavesData, user_id, currentLeave]);
 
     // Update remaining leaves when user or leave type changes
     useEffect(() => {

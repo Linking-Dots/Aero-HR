@@ -214,7 +214,7 @@ class LeaveController extends Controller
 
             foreach ($leaveIds as $leaveId) {
                 $result = $this->crudService->updateLeaveStatus($leaveId, 'Approved', Auth::id());
-                if ($result['success']) {
+                if ($result['updated']) {
                     $updatedCount++;
                 }
             }
@@ -246,7 +246,7 @@ class LeaveController extends Controller
 
             foreach ($leaveIds as $leaveId) {
                 $result = $this->crudService->updateLeaveStatus($leaveId, 'Declined', Auth::id());
-                if ($result['success']) {
+                if ($result['updated']) {
                     $updatedCount++;
                 }
             }

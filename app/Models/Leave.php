@@ -31,22 +31,37 @@ class Leave extends Model
         'approved_by' => 'integer',
     ];
 
-    // Relationships (if any)
+    // Relationships
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function employee(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // In the Leave model
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-
-    public function leaveSetting()
+    public function leaveSetting(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(LeaveSetting::class, 'leave_type');
+    }
+
+    public function approver(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Accessors
+    public function getStatusColorAttribute(): string
+    {
+        return match($this->status) {
+            'New' => 'primary',
+            'Pending' => 'warning', 
+            'Approved' => 'success',
+            'Declined' => 'danger',
+            default => 'default'
+        };
     }
 
 

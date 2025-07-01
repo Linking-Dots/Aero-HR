@@ -53,6 +53,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   });
   const [filters, setFilters] = useState({ 
     employee: '', 
+    selectedMonth: dayjs().format('YYYY-MM'),
     year: new Date().getFullYear() 
   });
 
