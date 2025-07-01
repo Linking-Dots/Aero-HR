@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
+import dayjs from 'dayjs';
 import {
   Box,
   Typography,
@@ -91,15 +92,29 @@ const LeavesEmployee = ({ title, allUsers }) => {
     }
   }, []);
 
-  // Modal handlers (placeholders for future implementation)
+  // Modal state
+  const [modalStates, setModalStates] = useState({
+    add_leave: false,
+    edit_leave: false,
+    delete_leave: false,
+  });
+
+  // Modal handlers
   const handleOpenModal = useCallback((modalType, itemId = null) => {
-    // TODO: Implement modal functionality
-    console.log(`Opening ${modalType} modal for item:`, itemId);
+    setModalStates(prev => ({ ...prev, [modalType]: true }));
   }, []);
 
   const closeModal = useCallback(() => {
-    // TODO: Implement modal close functionality
-    console.log('Closing modal');
+    setModalStates({ add_leave: false, edit_leave: false, delete_leave: false });
+  }, []);
+
+  const handleClickOpen = useCallback((leaveId, modalType) => {
+    setCurrentLeave({ id: leaveId });
+    setModalStates(prev => ({ ...prev, [modalType]: true }));
+  }, []);
+
+  const setCurrentLeave = useCallback((leave) => {
+    // Implementation for setting current leave
   }, []);
 
   // Fetch leaves data with error handling
@@ -247,10 +262,14 @@ const LeavesEmployee = ({ title, allUsers }) => {
       </div>
     );
   };
-  const [allUsers, setAllUsers] = useState([]);
-    const [leavesData, setLeavesData] = useState({});
+  const leaveTableRef = useRef(null);
+    const [totalRows, setTotalRows] = useState(0);
+    const [lastPage, setLastPage] = useState(0);
+    const [perPage, setPerPage] = useState(30);
     const [currentPage, setCurrentPage] = useState(1);
-    const leaveTableRef = useRef(null);
+    const [selectedMonth, setSelectedMonth] = useState(dayjs().format('YYYY-MM'));
+    const [employee, setEmployee] = useState('');
+    const [currentLeave, setCurrentLeave] = useState(null);
   return (
     <>
       <Head title={title} />

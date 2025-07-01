@@ -95,7 +95,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     const canViewLeaves = auth.permissions?.includes('leaves.view') || false;
     const canManageOwnLeaves = auth.permissions?.includes('leave.own.view') || false;
     const hasAdminAccess = isAdminView && (canApproveLeaves || canEditLeaves || canDeleteLeaves);
-    
+
     // Permission-based access control (replacing role-based checks)
     const userIsAdmin = isAdminView || hasAdminAccess;
     const userIsSE = canApproveLeaves; // SE/Manager can approve leaves
@@ -168,10 +168,10 @@ const LeaveEmployeeTable = React.forwardRef(({
 
     const updateLeaveStatus = useCallback(async (leave, newStatus) => {
         if (isUpdating) return;
-        
+
         setIsUpdating(true);
         setUpdatingLeave(`${leave.id}-${newStatus}`);
-        
+
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.post(route("leave-update-status"), {
@@ -209,7 +209,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     const getStatusChip = (status) => {
         const config = statusConfig[status] || statusConfig['New'];
         const StatusIcon = config.icon;
-        
+
         return (
             <Chip
                 size="sm"
@@ -382,7 +382,7 @@ const LeaveEmployeeTable = React.forwardRef(({
 
     const renderCell = useCallback((leave, columnKey) => {
         const user = getUserInfo(leave.user_id);
-        
+
         switch (columnKey) {
             case "employee":
                 return (
@@ -523,7 +523,10 @@ const LeaveEmployeeTable = React.forwardRef(({
                                 <Tooltip content="Delete Leave" color="danger">
                                     <IconButton
                                         size="small"
-                                        onClick={() => handleClickOpen(leave.id, "delete_leave")}
+                                        onClick={() => {
+                                            setCurrentLeave(leave);
+                                            handleClickOpen(leave.id, "delete_leave");
+                                        }}
                                         sx={{
                                             background: alpha(theme.palette.error.main, 0.1),
                                             '&:hover': {
@@ -584,8 +587,8 @@ const LeaveEmployeeTable = React.forwardRef(({
 
     return (
         <Box sx={{ maxHeight: "84vh", overflowY: "auto" }}>
-            
-            
+
+
             <ScrollShadow className="max-h-[70vh]">
                 <Table
                     isStriped

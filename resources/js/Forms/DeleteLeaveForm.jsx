@@ -5,19 +5,19 @@ import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 
 
-const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized }) => {
+const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized }) => {
     const theme = useTheme();
 
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.delete(route('leave-delete', { id: leaveIdToDelete, route: route().current() }));
+                const response = await axios.delete(route('leave-delete', { id: leaveId, route: route().current() }));
 
 
                 if (response.status === 200) {
                     // Assuming dailyWorkData contains the updated list of daily works after deletion
                     if (deleteLeaveOptimized) {
-                        deleteLeaveOptimized(leaveIdToDelete);
+                        deleteLeaveOptimized(leaveId);
                         setTotalRows(prev => prev - 1);
                     } else {
                         setLeavesData(response.data.leavesData);
@@ -39,7 +39,7 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
                 }
                 reject(error.response.data.error || 'Failed to delete leave application');
             } finally {
-                handleClose();
+                closeModal();
             }
         });
 
@@ -93,7 +93,7 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
     return(
         <GlassDialog
             open={open}
-            onClose={handleClose}
+            onClose={closeModal}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
@@ -106,7 +106,7 @@ const DeleteLeaveForm = ({ open, handleClose, leaveIdToDelete, setLeavesData, se
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} color="primary">
+                <Button onClick={closeModal} color="primary">
                     Cancel
                 </Button>
                 <Button onClick={handleDelete} color="error" autoFocus>

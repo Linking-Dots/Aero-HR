@@ -60,12 +60,10 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // State management - Enhanced for admin view
     const [loading, setLoading] = useState(false);
-    const [openModalType, setOpenModalType] = useState(null);
     const [leavesData, setLeavesData] = useState([]);
     const [leaves, setLeaves] = useState();
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
-    const [leaveIdToDelete, setLeaveIdToDelete] = useState(null);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
 
@@ -162,17 +160,16 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // Modal handlers
     const openModal = useCallback((modalType) => {
-        setOpenModalType(modalType);
+        setModalStates(prev => ({ ...prev, [modalType]: true }));
     }, []);
 
     const handleClickOpen = useCallback((leaveId, modalType) => {
-        setLeaveIdToDelete(leaveId);
-        setOpenModalType(modalType);
+        setCurrentLeave({ id: leaveId });
+        setModalStates(prev => ({ ...prev, [modalType]: true }));
     }, []);
 
     const handleClose = useCallback(() => {
-        setOpenModalType(null);
-        setLeaveIdToDelete(null);
+        setModalStates({ add_leave: false, edit_leave: false, delete_leave: false });
         setCurrentLeave(null);
     }, []);
 
@@ -432,7 +429,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                 ...(canCreateLeaves ? [{
                                     label: "Add Leave",
                                     icon: <PlusIcon className="w-4 h-4" />,
-                                    onPress: () => openModal('add_leave'),
+                                    onPress: () => openModalNew('add_leave'),
                                     className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
                                 }] : []),
                                 {
