@@ -88,6 +88,7 @@ const LeaveEmployeeTable = ({
     const isMobile = useMediaQuery('(max-width: 640px)');
 
     const [isUpdating, setIsUpdating] = useState(false);
+    const [updatingLeave, setUpdatingLeave] = useState(null);
     const [selectedLeaves, setSelectedLeaves] = useState(new Set());
 
     // Check permissions using new system
@@ -135,6 +136,7 @@ const LeaveEmployeeTable = ({
         if (isUpdating) return;
         
         setIsUpdating(true);
+        setUpdatingLeave(`${leave.id}-${newStatus}`);
         
         const promise = new Promise(async (resolve, reject) => {
             try {
@@ -159,6 +161,7 @@ const LeaveEmployeeTable = ({
                 console.error(error);
             } finally {
                 setIsUpdating(false);
+                setUpdatingLeave(null);
             }
         });
 
@@ -320,12 +323,13 @@ const LeaveEmployeeTable = ({
                                         size="sm"
                                         variant={leave.status === status ? "solid" : "bordered"}
                                         color={statusConfig[status].color}
-                                        isLoading={isUpdating}
+                                        isLoading={updatingLeave === `${leave.id}-${status}`}
                                         onPress={() => updateLeaveStatus(leave, status)}
                                         startContent={
+                                            !updatingLeave || updatingLeave !== `${leave.id}-${status}` ? 
                                             React.createElement(statusConfig[status].icon, {
                                                 className: "w-3 h-3"
-                                            })
+                                            }) : null
                                         }
                                         classNames={{
                                             base: "flex-1"
