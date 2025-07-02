@@ -73,7 +73,16 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
     const [isPolling, setIsPolling] = useState(true);
     const [lastChecked, setLastChecked] = useState(new Date());
     const prevUpdateRef = useRef(null);
-    const prevFilterData = useRef(externalFilterData || { currentMonth: dayjs().format('YYYY-MM') });
+    const prevFilterData = useRef({
+        currentMonth: dayjs().format('YYYY-MM'),
+        employee: externalEmployee || '',
+        filterData: externalFilterData || { currentMonth: dayjs().format('YYYY-MM') },
+        selectedDate: selectedDate,
+        perPage: 10,
+        updateTimeSheet: updateTimeSheet,
+        refreshKey: 0,
+        currentPage: 1
+    });
     
     const [filterData, setFilterData] = useState(externalFilterData || {
         currentMonth: dayjs().format('YYYY-MM'),
@@ -178,6 +187,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     _t: forceRefresh ? Date.now() : undefined
                 }
             });
+            console.log(response.data)
          
             if (response.status === 200) {
                 // Add null check for response data properties
@@ -564,8 +574,27 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
     // Fetch attendance data when filters change
     useEffect(() => {
         if (selectedDate) {
-            // Clear any previous data before fetching new data
-            if (currentPage !== 1) {
+            // Only reset the page to 1 when filters OTHER THAN the page number change
+            const shouldResetPage = (
+                employee !== prevFilterData.current.employee || 
+                filterData !== prevFilterData.current.filterData ||
+                selectedDate !== prevFilterData.current.selectedDate ||
+                perPage !== prevFilterData.current.perPage ||
+                updateTimeSheet !== prevFilterData.current.updateTimeSheet ||
+                refreshKey !== prevFilterData.current.refreshKey
+            );
+            
+            if (shouldResetPage && currentPage !== 1) {
+                // Store current values to compare against in next render
+                prevFilterData.current = {
+                    ...prevFilterData.current,
+                    employee,
+                    filterData,
+                    selectedDate,
+                    perPage,
+                    updateTimeSheet,
+                    refreshKey
+                };
                 setCurrentPage(1); // Reset to first page when filters change
                 return; // The page change will trigger this effect again
             }
@@ -587,6 +616,18 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             };
             
             updateAllData();
+            
+            // Store current values to compare against in next render
+            prevFilterData.current = {
+                ...prevFilterData.current,
+                employee,
+                filterData,
+                selectedDate,
+                perPage,
+                updateTimeSheet,
+                refreshKey,
+                currentPage
+            };
         }
         // eslint-disable-next-line
     }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet, refreshKey]);
@@ -607,9 +648,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
 
      // Track if filter data has changed
     useEffect(() => {
-        const filterChanged = JSON.stringify(filterData) !== JSON.stringify(prevFilterData.current);
+        // Only compare the filter data portion of the ref
+        const filterChanged = JSON.stringify(filterData) !== JSON.stringify(prevFilterData.current.filterData);
         if (filterChanged) {
-            prevFilterData.current = { ...filterData };
+            prevFilterData.current = { 
+                ...prevFilterData.current,
+                filterData: { ...filterData }
+            };
             handleRefresh();
         }
     }, [filterData, handleRefresh]);
