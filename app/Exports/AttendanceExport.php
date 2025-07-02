@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use Carbon\Carbon;
 use Log;
+use App\Models\LeaveSetting;
 
 class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
@@ -126,8 +127,9 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
                 $duration = $leave->from_date->eq($leave->to_date)
                     ? $this->date
                     : $leave->from_date->format('Y-m-d') . " to " . $leave->to_date->format('Y-m-d');
+                $leave_type = LeaveSetting::find($leave->leave_type)->type ?? 'Unknown';
 
-                $remarks = "On {$leave->leave_type} Leave ({$duration}) - Status: {$leave->status}";
+                $remarks = "On {$leave_type} Leave ({$duration}) - Status: {$leave->status}";
 
                 $rows->push([
                     'No.'              => $counter++,

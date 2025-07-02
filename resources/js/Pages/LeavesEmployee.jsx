@@ -25,12 +25,20 @@ import {
   ChartBarIcon, 
   ClockIcon,
   UserIcon,
-  PresentationChartLineIcon
+  PresentationChartLineIcon,
+  PlusIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
+import {
+  XCircleIcon as XCircleSolid
+} from '@heroicons/react/24/solid';
 import GlassCard from '@/Components/GlassCard.jsx';
 import PageHeader from '@/Components/PageHeader.jsx';
 import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
+import LeaveForm from '@/Forms/LeaveForm.jsx';
+import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
+import { toast } from 'react-toastify';
 import axios from 'axios';
 
 const LeavesEmployee = ({ title, allUsers }) => {
@@ -38,6 +46,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+      const [totalRows, setTotalRows] = useState(0);
+      const [lastPage, setLastPage] = useState(0);
 
   // State management
   const [loading, setLoading] = useState(false);
@@ -46,6 +56,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     leaveTypes: [], 
     leaveCountsByUser: {} 
   });
+  const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ 
     page: 1, 
     perPage: 30, 
@@ -136,23 +147,78 @@ const LeavesEmployee = ({ title, allUsers }) => {
       });
 
       if (response.status === 200) {
-        const { leaves: leavesPage, leavesData: responseData } = response.data;
+        const { leaves, leavesData } = response.data;
 
-        setLeaves(leavesPage.data || []);
-        setLeavesData(responseData || { leaveTypes: [], leaveCountsByUser: {} });
-        setPagination(previousPagination => ({
-          ...previousPagination,
-          total: leavesPage.total || 0,
-          lastPage: leavesPage.last_page || 0,
-        }));
+        if (leaves.data && Array.isArray(leaves.data)) {
+                setLeaves(leaves.data);
+                setTotalRows(leaves.total || leaves.data.length);
+                setLastPage(leaves.last_page || 1);
+            } else if (Array.isArray(leaves)) {
+                // Handle direct array response
+                setLeaves(leaves);
+                setTotalRows(leaves.length);
+                setLastPage(1);
+            } else {
+                console.error('Unexpected leaves data format:', leaves);
+                setLeaves([]);
+                setTotalRows(0);
+                setLastPage(1);
+            }
+            
+            setLeavesData(leavesData);
+            
+
+            setError('');
+            setLoading(false);
       }
     } catch (error) {
       console.error('Error fetching leaves:', error);
-      // TODO: Add user notification for error
+      if (error.response?.status === 404) {
+        const { leavesData } = error.response.data;
+        setLeavesData(leavesData);
+        setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
+      } else {
+        setError('Error retrieving leaves data. Please try again.');
+        toast.error('Failed to load leave data. Please try again.');
+      }
+      setLeaves([]);
+      setTotalRows(0);
+      setLastPage(1);
     } finally {
       setLoading(false);
     }
   }, [pagination.page, pagination.perPage, filters]);
+
+  // Fetch leave statistics
+  const fetchLeavesStats = useCallback(async () => {
+    try {
+      const response = await axios.get(route('leaves.stats'), {
+        params: {
+          year: filters.year,
+        },
+      });
+
+      if (response.status === 200) {
+        // Update the leave counts data to reflect the changes
+        const { stats, leaveCounts } = response.data;
+        
+        if (leaveCounts) {
+          // Update the leave counts in the leavesData
+          setLeavesData(prevData => ({
+            ...prevData,
+            leaveCountsByUser: {
+              ...prevData.leaveCountsByUser,
+              [auth.user.id]: leaveCounts
+            }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching leaves stats:', error.response);
+      // We don't want to disrupt the user experience if stats fail to load
+      // so we just log the error and don't show an error message
+    }
+  }, [filters.year, auth.user.id]);
 
   // Handle pagination changes
   const handlePageChange = useCallback((newPage) => {
@@ -162,15 +228,73 @@ const LeavesEmployee = ({ title, allUsers }) => {
   // Effect for data fetching
   useEffect(() => {
     fetchLeaves();
-  }, [fetchLeaves]);
+    fetchLeavesStats();
+  }, [fetchLeaves, fetchLeavesStats]);
   // Extract user-specific leave counts and calculate stats
   const userLeaveCounts = useMemo(() => {
     return leavesData.leaveCountsByUser[auth.user.id] || [];
   }, [leavesData.leaveCountsByUser, auth.user.id]);
 
+  // Optimized data manipulation functions
+  const sortLeavesByFromDate = useCallback((leavesArray) => {
+    return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+  }, []);
+
+  const addLeaveOptimized = useCallback((newLeave) => {
+    const leaveYear = new Date(newLeave.from_date).getFullYear();
+    const isSameYear = leaveYear === filters.year;
+
+    if (!isSameYear) return;
+
+    setLeaves(prevLeaves => {
+      const updatedLeaves = [...prevLeaves, newLeave];
+      return sortLeavesByFromDate(updatedLeaves);
+    });
+    
+    // Update totals but don't reload the entire table
+    setTotalRows(prevTotal => prevTotal + 1);
+    
+    // Only fetch leave stats to update the balance cards
+    fetchLeavesStats();
+  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats]);
+
+  const updateLeaveOptimized = useCallback((updatedLeave) => {
+    const leaveYear = new Date(updatedLeave.from_date).getFullYear();
+    const isSameYear = leaveYear === filters.year;
+
+    if (!isSameYear) return;
+
+    setLeaves(prevLeaves => {
+      const updatedLeaves = prevLeaves.map(leave =>
+        leave.id === updatedLeave.id ? updatedLeave : leave
+      );
+      return sortLeavesByFromDate(updatedLeaves);
+    });
+    
+    // Only fetch leave stats to update the balance cards
+    fetchLeavesStats();
+  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats]);
+
+  const deleteLeaveOptimized = useCallback((leaveId) => {
+    setLeaves(prevLeaves => {
+      return prevLeaves.filter(leave => leave.id !== leaveId);
+    });
+    
+    // Update totals but don't reload the entire table
+    setTotalRows(prevTotal => Math.max(0, prevTotal - 1));
+    
+    // Only fetch leave stats to update the balance cards
+    fetchLeavesStats();
+  }, [fetchLeavesStats]);
 
   // Action buttons for the header
   const actionButtons = [
+    {
+      label: "Add Leave",
+      icon: <PlusIcon className="w-4 h-4" />,
+      onPress: () => openModal('add_leave'),
+      className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+    },
     {
       label: "Current Year",
       icon: <CalendarIcon className="w-4 h-4" />,
@@ -179,7 +303,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     },
     {
       label: "Refresh",
-      icon: <ChartBarIcon className="w-4 h-4" />,
+      icon: <ArrowPathIcon className="w-4 h-4" />,
       onPress: fetchLeaves,
       className: "bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.8)] to-[rgba(var(--theme-success-rgb),1)] text-white font-medium hover:opacity-90"
     }
@@ -278,6 +402,57 @@ const LeavesEmployee = ({ title, allUsers }) => {
   return (
     <>
       <Head title={title} />
+      
+      {/* Modals for Leave Management */}
+      {modalStates.add_leave && (
+        <LeaveForm
+          open={modalStates.add_leave}
+          closeModal={() => closeModal()}
+          leavesData={leavesData}
+          setLeavesData={setLeavesData}
+          currentLeave={null}
+          allUsers={allUsers}
+          setTotalRows={setTotalRows}
+          setLastPage={setLastPage}
+          setLeaves={setLeaves}
+          employee={''}  // In employee mode, we hide the employee selector
+          selectedMonth={filters.selectedMonth}
+          addLeaveOptimized={addLeaveOptimized}
+          fetchLeavesStats={fetchLeavesStats}
+        />
+      )}
+      
+      {modalStates.edit_leave && (
+        <LeaveForm
+          open={modalStates.edit_leave}
+          closeModal={() => closeModal()}
+          leavesData={leavesData}
+          setLeavesData={setLeavesData}
+          currentLeave={currentLeave}
+          allUsers={allUsers}
+          setTotalRows={setTotalRows}
+          setLastPage={setLastPage}
+          setLeaves={setLeaves}
+          employee={''}  // In employee mode, we hide the employee selector
+          selectedMonth={filters.selectedMonth}
+          updateLeaveOptimized={updateLeaveOptimized}
+          fetchLeavesStats={fetchLeavesStats}
+        />
+      )}
+
+      {modalStates.delete_leave && (
+        <DeleteLeaveForm
+          open={modalStates.delete_leave}
+          closeModal={() => closeModal()}
+          leaveId={currentLeave?.id}
+          setLeaves={setLeaves}
+          setTotalRows={setTotalRows}
+          setLastPage={setLastPage}
+          deleteLeaveOptimized={deleteLeaveOptimized}
+          fetchLeavesStats={fetchLeavesStats}
+        />
+      )}
+
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>        <Grow in>
           <GlassCard>
             <PageHeader
@@ -287,6 +462,12 @@ const LeavesEmployee = ({ title, allUsers }) => {
               variant="gradient"
               actionButtons={[
                 {
+                  label: "Add Leave",
+                  icon: <PlusIcon className="w-4 h-4" />,
+                  onPress: () => openModal('add_leave'),
+                  className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                },
+                {
                   label: "Current Year",
                   icon: <CalendarIcon className="w-4 h-4" />,
                   onPress: () => handleFilterChange('year', new Date().getFullYear()),
@@ -294,7 +475,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                 },
                 {
                   label: "Refresh",
-                  icon: <ChartBarIcon className="w-4 h-4" />,
+                  icon: <ArrowPathIcon className="w-4 h-4" />,
                   onPress: fetchLeaves,
                   isDisabled: loading,
                   variant: "bordered",
@@ -373,6 +554,18 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         </Typography>
                       </CardBody>
                     </Card>
+                  ) : error ? (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardBody className="text-center py-12">
+                        <XCircleSolid className="w-16 h-16 mx-auto mb-4 text-red-400" />
+                        <Typography variant="h6" className="mb-2">
+                          Error Loading Data
+                        </Typography>
+                        <Typography color="textSecondary">
+                          {error}
+                        </Typography>
+                      </CardBody>
+                    </Card>
                   ) : leaves.length > 0 ? (
                     <div className="overflow-hidden rounded-lg">
                       <LeaveEmployeeTable
@@ -385,8 +578,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         setLeaves={setLeaves}
                         setCurrentPage={handlePageChange}
                         currentPage={pagination.page}
-                        totalRows={pagination.total}
-                        lastPage={pagination.lastPage}
+                        totalRows={totalRows}
+                                                lastPage={lastPage}
                         perPage={pagination.perPage}
                         selectedMonth={filters.selectedMonth}
                         employee={''}

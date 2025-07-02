@@ -107,7 +107,7 @@ const Header = React.memo(({
   }, []);
   // Mobile Header Component
   const MobileHeader = () => (
-  <Box sx={{ px: 1.5, pt: 1.5 }}>
+  <Box sx={{ p: 2 }}>
     <Grow in>
       <GlassCard>
         <Navbar

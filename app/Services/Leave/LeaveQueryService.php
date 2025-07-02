@@ -5,6 +5,7 @@ namespace App\Services\Leave;
 use App\Models\Leave;
 use App\Models\LeaveSetting;
 use App\Models\User;
+use App\Http\Resources\LeaveResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,10 +45,26 @@ class LeaveQueryService
         $leaveTypes = LeaveSetting::all();
         $leaveCountsWithRemainingByUser = $this->calculateLeaveCounts($year, $currentYear, $user);
 
+        // Process the data to fix date issues
+        $processedLeaveRecords = $leaveRecords->getCollection()->map(function ($leave) {
+            // Check if from_date and to_date have 'T18:00:00' pattern
+            if (is_string($leave->from_date) && strpos($leave->from_date, 'T18:00:00') !== false) {
+                $leave->from_date = date('Y-m-d', strtotime($leave->from_date . ' +1 day'));
+            }
+            
+            if (is_string($leave->to_date) && strpos($leave->to_date, 'T18:00:00') !== false) {
+                $leave->to_date = date('Y-m-d', strtotime($leave->to_date . ' +1 day'));
+            }
+            
+            return $leave;
+        });
+        
+        $leaveRecords->setCollection($processedLeaveRecords);
+        
         return [
             'leaveTypes' => $leaveTypes,
             'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-            'leaveRecords' => $leaveRecords,
+            'leaveRecords' => LeaveResource::collection($leaveRecords),
             'leavesData' => [
                 'leaveTypes' => $leaveTypes,
                 'leaveCountsByUser' => $leaveCountsWithRemainingByUser,

@@ -45,7 +45,7 @@ import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import L from 'leaflet';
 import { usePage } from "@inertiajs/react";
 import GlassCard from "@/Components/GlassCard.jsx";
-import { Card, CardBody, CardHeader as HeroCardHeader } from "@heroui/react";
+import { Card, CardBody, CardHeader as HeroCardHeader, Button } from "@heroui/react";
 import PageHeader  from './PageHeader';
 
 
@@ -106,22 +106,30 @@ const RoutingMachine = React.memo(({ startLocation, endLocation, theme }) => {
 
 RoutingMachine.displayName = 'RoutingMachine';
 
+
 // Enhanced User Markers Component
-const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate }) => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate, users, setUsers, setLoading, setError}) => {
+
     const map = useMap();
     const prevLocationsRef = useRef([]);
 
     const fetchUserLocations = useCallback(async () => {
-        if (!selectedDate) return;
+        if (!selectedDate) {
+            // Important: Always notify parent component when there's no date
+            setLoading(false);
+            setUsers([]);
+            onUsersLoad?.([]);
+            return;
+        }
 
         setLoading(true);
         setError(null);
 
         try {
-            const endpoint = route('getUserLocationsForDate', { date: selectedDate });
+            const endpoint = route('getUserLocationsForDate', { 
+                date: selectedDate,
+                _t: Date.now() // Add cache busting parameter
+            });
             const response = await fetch(endpoint);
             
             if (!response.ok) {
@@ -137,12 +145,15 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate }
             if (hasChanges) {
                 setUsers(locations);
                 prevLocationsRef.current = locations;
-                onUsersLoad?.(locations);
             }
+            
+            // Always notify parent regardless of changes
+            onUsersLoad?.(locations);
         } catch (error) {
             console.error('Error fetching user locations:', error);
             setError(error.message);
             setUsers([]);
+            onUsersLoad?.([]);
         } finally {
             setLoading(false);
         }
@@ -444,6 +455,9 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
     const theme = useTheme();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [loadingInitialized, setLoadingInitialized] = useState(false);
+    
     const [lastUpdate, setLastUpdate] = useState(null);
     const [isPolling, setIsPolling] = useState(true);
     const [mapKey, setMapKey] = useState(0);
@@ -452,6 +466,54 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
     const [lastChecked, setLastChecked] = useState(new Date());
     const prevUsersRef = useRef([]);
     const prevUpdateRef = useRef(null);
+     const handleRefresh = useCallback(async () => {
+        setLoading(true);
+
+        try {
+            // Force reload of user locations by triggering a new fetch
+            const endpoint = route('getUserLocationsForDate', { 
+                date: selectedDate,
+                _t: Date.now() // Add cache busting parameter
+            });
+            
+            if (!selectedDate) {
+                // Handle case when no date is selected
+                setUsers([]);
+                prevUsersRef.current = [];
+                setMapKey(prev => prev + 1);
+                setLastChecked(new Date());
+                setLastUpdate(new Date());
+                return;
+            }
+            
+            const response = await fetch(endpoint);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: Failed to refresh user locations`);
+            }
+            
+            const data = await response.json();
+            const locations = Array.isArray(data.locations) ? data.locations : [];
+            
+            // Update the users state and previous reference
+            setUsers(locations);
+            prevUsersRef.current = locations;
+            
+            // Update the map key to force re-render
+            setMapKey(prev => prev + 1);
+            // Update the last checked time
+            setLastChecked(new Date());
+            setLastUpdate(new Date());
+        } catch (error) {
+            console.error('Error refreshing map:', error);
+            // Clear users in case of error
+            setUsers([]);
+            prevUsersRef.current = [];
+        } finally {
+            // Always ensure loading is set to false
+            setLoading(false);
+        }
+    }, [selectedDate]);
     
     // Memoize the formatted date to prevent unnecessary recalculations
     const formattedDate = useMemo(() => {
@@ -473,7 +535,10 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
 
     // Function to check for updates
     const checkForUpdates = useCallback(async () => {
-        if (!selectedDate) return;
+        if (!selectedDate) {
+            setLoading(false);
+            return;
+        }
 
         try {
             const endpoint = route('check-user-locations-updates', { 
@@ -500,8 +565,9 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
             setLastChecked(new Date());
         } catch (error) {
             console.error('Error checking for updates:', error);
+            setLoading(false); // Ensure loading is set to false in case of error
         }
-    }, [selectedDate]);
+    }, [selectedDate, handleRefresh]);
 
     // Set up polling for updates
     useEffect(() => {
@@ -517,6 +583,29 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
         return () => clearInterval(intervalId);
     }, [isPolling, checkForUpdates]);
 
+    // Automatically set loading to false when no users are available
+    useEffect(() => {
+        if (users.length === 0 && loading && loadingInitialized) {
+            console.log('No users available, automatically setting loading to false');
+            setLoading(false);
+        }
+    }, [users, loading, loadingInitialized]);
+
+    // Failsafe to ensure loading stops after a certain time
+    useEffect(() => {
+        // If loading is true for more than 10 seconds, force it to false
+        if (loading) {
+            const timeoutId = setTimeout(() => {
+                if (loading) {
+                    console.log('Loading timeout reached, forcing loading to false');
+                    setLoading(false);
+                }
+            }, 10000); // 10 seconds timeout
+            
+            return () => clearTimeout(timeoutId);
+        }
+    }, [loading]);
+
     // Format the last checked time for display
     const lastCheckedText = useMemo(() => {
         if (!lastChecked) return null;
@@ -529,29 +618,24 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
     }, [lastChecked]);
 
     const handleUsersLoad = useCallback((loadedUsers) => {
+        // Make sure loadedUsers is an array
+        const usersArray = Array.isArray(loadedUsers) ? loadedUsers : [];
+        
         // Only update if users have actually changed
-        const usersChanged = JSON.stringify(loadedUsers) !== JSON.stringify(prevUsersRef.current);
+        const usersChanged = JSON.stringify(usersArray) !== JSON.stringify(prevUsersRef.current);
         if (usersChanged) {
-            setUsers(loadedUsers);
-            prevUsersRef.current = loadedUsers;
+            setUsers(usersArray);
+            prevUsersRef.current = usersArray;
         }
+        
+        // Mark that loading has been initialized and set loading to false
+        setLoadingInitialized(true);
         setLoading(false);
+        
+        console.log('Users loaded, setting loading to false', { usersCount: usersArray.length });
     }, []);
 
-    const handleRefresh = useCallback(async () => {
-        try {
-            setLoading(true);
-            // Only update the map key if we're not already refreshing
-            setMapKey(prev => prev + 1);
-            // Update the last checked time
-            setLastChecked(new Date());
-            setLastUpdate(new Date());
-        } catch (error) {
-            console.error('Error refreshing map:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+   
 
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -617,93 +701,148 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
                             />
                         </div>
                         {/* Stats Cards END */}
-
+                        
                         <CardContent sx={{ p: 3, pt: 0 }}>
-                            <Box 
-                                sx={{ 
-                                    height: '70vh', 
-                                    borderRadius: 4,
-                                    overflow: 'hidden',
-                                    border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                                    boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                    position: 'relative'
-                                }}
-                            >
-                                {loading && (
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            bottom: 0,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            background: alpha(theme.palette.background.paper, 0.8),
-                                            backdropFilter: 'blur(10px)',
-                                            zIndex: 1000
-                                        }}
-                                    >
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <CircularProgress size={40} thickness={4} />
-                                            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-                                                Loading locations...
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                )}
-
-                                <MapContainer
-                                    key={`${updateMap}-${mapKey}`}
-                                    center={[PROJECT_LOCATIONS.primary.lat, PROJECT_LOCATIONS.primary.lng]}
-                                    zoom={MAP_CONFIG.DEFAULT_ZOOM}
-                                    minZoom={MAP_CONFIG.MIN_ZOOM}
-                                    maxZoom={MAP_CONFIG.MAX_ZOOM}
-                                    style={{ height: '100%', width: '100%' }}
-                                    scrollWheelZoom={true}
-                                    doubleClickZoom={true}
-                                    dragging={true}
-                                    touchZoom={true}
-                                    fullscreenControl={true}
-                                    attributionControl={false}
-                                    zoomControl={false}
-                                >
-                                    <TileLayer
-                                        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                                        maxZoom={MAP_CONFIG.MAX_ZOOM}
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                    />
-                                    
-                                    <RoutingMachine 
-                                        startLocation={PROJECT_LOCATIONS.route.start} 
-                                        endLocation={PROJECT_LOCATIONS.route.end}
-                                        theme={theme}
-                                    />
-                                    
-                                    <UserMarkers 
-                                        selectedDate={selectedDate}
-                                        onUsersLoad={handleUsersLoad}
-                                        theme={theme}
-                                    />
-                                </MapContainer>
-                            </Box>
-
-                            {users.length === 0 && !loading && (
-                                <Alert 
-                                    severity="info" 
+                            {users.length > 0 ? (
+                                <Box 
                                     sx={{ 
-                                        mt: 2,
-                                        background: alpha(theme.palette.info.main, 0.1),
-                                        border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                                        backdropFilter: 'blur(10px)',
-                                        borderRadius: 2
+                                        height: '70vh', 
+                                        borderRadius: 4,
+                                        overflow: 'hidden',
+                                        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                        boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                        position: 'relative'
                                     }}
                                 >
-                                    <Typography variant="body2">
-                                        No user locations found for {formattedDate}
+                                    {loading && (
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                background: alpha(theme.palette.background.paper, 0.8),
+                                                backdropFilter: 'blur(10px)',
+                                                zIndex: 1000
+                                            }}
+                                        >
+                                            <Box sx={{ textAlign: 'center' }}>
+                                                <CircularProgress size={40} thickness={4} />
+                                                <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                                                    Loading locations...
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    )}
+
+                                    <MapContainer
+                                        key={`${updateMap}-${mapKey}`}
+                                        center={[PROJECT_LOCATIONS.primary.lat, PROJECT_LOCATIONS.primary.lng]}
+                                        zoom={MAP_CONFIG.DEFAULT_ZOOM}
+                                        minZoom={MAP_CONFIG.MIN_ZOOM}
+                                        maxZoom={MAP_CONFIG.MAX_ZOOM}
+                                        style={{ height: '100%', width: '100%' }}
+                                        scrollWheelZoom={true}
+                                        doubleClickZoom={true}
+                                        dragging={true}
+                                        touchZoom={true}
+                                        fullscreenControl={true}
+                                        attributionControl={false}
+                                        zoomControl={false}
+                                    >
+                                        <TileLayer
+                                            url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                            maxZoom={MAP_CONFIG.MAX_ZOOM}
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        />
+                                        
+                                        <RoutingMachine 
+                                            startLocation={PROJECT_LOCATIONS.route.start} 
+                                            endLocation={PROJECT_LOCATIONS.route.end}
+                                            theme={theme}
+                                        />
+                                        
+                                        <UserMarkers 
+                                            users={users}
+                                            setUsers={setUsers}
+                                            setLoading={setLoading}
+                                            setError={setError}
+                                            lastUpdate={lastUpdate}
+                                            selectedDate={selectedDate}
+                                            onUsersLoad={handleUsersLoad}
+                                            theme={theme}
+                                        />
+                                    </MapContainer>
+                                </Box>
+                            ) : loading ? (
+                                <Box 
+                                    sx={{ 
+                                        height: '70vh', 
+                                        borderRadius: 4,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                        boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                        background: alpha(theme.palette.background.paper, 0.5),
+                                        backdropFilter: 'blur(10px)',
+                                    }}
+                                >
+                                    <Box sx={{ textAlign: 'center' }}>
+                                        <CircularProgress size={40} thickness={4} />
+                                        <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                                            Loading locations...
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Box 
+                                    sx={{ 
+                                        height: '70vh', 
+                                        borderRadius: 4,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: alpha(theme.palette.background.paper, 0.5),
+                                        backdropFilter: 'blur(10px)',
+                                        border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                        boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                        p: 6
+                                    }}
+                                >
+                                    <MapIcon 
+                                        style={{ 
+                                            width: '64px', 
+                                            height: '64px', 
+                                            color: theme.palette.text.disabled,
+                                            margin: '0 auto 24px auto'
+                                        }} 
+                                    />
+                                    <Typography variant="h5" sx={{ mb: 2 }}>
+                                        No Location Data Available
                                     </Typography>
-                                </Alert>
+                                    <Typography color="textSecondary" sx={{ mb: 3, maxWidth: '600px', textAlign: 'center' }}>
+                                        No team location data found for {formattedDate}. 
+                                        {selectedDate && new Date(selectedDate) > new Date() ? 
+                                            " This date is in the future." : 
+                                            " Try selecting a different date or refreshing the data."}
+                                    </Typography>
+                                    <Button 
+                                        variant="outlined"
+                                        color="primary"
+                                        size="medium"
+                                        onClick={handleRefresh}
+                                        startIcon={<Refresh />}
+                                        sx={{ mt: 2 }}
+                                    >
+                                        Refresh Data
+                                    </Button>
+                                </Box>
                             )}
                         </CardContent>
                     </PageHeader>

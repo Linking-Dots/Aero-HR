@@ -283,7 +283,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                                 key="edit"
                                                 startContent={<PencilIcon className="w-4 h-4" />}
                                                 onPress={() => {
-                                                    console.log(leave);
+                                           
                                                     setCurrentLeave(leave);
                                                     openModal("edit_leave");
                                                 }}
@@ -412,7 +412,9 @@ const LeaveEmployeeTable = React.forwardRef(({
                     </TableCell>
                 );
             case "from_date":
+         
             case "to_date":
+ 
                 return (
                     <TableCell>
                         <Box className="flex items-center gap-1">
@@ -488,7 +490,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                 );
 
             case "actions":
-                console.log(leave)
+          
                 return (
                     <TableCell>
                         <Box className="flex items-center gap-1">
@@ -497,7 +499,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                     <IconButton
                                         size="small"
                                         onClick={() => {
-                                            console.log(leave);
+                                       
                                             setCurrentLeave(leave);
                                             openModal("edit_leave");
                                         }}

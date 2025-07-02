@@ -53,27 +53,57 @@ const LeaveForm = ({
     const [leaveCounts, setLeaveCounts] = useState([]);
     const [leaveType, setLeaveType] = useState(currentLeave?.leave_type || "");
     const formatDate = (dateString) => {
+ 
+        
         if (!dateString) return new Date().toISOString().split('T')[0];
         
-        // Handle ISO datetime strings with timezone (e.g., "2025-07-17T18:00:00.000000Z")
-        if (typeof dateString === 'string' && dateString.includes('T')) {
-            // Extract just the date part from ISO datetime
-            return dateString.split('T')[0];
-        }
-        
-        // For date strings like 'YYYY-MM-DD', return as-is
+        // For date strings like 'YYYY-MM-DD', return as-is (handled by backend now)
         if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+       
             return dateString;
         }
         
-        // For other formats, create date object and extract date part
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            return new Date().toISOString().split('T')[0];
+        // Handle legacy ISO datetime strings with timezone (e.g., "2025-07-17T18:00:00.000000Z")
+        if (typeof dateString === 'string' && dateString.includes('T')) {
+            // For dates stored at 6 PM UTC, they represent the following day in most timezones
+            if (dateString.includes('T18:00:00')) {
+                const dateParts = dateString.split('T')[0].split('-');
+                const year = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]);
+                const day = parseInt(dateParts[2]) + 1; // Add one day
+                
+                // Create a proper date object and format it
+                const adjustedDate = new Date(year, month - 1, day);
+                const formattedDate = adjustedDate.toISOString().split('T')[0];
+              
+                return formattedDate;
+            }
+            
+            // For other ISO strings, just take the date part
+            const formattedDate = dateString.split('T')[0];
+        
+            return formattedDate;
         }
         
-        // Extract date part from the original date string without timezone conversion
-        return date.toISOString().split('T')[0];
+        // For other formats, use local date components to avoid timezone issues
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+          
+                return new Date().toISOString().split('T')[0];
+            }
+            
+            // Use local date components to avoid timezone shifting
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+          
+            return formattedDate;
+        } catch (error) {
+            console.error("Error formatting date:", error);
+            return new Date().toISOString().split('T')[0];
+        }
     };
     
     const [fromDate, setFromDate] = useState(currentLeave?.from_date ? formatDate(currentLeave.from_date) : '');
@@ -186,7 +216,7 @@ const LeaveForm = ({
                     // Use optimized data manipulation instead of full reload
                     if (currentLeave && updateLeaveOptimized && response.data.leave) {
                         // Update existing leave
-                        console.log(response.data.leave)
+                    
                         updateLeaveOptimized(response.data.leave);
                         fetchLeavesStats();
                     } else if (addLeaveOptimized && response.data.leave) {

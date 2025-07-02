@@ -198,10 +198,26 @@ const LeavesAdmin = ({ title, allUsers }) => {
             if (response.status === 200) {
                
                 const { leaves, leavesData } = response.data;
-                setLeaves(leaves.data);
+     
+        
+                
+                if (leaves.data && Array.isArray(leaves.data)) {
+                    setLeaves(leaves.data);
+                    setTotalRows(leaves.total || leaves.data.length);
+                    setLastPage(leaves.last_page || 1);
+                } else if (Array.isArray(leaves)) {
+                    // Handle direct array response
+                    setLeaves(leaves);
+                    setTotalRows(leaves.length);
+                    setLastPage(1);
+                } else {
+                    console.error('Unexpected leaves data format:', leaves);
+                    setLeaves([]);
+                    setTotalRows(0);
+                    setLastPage(1);
+                }
+                
                 setLeavesData(leavesData);
-                setTotalRows(leaves.total);
-                setLastPage(leaves.last_page);
                 
 
                 setError('');

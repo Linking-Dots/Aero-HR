@@ -202,26 +202,7 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                             subtitle="View your attendance records and timesheet details"
                             icon={<PresentationChartLineIcon className="w-8 h-8" />}
                             variant="default"
-                            actionButtons={[
-                                {
-                                    label: "Today",
-                                    icon: <CalendarDaysIcon className="w-4 h-4" />,
-                                    onPress: () => {
-                                        setSelectedDate(new Date());
-                                        setFilterData({
-                                            currentMonth: new Date().toISOString().slice(0, 7)
-                                        });
-                                        setUpdateTimeSheet(prev => !prev);
-                                    },
-                                    className: "bg-gradient-to-r from-[rgba(var(--theme-primary-rgb),0.2)] to-[rgba(var(--theme-secondary-rgb),0.2)] hover:from-[rgba(var(--theme-primary-rgb),0.3)] hover:to-[rgba(var(--theme-secondary-rgb),0.3)] border border-[rgba(var(--theme-primary-rgb),0.3)]"
-                                },
-                                {
-                                    label: "Export",
-                                    icon: <DocumentArrowDownIcon className="w-4 h-4" />,
-                                    variant: "bordered",
-                                    className: "border-[rgba(var(--theme-success-rgb),0.3)] bg-[rgba(var(--theme-success-rgb),0.05)] hover:bg-[rgba(var(--theme-success-rgb),0.1)]"
-                                }
-                            ]}
+                            
                         >
                             <div className="p-6">
                                 {/* All Stats - Responsive Layout for 8 cards */}
@@ -265,68 +246,7 @@ const AttendanceEmployee = React.memo(({ title, totalWorkingDays, presentDays, a
                                                 </Typography>
                                             </Box>
                                         }
-                                        action={
-                                            <Stack direction="row" spacing={1}>
-                                                <Tooltip title="Download as Excel">
-                                                    <IconButton 
-                                                        disabled={loading}
-                                                        sx={{
-                                                            background: alpha(theme.palette.success.main, 0.1),
-                                                            backdropFilter: 'blur(10px)',
-                                                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                                            '&:hover': {
-                                                                background: alpha(theme.palette.success.main, 0.2),
-                                                                transform: 'scale(1.05)'
-                                                            },
-                                                            '&:disabled': { opacity: 0.5 }
-                                                        }}
-                                                    >
-                                                        <FileDownload sx={{ color: theme.palette.success.main }} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Download as PDF">
-                                                    <IconButton 
-                                                        disabled={loading}
-                                                        sx={{
-                                                            background: alpha(theme.palette.error.main, 0.1),
-                                                            backdropFilter: 'blur(10px)',
-                                                            border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                                                            '&:hover': {
-                                                                background: alpha(theme.palette.error.main, 0.2),
-                                                                transform: 'scale(1.05)'
-                                                            },
-                                                            '&:disabled': { opacity: 0.5 }
-                                                        }}
-                                                    >
-                                                        <PictureAsPdf sx={{ color: theme.palette.error.main }} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Refresh Data">
-                                                    <IconButton 
-                                                        onClick={() => {
-                                                            setSelectedDate(new Date());
-                                                            setFilterData({
-                                                                currentMonth: new Date().toISOString().slice(0, 7)
-                                                            });
-                                                            setUpdateTimeSheet(prev => !prev);
-                                                        }}
-                                                        disabled={loading}
-                                                        sx={{
-                                                            background: alpha(theme.palette.primary.main, 0.1),
-                                                            backdropFilter: 'blur(10px)',
-                                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                                                            '&:hover': {
-                                                                background: alpha(theme.palette.primary.main, 0.2),
-                                                                transform: 'scale(1.05)'
-                                                            },
-                                                            '&:disabled': { opacity: 0.5 }
-                                                        }}
-                                                    >
-                                                        <Refresh color="primary" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        }
+                                        
                                         sx={{ padding: '24px' }}
                                     />
                                     <Divider />

@@ -8,6 +8,7 @@ use App\Services\Leave\LeaveOverlapService;
 use App\Services\Leave\LeaveCrudService;
 use App\Services\Leave\LeaveQueryService;
 use App\Services\Leave\LeaveSummaryService;
+use App\Http\Resources\LeaveResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -133,10 +134,14 @@ class LeaveController extends Controller
             return response()->json([
                 'message' => 'Leave application submitted successfully',
                 'leave' => array_merge(
-                    $newLeave->load('employee')->toArray(),
+                    (new LeaveResource($newLeave->load('employee')))->toArray($request),
                     [
-                        'month' => $newLeave->from_date->format('F'),
-                        'year' => $newLeave->from_date->year,
+                        'month' => is_string($newLeave->from_date) 
+                            ? date('F', strtotime($newLeave->from_date)) 
+                            : $newLeave->from_date->format('F'),
+                        'year' => is_string($newLeave->from_date) 
+                            ? date('Y', strtotime($newLeave->from_date)) 
+                            : $newLeave->from_date->year,
                         'leave_type' => LeaveSetting::find($newLeave->leave_type)?->type,
                     ]
                 ),
@@ -170,10 +175,14 @@ class LeaveController extends Controller
             return response()->json([
                 'message' => 'Leave application updated successfully',
                 'leave' => array_merge(
-                    $updatedLeave->load('employee')->toArray(),
+                    (new LeaveResource($updatedLeave->load('employee')))->toArray($request),
                     [
-                        'month' => $updatedLeave->from_date->format('F'),
-                        'year' => $updatedLeave->from_date->year,
+                        'month' => is_string($updatedLeave->from_date) 
+                            ? date('F', strtotime($updatedLeave->from_date)) 
+                            : $updatedLeave->from_date->format('F'),
+                        'year' => is_string($updatedLeave->from_date) 
+                            ? date('Y', strtotime($updatedLeave->from_date)) 
+                            : $updatedLeave->from_date->year,
                         'leave_type' => LeaveSetting::find($updatedLeave->leave_type)?->type,
                     ]
                 ),

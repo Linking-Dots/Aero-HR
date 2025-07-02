@@ -36,12 +36,23 @@ class LeaveCrudService
     public function updateLeave(int $leaveId, array $data): Leave
     {
         $leave = Leave::findOrFail($leaveId);
+        
+        // Parse dates correctly for consistent format
+        $fromDate = Carbon::parse($data['fromDate']);
+        $toDate = Carbon::parse($data['toDate']);
+        
+        // Get leave type ID
+        $leaveTypeId = LeaveSetting::where('type', $data['leaveType'])->value('id');
+        if (!$leaveTypeId) {
+            // Fallback to current leave_type if not found
+            $leaveTypeId = $leave->leave_type;
+        }
 
         $leave->update([
             'user_id' => $data['user_id'],
-            'leave_type' => LeaveSetting::where('type', $data['leaveType'])->value('id'),
-            'from_date' => $data['fromDate'],
-            'to_date' => $data['toDate'],
+            'leave_type' => $leaveTypeId,
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
             'no_of_days' => $data['daysCount'],
             'reason' => $data['leaveReason'],
             'status' => $data['status'] ?? $leave->status,

@@ -4,33 +4,26 @@ import {
     CardContent,
     CardHeader,
     Typography,
-    Button,
+
     Grid,
-    Chip,
-    Collapse,
+
     useMediaQuery,
-    IconButton,
-    Tooltip,
-    Stack,
-    TextField,
-    InputAdornment
+
 } from '@mui/material';
-import {
-    Table,
+import {    Table,
     TableHeader,
     TableColumn,
     TableBody,
     TableRow,
     TableCell,
     User,
-    Avatar,
     Input,
     ScrollShadow,
     Pagination,
     Skeleton,
     Card as HeroCard,
-    CardBody,
     Divider,
+    Button,
     Button as HeroButton
 } from "@heroui/react";
 import Grow from '@mui/material/Grow';
@@ -45,23 +38,23 @@ import {
     ExclamationTriangleIcon,
     CheckCircleIcon,
     XCircleIcon,
-    ChevronDownIcon,
+
     UserGroupIcon,
     DocumentArrowDownIcon,
-    PresentationChartLineIcon
+
+   
 } from '@heroicons/react/24/outline';
-import { Refresh, FileDownload, PictureAsPdf, Search as SearchIcon } from '@mui/icons-material'; 
+import { Refresh } from '@mui/icons-material';
+
 import axios from 'axios';
 import { useTheme, alpha } from '@mui/material/styles';
-import * as XLSX from 'xlsx'; 
-import { jsPDF } from 'jspdf'; 
-import autoTable from 'jspdf-autotable'; 
-import PageHeader from '@/Components/PageHeader';
+
+import { AbsentUsersInlineCard } from '@/Components/TimeSheet/AbsentUsersInlineCard';
 
 const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, externalFilterData, externalEmployee }) => {
     const { auth } = usePage().props;
     const { url } = usePage();
-    const theme = useTheme();
+   
     const isLargeScreen = useMediaQuery('(min-width: 1025px)');
     const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
 
@@ -86,11 +79,15 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
         currentMonth: dayjs().format('YYYY-MM'),
     });
 
-    // Handle manual refresh and data fetching
+    // Handle manual refresh and data fetching for both present and absent users
     const handleRefresh = useCallback(async () => {
         try {
             setIsLoaded(false);
             await getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData, true);
+            // Also refresh absent users
+            if (url !== '/attendance-employee') {
+                await getAbsentUsersForDate(selectedDate, employee);
+            }
             setLastChecked(new Date());
             return true;
         } catch (error) {
@@ -99,12 +96,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
         } finally {
             setIsLoaded(true);
         }
-    }, [selectedDate, currentPage, perPage, employee, filterData]);
+    }, [selectedDate, currentPage, perPage, employee, filterData, url]);
 
 
     // Function to check for timesheet updates
     const checkForTimesheetUpdates = useCallback(async () => {
-        console.log('Checking for timesheet updates...');
+        // Don't check if no date is selected
         if (!selectedDate) return;
 
         try {
@@ -116,7 +113,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             const response = await fetch(endpoint);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: Failed to check for updates`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`HTTP ${response.status}: ${errorData.message || 'Failed to check for updates'}`);
             }
 
             const data = await response.json();
@@ -125,7 +123,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             if (data.success && data.last_updated !== prevUpdateRef.current) {
                 if (data.last_updated) {
                     prevUpdateRef.current = data.last_updated;
-                    handleRefresh();
+                    await handleRefresh(); // This now updates both present and absent users
                     setLastUpdate(new Date());
                 }
             }
@@ -133,22 +131,11 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             setLastChecked(new Date());
         } catch (error) {
             console.error('Error checking for timesheet updates:', error);
+            // Don't set an error state here to avoid disrupting the UI on background checks
         }
-    }, [selectedDate, filterData.currentMonth]);
+    }, [selectedDate, filterData.currentMonth, handleRefresh]);
 
-    // Set up polling for updates
-    useEffect(() => {
-        if (!isPolling) return;
 
-        // Initial check
-        checkForTimesheetUpdates();
-        
-        // Set up interval for polling (every 30 seconds)
-        const intervalId = setInterval(checkForTimesheetUpdates, 5000);
-
-        // Clean up on unmount or when dependencies change
-        return () => clearInterval(intervalId);
-    }, [isPolling, checkForTimesheetUpdates]);
 
     // Format the last checked time for display
     const lastCheckedText = useMemo(() => {
@@ -162,35 +149,30 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
     }, [lastChecked]);
 
     
-    
-    // Track if filter data has changed
-    useEffect(() => {
-        const filterChanged = JSON.stringify(filterData) !== JSON.stringify(prevFilterData.current);
-        if (filterChanged) {
-            prevFilterData.current = { ...filterData };
-            handleRefresh();
-        }
-    }, [filterData, handleRefresh]);
-    
-    // Handle refresh button click
-    const handleManualRefresh = useCallback(() => {
-        setRefreshKey(prev => prev + 1);
-        handleRefresh();
-    }, [handleRefresh]);
+   
 
     // Fetch attendance data for present users
     const getPresentUsersForDate = async (selectedDate, page, perPage, employee, filterData, forceRefresh = false) => {
+        if (!selectedDate) {
+            setIsLoaded(true);
+            setError('No date selected');
+            return;
+        }
+        
         const attendanceRoute = (url !== '/attendance-employee')
             ? route('admin.getPresentUsersForDate')
             : route('getCurrentUserAttendanceForDate');
+        
         try {
             setIsLoaded(false);
+            setError('');
+            
             const response = await axios.get(attendanceRoute, {
                 params: {
                     page,
                     perPage,
                     employee,
-                    date: selectedDate,
+                    date: dayjs(selectedDate).format('YYYY-MM-DD'), // Ensure consistent date format
                     currentYear: filterData?.currentMonth ? dayjs(filterData.currentMonth).year() : '',
                     currentMonth: filterData?.currentMonth ? dayjs(filterData.currentMonth).format('MM') : '',
                     _t: forceRefresh ? Date.now() : undefined
@@ -198,16 +180,22 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             });
          
             if (response.status === 200) {
+                // Add null check for response data properties
                 setAttendances(response.data.attendances || []);
                 setTotalRows(response.data.total || 0);
                 setLastPage(response.data.last_page || 1);
                 setCurrentPage(response.data.current_page || 1);
                 setLastUpdate(new Date());
                 setError('');
-                setIsLoaded(true);
+            } else {
+                setError(`Unexpected response: ${response.status}`);
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occurred while retrieving present users data.');
+            console.error('Error fetching attendance data:', error);
+            setError(error.response?.data?.message || 'An error occurred while retrieving attendance data.');
+            setAttendances([]);
+            setTotalRows(0);
+        } finally {
             setIsLoaded(true);
         }
     };
@@ -221,17 +209,28 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             return;
         }
 
+        if (!selectedDate) {
+            setAbsentUsers([]);
+            setLeaves([]);
+            return;
+        }
+
         try {
             const response = await axios.get(route('admin.getAbsentUsersForDate'), {
                 params: {
-                    date: selectedDate,
-                    
+                    date: dayjs(selectedDate).format('YYYY-MM-DD'), // Ensure consistent date format
+                    employee: employee || '',
+                    _t: Date.now() // Add cache busting parameter
                 }
             });
 
             if (response.status === 200) {
                 setAbsentUsers(response.data.absent_users || []);
                 setLeaves(response.data.leaves || []);
+            } else {
+                console.warn('Unexpected response getting absent users:', response.status);
+                setAbsentUsers([]);
+                setLeaves([]);
             }
         } catch (error) {
             console.error('Error fetching absent users:', error);
@@ -265,9 +264,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             
             // Handle different time formats
             if (typeof timeString === 'string') {
+                // Standardize date format to prevent timezone issues
+                const formattedDate = dayjs(date).format('YYYY-MM-DD');
+                
                 // If it's just a time string (HH:MM:SS), combine with date
                 if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
-                    const dateTimeString = `${date}T${timeString}`;
+                    const dateTimeString = `${formattedDate}T${timeString}`;
                     dateObj = new Date(dateTimeString);
                 } 
                 // If it's already a full datetime string
@@ -276,12 +278,12 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 }
                 // If it's just HH:MM format
                 else if (timeString.match(/^\d{2}:\d{2}$/)) {
-                    const dateTimeString = `${date}T${timeString}:00`;
+                    const dateTimeString = `${formattedDate}T${timeString}:00`;
                     dateObj = new Date(dateTimeString);
                 }
                 // Fallback - try to parse as is
                 else {
-                    dateObj = new Date(`${date}T${timeString}`);
+                    dateObj = new Date(`${formattedDate}T${timeString}`);
                 }
             } else {
                 // If it's already a Date object or timestamp
@@ -334,30 +336,32 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
         return absentUsers;
     }, [absentUsers]);
     
+    // Column definitions with improved descriptive labels
     const columns = [
-        { name: "Date", uid: "date", icon: CalendarDaysIcon },
-        ...(canViewAllAttendance && (url !== '/attendance-employee') ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
-        { name: "Clock In", uid: "clockin_time", icon: ClockIcon },
-        { name: "Clock Out", uid: "clockout_time", icon: ClockIcon },        { name: "Work Hours", uid: "production_time", icon: ClockIcon },
-        { name: "Punches", uid: "punch_details", icon: ClockIcon }
+        { name: "Date", uid: "date", icon: CalendarDaysIcon, ariaLabel: "Attendance date" },
+        ...(canViewAllAttendance && (url !== '/attendance-employee') ? [
+            { name: "Employee", uid: "employee", icon: UserIcon, ariaLabel: "Employee name and information" }
+        ] : []),
+        { name: "Clock In", uid: "clockin_time", icon: ClockIcon, ariaLabel: "First punch in time" },
+        { name: "Clock Out", uid: "clockout_time", icon: ClockIcon, ariaLabel: "Last punch out time" },
+        { name: "Work Hours", uid: "production_time", icon: ClockIcon, ariaLabel: "Total working hours" },
+        { name: "Punches", uid: "punch_details", icon: ClockIcon, ariaLabel: "Number of time punches recorded" }
     ];
 
     const renderCell = (attendance, columnKey) => {
-        const isCurrentDate = new Date(attendance.date).toDateString() === new Date().toDateString();
+        // Default size classes for all cells to ensure consistent sizing
+        const cellBaseClasses = "text-xs sm:text-sm md:text-base whitespace-nowrap";
+        const isCurrentDate = dayjs(attendance.date).isSame(dayjs(), 'day');
         
         switch (columnKey) {
             case "date":
                 return (
-                    <TableCell className="text-xs sm:text-sm md:text-base">
+                    <TableCell className={`${cellBaseClasses}`}>
                         <Box className="flex items-center gap-2">
-                            <CalendarDaysIcon className="w-4 h-4 text-primary" />
+                            <CalendarDaysIcon className="w-4 h-4 text-primary flex-shrink-0" />
                             <Box className="flex flex-col">
                                 <span>
-                                    {new Date(attendance.date).toLocaleString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                    })}
+                                    {dayjs(attendance.date).format('MMM D, YYYY')}
                                 </span>
                             </Box>
                         </Box>
@@ -366,7 +370,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             case "employee":
                 const avatarSize = isLargeScreen ? 'md' : isMediumScreen ? 'md' : 'sm';
                 return (
-                    <TableCell className="whitespace-nowrap text-xs sm:text-sm md:text-base">
+                    <TableCell className="whitespace-nowrap">
                         <User
                             avatarProps={{
                                 radius: "lg",
@@ -380,7 +384,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     </TableCell>
                 );            case "clockin_time":
                 return (
-                    <TableCell className="text-xs sm:text-sm md:text-base">
+                    <TableCell className={`${cellBaseClasses}`}>
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-success" />
                             <Box className="flex flex-col">
@@ -400,7 +404,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     </TableCell>
                 );            case "clockout_time":
                 return (
-                    <TableCell className="text-xs sm:text-sm md:text-base">
+                    <TableCell className={`${cellBaseClasses}`}>
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-danger" />
                             <Box className="flex flex-col">
@@ -408,7 +412,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                     {attendance.punchout_time 
                                         ? formatTime(attendance.punchout_time, attendance.date) || 'Invalid time'
                                         : attendance.punchin_time 
-                                            ? (isCurrentDate ? 'Still working' : 'Not Punched Out')
+                                            ? (isCurrentDate ? 'Currently working' : 'Missing punch-out')
                                             : 'Not started'
                                     }
                                 </span>
@@ -430,13 +434,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     const minutes = Math.floor(attendance.total_work_minutes % 60);
                     
                     return (
-                        <TableCell className="text-xs sm:text-sm md:text-base">
+                        <TableCell className={`${cellBaseClasses}`}>
                             <Box className="flex items-center gap-2">
                                 <ClockIcon className={`w-4 h-4 ${hasIncompletePunch ? 'text-warning' : 'text-primary'}`} />
                                 <Box className="flex flex-col">
                                     <span className="font-medium">{`${hours}h ${minutes}m`}</span>
                                     <span className="text-xs text-default-500">
-                                        {hasIncompletePunch ? 'Partial + In Progress' : 'Total worked'}
+                                        {hasIncompletePunch ? 'Partial data - in progress' : 'Total worked time'}
                                     </span>
                                 </Box>
                             </Box>
@@ -445,7 +449,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 } else if (isCurrentlyWorking) {
                     // Currently working (today's date and has punch in but no punch out)
                     return (
-                        <TableCell className="text-xs sm:text-sm md:text-base">
+                        <TableCell className={`${cellBaseClasses}`}>
                             <Box className="flex items-center gap-2">
                                 <ClockIcon className="w-4 h-4 text-warning" />
                                 <Box className="flex flex-col">
@@ -460,7 +464,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 } else if (attendance.punchin_time && !attendance.punchout_time && !isCurrentDate) {
                     // Past date with incomplete punch
                     return (
-                        <TableCell className="text-xs sm:text-sm md:text-base">
+                        <TableCell className={`${cellBaseClasses}`}>
                             <Box className="flex items-center gap-2">
                                 <ExclamationTriangleIcon className="w-4 h-4 text-danger" />
                                 <Box className="flex flex-col">
@@ -476,7 +480,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 
                 // No punch in at all
                 return (
-                    <TableCell className="text-xs sm:text-sm md:text-base">
+                    <TableCell className={`${cellBaseClasses}`}>
                         <Box className="flex items-center gap-2">
                             <ExclamationTriangleIcon className="w-4 h-4 text-warning" />
                             <Box className="flex flex-col">
@@ -490,7 +494,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 );
             case "punch_details":
                 return (
-                    <TableCell className="text-xs sm:text-sm md:text-base">
+                    <TableCell className={`${cellBaseClasses}`}>
                         <Box className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4 text-default-400" />
                             <Box className="flex flex-col">
@@ -512,7 +516,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     </TableCell>
                 );
             default:
-                return <TableCell className="text-xs sm:text-sm md:text-base">N/A</TableCell>;
+                return <TableCell className={`${cellBaseClasses}`}>N/A</TableCell>;
         }
     };    // Excel download function
     const exportExcel = useCallback(async () => { 
@@ -555,13 +559,35 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             alert('Failed to download attendance pdf.');
         }
         
-    },[selectedDate]);
+    },[selectedDate]);    
+    
     // Fetch attendance data when filters change
-
-
     useEffect(() => {
-        getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData);
-        getAbsentUsersForDate(selectedDate, employee);
+        if (selectedDate) {
+            // Clear any previous data before fetching new data
+            if (currentPage !== 1) {
+                setCurrentPage(1); // Reset to first page when filters change
+                return; // The page change will trigger this effect again
+            }
+            
+            // Create a synchronous update function to ensure both datasets are updated in the same render cycle
+            const updateAllData = async () => {
+                setIsLoaded(false);
+                try {
+                    // Update both datasets in parallel for efficiency
+                    await Promise.all([
+                        getPresentUsersForDate(selectedDate, currentPage, perPage, employee, filterData),
+                        url !== '/attendance-employee' ? getAbsentUsersForDate(selectedDate, employee) : Promise.resolve()
+                    ]);
+                } catch (error) {
+                    console.error('Error updating attendance data:', error);
+                } finally {
+                    setIsLoaded(true);
+                }
+            };
+            
+            updateAllData();
+        }
         // eslint-disable-next-line
     }, [selectedDate, currentPage, perPage, employee, filterData, updateTimeSheet, refreshKey]);
 
@@ -578,6 +604,31 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
             setEmployee(externalEmployee);
         }
     }, [externalEmployee]);
+
+     // Track if filter data has changed
+    useEffect(() => {
+        const filterChanged = JSON.stringify(filterData) !== JSON.stringify(prevFilterData.current);
+        if (filterChanged) {
+            prevFilterData.current = { ...filterData };
+            handleRefresh();
+        }
+    }, [filterData, handleRefresh]);
+
+        // Set up polling for updates
+    useEffect(() => {
+        if (!isPolling || !selectedDate) return;
+
+        // Initial check
+        checkForTimesheetUpdates();
+        
+        // Set up interval for polling (every 5 seconds)
+        const intervalId = setInterval(checkForTimesheetUpdates, 5000);
+
+        // Clean up on unmount or when dependencies change
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [isPolling, checkForTimesheetUpdates, selectedDate]);
 
 
 
@@ -611,13 +662,19 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                     aria-label="Employee attendance timesheet table"
                                     isHeaderSticky
                                     classNames={{
-                                        base: "max-h-[520px] overflow-scroll",
-                                        table: "min-h-[200px]",
+                                        base: "max-h-[520px] overflow-auto",
+                                        table: "min-h-[200px] w-full",
+                                        thead: "z-10",
+                                        tbody: "overflow-y-auto",
                                     }}
                                 >
                                     <TableHeader columns={columns}>
                                         {(column) => (
-                                            <TableColumn key={column.uid} align="start">
+                                            <TableColumn 
+                                                key={column.uid} 
+                                                align="start"
+                                                aria-label={column.ariaLabel || column.name}
+                                            >
                                                 <Box className="flex items-center gap-2">
                                                     {column.icon && <column.icon className="w-4 h-4" />}
                                                     <span className="text-sm font-medium">{column.name}</span>
@@ -626,15 +683,18 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                         )}
                                     </TableHeader>
                                     <TableBody 
-                                        items={attendances}
-                                        emptyContent={
-                                            <Box className="flex flex-col items-center justify-center py-8">
-                                                <ClockIcon className="w-12 h-12 text-default-300 mb-4" />
-                                                <Typography variant="body1" color="textSecondary">
-                                                    No attendance records found
-                                                </Typography>
-                                            </Box>
-                                        }
+                                        items={attendances}                                                                emptyContent={
+                                        <Box className="flex flex-col items-center justify-center py-12">
+                                            <ClockIcon className="w-16 h-16 text-default-300 mb-4" />
+                                            <Typography variant="h6" className="mb-2">
+                                                No Attendance Records
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary">
+                                                No attendance records found for the selected date
+                                            </Typography>
+                                            
+                                        </Box>
+                                    }
                                     >
                                         {(attendance) => (
                                             <TableRow key={attendance.id || attendance.user_id}>
@@ -665,7 +725,8 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                 )}
             </Box>
         );
-    }    // Admin view - render full layout with combined GlassCard wrapper
+    }    
+    // Admin view - render full layout with combined GlassCard wrapper
     return (
         <Box 
             sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
@@ -917,8 +978,10 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                                                             aria-label="Employee attendance timesheet table"
                                                             isHeaderSticky
                                                             classNames={{
-                                                                base: "max-h-[520px] overflow-scroll",
-                                                                table: "min-h-[200px]",
+                                                                base: "max-h-[520px] overflow-auto",
+                                                                table: "min-h-[200px] w-full",
+                                                                thead: "z-10",
+                                                                tbody: "overflow-y-auto",
                                                             }}
                                                         >
                                                             <TableHeader columns={columns}>
@@ -992,264 +1055,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
     );
 };
 
-// Inline AbsentUsersCard component for the combined layout
-const AbsentUsersInlineCard = React.memo(({ absentUsers, selectedDate, getUserLeave }) => {
-    const [visibleUsersCount, setVisibleUsersCount] = useState(5);
-    const [searchTerm, setSearchTerm] = useState('');
 
-    // Filter absent users based on search term
-    const filteredAbsentUsers = useMemo(() => {
-        if (!searchTerm.trim()) {
-            return absentUsers;
-        }
-        
-        const searchLower = searchTerm.toLowerCase();
-        return absentUsers.filter(user => {
-            const name = user.name?.toLowerCase() || '';
-            const employeeId = user.employee_id?.toString().toLowerCase() || '';
-            const email = user.email?.toLowerCase() || '';
-            const phone = user.phone?.toString().toLowerCase() || '';
-            
-            return name.includes(searchLower) ||
-                   employeeId.includes(searchLower) ||
-                   email.includes(searchLower) ||
-                   phone.includes(searchLower);
-        });
-    }, [absentUsers, searchTerm]);
-
-    const handleLoadMore = () => {
-        setVisibleUsersCount((prev) => prev + 5);
-    };
-
-    const handleSearchChange = (event) => {
-        setSearchTerm(event.target.value);
-        setVisibleUsersCount(5); // Reset visible count when searching
-    };
-
-    const getLeaveStatusIcon = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'approved':
-                return <CheckCircleIcon className="w-4 h-4 text-success" />;
-            case 'rejected':
-                return <XCircleIcon className="w-4 h-4 text-danger" />;
-            default:
-                return <ClockIcon className="w-4 h-4 text-warning" />;
-        }
-    };    if (absentUsers.length === 0) {
-        return (
-            <Box className="h-full">
-                <PageHeader
-                    title="Perfect Attendance!"
-                    subtitle={`No employees are absent on ${dayjs(selectedDate).format('MMMM D, YYYY')}`}
-                    icon={<CheckCircleIcon className="w-6 h-6" />}
-                    variant="gradient"
-                    actionButtons={[
-                        {
-                            label: "0",
-                            variant: "flat",
-                            color: "success",
-                            icon: <CheckCircleIcon className="w-4 h-4" />,
-                            className: "bg-green-500/10 text-green-500 border-green-500/20"
-                        }
-                    ]}
-                />
-                <Box 
-                    role="region"
-                    aria-label="No absent employees today"
-                    className="text-center py-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg h-96 flex flex-col items-center justify-center"
-                >
-                    <CheckCircleIcon className="w-12 h-12 text-success mx-auto mb-4" />
-                    <Typography variant="body2" color="success" className="mb-2 text-sm font-medium">
-                        Perfect Attendance!
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary" className="text-xs">
-                        No employees are absent today.
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary" className="mt-1 block text-xs">
-                        All employees are either present or on approved leave.
-                    </Typography>
-                </Box>
-            </Box>
-        );
-    }
-
-    return (
-        <Box className="h-full">
-            <Box className="mb-4 flex items-center justify-between">
-                <Typography 
-                    variant="h6" 
-                    className="font-semibold text-orange-600 flex items-center gap-2 text-sm"
-                >
-                    <UserGroupIcon className="w-4 h-4" />
-                    Absent Today
-                </Typography>
-                <Chip 
-                    label={absentUsers.length} 
-                    variant="outlined" 
-                    color="warning"
-                    size="small"
-                    className="font-semibold"
-                    avatar={
-                        <Avatar 
-                            sx={{
-                                width: 18,
-                                height: 18,
-                                bgcolor: 'warning.main',
-                                color: 'warning.contrastText',
-                                fontSize: '0.75rem',
-                                marginRight: '-4px'
-                            }}
-                        >
-                            <UserGroupIcon style={{ width: 12, height: 12 }} />
-                        </Avatar>
-                    }
-                />
-            </Box>
-            {/* Search Input */}
-            <Box className="mb-3 m-2">
-                <Input
-                    type="text"
-                    placeholder="Search absent employees..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
-                    variant="bordered"
-                    aria-label="Search absent employees"
-                    classNames={{
-                        inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 h-10",
-                        input: "text-sm"
-                    }}
-                />
-            </Box>
-
-            {/* Show search results count */}
-            {searchTerm && (
-                <Box className="mb-2 ">
-                    <Typography variant="caption" color="textSecondary" className="text-xs">
-                        {filteredAbsentUsers.length} of {absentUsers.length} employees found
-                    </Typography>
-                </Box>
-            )}
-
-            {/* Show message if no results found */}
-            {searchTerm && filteredAbsentUsers.length === 0 && (
-                <Box className="text-center py-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
-                    <MagnifyingGlassIcon className="w-8 h-8 text-default-300 mx-auto mb-2" />
-                    <Typography variant="body2" color="textSecondary" className="text-sm">
-                        No employees found matching "{searchTerm}"
-                    </Typography>
-                </Box>
-            )}
-
-            <Box 
-                role="region"
-                aria-label="Absent employees list"
-                className="overflow-y-auto max-h-[520px]"
-            >
-                {filteredAbsentUsers.slice(0, visibleUsersCount).map((user) => {
-                    const userLeave = getUserLeave(user.id);
-                    
-                    return (
-                        <Collapse in={true} key={user.id} timeout="auto">
-                            <div className="p-3 m-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-200 rounded-lg">
-                                <Box className="flex items-start justify-between">
-                                    <Box className="flex items-center gap-2 flex-1">
-                                        <Avatar 
-                                            src={user.profile_image} 
-                                            alt={user.name}
-                                            size="sm"
-                                            fallback={<UserIcon className="w-4 h-4" />}
-                                        />
-                                        <Box className="flex-1 min-w-0">                                            <Typography 
-                                                variant="body2" 
-                                                fontWeight="medium"
-                                                className="truncate text-sm"
-                                            >
-                                                {user.name}
-                                            </Typography>
-                                            {user.employee_id && (
-                                                <Typography 
-                                                    variant="caption" 
-                                                    color="textSecondary"
-                                                    className="block text-xs"
-                                                >
-                                                    ID: {user.employee_id}
-                                                </Typography>
-                                            )}
-                                            {userLeave ? (
-                                                <Box className="flex flex-col gap-1 mt-1">
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color="textSecondary"
-                                                        className="flex items-center gap-1 text-xs"
-                                                    >
-                                                        <CalendarDaysIcon className="w-3 h-3" />
-                                                        {userLeave.from_date === userLeave.to_date 
-                                                            ? userLeave.from_date 
-                                                            : `${userLeave.from_date} - ${userLeave.to_date}`
-                                                        }
-                                                    </Typography>
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color="primary"
-                                                        className="flex items-center gap-1 text-xs"
-                                                    >
-                                                        {getLeaveStatusIcon(userLeave.status)}
-                                                        {userLeave.leave_type} Leave
-                                                    </Typography>
-                                                </Box>
-                                            ) : (
-                                                <Typography 
-                                                    variant="caption" 
-                                                    color="error"
-                                                    className="flex items-center gap-1 mt-1 text-xs"
-                                                >
-                                                    <ExclamationTriangleIcon className="w-3 h-3" />
-                                                    Absent without leave
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                    {userLeave && (
-                                        <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-md px-1.5 py-0.5 ml-2">
-                                            <div className="flex items-center gap-1">
-                                                {getLeaveStatusIcon(userLeave.status)}
-                                                <Typography 
-                                                    variant="caption" 
-                                                    className={`font-semibold text-xs ${
-                                                        userLeave.status?.toLowerCase() === 'approved' ? 'text-green-600' :
-                                                        userLeave.status?.toLowerCase() === 'rejected' ? 'text-red-600' :
-                                                        'text-orange-600'
-                                                    }`}
-                                                >
-                                                    {userLeave.status}
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                    )}
-                                </Box>
-                            </div>
-                        </Collapse>
-                    );
-                })}                
-                {visibleUsersCount < filteredAbsentUsers.length && (
-                    <Box className="text-center mt-4 pb-4">
-                        <Button 
-                            variant="outlined" 
-                            onClick={handleLoadMore}
-                            startIcon={<ChevronDownIcon className="w-4 h-4" />}
-                            size="small"
-                            color="warning"
-                            fullWidth
-                        >
-                            Show More ({filteredAbsentUsers.length - visibleUsersCount} remaining)
-                        </Button>
-                    </Box>
-                )}
-            </Box>
-        </Box>
-    );
-});
 
 
 
