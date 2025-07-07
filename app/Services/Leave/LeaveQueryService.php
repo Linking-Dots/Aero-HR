@@ -26,13 +26,22 @@ class LeaveQueryService
         $month = $request->get('month', $month);
         $status = $request->get('status');
         $leaveType = $request->get('leave_type');
+        $specificUserId = $request->get('user_id'); // Extract user_id if provided
 
         $currentYear = $year ?: ($month ? Carbon::createFromFormat('Y-m', $month)->year : now()->year);
 
         $leavesQuery = Leave::with('employee')
             ->join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
-            ->select('leaves.*', 'leave_settings.type as leave_type')
-            ->when(!$isAdmin, fn($q) => $q->where('leaves.user_id', $user->id));
+            ->select('leaves.*', 'leave_settings.type as leave_type');
+            
+        // If a specific user_id is provided, filter by that user
+        if ($specificUserId) {
+            $leavesQuery->where('leaves.user_id', $specificUserId);
+        }
+        // Otherwise apply standard authorization rules
+        else if (!$isAdmin) {
+            $leavesQuery->where('leaves.user_id', $user->id);
+        }
 
         $this->applyDateFilters($leavesQuery, $year, $month, $isAdmin, $user->id);
         $this->applyEmployeeFilter($leavesQuery, $employee);
@@ -62,9 +71,7 @@ class LeaveQueryService
         $leaveRecords->setCollection($processedLeaveRecords);
         
         return [
-            'leaveTypes' => $leaveTypes,
-            'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
-            'leaveRecords' => LeaveResource::collection($leaveRecords),
+            'leaveRecords' => $leaveRecords, // Return paginated result directly
             'leavesData' => [
                 'leaveTypes' => $leaveTypes,
                 'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
@@ -75,9 +82,11 @@ class LeaveQueryService
      */
     private function applyDateFilters($query, ?int $year, ?string $month, bool $isAdmin, int $userId): void
     {
+        // If a specific user_id filter is already applied (from the main query), we don't need to reapply it here
+        
         if ($year && !$isAdmin) {
             // For employees, filter by year and their own records
-            $query->where('leaves.user_id', $userId)->whereYear('leaves.from_date', $year);
+            $query->whereYear('leaves.from_date', $year);
         } elseif ($isAdmin && $month) {
             // For admins, filter by month across all employees
             $range = [
@@ -88,9 +97,6 @@ class LeaveQueryService
         } elseif ($isAdmin && $year) {
             // For admins, filter by year across all employees
             $query->whereYear('leaves.from_date', $year);
-        } elseif (!$isAdmin) {
-            // For employees, always filter to their own records
-            $query->where('leaves.user_id', $userId);
         }
     }    /**
      * Apply employee filter to the query
@@ -141,8 +147,10 @@ class LeaveQueryService
      */
     private function calculateLeaveCounts(?int $year, int $currentYear, $user): array
     {
+        $userId = $user->id;
+        
         $allLeaves = Leave::with('leaveSetting')
-            ->when($year, fn($q) => $q->where('user_id', $user->id))
+            ->where('user_id', $userId) // Always filter by the user ID
             ->whereYear('from_date', $currentYear)
             ->get();
 
@@ -151,7 +159,6 @@ class LeaveQueryService
         // Leave counts aggregation
         $leaveCountsByUser = [];
         foreach ($allLeaves as $leave) {
-            $userId = $leave->user_id;
             $type = $leave->leaveSetting->type ?? 'Unknown';
             $leaveCountsByUser[$userId][$type] = ($leaveCountsByUser[$userId][$type] ?? 0) + $leave->no_of_days;
         }

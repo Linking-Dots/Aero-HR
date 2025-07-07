@@ -48,7 +48,6 @@ const LeavesEmployee = ({ title, allUsers }) => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
       const [totalRows, setTotalRows] = useState(0);
       const [lastPage, setLastPage] = useState(0);
-
   // State management
   const [loading, setLoading] = useState(false);
   const [leaves, setLeaves] = useState([]);
@@ -68,6 +67,114 @@ const LeavesEmployee = ({ title, allUsers }) => {
     selectedMonth: dayjs().format('YYYY-MM'),
     year: new Date().getFullYear() 
   });
+
+  // Function to update pagination metadata
+  const updatePaginationMetadata = useCallback((metadata) => {
+    if (metadata) {
+      setTotalRows(metadata.total || 0);
+      setLastPage(metadata.last_page || 1);
+      setPagination(prev => ({
+        ...prev,
+        total: metadata.total || 0,
+        lastPage: metadata.last_page || 1
+      }));
+    }
+  }, []);
+
+   // Fetch leaves data with error handling
+  const fetchLeaves = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { page, perPage } = pagination;
+      const { year } = filters;
+      
+      console.log('Fetching leaves for user:', auth.user.id, 'with year:', year);
+      
+      const response = await axios.get(route('leaves.paginate'), {
+        params: { 
+          page, 
+          perPage, 
+          year,
+          user_id: auth.user.id // Explicitly pass the current user ID
+        },
+        timeout: 10000, // 10 second timeout
+      });
+
+      if (response.status === 200) {
+        const { leaves, leavesData } = response.data;
+
+        if (leaves.data && Array.isArray(leaves.data)) {
+                setLeaves(leaves.data);
+                // Update pagination metadata
+                updatePaginationMetadata({
+                  total: leaves.total || leaves.data.length,
+                  last_page: leaves.last_page || 1,
+                  current_page: leaves.current_page || 1,
+                  per_page: leaves.per_page || pagination.perPage
+                });
+            } else if (Array.isArray(leaves)) {
+                // Handle direct array response
+                setLeaves(leaves);
+                updatePaginationMetadata({
+                  total: leaves.length,
+                  last_page: 1,
+                  current_page: 1,
+                  per_page: pagination.perPage
+                });
+            } else {
+                console.error('Unexpected leaves data format:', leaves);
+                setLeaves([]);
+                updatePaginationMetadata({
+                  total: 0,
+                  last_page: 1,
+                  current_page: 1,
+                  per_page: pagination.perPage
+                });
+            }
+            
+            setLeavesData(leavesData);
+            
+            setError('');
+            setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching leaves:', error);
+      if (error.response?.status === 404) {
+        const { leavesData } = error.response.data;
+        setLeavesData(leavesData);
+        setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
+      } else {
+        setError('Error retrieving leaves data. Please try again.');
+        toast.error('Failed to load leave data. Please try again.');
+      }
+      setLeaves([]);
+      updatePaginationMetadata({
+        total: 0,
+        last_page: 1,
+        current_page: 1,
+        per_page: pagination.perPage
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.perPage, filters, auth.user.id, updatePaginationMetadata]);
+
+  // Function to fetch additional items if needed after operations
+  const fetchAdditionalItemsIfNeeded = useCallback((currentItems, totalItems, operation) => {
+    const { page, perPage } = pagination;
+    
+    // If we're not on the last page, or we have exactly enough items to fill the current page,
+    // we don't need to fetch more data
+    if (currentItems.length >= perPage || page < lastPage) {
+      return;
+    }
+    
+    // If we're on the last page and have fewer items than perPage after an operation,
+    // fetch new data to fill the gap
+    fetchLeaves();
+  }, [pagination, lastPage, fetchLeaves]);
+
+  
 
   // Memoized year options following ISO standard (1900-current year)
   const yearOptions = useMemo(() => {
@@ -134,60 +241,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     setCurrentLeave(leave);
   }, []);
 
-  // Fetch leaves data with error handling
-  const fetchLeaves = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { page, perPage } = pagination;
-      const { year } = filters;
-
-      const response = await axios.get(route('leaves.paginate'), {
-        params: { page, perPage, year },
-        timeout: 10000, // 10 second timeout
-      });
-
-      if (response.status === 200) {
-        const { leaves, leavesData } = response.data;
-
-        if (leaves.data && Array.isArray(leaves.data)) {
-                setLeaves(leaves.data);
-                setTotalRows(leaves.total || leaves.data.length);
-                setLastPage(leaves.last_page || 1);
-            } else if (Array.isArray(leaves)) {
-                // Handle direct array response
-                setLeaves(leaves);
-                setTotalRows(leaves.length);
-                setLastPage(1);
-            } else {
-                console.error('Unexpected leaves data format:', leaves);
-                setLeaves([]);
-                setTotalRows(0);
-                setLastPage(1);
-            }
-            
-            setLeavesData(leavesData);
-            
-
-            setError('');
-            setLoading(false);
-      }
-    } catch (error) {
-      console.error('Error fetching leaves:', error);
-      if (error.response?.status === 404) {
-        const { leavesData } = error.response.data;
-        setLeavesData(leavesData);
-        setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
-      } else {
-        setError('Error retrieving leaves data. Please try again.');
-        toast.error('Failed to load leave data. Please try again.');
-      }
-      setLeaves([]);
-      setTotalRows(0);
-      setLastPage(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.perPage, filters]);
+ 
 
   // Fetch leave statistics
   const fetchLeavesStats = useCallback(async () => {
@@ -222,14 +276,21 @@ const LeavesEmployee = ({ title, allUsers }) => {
 
   // Handle pagination changes
   const handlePageChange = useCallback((newPage) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
-  }, []);
+    // Only change page if it's different from the current page
+    if (newPage !== pagination.page) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  }, [pagination.page]);
 
   // Effect for data fetching
   useEffect(() => {
     fetchLeaves();
+  }, [fetchLeaves]);
+  
+  // Separate effect for fetching leave stats to avoid unnecessary refetches
+  useEffect(() => {
     fetchLeavesStats();
-  }, [fetchLeaves, fetchLeavesStats]);
+  }, [fetchLeavesStats]);
   // Extract user-specific leave counts and calculate stats
   const userLeaveCounts = useMemo(() => {
     return leavesData.leaveCountsByUser[auth.user.id] || [];
@@ -251,18 +312,46 @@ const LeavesEmployee = ({ title, allUsers }) => {
       return sortLeavesByFromDate(updatedLeaves);
     });
     
-    // Update totals but don't reload the entire table
-    setTotalRows(prevTotal => prevTotal + 1);
+    // Update pagination metadata
+    updatePaginationMetadata({
+      total: totalRows + 1,
+      last_page: Math.ceil((totalRows + 1) / pagination.perPage),
+      current_page: pagination.page,
+      per_page: pagination.perPage
+    });
     
     // Only fetch leave stats to update the balance cards
     fetchLeavesStats();
-  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats]);
+  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats, totalRows, pagination, updatePaginationMetadata]);
 
   const updateLeaveOptimized = useCallback((updatedLeave) => {
     const leaveYear = new Date(updatedLeave.from_date).getFullYear();
     const isSameYear = leaveYear === filters.year;
 
-    if (!isSameYear) return;
+    // If the leave year is changing and no longer matches the filter, remove it from the current view
+    if (!isSameYear) {
+      setLeaves(prevLeaves => {
+        const filteredLeaves = prevLeaves.filter(leave => leave.id !== updatedLeave.id);
+        
+        // Update pagination metadata to reflect the removed item
+        const newTotal = Math.max(0, totalRows - 1);
+        updatePaginationMetadata({
+          total: newTotal,
+          last_page: Math.max(1, Math.ceil(newTotal / pagination.perPage)),
+          current_page: pagination.page,
+          per_page: pagination.perPage
+        });
+        
+        // Check if we need to fetch more data after removing an item
+        fetchAdditionalItemsIfNeeded(filteredLeaves, newTotal, 'update-remove');
+        
+        return filteredLeaves;
+      });
+      
+      // Only fetch leave stats to update the balance cards
+      fetchLeavesStats();
+      return;
+    }
 
     setLeaves(prevLeaves => {
       const updatedLeaves = prevLeaves.map(leave =>
@@ -273,19 +362,31 @@ const LeavesEmployee = ({ title, allUsers }) => {
     
     // Only fetch leave stats to update the balance cards
     fetchLeavesStats();
-  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats]);
+  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats, totalRows, pagination, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
 
   const deleteLeaveOptimized = useCallback((leaveId) => {
     setLeaves(prevLeaves => {
-      return prevLeaves.filter(leave => leave.id !== leaveId);
+      const updatedLeaves = prevLeaves.filter(leave => leave.id !== leaveId);
+      
+      // After removing a leave, check if we need to fetch more data
+      const newTotal = Math.max(0, totalRows - 1);
+      fetchAdditionalItemsIfNeeded(updatedLeaves, newTotal, 'delete');
+      
+      return updatedLeaves;
     });
     
-    // Update totals but don't reload the entire table
-    setTotalRows(prevTotal => Math.max(0, prevTotal - 1));
+    // Update pagination metadata
+    const newTotal = Math.max(0, totalRows - 1);
+    updatePaginationMetadata({
+      total: newTotal,
+      last_page: Math.max(1, Math.ceil(newTotal / pagination.perPage)),
+      current_page: pagination.page,
+      per_page: pagination.perPage
+    });
     
     // Only fetch leave stats to update the balance cards
     fetchLeavesStats();
-  }, [fetchLeavesStats]);
+  }, [fetchLeavesStats, totalRows, pagination, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
 
   // Action buttons for the header
   const actionButtons = [
@@ -418,6 +519,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
           employee={''}  // In employee mode, we hide the employee selector
           selectedMonth={filters.selectedMonth}
           addLeaveOptimized={addLeaveOptimized}
+          updatePaginationMetadata={updatePaginationMetadata}
           fetchLeavesStats={fetchLeavesStats}
         />
       )}
@@ -436,6 +538,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
           employee={''}  // In employee mode, we hide the employee selector
           selectedMonth={filters.selectedMonth}
           updateLeaveOptimized={updateLeaveOptimized}
+          updatePaginationMetadata={updatePaginationMetadata}
           fetchLeavesStats={fetchLeavesStats}
         />
       )}
@@ -449,6 +552,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
           setTotalRows={setTotalRows}
           setLastPage={setLastPage}
           deleteLeaveOptimized={deleteLeaveOptimized}
+          updatePaginationMetadata={updatePaginationMetadata}
           fetchLeavesStats={fetchLeavesStats}
         />
       )}
@@ -579,11 +683,13 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         setCurrentPage={handlePageChange}
                         currentPage={pagination.page}
                         totalRows={totalRows}
-                                                lastPage={lastPage}
+                        lastPage={lastPage}
                         perPage={pagination.perPage}
                         selectedMonth={filters.selectedMonth}
                         employee={''}
                         isAdminView={false}
+                        fetchLeavesStats={fetchLeavesStats}
+                        updatePaginationMetadata={updatePaginationMetadata}
                     />
                     </div>
                   ) : (

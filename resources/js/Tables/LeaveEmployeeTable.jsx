@@ -147,7 +147,10 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     const handlePageChange = useCallback((page) => {
+        console.log('Pagination page change requested:', page);
         if (setCurrentPage) {
+            // When page changes, this will trigger fetchLeavesData in the parent component
+            // which will load the correct data for the requested page
             setCurrentPage(page);
         }
     }, [setCurrentPage]);
@@ -563,8 +566,6 @@ const LeaveEmployeeTable = React.forwardRef(({
                 {totalRows > perPage && (
                     <Box className="flex justify-center pt-4">
                         <Pagination
-                            initialPage={1}
-                            isCompact
                             showControls
                             showShadow
                             color="primary"
@@ -641,8 +642,6 @@ const LeaveEmployeeTable = React.forwardRef(({
             {totalRows > perPage && (
                 <Box className="py-4 flex justify-center">
                     <Pagination
-                        initialPage={1}
-                        isCompact
                         showControls
                         showShadow
                         color="primary"
@@ -652,6 +651,9 @@ const LeaveEmployeeTable = React.forwardRef(({
                         onChange={handlePageChange}
                         size={isMediumScreen ? "sm" : "md"}
                     />
+                    <div className="ml-4 text-xs text-gray-500">
+                        Page {currentPage} of {lastPage} (Total: {totalRows} records)
+                    </div>
                 </Box>
             )}
         </Box>

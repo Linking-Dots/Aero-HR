@@ -213,18 +213,36 @@ const LeaveForm = ({
                     // Update leave data
                     setLeavesData(response.data.leavesData);
                     
-                    // Use optimized data manipulation instead of full reload
+                    // Use optimized data manipulation without triggering full reloads
                     if (currentLeave && updateLeaveOptimized && response.data.leave) {
-                        // Update existing leave
-                    
+                        // Update existing leave in-place without re-fetching
                         updateLeaveOptimized(response.data.leave);
                         fetchLeavesStats();
                     } else if (addLeaveOptimized && response.data.leave) {
-                        // Add new leave
+                        // Add new leave in-place without re-fetching
                         addLeaveOptimized(response.data.leave);
                         fetchLeavesStats();
-                        // Update totals for new leave
-                        setTotalRows(prev => prev + 1);
+                        
+                        // Only update total counts, don't reload the entire table
+                        if (response.data.leaves && response.data.leaves.total) {
+                            setTotalRows(response.data.leaves.total);
+                            setLastPage(response.data.leaves.last_page || 1);
+                        }
+                    } else {
+                        // Only as a last resort, use the server response data
+                        // This should rarely happen since we have optimized functions
+                        console.log("Using fallback data update mode");
+                        if (response.data.leaves) {
+                            if (response.data.leaves.data) {
+                                setLeaves(response.data.leaves.data);
+                                setTotalRows(response.data.leaves.total || response.data.leaves.data.length);
+                                setLastPage(response.data.leaves.last_page || 1);
+                            } else if (Array.isArray(response.data.leaves)) {
+                                setLeaves(response.data.leaves);
+                                setTotalRows(response.data.leaves.length);
+                                setLastPage(1);
+                            }
+                        }
                     }
                     
                     closeModal();

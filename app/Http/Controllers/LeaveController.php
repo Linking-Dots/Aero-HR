@@ -9,6 +9,7 @@ use App\Services\Leave\LeaveCrudService;
 use App\Services\Leave\LeaveQueryService;
 use App\Services\Leave\LeaveSummaryService;
 use App\Http\Resources\LeaveResource;
+use App\Http\Resources\LeaveResourceCollection;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -61,16 +62,14 @@ class LeaveController extends Controller
             if ($leaveData['leaveRecords']->isEmpty()) {
                 return response()->json([
                     'message' => 'No leave records found for the selected period.',
+                    'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                     'leavesData' => $leaveData['leavesData'],
                     'stats' => $stats,
-                ], 404);
+                ], 200); // Changed to 200 instead of 404 to ensure frontend gets pagination structure
             }
 
             return response()->json([
-                'leaves' => $leaveData['leaveRecords'],
-                'current_page' => $leaveData['leaveRecords']->currentPage(),
-                'last_page' => $leaveData['leaveRecords']->lastPage(),
-                'total' => $leaveData['leaveRecords']->total(),
+                'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                 'leavesData' => $leaveData['leavesData'],
                 'stats' => $stats,
             ]);
@@ -147,7 +146,7 @@ class LeaveController extends Controller
                 ),
 
                 'leavesData' => $leaveData['leavesData'],
-                'leaves' => $leaveData['leaveRecords'],
+                'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -186,7 +185,7 @@ class LeaveController extends Controller
                         'leave_type' => LeaveSetting::find($updatedLeave->leave_type)?->type,
                     ]
                 ),
-                'leaves' => $leaveData['leaveRecords'],
+                'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                 'leavesData' => $leaveData['leavesData'],
             ]);
         } catch (\Throwable $e) {
@@ -220,7 +219,7 @@ class LeaveController extends Controller
             return response()->json([
                 'message' => 'Leave application deleted successfully',
                 'leavesData' => $leaveData['leavesData'],
-                'leaves' => $leaveData['leaveRecords'],
+                'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
             ]);
         } catch (\Throwable $e) {
             report($e);

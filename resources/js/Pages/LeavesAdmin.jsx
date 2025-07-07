@@ -166,6 +166,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // Pagination handlers
     const handlePageChange = useCallback((page) => {
+        console.log('Page change requested:', page);
         setPagination(prev => ({
             ...prev,
             currentPage: page
@@ -198,15 +199,24 @@ const LeavesAdmin = ({ title, allUsers }) => {
             if (response.status === 200) {
                
                 const { leaves, leavesData } = response.data;
-     
-        
+
+                console.log('Fetched leaves data:', response.data);
+                console.log('Leaves structure:', leaves);
                 
+                // Standard Laravel pagination structure
                 if (leaves.data && Array.isArray(leaves.data)) {
+                    console.log('Found paginated data with standard metadata');
                     setLeaves(leaves.data);
                     setTotalRows(leaves.total || leaves.data.length);
                     setLastPage(leaves.last_page || 1);
+                    console.log('Pagination info:', {
+                        totalRows: leaves.total,
+                        lastPage: leaves.last_page,
+                        currentPage: leaves.current_page
+                    });
                 } else if (Array.isArray(leaves)) {
                     // Handle direct array response
+                    console.log('Found direct array response without pagination');
                     setLeaves(leaves);
                     setTotalRows(leaves.length);
                     setLastPage(1);
@@ -236,7 +246,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
             setLeaves(false);
             setLoading(false);
         }
-    }, [filters]);
+    }, [filters, pagination.currentPage, pagination.perPage]);
 
     const fetchLeavesStats = useCallback(async () => {
         try {
@@ -374,55 +384,156 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // Optimized data manipulation functions
     const sortLeavesByFromDate = useCallback((leavesArray) => {
-        return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+        return [...leavesArray].sort((a, b) => new Date(b.from_date) - new Date(a.from_date));
     }, []);
+
+     // Optimized pagination update without full reload
+    const updatePaginationMetadata = useCallback((totalCount, affectedPage = null) => {
+        // Update total rows
+        setTotalRows(totalCount);
+        
+        // Calculate new last page
+        const newLastPage = Math.max(1, Math.ceil(totalCount / pagination.perPage));
+        setLastPage(newLastPage);
+        
+        // Ensure current page is valid
+        if (pagination.currentPage > newLastPage) {
+            setPagination(prev => ({
+                ...prev,
+                currentPage: newLastPage
+            }));
+        }
+        
+        console.log(`Pagination metadata updated: ${totalCount} total rows, ${newLastPage} pages`);
+    }, [pagination.perPage, pagination.currentPage]);
 
   
 
     const addLeaveOptimized = useCallback((newLeave) => {
         const leaveMonth = dayjs(newLeave.from_date).format('YYYY-MM');
-
         const isSameMonth = leaveMonth === filters.selectedMonth;
         const isSameEmployee = !filters.employee || String(filters.employee) === String(newLeave.user_id);
 
-        if (!isSameMonth || !isSameEmployee) return;
+        // If the leave doesn't match current filters, don't update the UI
+        if (!isSameMonth || !isSameEmployee) {
+            return;
+        }
 
-        setLeaves(prevLeaves => {
-            const updatedLeaves = [...prevLeaves, newLeave];
-            return sortLeavesByFromDate(updatedLeaves);
-        });
-    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee]);
+        // Only add to current page if we're on page 1
+        if (pagination.currentPage === 1) {
+            setLeaves(prevLeaves => {
+                const updatedLeaves = [...prevLeaves, newLeave];
+                // Return at most perPage items to maintain page size
+                return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
+            });
+            
+            // Update pagination metadata without triggering a reload
+            updatePaginationMetadata(totalRows + 1);
+        }
+        // We don't need to trigger a full reload - just update the counts
+    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee, pagination.currentPage, pagination.perPage, totalRows, updatePaginationMetadata]);
 
     const updateLeaveOptimized = useCallback((updatedLeave) => {
         const leaveMonth = dayjs(updatedLeave.from_date).format('YYYY-MM');
-
         const isSameMonth = leaveMonth === filters.selectedMonth;
         const isSameEmployee = !filters.employee || String(filters.employee) === String(updatedLeave.user_id);
+        
+        // Check if the leave exists in the current page's data
+        const leaveExistsInCurrentPage = leaves.some(leave => leave.id === updatedLeave.id);
+        
+        // If the updated leave doesn't match current filters but exists on this page,
+        // we should remove it from the current page
+        if ((!isSameMonth || !isSameEmployee) && leaveExistsInCurrentPage) {
+            setLeaves(prevLeaves => {
+                return prevLeaves.filter(leave => leave.id !== updatedLeave.id);
+            });
+            return;
+        }
+        
+        // If it's not on this page and doesn't match filters, do nothing
+        if (!leaveExistsInCurrentPage && (!isSameMonth || !isSameEmployee)) {
+            return;
+        }
+        
+        // If it's on this page and still matches filters, update it in-place
+        if (leaveExistsInCurrentPage) {
+            setLeaves(prevLeaves => {
+                const updatedLeaves = prevLeaves.map(leave =>
+                    leave.id === updatedLeave.id ? updatedLeave : leave
+                );
+                return sortLeavesByFromDate(updatedLeaves);
+            });
+        }
+        // No need to refresh the entire table
+    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee, leaves]);
 
-        if (!isSameMonth || !isSameEmployee) return;
-
-        setLeaves(prevLeaves => {
-            const updatedLeaves = prevLeaves.map(leave =>
-                leave.id === updatedLeave.id ? updatedLeave : leave
-            );
-            return sortLeavesByFromDate(updatedLeaves);
-        });
-    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee]);
 
 
+    // Intelligently fetch additional items if needed without full reload
+    const fetchAdditionalItemsIfNeeded = useCallback(async () => {
+        // Only fetch if we're on page 1 and don't have enough items
+        if (pagination.currentPage === 1 && leaves && leaves.length < pagination.perPage) {
+            // How many more items we need
+            const itemsNeeded = pagination.perPage - leaves.length;
+            if (itemsNeeded <= 0) return;
+            
+            console.log(`Fetching ${itemsNeeded} additional items to fill the page`);
+            
+            try {
+                const response = await axios.get(route('leaves.paginate'), {
+                    params: {
+                        page: 2, // Get from page 2
+                        perPage: itemsNeeded, // Only get what we need
+                        employee: filters.employee,
+                        month: filters.selectedMonth,
+                        status: filters.status !== 'all' ? filters.status : undefined,
+                        leave_type: filters.leaveType !== 'all' ? filters.leaveType : undefined,
+                        department: filters.department !== 'all' ? filters.department : undefined
+                    },
+                });
+                
+                if (response.status === 200 && response.data.leaves.data) {
+                    // Add these items to the current page
+                    setLeaves(prevLeaves => {
+                        const combinedLeaves = [...prevLeaves, ...response.data.leaves.data];
+                        return sortLeavesByFromDate(combinedLeaves);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching additional items:', error);
+            }
+        }
+    }, [pagination.currentPage, pagination.perPage, leaves, filters, sortLeavesByFromDate]);
 
 
     const deleteLeaveOptimized = useCallback((leaveId) => {
-        setLeaves(prevLeaves => {
-            return prevLeaves.filter(leave => leave.id !== leaveId);
-        });
-    }, []);
+        // Check if the leave exists in the current page's data
+        const leaveExistsInCurrentPage = leaves.some(leave => leave.id === leaveId);
+        
+        if (leaveExistsInCurrentPage) {
+            // Simply remove the item from the current page
+            setLeaves(prevLeaves => {
+                return prevLeaves.filter(leave => leave.id !== leaveId);
+            });
+            
+            // Update pagination metadata without triggering a reload
+            updatePaginationMetadata(totalRows - 1);
+            
+            // Check if we need to fetch additional items to fill the page
+            fetchAdditionalItemsIfNeeded();
+        }
+        // Don't refresh data if the item wasn't on this page
+    }, [leaves, totalRows, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
 
+   
+
+    
     useEffect(() => {
         if (canManageLeaves) {
+            // Only fetch data when page changes or filters change, not for every internal state update
             fetchLeavesData();
         }
-    }, [fetchLeavesStats,canManageLeaves]);
+    }, [fetchLeavesData, canManageLeaves, pagination.currentPage, filters.employee, filters.selectedMonth, filters.status, filters.leaveType, filters.department]);
 
     useEffect(() => {
         if (canManageLeaves) {
