@@ -16,7 +16,7 @@ class LeaveValidationService
             'id' => 'nullable|exists:leaves,id',
             'user_id' => 'required|exists:users,id',
             'leaveType' => 'required|exists:leave_settings,type',
-            'fromDate' => 'required|date|after_or_equal:today',
+            'fromDate' => 'required|date|before_or_equal:toDate',
             'toDate' => 'required|date|after_or_equal:fromDate',
             'daysCount' => 'required|integer|min:1',
             'leaveReason' => 'required|string|max:500',
