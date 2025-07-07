@@ -6,6 +6,8 @@ use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\LeaveSetting;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Exception;
 
 class LeaveOverlapService
 {
@@ -38,9 +40,13 @@ class LeaveOverlapService
         }
 
         return $overlapping->map(function ($leave) {
-            return $leave->from_date->equalTo($leave->to_date)
-                ? "\"{$leave->leave_type}\" leave already exists for: " . $leave->from_date->format('Y-m-d')
-                : "\"{$leave->leave_type}\" leave already exists from " . $leave->from_date->format('Y-m-d') . ' to ' . $leave->to_date->format('Y-m-d');
+            // Convert string dates to Carbon instances if they're not already
+            $fromDate = $leave->from_date instanceof Carbon ? $leave->from_date : new Carbon($leave->from_date);
+            $toDate = $leave->to_date instanceof Carbon ? $leave->to_date : new Carbon($leave->to_date);
+            
+            return $fromDate->equalTo($toDate)
+                ? "\"{$leave->leave_type}\" leave already exists for: " . $fromDate->format('Y-m-d')
+                : "\"{$leave->leave_type}\" leave already exists from " . $fromDate->format('Y-m-d') . ' to ' . $toDate->format('Y-m-d');
         })->toArray();
     }
 
@@ -66,9 +72,13 @@ class LeaveOverlapService
         }
 
         return $overlapping->map(function ($holiday) {
-            return $holiday->from_date->equalTo($holiday->to_date)
-                ? "\"{$holiday->title}\" holiday on this date: " . $holiday->from_date->format('Y-m-d')
-                : "\"{$holiday->title}\" holiday on this dates: " . $holiday->from_date->format('Y-m-d') . ' to ' . $holiday->to_date->format('Y-m-d');
+            // Convert string dates to Carbon instances if they're not already
+            $fromDate = $holiday->from_date instanceof Carbon ? $holiday->from_date : new Carbon($holiday->from_date);
+            $toDate = $holiday->to_date instanceof Carbon ? $holiday->to_date : new Carbon($holiday->to_date);
+            
+            return $fromDate->equalTo($toDate)
+                ? "\"{$holiday->title}\" holiday on this date: " . $fromDate->format('Y-m-d')
+                : "\"{$holiday->title}\" holiday on this dates: " . $fromDate->format('Y-m-d') . ' to ' . $toDate->format('Y-m-d');
         })->toArray();
     }
 
