@@ -1,92 +1,48 @@
-import DataTable from 'react-data-table-component';
+import React, { useEffect, useState } from 'react';
 import {
-    Box,
-    CircularProgress,
-    GlobalStyles,
-} from '@mui/material';
-import {
-    SelectItem,
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
     Select,
+    SelectItem,
     Input,
     Textarea,
-    Checkbox,
-    ButtonGroup,
     Button,
-    Link,
     Tooltip,
-    Avatar,
-    User
+    User,
+    Chip,
+    Pagination,
+    Spinner
 } from "@heroui/react";
-import {styled, useTheme} from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import {
+    PencilIcon,
+    TrashIcon,
+    EyeIcon,
+    DocumentTextIcon,
+    EnvelopeIcon,
+    LinkIcon as LinkIconHero,
+    EllipsisVerticalIcon,
+    ArrowsUpDownIcon
+} from '@heroicons/react/24/outline';
 import axios from 'axios';
-import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
-import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
-import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
-import EmergencyIcon from '@mui/icons-material/Error';
-import {toast} from "react-toastify";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination} from "@heroui/react";
+import { toast } from "react-toastify";
 import Loader from "@/Components/Loader.jsx";
-import {  usePage } from '@inertiajs/react';
-import LinkIcon from '@mui/icons-material/Link';
-import MailIcon from '@mui/icons-material/Mail';
-import SwapVertIcon from '@mui/icons-material/SwapVert';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { usePage } from '@inertiajs/react';
 
-
-const CustomDataTable = styled(DataTable)(({ theme }) => ({
-
-    '& .rdt_Table': {
-        backgroundColor: 'transparent',
-        '& .rdt_TableHead': {
-            '& .rdt_TableHeadRow': {
-                '& .hZUxNm': {
-                    'white-space': 'normal',
-                },
-                backgroundColor: 'transparent',
-                color: theme.palette.text.primary,
-            },
-            top: 0,
-            zIndex: 1, // Ensure header is above the scrollable body
-        },
-        '& .rdt_TableBody': {
-            overflowY: 'auto',
-            maxHeight: '52vh',
-            '&::-webkit-scrollbar': {
-                display: 'none',
-            },
-            '-ms-overflow-style': 'none',  // IE and Edge
-            'scrollbar-width': 'none',  // Firefox
-            '& .rdt_TableRow': {
-                minHeight: 'auto',
-                backgroundColor: 'transparent',
-                color: theme.palette.text.primary,
-                '& .rdt_TableCol': {
-                    backgroundColor: 'transparent',
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                    width: 'auto', // Ensure columns can grow to fit content
-                    whiteSpace: 'nowrap', // Prevent wrapping, adjust based on your needs
-                },
-            },
-            '& .rdt_TableRow:hover': {
-                backgroundColor: theme.palette.action.hover,
-            },
-        },
-    },
-
-
-}));
-
-const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openModal, setCurrentRow , search}) => {
+const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openModal, setCurrentRow, search }) => {
     const { auth } = usePage().props;
-    const theme = useTheme();
-
-    const [editingRow, setEditingRow] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [sortDescriptor, setSortDescriptor] = useState({
+        column: "received_date",
+        direction: "descending",
+    });
 
     const userIsAdmin = auth.roles.includes('Administrator');
     const userIsSe = auth.roles.includes('Supervision Engineer');
+    const itemsPerPage = 10;
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -101,22 +57,39 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
             case 'Sent':
                 return 'success';
             default:
-                return '';
+                return 'default';
         }
     };
+
+    const getStatusChip = (status, letterId) => {
+        return (
+            <Select
+                aria-label="Status"
+                selectedKeys={[status]}
+                onSelectionChange={(keys) => handleChange(letterId, 'status', Array.from(keys)[0])}
+                size="sm"
+                variant="flat"
+                color={getStatusColor(status)}
+                className="min-w-[120px]"
+            >
+                <SelectItem key="Open" value="Open">Open</SelectItem>
+                <SelectItem key="Processing" value="Processing">Processing</SelectItem>
+                <SelectItem key="Signed" value="Signed">Signed</SelectItem>
+                <SelectItem key="Sent" value="Sent">Sent</SelectItem>
+                <SelectItem key="Closed" value="Closed">Closed</SelectItem>
+            </Select>
+        );
+    };
+
     const highlightText = (text) => {
-        if (!search) return text;
-
-        // Split the search terms by spaces and create a regex pattern to match each term.
-        const searchTerms = search.split(' ').filter(Boolean); // Filters out empty strings
+        if (!search || !text) return text;
+        const searchTerms = search.split(' ').filter(Boolean);
         const regex = new RegExp(`(${searchTerms.join('|')})`, 'gi');
-
-        // Split the text into parts based on the search terms and highlight matching parts
         const parts = text.split(regex);
 
         return parts.map((part, index) =>
             searchTerms.some(term => part.toLowerCase() === term.toLowerCase()) ? (
-                <span key={index} style={{ backgroundColor: 'yellow' }}>{part}</span>
+                <span key={index} className="bg-yellow-200 dark:bg-yellow-600">{part}</span>
             ) : (
                 part
             )
@@ -124,329 +97,165 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
     };
 
     const columns = [
-        {
-            name: 'From',
-            selector: row => row.from,
-            sortable: true,
-            center: 'true',
-            width: '80px',
-            cell: row => highlightText(row.from),
-        },
-        {
-            name: 'Status',
-            selector: row => row.status,
-            sortable: true,
-            center: 'true',
-            width: '170px',
-            cell: row => (
-                <Select
-                    aria-label={'Status'}
-                    color={getStatusColor(row.status)}
-                    placeholder="Select Status"
-                    value={row.status}
-                    onChange={(e) => handleChange(row.id, 'status', e.target.value)}
-                    fullWidth
-                    selectedKeys={[row.status]}
-                    popoverProps={{
-                        classNames: {
-                            content: "bg-transparent backdrop-blur-lg border-inherit",
-                        },
-                    }}
-                >
-                    {['Open', 'Closed'].map(option => (
-                        <SelectItem key={option} value={row.status}>
-                            {option}
-                        </SelectItem>
-                    ))}
-                </Select>
-            ),
-        },
-        {
-            name: 'Received Date',
-            selector: row => row.received_date,
-            sortable: true,
-            center: 'true',
-            width: '160px',
-            cell: row => (
-                <Input
-                    variant={'underlined'}
-                    type="date"
-                    fullWidth
-                    value={row.received_date}
-                    onChange={(e) => handleChange(row.id, 'received_date', e.target.value)}
-                />
-            ),
-        },
-        {
-            name: 'Memo Number',
-            selector: row => row.memo_number,
-            sortable: true,
-            center: 'true',
-            width: '200px',
-            cell: row => (
-                <Link
-                    isExternal
-                    color={'foreground'}
-                    isBlock
-                    showAnchorIcon
-                    href={row.letter_link || `/letters/${row.memo_number}.pdf`}
-                    anchorIcon={<MailIcon />}
-                >
-                    {row.memo_number || 'N/A'}
-                </Link>
-            ),
-        },
-        {
-            name: 'Subject',
-            selector: row => row.subject,
-            sortable: true,
-            left: true,
-            width: '260px',
-            cell: row => (
-                <Tooltip
-                    content={row.subject}
-                    placement="top"
-                    showArrow={true}
-                    radius={'md'}
-                    size={'md'}
-                    classNames={{
-                        content: [
-                            'bg-transparent backdrop-blur-lg border border-gray-200',
-                            'max-w-[300px] text-sm',
-                        ]
-                    }}
-                >
-                    <Box sx={{
-                        whiteSpace: 'normal',
-                        wordWrap: 'break-word',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '100%',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                    }}>
-                        {highlightText(row.subject)}
-                    </Box>
-                </Tooltip>
-            ),
-        },
-        {
-            name: 'Action Taken',
-            selector: row => row.action_taken,
-            sortable: true,
-            left: true,
-            width: '250px',
-            cell: row => {
-                const [inputValue, setInputValue] = useState(row.action_taken || '');
-                const handleInputChange = (event) => {
-                    setInputValue(event.target.value);
-                };
-                const handleBlur = () => {
-                    handleChange(row.id,'action_taken', inputValue);
-                };
-
-                return (
-                    <Textarea
-                        variant="underlined"
-                        size={'sm'}
-                        radius={'sm'}
-                        maxRows={2}
-                        fullWidth
-                        value={inputValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                    />
-                )
-            },
-        },
-        {
-            name: 'Handling Link',
-            selector: row => row.handling_link,
-            sortable: true,
-            center: 'true',
-            width: '200px',
-            cell: row => (
-                <Link
-                    isExternal
-                    color={'primary'}
-                    isBlock
-                    showAnchorIcon
-                    href={row.handling_link || '#'}
-                    anchorIcon={<LinkIcon />}
-                >
-                    {row.handling_memo || 'N/A'}
-                </Link>
-            ),
-        },
-        {
-            name: 'Handling Status',
-            selector: row => row.handling_status,
-            sortable: true,
-            center: 'true',
-            width: '180px',
-            cell: row => (
-                <Select
-                    aria-label={'Handling Status'}
-                    color={getStatusColor(row.handling_status)}
-                    placeholder="Select Status"
-                    value={row.handling_status}
-                    onChange={(e) => handleChange(row.id, 'handling_status', e.target.value)}
-                    fullWidth
-                    selectedKeys={[row.handling_status]}
-                    popoverProps={{
-                        classNames: {
-                            content: "bg-transparent backdrop-blur-lg border-inherit",
-                        },
-                    }}
-                >
-                    {['Processing', 'Signed', 'Sent'].map(option => (
-                        <SelectItem key={option} value={row.handling_status}>
-                            {option}
-                        </SelectItem>
-                    ))}
-                </Select>
-            ),
-        },
-        {
-            name: 'Need Reply',
-            selector: row => row.need_reply,
-            center: 'true',
-            width: '80px',
-            cell: row => (
-                <Checkbox
-                    color={getStatusColor(row.status)}
-                    isSelected={row.need_reply}
-                    onChange={(e) => handleChange(row.id, 'need_reply', e.target.checked)}
-                />
-            ),
-        },
-        {
-            name: 'Replied Status',
-            selector: row => row.replied_status,
-            center: 'true',
-            width: '80px',
-            cell: row => (
-                <Checkbox
-                    color={getStatusColor(row.status)}
-                    isSelected={row.replied_status}
-                    onChange={(e) => handleChange(row.id, 'replied_status', e.target.checked)}
-                />
-            ),
-        },
-        {
-            name: 'Need Forward',
-            selector: row => row.need_forward,
-            center: 'true',
-            width: '80px',
-            cell: row => (
-                <Checkbox
-                    color={getStatusColor(row.status)}
-                    isSelected={row.need_forward}
-                    onChange={(e) => handleChange(row.id, 'need_forward', e.target.checked)}
-                />
-            ),
-        },
-        {
-            name: 'Forwarded Status',
-            selector: row => row.forwarded_status,
-            center: 'true',
-            width: '90px',
-            cell: row => (
-                <Checkbox
-                    color={getStatusColor(row.status)}
-                    isSelected={row.forwarded_status}
-                    onChange={(e) => handleChange(row.id, 'forwarded_status', e.target.checked)}
-                />
-            ),
-        },
-        {
-            name: 'Dealt By',
-            selector: row => row.dealt_by,
-            sortable: true,
-            center: 'true',
-            cell: row => (
-
-                <Select
-                    items={users}
-                    variant="underlined"
-                    aria-label={'Dealt By'}
-                    fullWidth
-                    value={row.dealt_by || 'na'}  // Set the value to 'na' if no user is assigned
-                    onChange={(e) => handleChange(row.id, 'dealt_by', e.target.value)}
-                    selectedKeys={[String(row.dealt_by)]}
-                    style={{
-                        minWidth: '260px',  // Optionally set a minimum width
-                    }}
-                    popoverProps={{
-                        classNames: {
-                            content: "bg-transparent backdrop-blur-lg border-inherit",
-                        },
-                        style: {
-                            whiteSpace: 'nowrap', // Ensure content wraps
-                            minWidth: 'fit-content',  // Optionally set a minimum width
-                        },
-                    }}
-                    placeholder="Select a user"
-                    renderValue={(selectedUsers) => {
-                        // Handle display of selected value(s)
-                        return selectedUsers.map((selectedUser) => (
-                            <div key={selectedUser.key} className="flex items-center gap-2 m-1">
-                                <User
-                                    style={{
-                                        whiteSpace: 'nowrap', // Ensure content wraps
-                                    }}
-                                    size="sm"
-                                    name={selectedUser.data.name}
-                                    description={selectedUser.data.designation.title}
-                                    avatarProps={{
-                                        radius: "sm",
-                                        size: "sm",
-                                        src: selectedUser.data.profile_image
-                                    }}
-                                />
-                            </div>
-                        ));
-                    }}
-                >
-                    {(user) => (
-                        <SelectItem key={user.id} textValue={user.id}>
-                            <User
-                                style={{
-                                    whiteSpace: 'nowrap', // Ensure content wraps
-                                }}
-                                size="sm"
-                                name={user.name}
-                                description={user.designation.title}
-                                avatarProps={{
-                                    radius: "sm",
-                                    size: "sm",
-                                    src: user.profile_image
-                                }}
-                            />
-                        </SelectItem>
-                    )}
-                </Select>
-
-            ),
-        },
-        {
-            name: 'Actions',
-            center: 'true',
-            width: '150px',
-            cell: row => (
-                <div className="flex gap-4 items-center">
-                    <Button variant={'bordered'} isIconOnly color="warning" aria-label="Edit" onClick={() => openModal('editLetter', row)}>
-                        <EditIcon/>
-                    </Button>
-                    <Button variant={'bordered'} isIconOnly color="danger" aria-label="Delete" onClick={() => handleDelete(row.id)}>
-                        <DeleteIcon/>
-                    </Button>
-                </div>
-            ),
-        },
+        { name: "From", uid: "from", sortable: true },
+        { name: "Status", uid: "status", sortable: true },
+        { name: "Subject", uid: "subject", sortable: true },
+        { name: "Action Taken", uid: "action_taken", sortable: false },
+        { name: "Assigned To", uid: "assigned_to", sortable: true },
+        { name: "Date", uid: "received_date", sortable: true },
+        { name: "Actions", uid: "actions" }
     ];
 
+    const renderCell = (item, columnKey) => {
+        switch (columnKey) {
+            case "from":
+                return (
+                    <span className="text-sm">
+                        {highlightText(item.from)}
+                    </span>
+                );
+            case "status":
+                return getStatusChip(item.status, item.id);
+            case "subject":
+                return (
+                    <Tooltip content={item.subject} placement="top">
+                        <div className="max-w-[200px] truncate text-sm">
+                            {highlightText(item.subject)}
+                        </div>
+                    </Tooltip>
+                );
+            case "action_taken":
+                return (
+                    <Textarea
+                        variant="flat"
+                        size="sm"
+                        value={item.action_taken || ''}
+                        onValueChange={(value) => handleChange(item.id, 'action_taken', value)}
+                        minRows={1}
+                        maxRows={3}
+                        className="min-w-[200px]"
+                        placeholder="Enter action taken..."
+                    />
+                );
+            case "assigned_to":
+                const assignedUser = users.find(user => user.id === item.assigned_to);
+                return (
+                    <Select
+                        aria-label="Assigned To"
+                        selectedKeys={item.assigned_to ? [item.assigned_to.toString()] : []}
+                        onSelectionChange={(keys) => handleChange(item.id, 'assigned_to', Array.from(keys)[0])}
+                        size="sm"
+                        variant="flat"
+                        className="min-w-[140px]"
+                        placeholder="Select user"
+                        renderValue={(items) => {
+                            return items.map((item) => {
+                                const user = users.find(u => u.id.toString() === item.key);
+                                return user ? (
+                                    <User
+                                        key={user.id}
+                                        name={user.name}
+                                        avatarProps={{
+                                            src: user.profile_photo_url,
+                                            size: "sm"
+                                        }}
+                                    />
+                                ) : null;
+                            });
+                        }}
+                    >
+                        {users.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                                <User
+                                    name={user.name}
+                                    avatarProps={{
+                                        src: user.profile_photo_url,
+                                        size: "sm"
+                                    }}
+                                />
+                            </SelectItem>
+                        ))}
+                    </Select>
+                );
+            case "received_date":
+                return (
+                    <span className="text-sm">
+                        {item.received_date ? new Date(item.received_date).toLocaleDateString() : 'N/A'}
+                    </span>
+                );
+            case "actions":
+                return (
+                    <div className="flex items-center gap-2">
+                        <Tooltip content="View Details">
+                            <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                onPress={() => {
+                                    setCurrentRow(item);
+                                    openModal('view_letter');
+                                }}
+                            >
+                                <EyeIcon className="w-4 h-4" />
+                            </Button>
+                        </Tooltip>
+                        
+                        {(userIsAdmin || userIsSe) && (
+                            <>
+                                <Tooltip content="Edit Letter">
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        variant="light"
+                                        onPress={() => {
+                                            setCurrentRow(item);
+                                            openModal('edit_letter');
+                                        }}
+                                    >
+                                        <PencilIcon className="w-4 h-4" />
+                                    </Button>
+                                </Tooltip>
+                                
+                                <Tooltip content="Delete Letter" color="danger">
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        variant="light"
+                                        color="danger"
+                                        onPress={() => handleClickOpen(item.id, 'delete_letter')}
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </Button>
+                                </Tooltip>
+                            </>
+                        )}
+                    </div>
+                );
+            default:
+                return item[columnKey];
+        }
+    };
+
+    // Sort data
+    const sortedItems = React.useMemo(() => {
+        return [...allData].sort((a, b) => {
+            const first = a[sortDescriptor.column];
+            const second = b[sortDescriptor.column];
+            const cmp = first < second ? -1 : first > second ? 1 : 0;
+
+            return sortDescriptor.direction === "descending" ? -cmp : cmp;
+        });
+    }, [allData, sortDescriptor]);
+
+    // Paginate data
+    const items = React.useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        return sortedItems.slice(start, end);
+    }, [currentPage, sortedItems]);
+
+    const pages = Math.ceil(sortedItems.length / itemsPerPage);
 
     const handleChange = async (letterId, key, value) => {
         try {
@@ -455,7 +264,6 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                 [key]: value,
             });
 
-
             if (response.status === 200) {
                 setData(prevLetters =>
                     prevLetters.map(letter =>
@@ -463,68 +271,77 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
                     )
                 );
 
-                toast.success(...(response.data.messages || `Letter updated successfully`), {
+                toast.success(response.data.messages || 'Letter updated successfully', {
                     icon: '🟢',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
                 });
             } else {
-                toast.error(response.data.error || `Failed to update letter ${[key]}.`, {
+                toast.error(response.data.error || `Failed to update letter ${key}.`, {
                     icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
                 });
             }
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
                 icon: '🔴',
-                style: {
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    background: theme.glassCard.background,
-                    border: theme.glassCard.border,
-                    color: theme.palette.text.primary,
-                }
             });
         }
     };
 
-
-
-
-
     return (
-        <div>
-            {loading && <Loader/>}
-            <GlobalStyles
-                styles={{
-                    '& .cgTKyH': {
-                        backgroundColor: 'transparent !important',
-                        color: theme.palette.text.primary
-                    },
+        <div className="w-full">
+            {loading && <Loader />}
+            <Table
+                aria-label="Letters table"
+                isHeaderSticky
+                sortDescriptor={sortDescriptor}
+                onSortChange={setSortDescriptor}
+                classNames={{
+                    wrapper: "glass-table max-h-[600px]",
+                    th: "bg-transparent",
+                    td: "group-data-[hover=true]:bg-default-50",
                 }}
-            />
-            <CustomDataTable
-                columns={columns}
-                data={allData}
-                defaultSortField="received_date"
-                highlightOnHover
-                responsive
-                dense
-                sortIcon={<KeyboardArrowDownIcon />}
-                keyField="id"
-
-            />
-
+                bottomContent={
+                    pages > 1 ? (
+                        <div className="flex w-full justify-center">
+                            <Pagination
+                                isCompact
+                                showControls
+                                showShadow
+                                color="primary"
+                                page={currentPage}
+                                total={pages}
+                                onChange={setCurrentPage}
+                            />
+                        </div>
+                    ) : null
+                }
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn
+                            key={column.uid}
+                            align={column.uid === "actions" ? "center" : "start"}
+                            allowsSorting={column.sortable}
+                        >
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody
+                    items={items}
+                    isLoading={loading}
+                    loadingContent={<Spinner label="Loading..." />}
+                    emptyContent="No letters found"
+                >
+                    {(item) => (
+                        <TableRow key={item.id}>
+                            {(columnKey) => (
+                                <TableCell>{renderCell(item, columnKey)}</TableCell>
+                            )}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
         </div>
-
     );
 };
 

@@ -18,7 +18,17 @@ import {
     UserGroupIcon,
     ShieldCheckIcon,
     DocumentChartBarIcon,
-    Cog8ToothIcon
+    Cog8ToothIcon,
+    ShoppingBagIcon,
+    CreditCardIcon,
+    UserIcon,
+    ShoppingCartIcon,
+    ArchiveBoxIcon,
+    AcademicCapIcon,
+    TruckIcon,
+    TicketIcon,
+    BeakerIcon,
+    ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 import { Squares2X2Icon } from '@heroicons/react/24/outline';
 
@@ -87,6 +97,194 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Manage user accounts and access control'
         });
     }
+    
+    // HR Module Settings
+    if (permissions.includes('performance-templates.view')) {
+        settings.push({
+            name: 'Performance Review Configuration', 
+            icon: <ChartBarIcon className="w-5 h-5" />, 
+            route: 'hr.performance.templates.index',
+            category: 'organization',
+            priority: 7,
+            description: 'Manage performance review templates and evaluation criteria'
+        });
+    }
+    if (permissions.includes('training-categories.view')) {
+        settings.push({
+            name: 'Training Program Configuration', 
+            icon: <AcademicCapIcon className="w-5 h-5" />, 
+            route: 'hr.training.categories.index',
+            category: 'organization',
+            priority: 8,
+            description: 'Configure training categories and learning programs'
+        });
+    }
+    if (permissions.includes('job-hiring-stages.view')) {
+        settings.push({
+            name: 'Recruitment Pipeline Configuration', 
+            icon: <UserIcon className="w-5 h-5" />, 
+            route: 'hr.recruitment.stages.index',
+            category: 'organization',
+            priority: 9,
+            description: 'Configure hiring stages and recruitment workflow'
+        });
+    }
+    // 4. CRM Settings
+    if (permissions.includes('crm.settings')) {
+        settings.push({
+            name: 'Customer Relationship Management', 
+            icon: <UserIcon className="w-5 h-5" />, 
+            route: 'admin.settings.crm',
+            category: 'business-process',
+            priority: 10,
+            description: 'Configure customer management and sales pipeline settings'
+        });
+    }
+
+    // 5. Financial Settings
+    if (permissions.includes('fms.settings')) {
+        settings.push({
+            name: 'Financial Management System', 
+            icon: <CurrencyDollarIcon className="w-5 h-5" />, 
+            route: 'admin.settings.finance',
+            category: 'business-process',
+            priority: 11,
+            description: 'Configure financial accounts, categories, and reporting'
+        });
+    }
+
+    // 6. POS Settings
+    if (permissions.includes('pos.settings')) {
+        settings.push({
+            name: 'Point of Sale Configuration', 
+            icon: <ShoppingCartIcon className="w-5 h-5" />, 
+            route: 'admin.settings.pos',
+            category: 'business-process',
+            priority: 12,
+            description: 'Configure registers, receipts, and payment methods'
+        });
+    }
+
+    // 7. Inventory Settings
+    if (permissions.includes('ims.settings')) {
+        settings.push({
+            name: 'Inventory Management System', 
+            icon: <ArchiveBoxIcon className="w-5 h-5" />, 
+            route: 'admin.settings.inventory',
+            category: 'business-process',
+            priority: 13,
+            description: 'Configure inventory categories, locations, and units'
+        });
+    }
+
+    // 8. Learning Settings
+    if (permissions.includes('lms.settings')) {
+        settings.push({
+            name: 'Learning Management System', 
+            icon: <AcademicCapIcon className="w-5 h-5" />, 
+            route: 'admin.settings.learning',
+            category: 'business-process',
+            priority: 14,
+            description: 'Configure course categories, assessments, and certificates'
+        });
+    }
+
+    // 9. Supply Chain Settings
+    if (permissions.includes('scm.settings')) {
+        settings.push({
+            name: 'Supply Chain Management', 
+            icon: <TruckIcon className="w-5 h-5" />, 
+            route: 'admin.settings.supply-chain',
+            category: 'business-process',
+            priority: 15,
+            description: 'Configure supplier categories, purchase workflows, and logistics'
+        });
+    }
+
+    // 10. Sales Settings
+    if (permissions.includes('sales.settings')) {
+        settings.push({
+            name: 'Sales & Retail Configuration', 
+            icon: <ShoppingBagIcon className="w-5 h-5" />, 
+            route: 'admin.settings.sales',
+            category: 'business-process',
+            priority: 16,
+            description: 'Configure sales channels, quotations, and order processing'
+        });
+    }
+
+    // 11. Helpdesk Settings
+    if (permissions.includes('helpdesk.settings')) {
+        settings.push({
+            name: 'Helpdesk Configuration', 
+            icon: <TicketIcon className="w-5 h-5" />, 
+            route: 'admin.settings.helpdesk',
+            category: 'services',
+            priority: 17,
+            description: 'Configure ticket categories, SLAs, and support workflows'
+        });
+    }
+
+    // 12. Asset Management Settings
+    if (permissions.includes('assets.settings')) {
+        settings.push({
+            name: 'Asset Management Configuration', 
+            icon: <ComputerDesktopIcon className="w-5 h-5" />, 
+            route: 'admin.settings.assets',
+            category: 'services',
+            priority: 18,
+            description: 'Configure asset categories, depreciation, and maintenance schedules'
+        });
+    }
+
+    // 13. Procurement Settings
+    if (permissions.includes('procurement.settings')) {
+        settings.push({
+            name: 'Procurement Management', 
+            icon: <ShoppingBagIcon className="w-5 h-5" />, 
+            route: 'admin.settings.procurement',
+            category: 'business-process',
+            priority: 19,
+            description: 'Configure procurement policies, approval workflows, and vendor ratings'
+        });
+    }
+
+    // 14. Compliance Settings
+    if (permissions.includes('compliance.settings')) {
+        settings.push({
+            name: 'Compliance Management System', 
+            icon: <ShieldCheckIcon className="w-5 h-5" />, 
+            route: 'admin.settings.compliance',
+            category: 'security',
+            priority: 20,
+            description: 'Configure compliance documents, audit workflows, and reporting'
+        });
+    }
+
+    // 15. Quality Management Settings
+    if (permissions.includes('quality.settings')) {
+        settings.push({
+            name: 'Quality Management System', 
+            icon: <BeakerIcon className="w-5 h-5" />, 
+            route: 'admin.settings.quality',
+            category: 'business-process',
+            priority: 21,
+            description: 'Configure inspection workflows, quality standards, and reporting'
+        });
+    }
+
+    // 16. Analytics Settings
+    if (permissions.includes('analytics.settings')) {
+        settings.push({
+            name: 'Analytics & Reporting System', 
+            icon: <ChartBarIcon className="w-5 h-5" />, 
+            route: 'admin.settings.analytics',
+            category: 'system-administration',
+            priority: 22,
+            description: 'Configure KPIs, dashboards, and data sources'
+        });
+    }
+
     // if (permissions.includes('audit.view')) {
     //     settings.push({
     //         name: 'Security Audit & Compliance', 

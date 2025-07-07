@@ -19,10 +19,10 @@ class ComprehensiveRolePermissionSeeder extends Seeder
 
         // Create permissions for all modules
         $this->createPermissions();
-        
+
         // Create roles with hierarchy
         $this->createRoles();
-        
+
         // Assign permissions to roles
         $this->assignPermissionsToRoles();
 
@@ -114,6 +114,85 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'reports.create' => 'Create reports',
                 'reports.update' => 'Update reports',
                 'reports.delete' => 'Delete reports'
+            ],
+
+            // HR Performance Management
+            'performance' => [
+                'performance-reviews.view' => 'View performance reviews',
+                'performance-reviews.create' => 'Create performance reviews',
+                'performance-reviews.update' => 'Update performance reviews',
+                'performance-reviews.delete' => 'Delete performance reviews',
+                'performance-reviews.approve' => 'Approve/reject performance reviews',
+                'performance-reviews.own.view' => 'View own performance reviews',
+                'performance-reviews.own.create' => 'Create own performance reviews',
+                'performance-reviews.own.update' => 'Update own performance reviews',
+                'performance-templates.view' => 'View performance review templates',
+                'performance-templates.create' => 'Create performance review templates',
+                'performance-templates.update' => 'Update performance review templates',
+                'performance-templates.delete' => 'Delete performance review templates',
+                'performance-analytics.view' => 'View performance analytics',
+            ],
+
+            // HR Training Management
+            'training' => [
+                'training-sessions.view' => 'View training sessions',
+                'training-sessions.create' => 'Create training sessions',
+                'training-sessions.update' => 'Update training sessions',
+                'training-sessions.delete' => 'Delete training sessions',
+                'training-categories.view' => 'View training categories',
+                'training-categories.create' => 'Create training categories',
+                'training-categories.update' => 'Update training categories',
+                'training-categories.delete' => 'Delete training categories',
+                'training-materials.view' => 'View training materials',
+                'training-materials.create' => 'Create training materials',
+                'training-materials.update' => 'Update training materials',
+                'training-materials.delete' => 'Delete training materials',
+                'training-enrollments.view' => 'View training enrollments',
+                'training-enrollments.create' => 'Create training enrollments',
+                'training-enrollments.update' => 'Update training enrollments',
+                'training-enrollments.delete' => 'Delete training enrollments',
+                'training-assignments.view' => 'View training assignments',
+                'training-assignments.create' => 'Create training assignments',
+                'training-assignments.update' => 'Update training assignments',
+                'training-assignments.delete' => 'Delete training assignments',
+                'training-assignment-submissions.view' => 'View training assignment submissions',
+                'training-assignment-submissions.create' => 'Create training assignment submissions',
+                'training-assignment-submissions.update' => 'Update training assignment submissions',
+                'training-assignment-submissions.grade' => 'Grade training assignment submissions',
+                'training-feedback.view' => 'View training feedback',
+                'training-feedback.create' => 'Create training feedback',
+                'training-feedback.own.view' => 'View own training enrollments',
+                'training-feedback.own.create' => 'Create own training feedback',
+                'training-analytics.view' => 'View training analytics',
+            ],
+
+            // HR Recruitment Management
+            'recruitment' => [
+                'jobs.view' => 'View job postings',
+                'jobs.create' => 'Create job postings',
+                'jobs.update' => 'Update job postings',
+                'jobs.delete' => 'Delete job postings',
+                'job-applications.view' => 'View job applications',
+                'job-applications.create' => 'Create job applications',
+                'job-applications.update' => 'Update job applications',
+                'job-applications.delete' => 'Delete job applications',
+                'job-hiring-stages.view' => 'View job hiring stages',
+                'job-hiring-stages.create' => 'Create job hiring stages',
+                'job-hiring-stages.update' => 'Update job hiring stages',
+                'job-hiring-stages.delete' => 'Delete job hiring stages',
+                'job-interviews.view' => 'View job interviews',
+                'job-interviews.create' => 'Create job interviews',
+                'job-interviews.update' => 'Update job interviews',
+                'job-interviews.delete' => 'Delete job interviews',
+                'job-interview-feedback.view' => 'View job interview feedback',
+                'job-interview-feedback.create' => 'Create job interview feedback',
+                'job-interview-feedback.update' => 'Update job interview feedback',
+                'job-offers.view' => 'View job offers',
+                'job-offers.create' => 'Create job offers',
+                'job-offers.update' => 'Update job offers',
+                'job-offers.delete' => 'Delete job offers',
+                'job-offers.approve' => 'Approve job offers',
+                'recruitment-analytics.view' => 'View recruitment analytics',
             ],
 
             // Document & Knowledge Management
@@ -212,7 +291,92 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'audit.export' => 'Export audit data',
                 'backup.create' => 'Create system backups',
                 'backup.restore' => 'Restore system backups'
-            ]
+            ],
+
+            // Compliance Management
+            'compliance' => [
+                'compliance.view' => 'Access compliance module',
+                'compliance.dashboard.view' => 'View compliance dashboard',
+                'compliance.documents.view' => 'View compliance documents',
+                'compliance.documents.create' => 'Create compliance documents',
+                'compliance.documents.update' => 'Update compliance documents',
+                'compliance.documents.delete' => 'Delete compliance documents',
+                'compliance.audits.view' => 'View compliance audits',
+                'compliance.audits.create' => 'Create compliance audits',
+                'compliance.audits.update' => 'Update compliance audits',
+                'compliance.audits.delete' => 'Delete compliance audits',
+                'compliance.requirements.view' => 'View compliance requirements',
+                'compliance.requirements.create' => 'Create compliance requirements',
+                'compliance.requirements.update' => 'Update compliance requirements',
+                'compliance.requirements.delete' => 'Delete compliance requirements',
+                'compliance.settings' => 'Manage compliance settings'
+            ],
+
+            // Quality Management
+            'quality' => [
+                'quality.view' => 'Access quality control module',
+                'quality.dashboard.view' => 'View quality dashboard',
+                'quality.inspections.view' => 'View quality inspections',
+                'quality.inspections.create' => 'Create quality inspections',
+                'quality.inspections.update' => 'Update quality inspections',
+                'quality.inspections.delete' => 'Delete quality inspections',
+                'quality.ncr.view' => 'View non-conformance reports',
+                'quality.ncr.create' => 'Create non-conformance reports',
+                'quality.ncr.update' => 'Update non-conformance reports',
+                'quality.ncr.delete' => 'Delete non-conformance reports',
+                'quality.calibrations.view' => 'View equipment calibrations',
+                'quality.calibrations.create' => 'Create equipment calibrations',
+                'quality.calibrations.update' => 'Update equipment calibrations',
+                'quality.calibrations.delete' => 'Delete equipment calibrations',
+                'quality.settings' => 'Manage quality control settings'
+            ],
+
+            // Analytics & Business Intelligence
+            'analytics' => [
+                'analytics.view' => 'Access analytics module',
+                'analytics.reports.view' => 'View analytics reports',
+                'analytics.reports.create' => 'Create analytics reports',
+                'analytics.reports.update' => 'Update analytics reports',
+                'analytics.reports.delete' => 'Delete analytics reports',
+                'analytics.reports.schedule' => 'Schedule analytics reports',
+                'analytics.dashboards.view' => 'View analytics dashboards',
+                'analytics.dashboards.create' => 'Create analytics dashboards',
+                'analytics.dashboards.update' => 'Update analytics dashboards',
+                'analytics.dashboards.delete' => 'Delete analytics dashboards',
+                'analytics.kpi.view' => 'View key performance indicators',
+                'analytics.kpi.create' => 'Create key performance indicators',
+                'analytics.kpi.update' => 'Update key performance indicators',
+                'analytics.kpi.delete' => 'Delete key performance indicators',
+                'analytics.kpi.log' => 'Log KPI values',
+                'analytics.settings' => 'Manage analytics settings'
+            ],
+
+            // Project Management (Extended)
+            'project-management' => [
+                'project-management.view' => 'Access project management module',
+                'project-management.dashboard.view' => 'View project management dashboard',
+                'project-management.projects.view' => 'View projects',
+                'project-management.projects.create' => 'Create projects',
+                'project-management.projects.update' => 'Update projects',
+                'project-management.projects.delete' => 'Delete projects',
+                'project-management.milestones.view' => 'View project milestones',
+                'project-management.milestones.create' => 'Create project milestones',
+                'project-management.milestones.update' => 'Update project milestones',
+                'project-management.milestones.delete' => 'Delete project milestones',
+                'project-management.tasks.view' => 'View project tasks',
+                'project-management.tasks.create' => 'Create project tasks',
+                'project-management.tasks.update' => 'Update project tasks',
+                'project-management.tasks.delete' => 'Delete project tasks',
+                'project-management.tasks.assign' => 'Assign project tasks',
+                'project-management.resources.view' => 'View project resources',
+                'project-management.resources.assign' => 'Assign project resources',
+                'project-management.issues.view' => 'View project issues',
+                'project-management.issues.create' => 'Create project issues',
+                'project-management.issues.update' => 'Update project issues',
+                'project-management.issues.delete' => 'Delete project issues',
+                'project-management.reports.view' => 'View project reports',
+                'project-management.settings' => 'Manage project settings'
+            ],
         ];
 
         foreach ($modules as $module => $permissions) {
@@ -328,12 +492,17 @@ class ComprehensiveRolePermissionSeeder extends Seeder
 
         // HR Manager - HR and employee management
         $hrManager = Role::findByName('HR Manager');
-        $hrPermissions = Permission::whereIn('module', ['core', 'self-service', 'hrm', 'dms'])
+        $hrPermissions = Permission::whereIn('module', ['core', 'self-service', 'hrm', 'dms', 'performance', 'training', 'recruitment'])
             ->orWhere('name', 'like', 'users.%')
             ->orWhere('name', 'like', 'settings.%')
             ->orWhere('name', 'like', 'company.%')
             ->orWhere('name', 'like', 'attendance.%')
             ->orWhere('name', 'like', 'leave-%')
+            ->orWhere('name', 'like', 'performance-%')
+            ->orWhere('name', 'like', 'training-%')
+            ->orWhere('name', 'like', 'jobs.%')
+            ->orWhere('name', 'like', 'job-%')
+            ->orWhere('name', 'like', 'recruitment-%')
             ->get();
         $hrManager->givePermissionTo($hrPermissions);
 
@@ -350,10 +519,19 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         $deptManager = Role::findByName('Department Manager');
         $deptPermissions = Permission::whereIn('module', ['core', 'self-service', 'ppm'])
             ->orWhereIn('name', [
-                'employees.view', 'employees.update',
-                'attendance.view', 'attendance.create',
-                'leaves.view', 'leaves.approve',
-                'departments.view', 'designations.view'
+                'employees.view',
+                'employees.update',
+                'attendance.view',
+                'attendance.create',
+                'leaves.view',
+                'leaves.approve',
+                'departments.view',
+                'designations.view',
+                'performance-reviews.view',
+                'performance-reviews.create',
+                'performance-reviews.update',
+                'performance-reviews.approve',
+                'performance-analytics.view'
             ])
             ->get();
         $deptManager->givePermissionTo($deptPermissions);
@@ -365,8 +543,21 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'employees.view',
                 'attendance.view',
                 'leaves.view',
-                'daily-works.view', 'daily-works.create', 'daily-works.update',
-                'tasks.view', 'tasks.create', 'tasks.update', 'tasks.assign'
+                'daily-works.view',
+                'daily-works.create',
+                'daily-works.update',
+                'tasks.view',
+                'tasks.create',
+                'tasks.update',
+                'tasks.assign',
+                'performance-reviews.view',
+                'performance-reviews.create',
+                'performance-reviews.update',
+                'training-sessions.view',
+                'training-enrollments.view',
+                'training-enrollments.create',
+                'training-assignment-submissions.view',
+                'training-assignment-submissions.grade'
             ])
             ->get();
         $teamLead->givePermissionTo($teamPermissions);
@@ -375,8 +566,19 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         $seniorEmployee = Role::findByName('Senior Employee');
         $seniorPermissions = Permission::whereIn('module', ['core', 'self-service'])
             ->orWhereIn('name', [
-                'daily-works.view', 'daily-works.create', 'daily-works.update',
-                'tasks.view', 'tasks.create', 'tasks.update'
+                'daily-works.view',
+                'daily-works.create',
+                'daily-works.update',
+                'tasks.view',
+                'tasks.create',
+                'tasks.update',
+                'performance-reviews.own.view',
+                'performance-reviews.own.create',
+                'performance-reviews.own.update',
+                'training-feedback.own.view',
+                'training-feedback.own.create',
+                'training-assignment-submissions.create',
+                'training-assignment-submissions.update'
             ])
             ->get();
         $seniorEmployee->givePermissionTo($seniorPermissions);
@@ -385,8 +587,13 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         $employee = Role::findByName('Employee');
         $employeePermissions = Permission::whereIn('module', ['core', 'self-service'])
             ->orWhereIn('name', [
-                'daily-works.view', 'daily-works.create',
-                'tasks.view'
+                'daily-works.view',
+                'daily-works.create',
+                'tasks.view',
+                'performance-reviews.own.view',
+                'training-feedback.own.view',
+                'training-feedback.own.create',
+                'training-assignment-submissions.create'
             ])
             ->get();
         $employee->givePermissionTo($employeePermissions);
@@ -395,23 +602,29 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         $contractor = Role::findByName('Contractor');
         $contractorPermissions = Permission::whereIn('name', [
             'dashboard.view',
-            'attendance.own.view', 'attendance.own.punch',
-            'profile.own.view', 'profile.own.update', 'profile.password.change',
-            'daily-works.view', 'daily-works.create',
+            'attendance.own.view',
+            'attendance.own.punch',
+            'profile.own.view',
+            'profile.own.update',
+            'profile.password.change',
+            'daily-works.view',
+            'daily-works.create',
             'tasks.view'
         ])
-        ->get();
+            ->get();
         $contractor->givePermissionTo($contractorPermissions);
 
         // Intern - Minimal access
         $intern = Role::findByName('Intern');
         $internPermissions = Permission::whereIn('name', [
             'dashboard.view',
-            'attendance.own.view', 'attendance.own.punch',
-            'profile.own.view', 'profile.password.change',
+            'attendance.own.view',
+            'attendance.own.punch',
+            'profile.own.view',
+            'profile.password.change',
             'tasks.view'
         ])
-        ->get();
+            ->get();
         $intern->givePermissionTo($internPermissions);
 
         $this->command->info('✅ Permissions assigned to all roles');

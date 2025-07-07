@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\CRMController;
+use App\Http\Controllers\FMSController;
+use App\Http\Controllers\POSController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailyWorkSummaryController;
 use App\Http\Controllers\DepartmentController;
@@ -302,10 +305,95 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
     Route::post('/admin/errors/{errorId}/resolve', [SystemMonitoringController::class, 'resolveError'])->name('admin.errors.resolve');
     Route::get('/admin/system-report', [SystemMonitoringController::class, 'exportReport'])->name('admin.system-report');
     Route::get('/admin/optimization-report', [SystemMonitoringController::class, 'getOptimizationReport'])->name('admin.optimization-report');
+    // CRM Module routes
+    Route::middleware(['permission:view_crm'])->prefix('crm')->group(function () {
+        Route::get('/', [App\Http\Controllers\CRMController::class, 'index'])->name('crm.index');
+        Route::get('/leads', [App\Http\Controllers\CRMController::class, 'leads'])->name('crm.leads');
+        Route::post('/leads', [App\Http\Controllers\CRMController::class, 'storeLeads'])->name('crm.leads.store')->middleware('permission:create_leads');
+        Route::get('/customers', [App\Http\Controllers\CRMController::class, 'customers'])->name('crm.customers')->middleware('permission:view_customers');
+        Route::get('/opportunities', [App\Http\Controllers\CRMController::class, 'opportunities'])->name('crm.opportunities')->middleware('permission:view_opportunities');
+        Route::get('/pipeline', [App\Http\Controllers\CRMController::class, 'pipeline'])->name('crm.pipeline')->middleware('permission:view_sales_pipeline');
+        Route::get('/reports', [App\Http\Controllers\CRMController::class, 'reports'])->name('crm.reports')->middleware('permission:view_crm_reports');
+        Route::get('/settings', [App\Http\Controllers\CRMController::class, 'settings'])->name('crm.settings')->middleware('permission:manage_crm_settings');
+    });
+
+    // FMS Module routes
+    Route::middleware(['permission:financial-reports.view'])->prefix('fms')->group(function () {
+        Route::get('/', [FMSController::class, 'index'])->name('fms.index');
+
+        // Accounts Payable
+        Route::get('/accounts-payable', [FMSController::class, 'accountsPayable'])->name('fms.accounts-payable')->middleware('permission:accounts-payable.view');
+        Route::post('/accounts-payable', [FMSController::class, 'storeAccountsPayable'])->name('fms.accounts-payable.store')->middleware('permission:accounts-payable.manage');
+
+        // Accounts Receivable
+        Route::get('/accounts-receivable', [FMSController::class, 'accountsReceivable'])->name('fms.accounts-receivable')->middleware('permission:accounts-receivable.view');
+        Route::post('/accounts-receivable', [FMSController::class, 'storeAccountsReceivable'])->name('fms.accounts-receivable.store')->middleware('permission:accounts-receivable.manage');
+
+        // General Ledger
+        Route::get('/general-ledger', [FMSController::class, 'generalLedger'])->name('fms.general-ledger')->middleware('permission:ledger.view');
+        Route::post('/general-ledger', [FMSController::class, 'storeLedgerEntry'])->name('fms.general-ledger.store')->middleware('permission:ledger.manage');
+
+        // Reports
+        Route::get('/reports', [FMSController::class, 'reports'])->name('fms.reports')->middleware('permission:financial-reports.view');
+        Route::post('/reports/generate', [FMSController::class, 'generateReport'])->name('fms.reports.generate')->middleware('permission:financial-reports.create');
+
+        // Budgets
+        Route::get('/budgets', [FMSController::class, 'budgets'])->name('fms.budgets')->middleware('permission:ledger.view');
+        Route::post('/budgets', [FMSController::class, 'storeBudget'])->name('fms.budgets.store')->middleware('permission:ledger.manage');
+
+        // Expenses
+        Route::get('/expenses', [FMSController::class, 'expenses'])->name('fms.expenses')->middleware('permission:ledger.view');
+        Route::post('/expenses', [FMSController::class, 'storeExpense'])->name('fms.expenses.store')->middleware('permission:ledger.manage');
+
+        // Invoices
+        Route::get('/invoices', [FMSController::class, 'invoices'])->name('fms.invoices')->middleware('permission:financial-reports.view');
+        Route::post('/invoices', [FMSController::class, 'storeInvoice'])->name('fms.invoices.store')->middleware('permission:financial-reports.create');
+
+        // Settings
+        Route::get('/settings', [FMSController::class, 'settings'])->name('fms.settings')->middleware('permission:ledger.manage');
+        Route::put('/settings', [FMSController::class, 'updateSettings'])->name('fms.settings.update')->middleware('permission:ledger.manage');
+    });
+
+    // POS Module routes
+    Route::middleware(['permission:retail.view'])->prefix('pos')->group(function () {
+        Route::get('/', [POSController::class, 'index'])->name('pos.index');
+
+        // POS Terminal
+        Route::get('/terminal', [POSController::class, 'terminal'])->name('pos.terminal')->middleware('permission:pos.access');
+
+        // Sales Management
+        Route::get('/sales', [POSController::class, 'sales'])->name('pos.sales')->middleware('permission:retail.view');
+        Route::post('/sales/process', [POSController::class, 'processSale'])->name('pos.sales.process')->middleware('permission:pos.access');
+
+        // Product Management
+        Route::get('/products', [POSController::class, 'products'])->name('pos.products')->middleware('permission:retail.view');
+        Route::get('/products/barcode/{barcode}', [POSController::class, 'getProductByBarcode'])->name('pos.products.barcode')->middleware('permission:pos.access');
+
+        // Customer Management
+        Route::get('/customers', [POSController::class, 'customers'])->name('pos.customers')->middleware('permission:retail.view');
+
+        // Payment Management
+        Route::get('/payments', [POSController::class, 'payments'])->name('pos.payments')->middleware('permission:retail.view');
+
+        // Reports
+        Route::get('/reports', [POSController::class, 'reports'])->name('pos.reports')->middleware('permission:retail.view');
+
+        // Settings
+        Route::get('/settings', [POSController::class, 'settings'])->name('pos.settings')->middleware('permission:retail.manage');
+        Route::put('/settings', [POSController::class, 'updateSettings'])->name('pos.settings.update')->middleware('permission:retail.manage');
+    });
 });
 
 
 Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
+
+// Include all module routes
+require __DIR__ . '/modules.php';
+require __DIR__ . '/compliance.php';
+require __DIR__ . '/quality.php';
+require __DIR__ . '/analytics.php';
+require __DIR__ . '/project-management.php';
+require __DIR__ . '/hr.php';
 
 require __DIR__ . '/auth.php';
 

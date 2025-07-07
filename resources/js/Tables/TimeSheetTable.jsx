@@ -679,6 +679,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
 
       // Employee view - render only table and pagination without wrapper
     if (url === '/attendance-employee') {
+        console.log("Employee view")
         return (
             <Box 
                 role="region"
