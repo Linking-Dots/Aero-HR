@@ -66,7 +66,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Check if user has permission to view updates
-        if (!$user->can('updates.view')) {
+        if (!$user->can('core.updates.view')) {
             return response()->json([
                 'message' => 'Unauthorized access to updates'
             ], 403);

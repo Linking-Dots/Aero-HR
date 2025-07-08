@@ -36,7 +36,7 @@ import { Squares2X2Icon } from '@heroicons/react/24/outline';
 export const getSettingsPages = (permissions = []) => {
     const settings = [];
     // 1. Navigation
-    if (permissions.includes('dashboard.view')) {
+    if (permissions.includes('core.dashboard.view')) {
         settings.push({
             name: 'Return to Dashboard', 
             icon: <Squares2X2Icon className="w-5 h-5" />, 
@@ -127,6 +127,57 @@ export const getSettingsPages = (permissions = []) => {
             category: 'organization',
             priority: 9,
             description: 'Configure hiring stages and recruitment workflow'
+        });
+    }
+    // Additional HR Settings
+    if (permissions.includes('hr.onboarding.view')) {
+        settings.push({
+            name: 'Onboarding & Offboarding Configuration', 
+            icon: <UserGroupIcon className="w-5 h-5" />, 
+            route: 'settings.hr.onboarding',
+            category: 'organization',
+            priority: 9.1,
+            description: 'Configure onboarding and offboarding processes and templates'
+        });
+    }
+    if (permissions.includes('hr.skills.view')) {
+        settings.push({
+            name: 'Skills & Competencies Configuration', 
+            icon: <AcademicCapIcon className="w-5 h-5" />, 
+            route: 'settings.hr.skills',
+            category: 'organization',
+            priority: 9.2,
+            description: 'Manage skill categories and competency frameworks'
+        });
+    }
+    if (permissions.includes('hr.benefits.view')) {
+        settings.push({
+            name: 'Employee Benefits Configuration', 
+            icon: <CreditCardIcon className="w-5 h-5" />, 
+            route: 'settings.hr.benefits',
+            category: 'organization',
+            priority: 9.3,
+            description: 'Configure employee benefits packages and eligibility rules'
+        });
+    }
+    if (permissions.includes('hr.safety.view')) {
+        settings.push({
+            name: 'Workplace Safety Configuration', 
+            icon: <ShieldCheckIcon className="w-5 h-5" />, 
+            route: 'settings.hr.safety',
+            category: 'organization',
+            priority: 9.4,
+            description: 'Configure safety protocols, incident reporting, and training requirements'
+        });
+    }
+    if (permissions.includes('hr.documents.view')) {
+        settings.push({
+            name: 'HR Document Management', 
+            icon: <DocumentChartBarIcon className="w-5 h-5" />, 
+            route: 'settings.hr.documents',
+            category: 'organization',
+            priority: 9.5,
+            description: 'Configure document categories, templates, and retention policies'
         });
     }
     // 4. CRM Settings

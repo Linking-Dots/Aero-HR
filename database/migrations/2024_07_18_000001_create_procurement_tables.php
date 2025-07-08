@@ -11,6 +11,31 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ensure suppliers table exists to avoid foreign key constraint issues
+        if (!Schema::hasTable('suppliers')) {
+            // Migrate the suppliers table first (from 2025_07_08_181530_create_suppliers_table.php)
+            Schema::create('suppliers', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('contact_person')->nullable();
+                $table->string('email')->nullable();
+                $table->string('phone')->nullable();
+                $table->string('address')->nullable();
+                $table->string('city')->nullable();
+                $table->string('state')->nullable();
+                $table->string('zip_code')->nullable();
+                $table->string('country')->nullable();
+                $table->string('tax_id')->nullable();
+                $table->string('website')->nullable();
+                $table->decimal('credit_limit', 15, 2)->nullable();
+                $table->integer('payment_terms_days')->default(30);
+                $table->enum('status', ['active', 'inactive', 'blacklisted'])->default('active');
+                $table->text('notes')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
         // Create RFQs table
         Schema::create('rfqs', function (Blueprint $table) {
             $table->id();

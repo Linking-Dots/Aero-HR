@@ -6,9 +6,29 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Console\Command;
 
 class ComprehensiveRolePermissionSeeder extends Seeder
 {
+    /**
+     * The command instance.
+     *
+     * @var Command
+     */
+    protected $command;
+
+    /**
+     * Set the console command instance.
+     *
+     * @param Command $command
+     * @return void
+     */
+    public function setCommand(Command $command)
+    {
+        $this->command = $command;
+        return $this;
+    }
+
     /**
      * Run the database seeds.
      */
@@ -26,7 +46,9 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         // Assign permissions to roles
         $this->assignPermissionsToRoles();
 
-        $this->command->info('✅ Comprehensive role and permission system created successfully!');
+        if ($this->command) {
+            $this->command->info('✅ Comprehensive role and permission system created successfully!');
+        }
     }
 
     /**
@@ -37,9 +59,9 @@ class ComprehensiveRolePermissionSeeder extends Seeder
         $modules = [
             // Core System
             'core' => [
-                'dashboard.view' => 'View dashboard and analytics',
-                'stats.view' => 'View system statistics',
-                'updates.view' => 'View system updates'
+                'core.dashboard.view' => 'View dashboard and analytics',
+                'core.stats.view' => 'View system statistics',
+                'core.updates.view' => 'View system updates'
             ],
 
             // Self Service Module
@@ -93,7 +115,102 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'jurisdiction.view' => 'View work locations',
                 'jurisdiction.create' => 'Create work locations',
                 'jurisdiction.update' => 'Update work locations',
-                'jurisdiction.delete' => 'Delete work locations'
+                'jurisdiction.delete' => 'Delete work locations',
+                
+                // New HRM Permissions
+                // Onboarding & Offboarding
+                'hr.onboarding.view' => 'View employee onboarding',
+                'hr.onboarding.create' => 'Create onboarding process',
+                'hr.onboarding.update' => 'Update onboarding process',
+                'hr.onboarding.delete' => 'Delete onboarding process',
+                'hr.offboarding.view' => 'View employee offboarding',
+                'hr.offboarding.create' => 'Create offboarding process',
+                'hr.offboarding.update' => 'Update offboarding process',
+                'hr.offboarding.delete' => 'Delete offboarding process',
+                'hr.checklists.view' => 'View HR checklists',
+                'hr.checklists.create' => 'Create HR checklists',
+                'hr.checklists.update' => 'Update HR checklists',
+                'hr.checklists.delete' => 'Delete HR checklists',
+                
+                // Skills & Competency Management
+                'hr.skills.view' => 'View skills database',
+                'hr.skills.create' => 'Create skills',
+                'hr.skills.update' => 'Update skills',
+                'hr.skills.delete' => 'Delete skills',
+                'hr.competencies.view' => 'View competencies',
+                'hr.competencies.create' => 'Create competencies',
+                'hr.competencies.update' => 'Update competencies',
+                'hr.competencies.delete' => 'Delete competencies',
+                'hr.employee.skills.view' => 'View employee skills',
+                'hr.employee.skills.create' => 'Add employee skills',
+                'hr.employee.skills.update' => 'Update employee skills',
+                'hr.employee.skills.delete' => 'Remove employee skills',
+                
+                // Employee Benefits Administration
+                'hr.benefits.view' => 'View benefits programs',
+                'hr.benefits.create' => 'Create benefits programs',
+                'hr.benefits.update' => 'Update benefits programs',
+                'hr.benefits.delete' => 'Delete benefits programs',
+                'hr.employee.benefits.view' => 'View employee benefits',
+                'hr.employee.benefits.assign' => 'Assign benefits to employees',
+                'hr.employee.benefits.update' => 'Update employee benefits',
+                'hr.employee.benefits.remove' => 'Remove employee benefits',
+                
+                // Enhanced Time-off Management
+                'hr.timeoff.view' => 'View time-off management',
+                'hr.timeoff.calendar.view' => 'View time-off calendar',
+                'hr.timeoff.approve' => 'Approve time-off requests',
+                'hr.timeoff.reject' => 'Reject time-off requests',
+                'hr.timeoff.reports.view' => 'View time-off reports',
+                'hr.timeoff.settings.view' => 'View time-off settings',
+                'hr.timeoff.settings.update' => 'Update time-off settings',
+                
+                // Workplace Health & Safety
+                'hr.safety.view' => 'View workplace safety',
+                'hr.safety.incidents.view' => 'View safety incidents',
+                'hr.safety.incidents.create' => 'Create safety incidents',
+                'hr.safety.incidents.update' => 'Update safety incidents',
+                'hr.safety.inspections.view' => 'View safety inspections',
+                'hr.safety.inspections.create' => 'Create safety inspections',
+                'hr.safety.inspections.update' => 'Update safety inspections',
+                'hr.safety.training.view' => 'View safety training',
+                'hr.safety.training.create' => 'Create safety training',
+                'hr.safety.training.update' => 'Update safety training',
+                
+                // HR Analytics & Reporting
+                'hr.analytics.view' => 'View HR analytics',
+                'hr.analytics.attendance' => 'View attendance analytics',
+                'hr.analytics.performance' => 'View performance analytics',
+                'hr.analytics.recruitment' => 'View recruitment analytics',
+                'hr.analytics.turnover' => 'View employee turnover analytics',
+                'hr.analytics.training' => 'View training analytics',
+                'hr.analytics.reports.view' => 'View HR reports',
+                'hr.analytics.reports.generate' => 'Generate HR reports',
+                
+                // HR Document Management
+                'hr.documents.view' => 'View HR documents',
+                'hr.documents.create' => 'Create HR documents',
+                'hr.documents.update' => 'Update HR documents',
+                'hr.documents.delete' => 'Delete HR documents',
+                'hr.documents.categories.view' => 'View document categories',
+                'hr.documents.categories.create' => 'Create document categories',
+                'hr.documents.categories.update' => 'Update document categories',
+                'hr.documents.categories.delete' => 'Delete document categories',
+                'hr.employee.documents.view' => 'View employee documents',
+                'hr.employee.documents.create' => 'Create employee documents',
+                'hr.employee.documents.delete' => 'Delete employee documents',
+                
+                // Enhanced Employee Self-Service
+                'hr.selfservice.view' => 'Access self-service portal',
+                'hr.selfservice.profile.view' => 'View own profile in self-service',
+                'hr.selfservice.profile.update' => 'Update own profile in self-service',
+                'hr.selfservice.documents.view' => 'View own documents in self-service',
+                'hr.selfservice.benefits.view' => 'View own benefits in self-service',
+                'hr.selfservice.timeoff.view' => 'View own time-off in self-service',
+                'hr.selfservice.timeoff.request' => 'Request time-off in self-service',
+                'hr.selfservice.trainings.view' => 'View own trainings in self-service',
+                'hr.selfservice.payslips.view' => 'View own payslips in self-service',
+                'hr.selfservice.performance.view' => 'View own performance in self-service'
             ],
 
             // Project & Portfolio Management
@@ -391,7 +508,9 @@ class ComprehensiveRolePermissionSeeder extends Seeder
             }
         }
 
-        $this->command->info('✅ Permissions created for all modules');
+        if ($this->command) {
+            $this->command->info('✅ Permissions created for all modules');
+        }
     }
 
     /**
@@ -466,10 +585,12 @@ class ComprehensiveRolePermissionSeeder extends Seeder
             Role::firstOrCreate([
                 'name' => $roleData['name'],
                 'guard_name' => 'web'
-            ], $roleData);
+            ], $roleData            );
         }
 
-        $this->command->info('✅ Roles created with hierarchy levels');
+        if ($this->command) {
+            $this->command->info('✅ Roles created with hierarchy levels');
+        }
     }
 
     /**
@@ -503,6 +624,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
             ->orWhere('name', 'like', 'jobs.%')
             ->orWhere('name', 'like', 'job-%')
             ->orWhere('name', 'like', 'recruitment-%')
+            ->orWhere('name', 'like', 'hr.%') // Include all new HR permissions
             ->get();
         $hrManager->givePermissionTo($hrPermissions);
 
@@ -531,7 +653,17 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'performance-reviews.create',
                 'performance-reviews.update',
                 'performance-reviews.approve',
-                'performance-analytics.view'
+                'performance-analytics.view',
+                'hr.onboarding.view',
+                'hr.offboarding.view',
+                'hr.skills.view',
+                'hr.employee.skills.view',
+                'hr.employee.skills.update',
+                'hr.timeoff.view',
+                'hr.timeoff.approve',
+                'hr.timeoff.reject',
+                'hr.analytics.view',
+                'hr.employee.documents.view'
             ])
             ->get();
         $deptManager->givePermissionTo($deptPermissions);
@@ -557,7 +689,13 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'training-enrollments.view',
                 'training-enrollments.create',
                 'training-assignment-submissions.view',
-                'training-assignment-submissions.grade'
+                'training-assignment-submissions.grade',
+                'hr.employee.skills.view',
+                'hr.timeoff.view',
+                'hr.timeoff.approve',
+                'hr.timeoff.calendar.view',
+                'hr.safety.view',
+                'hr.safety.incidents.view'
             ])
             ->get();
         $teamLead->givePermissionTo($teamPermissions);
@@ -593,7 +731,18 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'performance-reviews.own.view',
                 'training-feedback.own.view',
                 'training-feedback.own.create',
-                'training-assignment-submissions.create'
+                'training-assignment-submissions.create',
+                'hr.selfservice.view',
+                'hr.selfservice.profile.view',
+                'hr.selfservice.profile.update',
+                'hr.selfservice.documents.view',
+                'hr.selfservice.benefits.view',
+                'hr.selfservice.timeoff.view',
+                'hr.selfservice.timeoff.request',
+                'hr.selfservice.trainings.view',
+                'hr.selfservice.payslips.view',
+                'hr.selfservice.performance.view',
+                'hr.safety.incidents.create'
             ])
             ->get();
         $employee->givePermissionTo($employeePermissions);
@@ -627,6 +776,8 @@ class ComprehensiveRolePermissionSeeder extends Seeder
             ->get();
         $intern->givePermissionTo($internPermissions);
 
-        $this->command->info('✅ Permissions assigned to all roles');
+        if ($this->command) {
+            $this->command->info('✅ Permissions assigned to all roles');
+        }
     }
 }

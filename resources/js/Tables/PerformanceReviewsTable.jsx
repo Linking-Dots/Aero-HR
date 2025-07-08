@@ -24,7 +24,7 @@ import {
     User,
     Spinner
 } from '@heroui/react';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 const PerformanceReviewsTable = ({ data, loading, permissions, onView, onEdit, onDelete, onApprove }) => {
     const getStatusChip = (status) => {
@@ -134,7 +134,7 @@ const PerformanceReviewsTable = ({ data, loading, permissions, onView, onEdit, o
             case "review_type":
                 return item.template?.name || item.review_type;
             case "period":
-                return item.review_period ? format(new Date(item.review_period), 'MMM yyyy') : 'N/A';
+                return item.review_period ? dayjs(item.review_period).format('MMM YYYY') : 'N/A';
             case "status":
                 return getStatusChip(item.status);
             case "reviewer":

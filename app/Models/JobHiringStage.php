@@ -16,16 +16,19 @@ class JobHiringStage extends Model
         'job_id',
         'name',
         'description',
-        'order',
-        'is_required',
-        'expected_duration_days',
-        'stage_type'
+        'sequence',
+        'is_active',
+        'required_actions',
+        'requires_approval',
+        'is_final'
     ];
 
     protected $casts = [
-        'order' => 'integer',
-        'is_required' => 'boolean',
-        'expected_duration_days' => 'integer',
+        'sequence' => 'integer',
+        'is_active' => 'boolean',
+        'requires_approval' => 'boolean',
+        'is_final' => 'boolean',
+        'required_actions' => 'array',
     ];
 
     /**
@@ -58,8 +61,8 @@ class JobHiringStage extends Model
     public function nextStage()
     {
         return JobHiringStage::where('job_id', $this->job_id)
-            ->where('order', '>', $this->order)
-            ->orderBy('order', 'asc')
+            ->where('sequence', '>', $this->sequence)
+            ->orderBy('sequence', 'asc')
             ->first();
     }
 
@@ -69,8 +72,8 @@ class JobHiringStage extends Model
     public function previousStage()
     {
         return JobHiringStage::where('job_id', $this->job_id)
-            ->where('order', '<', $this->order)
-            ->orderBy('order', 'desc')
+            ->where('sequence', '<', $this->sequence)
+            ->orderBy('sequence', 'desc')
             ->first();
     }
 

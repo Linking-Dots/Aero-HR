@@ -40,13 +40,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');
 
     // Dashboard routes - require dashboard permission
-    Route::middleware(['permission:dashboard.view'])->group(function () {
+    Route::middleware(['permission:core.dashboard.view'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
     });
 
     // Updates route - require updates permission
-    Route::middleware(['permission:updates.view'])->get('/updates', [DashboardController::class, 'updates'])->name('updates');
+    Route::middleware(['permission:core.updates.view'])->get('/updates', [DashboardController::class, 'updates'])->name('updates');
 
     // Employee self-service routes
     Route::middleware(['permission:leave.own.view'])->group(function () {
@@ -219,6 +219,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('settings/attendance-type/{id}', [AttendanceSettingController::class, 'updateType'])->name('attendance-types.update');
         Route::delete('settings/attendance-type/{id}', [AttendanceSettingController::class, 'destroyType'])->name('attendance-types.destroy');
     });
+    
+    // HR Module Settings
+    Route::prefix('settings/hr')->middleware(['auth', 'verified'])->group(function () {
+        Route::middleware(['permission:hr.onboarding.view'])->get('/onboarding', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.onboarding');
+        Route::middleware(['permission:hr.skills.view'])->get('/skills', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.skills');
+        Route::middleware(['permission:hr.benefits.view'])->get('/benefits', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.benefits');
+        Route::middleware(['permission:hr.safety.view'])->get('/safety', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.safety');
+        Route::middleware(['permission:hr.documents.view'])->get('/documents', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.documents');
+        
+        // Update routes
+        Route::middleware(['permission:hr.onboarding.update'])->post('/onboarding', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateOnboardingSettings'])->name('settings.hr.onboarding.update');
+        Route::middleware(['permission:hr.skills.update'])->post('/skills', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateSkillsSettings'])->name('settings.hr.skills.update');
+        Route::middleware(['permission:hr.benefits.update'])->post('/benefits', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateBenefitsSettings'])->name('settings.hr.benefits.update');
+        Route::middleware(['permission:hr.safety.update'])->post('/safety', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateSafetySettings'])->name('settings.hr.safety.update');
+        Route::middleware(['permission:hr.documents.update'])->post('/documents', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateDocumentSettings'])->name('settings.hr.documents.update');
+    });
 
     // Task management routes
     Route::middleware(['permission:tasks.view'])->group(function () {
@@ -384,6 +400,31 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
     });
 });
 
+// API routes for dropdown data
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/api/designations/list', function () {
+        return response()->json(\App\Models\Designation::select('id', 'title as name')->get());
+    })->name('designations.list');
+    
+    Route::get('/api/departments/list', function () {
+        return response()->json(\App\Models\Department::select('id', 'name')->get());
+    })->name('departments.list');
+    
+    Route::get('/api/users/managers/list', function () {
+        return response()->json(\App\Models\User::whereHas('roles', function ($query) {
+            $query->whereIn('name', [
+                'Super Administrator',
+                'Administrator', 
+                'HR Manager',
+                'Project Manager',
+                'Department Manager',
+                'Team Lead'
+            ]);
+        })
+        ->select('id', 'name')
+        ->get());
+    })->name('users.managers.list');
+});
 
 Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
 

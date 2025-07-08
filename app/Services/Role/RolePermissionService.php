@@ -23,7 +23,7 @@ class RolePermissionService
         // Core System
         'core' => [
             'name' => 'Dashboard & Analytics',
-            'permissions' => ['dashboard.view', 'stats.view', 'updates.view'],
+            'permissions' => ['core.dashboard.view', 'core.stats.view', 'core.updates.view'],
             'description' => 'Core system dashboard and analytics',
             'category' => 'core_system'
         ],

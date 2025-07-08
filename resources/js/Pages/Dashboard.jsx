@@ -85,7 +85,7 @@ export default function Dashboard({ auth }) {
                             </Grid>
                         }
                         {/* Statistics Card - for users with dashboard access */}
-                        {hasPermission('dashboard.view') &&
+                        {hasPermission('core.dashboard.view') &&
                             <Grid item xs={12} md={6}>
                                 <StatisticCard />
                             </Grid>
@@ -101,8 +101,8 @@ export default function Dashboard({ auth }) {
                     )}
                     
                     {/* Updates and holidays - available to all authenticated users */}
-                    {hasPermission('updates.view') && <UpdatesCards />}
-                    {hasPermission('dashboard.view') && <HolidayCard />}
+                    {hasPermission('core.updates.view') && <UpdatesCards />}
+                    {hasPermission('core.dashboard.view') && <HolidayCard />}
                 </Suspense>
             </Box>
         </>

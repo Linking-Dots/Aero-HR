@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import AppLayout from '@/Layouts/App';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { 
     PencilIcon, 

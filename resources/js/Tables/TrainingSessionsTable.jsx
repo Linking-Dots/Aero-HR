@@ -25,7 +25,7 @@ import {
     XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Button, Chip } from '@heroui/react';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 const TrainingSessionsTable = ({ data, loading, permissions, onView, onEdit, onDelete, onMaterials, onEnrollments }) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -143,8 +143,8 @@ const TrainingSessionsTable = ({ data, loading, permissions, onView, onEdit, onD
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">
-                                            {row.start_date ? format(new Date(row.start_date), 'MMM dd, yyyy') : 'TBD'}
-                                            {row.end_date ? ` - ${format(new Date(row.end_date), 'MMM dd, yyyy')}` : ''}
+                                            {row.start_date ? dayjs(row.start_date).format('MMM DD, YYYY') : 'TBD'}
+                                            {row.end_date ? ` - ${dayjs(row.end_date).format('MMM DD, YYYY')}` : ''}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>

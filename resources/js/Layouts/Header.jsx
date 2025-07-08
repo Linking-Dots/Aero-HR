@@ -193,7 +193,7 @@ const Header = React.memo(({
             </Tooltip>
 
             {/* Notifications */}
-            <GlassDropdown placement="bottom-end">
+            <GlassDropdown placement="bottom-end" closeDelay={100}>
               <DropdownTrigger>
                 {/* ✅ Single React element inside */}
                 <Button
@@ -212,7 +212,7 @@ const Header = React.memo(({
                 </Button>
               </DropdownTrigger>
               <DropdownMenu className="w-80 p-0">
-                <DropdownItem key="header" className="cursor-default">
+                <DropdownItem key="header" className="cursor-default" textValue="Notifications Header">
                   <div className="p-4 border-b border-divider">
                     <Typography variant="h6" className="font-semibold">Notifications</Typography>
                     <Typography variant="caption" className="text-default-500">You have 12 unread notifications</Typography>
@@ -234,6 +234,7 @@ const Header = React.memo(({
 
             {/* User Menu */}
             <GlassDropdown
+              closeDelay={100}
               classNames={{
                 content: "bg-white/10 backdrop-blur-md border border-white/20"
               }}
@@ -308,7 +309,16 @@ const Header = React.memo(({
                       isTablet ? 'grid-cols-2' : 'grid-cols-4'
                     }`}>
                       {pages.map((page, index) => {
-                        const isActive = activePage === "/" + page.route || (page.subMenu && page.subMenu.some(subPage => "/" + subPage.route === activePage));
+                        // Enhanced active state detection for nested menus
+                        const checkActiveRecursive = (menuItem) => {
+                          if (activePage === "/" + menuItem.route) return true;
+                          if (menuItem.subMenu) {
+                            return menuItem.subMenu.some(subItem => checkActiveRecursive(subItem));
+                          }
+                          return false;
+                        };
+                        
+                        const isActive = checkActiveRecursive(page);
                         // Theme color for active/inactive
                         // Convert hex themeColor to rgba with 0.5 opacity
                         function hexToRgba(hex, alpha) {
@@ -332,14 +342,17 @@ const Header = React.memo(({
                             {page.subMenu ? (
                               <GlassDropdown
                                 placement="bottom"
+                                closeDelay={800}
+                                shouldBlockScroll={false}
+                                isKeyboardDismissDisabled={false}
                                 classNames={{
-                                  content: "bg-white/10 backdrop-blur-md border border-white/20"
+                                  content: "bg-white/10 backdrop-blur-md border border-white/20 min-w-64 max-h-80 overflow-y-auto p-1 dropdown-content-fix"
                                 }}
                               >
                                 <DropdownTrigger>
                                   <Button
                                     variant="light"
-                                    endContent={<ChevronDownIcon className={`w-4 h-4 ${inactiveIcon}`} />} // Always same color
+                                    endContent={<ChevronDownIcon className={`w-5 h-5 ${isActive ? 'text-white' : inactiveIcon}`} />}
                                     className={`transition-all duration-300 hover:scale-105 ${
                                       isActive
                                         ? 'text-white'
@@ -355,22 +368,116 @@ const Header = React.memo(({
                                 <DropdownMenu
                                   aria-label={`${page.name} submenu`}
                                   variant="faded"
+                                  closeOnSelect={false}
+                                  className="p-1 dropdown-menu-container"
                                 >
                                   {page.subMenu.map((subPage) => {
-                                    const isSubActive = activePage === "/" + subPage.route;
-                                    return (
-                                      <DropdownItem
-                                        key={subPage.name}
-                                        startContent={
-                                          <span className={`flex items-center ${isSubActive ? 'text-white' : inactiveIcon}`}>{subPage.icon}</span>
-                                        }
-                                        className={isSubActive ? 'text-white' : ''}
-                                        style={isSubActive ? activeGradientStyle : {}}
-                                        onPress={() => handleNavigation(route(subPage.route), subPage.method)}
-                                      >
-                                        <span className={isSubActive ? 'text-white font-semibold' : 'font-semibold text-default-700'}>{subPage.name}</span>
-                                      </DropdownItem>
-                                    );
+                                    // Enhanced active state detection for nested submenus
+                                    const checkSubActiveRecursive = (menuItem) => {
+                                      if (activePage === "/" + menuItem.route) return true;
+                                      if (menuItem.subMenu) {
+                                        return menuItem.subMenu.some(subItem => checkSubActiveRecursive(subItem));
+                                      }
+                                      return false;
+                                    };
+                                    
+                                    const isSubActive = checkSubActiveRecursive(subPage);
+                                    
+                                    // Check if this submenu item has nested children
+                                    if (subPage.subMenu && subPage.subMenu.length > 0) {
+                                      return (
+                                        <DropdownItem key={subPage.name} className="p-0 hover:bg-transparent" textValue={subPage.name}>
+                                          <div className="dropdown-trigger-wrapper w-full">
+                                            <GlassDropdown
+                                              placement="right-start"
+                                              offset={4}
+                                              closeDelay={800}
+                                              shouldBlockScroll={false}
+                                              classNames={{
+                                                content: "bg-white/10 backdrop-blur-md border border-white/20 min-w-48 max-h-72 overflow-y-auto p-1 dropdown-content-fix"
+                                              }}
+                                            >
+                                            <DropdownTrigger>
+                                              <div
+                                                className={`menu-item-base ${
+                                                  isSubActive 
+                                                    ? 'active text-white' 
+                                                    : 'hover:bg-white/10 text-default-700'
+                                                }`}
+                                                style={isSubActive ? activeGradientStyle : {}}
+                                              >
+                                                <div className="flex items-center gap-2 w-full">
+                                                  <span className={`menu-item-icon flex items-center ${isSubActive ? 'text-white' : inactiveIcon}`}>
+                                                    {subPage.icon}
+                                                  </span>
+                                                  <span className={`menu-item-text ${isSubActive ? 'text-white' : 'text-default-700'}`}>
+                                                    {subPage.name}
+                                                  </span>
+                                                  <ChevronDownIcon className={`menu-item-chevron rotate-[-90deg] ${isSubActive ? 'text-white' : 'text-default-500'}`} />
+                                                </div>
+                                              </div>
+                                            </DropdownTrigger>
+                                            <DropdownMenu
+                                              aria-label={`${subPage.name} nested submenu`}
+                                              variant="faded"
+                                              closeOnSelect={true}
+                                              className="p-1 dropdown-menu-container"
+                                            >
+                                              {subPage.subMenu.map((nestedPage) => {
+                                                const isNestedActive = activePage === "/" + nestedPage.route;
+                                                return (
+                                                  <DropdownItem key={nestedPage.name} className="p-0 hover:bg-transparent" textValue={nestedPage.name}>
+                                                    <div
+                                                      className={`menu-item-base ${
+                                                        isNestedActive 
+                                                          ? 'active text-white' 
+                                                          : 'hover:bg-white/10 text-default-700'
+                                                      }`}
+                                                      style={isNestedActive ? activeGradientStyle : {}}
+                                                      onClick={() => handleNavigation(route(nestedPage.route), nestedPage.method)}
+                                                    >
+                                                      <div className="flex items-center gap-2 w-full">
+                                                        <span className={`menu-item-icon flex items-center ${isNestedActive ? 'text-white' : inactiveIcon}`}>
+                                                          {nestedPage.icon}
+                                                        </span>
+                                                        <span className={`menu-item-text ${isNestedActive ? 'text-white' : 'text-default-700'}`}>
+                                                          {nestedPage.name}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  </DropdownItem>
+                                                );
+                                              })}
+                                            </DropdownMenu>
+                                          </GlassDropdown>
+                                          </div>
+                                        </DropdownItem>
+                                      );
+                                    } else {
+                                      // Regular submenu item without nested children
+                                      return (
+                                        <DropdownItem key={subPage.name} className="p-0 hover:bg-transparent" textValue={subPage.name}>
+                                          <div
+                                            className={`menu-item-base ${
+                                              isSubActive 
+                                                ? 'active text-white' 
+                                                : 'hover:bg-white/10 text-default-700'
+                                            }`}
+                                            style={isSubActive ? activeGradientStyle : {}}
+                                            onClick={() => handleNavigation(route(subPage.route), subPage.method)}
+                                          >
+                                            <div className="flex items-center gap-2 w-full">
+                                              <span className={`menu-item-icon flex items-center ${isSubActive ? 'text-white' : inactiveIcon}`}>
+                                                {subPage.icon}
+                                              </span>
+                                              <span className={`menu-item-text ${isSubActive ? 'text-white' : 'text-default-700'}`}>
+                                                {subPage.name}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </DropdownItem>
+                                      );
+                                    }
                                   })}
                                 </DropdownMenu>
                               </GlassDropdown>
@@ -444,7 +551,7 @@ const Header = React.memo(({
                       </Button>
                     </DropdownTrigger>
                     <DropdownMenu className="w-80 p-0">
-                      <DropdownItem key="header" className="cursor-default">
+                      <DropdownItem key="header" className="cursor-default" textValue="Notifications Header">
                         <div className="p-4 border-b border-divider">
                           <Typography variant="h6" className="font-semibold">Notifications</Typography>
                           <Typography variant="caption" className="text-default-500">You have 12 unread notifications</Typography>
@@ -465,6 +572,7 @@ const Header = React.memo(({
                   {/* Profile Menu */}
                   <GlassDropdown
                     placement="bottom-end"
+                    closeDelay={100}
                     classNames={{
                       content: "bg-white/10 backdrop-blur-md border border-white/20"
                     }}
@@ -513,7 +621,7 @@ const Header = React.memo(({
   // Shared Profile Menu for both Mobile and Desktop
   const ProfileMenu = () => (
     <DropdownMenu className="w-72 p-2 min-w-48" aria-label="Profile Actions" variant="faded">
-      <DropdownItem key="user-info" className="h-20 gap-3 cursor-default">
+      <DropdownItem key="user-info" className="h-20 gap-3 cursor-default" textValue={`${auth.user.first_name} ${auth.user.last_name || ''} - ${auth.user.email}`}>
         <div className="flex items-center gap-4 w-full">
           <Avatar
             size="md"
@@ -536,37 +644,40 @@ const Header = React.memo(({
           </div>
         </div>
       </DropdownItem>
-      <DropdownItem key="divider" className="p-0 my-2">
+      <DropdownItem key="divider" className="p-0 my-2" textValue="Divider">
         <div className="border-t border-divider" />
       </DropdownItem>
       <DropdownItem
         key="profile"
-        startContent={<UserCircleIcon className="w-4 h-4" />}
+        startContent={<UserCircleIcon className="w-5 h-5" />}
         onPress={() => handleNavigation(route('profile', { user: auth.user.id }))}
         className="hover:bg-white/10 rounded-lg"
+        textValue="View Profile"
       >
         View Profile
       </DropdownItem>
       <DropdownItem
         key="settings"
-        startContent={<Cog6ToothIcon className="w-4 h-4" />}
+        startContent={<Cog6ToothIcon className="w-5 h-5" />}
         onPress={() => handleNavigation(route('dashboard'))}
         className="hover:bg-white/10 rounded-lg"
+        textValue="Account Settings"
       >
         Account Settings
       </DropdownItem>
       <DropdownItem
         key="themes"
-        startContent={<SwatchIcon className="w-4 h-4" />}
+        startContent={<SwatchIcon className="w-5 h-5" />}
         onPress={toggleThemeDrawer}
         className="hover:bg-white/10 rounded-lg"
+        textValue="Appearance"
       >
         Appearance
       </DropdownItem>
-      <DropdownItem key="theme-toggle" className="p-0 my-1">
+      <DropdownItem key="theme-toggle" className="p-0 my-1" textValue="Dark Mode Toggle">
         <div className="flex items-center justify-between w-full px-3 py-2 hover:bg-white/10 rounded-lg transition-all duration-200">
           <div className="flex items-center gap-3">
-            {darkMode ? <MoonIcon className="w-4 h-4" /> : <SunIcon className="w-4 h-4" />}
+            {darkMode ? <MoonIcon className="w-5 h-5" /> : <SunIcon className="w-5 h-5" />}
             <span className="text-sm">Dark Mode</span>
           </div>
           <Switch
@@ -586,7 +697,7 @@ const Header = React.memo(({
       <DropdownItem
         key="logout"
         color="danger"
-        startContent={<ArrowRightOnRectangleIcon className="w-4 h-4" />}
+        startContent={<ArrowRightOnRectangleIcon className="w-5 h-5" />}
         onPress={() => router.post('/logout')}
         className="hover:bg-red-500/20 rounded-lg"
       >

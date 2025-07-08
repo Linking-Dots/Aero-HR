@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('method', 10)->nullable();
             $table->text('url')->nullable();
             $table->string('session_id', 50)->nullable(); // Reduced length
-            $table->timestamp('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
 
             // Optimized indexes for performance (avoid exceeding MySQL key length limit)
             $table->index(['user_id', 'created_at']);
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->ipAddress('ip_address')->nullable();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
 
             // Optimized indexes for performance analysis
             $table->index(['metric_type', 'created_at']);
@@ -63,7 +63,8 @@ return new class extends Migration
             $table->boolean('resolved')->default(false);
             $table->text('resolution_notes')->nullable();
             $table->timestamp('resolved_at')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
 
             // Optimized indexes
             $table->index(['resolved', 'created_at']);

@@ -13,7 +13,7 @@ import {
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { parseDate } from '@internationalized/date';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 import GlassDialog from '../Components/GlassDialog';
 
 const AddEditJobForm = ({ open, onClose, job = null, fetchData, currentPage, perPage, filterData }) => {
@@ -33,7 +33,7 @@ const AddEditJobForm = ({ open, onClose, job = null, fetchData, currentPage, per
         salary_max: '',
         salary_currency: 'USD',
         benefits: [],
-        posted_date: format(new Date(), 'yyyy-MM-dd'),
+        posted_date: dayjs().format('YYYY-MM-DD'),
         closing_date: '',
         status: 'draft',
         hiring_manager_id: '',
@@ -91,7 +91,7 @@ const AddEditJobForm = ({ open, onClose, job = null, fetchData, currentPage, per
                 salary_max: job.salary_max || '',
                 salary_currency: job.salary_currency || 'USD',
                 benefits: job.benefits || [],
-                posted_date: job.posted_date || format(new Date(), 'yyyy-MM-dd'),
+                posted_date: job.posted_date || dayjs().format('YYYY-MM-DD'),
                 closing_date: job.closing_date || '',
                 status: job.status || 'draft',
                 hiring_manager_id: job.hiring_manager_id || '',
@@ -121,7 +121,7 @@ const AddEditJobForm = ({ open, onClose, job = null, fetchData, currentPage, per
     const handleDateChange = (name, date) => {
         setFormData(prev => ({
             ...prev,
-            [name]: date ? format(new Date(date), 'yyyy-MM-dd') : ''
+            [name]: date ? dayjs(date).format('YYYY-MM-DD') : ''
         }));
         
         if (errors[name]) {

@@ -230,3 +230,123 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(var(--theme-primary-rgb), 0.3);
 }
+
+/* Dropdown improvements for better UX */
+.dropdown-content-fix {
+    min-height: fit-content !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+/* Ensure dropdown items are visible and properly spaced */
+[data-slot="base"][role="menu"] {
+    min-height: fit-content !important;
+    overflow: visible !important;
+    padding: 4px !important;
+}
+
+/* Fix dropdown menu positioning and visibility */
+[data-slot="base"][role="menu"] > li:first-child {
+    margin-top: 0 !important;
+}
+
+/* Improve hover states for nested dropdowns */
+.dropdown-trigger-wrapper {
+    position: relative;
+}
+
+.dropdown-trigger-wrapper:hover .dropdown-content,
+.dropdown-trigger-wrapper:focus-within .dropdown-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure smooth transitions for dropdowns */
+.dropdown-transition {
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+/* Fix for dropdown items being cut off */
+.dropdown-menu-container {
+    overflow: visible !important;
+    z-index: 9999 !important;
+    padding: 4px !important;
+}
+
+/* Better spacing for nested dropdown items */
+.nested-dropdown-item {
+    padding: 4px 8px !important;
+    margin: 2px 4px !important;
+    border-radius: 6px !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+}
+
+/* Compact dropdown items */
+[data-slot="base"][role="menuitem"] {
+    padding: 4px 8px !important;
+    margin: 1px 2px !important;
+    min-height: 28px !important;
+    font-size: 0.75rem !important;
+}
+
+/* Compact dropdown content */
+[data-slot="content"] {
+    padding: 4px !important;
+}
+
+/* Consistent menu item styling for all dropdown items */
+.menu-item-base {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    margin: 2px 4px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    transition: all 0.2s ease-in-out !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    min-height: 32px !important;
+}
+
+.menu-item-base:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    transform: none !important;
+}
+
+.menu-item-base.active {
+    color: white !important;
+}
+
+.menu-item-base .menu-item-icon {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+.menu-item-base .menu-item-text {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    flex-grow: 1 !important;
+}
+
+.menu-item-base .menu-item-chevron {
+    width: 12px !important;
+    height: 12px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* Override HeroUI default styles for consistency */
+[data-slot="base"][role="menuitem"]:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure dropdown containers are compact */
+.dropdown-menu-container [data-slot="base"] {
+    padding: 2px !important;
+}

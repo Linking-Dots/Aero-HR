@@ -43,6 +43,7 @@ return new class extends Migration
         // Job Hiring Stages
         Schema::create('job_hiring_stages', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('job_id')->constrained('jobs_recruitment')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
             $table->integer('sequence')->default(0);
@@ -51,6 +52,7 @@ return new class extends Migration
             $table->boolean('requires_approval')->default(false);
             $table->boolean('is_final')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Job Applications

@@ -34,9 +34,9 @@ import {
 
 export const getPages = (permissions, auth = null) => [
   // 1. Dashboard (ISO 9000 - Information Management)
-  ...(permissions.includes('dashboard.view') ? [{
+  ...(permissions.includes('core.dashboard.view') ? [{
     name: 'Dashboard',
-    icon: <HomeIcon className="h-6 w-6" />, 
+    icon: <HomeIcon className="" />, 
     route: 'dashboard',
     priority: 1,
     module: 'core'
@@ -44,256 +44,357 @@ export const getPages = (permissions, auth = null) => [
   // 2. Workspace (Self-Service)
   ...((permissions.includes('attendance.own.view') || permissions.includes('leave.own.view') || permissions.includes('communications.own.view')) ? [{
     name: 'Workspace',
-    icon: <UserGroupIcon className="h-6 w-6" />,
+    icon: <UserGroupIcon className="" />,
     priority: 2,
     module: 'self-service',
     subMenu: [
       ...(permissions.includes('attendance.own.view') ? [
-        { name: 'Attendance', icon: <CalendarDaysIcon className="ml-2 h-5 w-5" />, route: 'attendance-employee' }
+        { name: 'Attendance', icon: <CalendarDaysIcon  />, route: 'attendance-employee' }
       ] : []),
       ...(permissions.includes('leave.own.view') ? [
-        { name: 'Leaves', icon: <ArrowRightOnRectangleIcon className="ml-2 h-5 w-5" />, route: 'leaves-employee' }
+        { name: 'Leaves', icon: <ArrowRightOnRectangleIcon  />, route: 'leaves-employee' }
       ] : []),
       ...(permissions.includes('communications.own.view') ? [
-        { name: 'Communications', icon: <EnvelopeIcon className="ml-2 h-5 w-5" />, route: 'emails' },
+        { name: 'Communications', icon: <EnvelopeIcon  />, route: 'emails' },
       ] : []),
     ]
   }] : []),
-  // 3. HR (Human Resources)
-  ...(permissions.includes('employees.view') ? [{
+  // 3. HR (Human Resources) - Reorganized with submodule groups
+  ...((permissions.includes('employees.view') || 
+       permissions.includes('hr.onboarding.view') || 
+       permissions.includes('hr.skills.view') || 
+       permissions.includes('hr.benefits.view') || 
+       permissions.includes('hr.safety.view') || 
+       permissions.includes('hr.analytics.view') || 
+       permissions.includes('hr.documents.view') || 
+       permissions.includes('hr.selfservice.view')) ? [{
     name: 'HR',
-    icon: <UserGroupIcon className="h-6 w-6" />,
+    icon: <UserGroupIcon className="" />,
     priority: 3,
     module: 'hrm',
     subMenu: [
-      ...(permissions.includes('employees.view') ? [{ name: 'Employees', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'employees' }] : []),
-      ...(permissions.includes('departments.view') ? [{ name: 'Departments', icon: <HomeIcon className="ml-2 h-5 w-5" />, route: 'departments' }] : []),
-      ...(permissions.includes('designations.view') ? [{ name: 'Positions', icon: <BriefcaseIcon className="ml-2 h-5 w-5" />, route: 'designations' }] : []),
-      ...(permissions.includes('attendance.view') ? [{ name: 'Attendance', icon: <CalendarDaysIcon className="ml-2 h-5 w-5" />, route: 'attendances' }] : []),
-      ...(permissions.includes('holidays.view') ? [{ name: 'Calendar', icon: <CalendarIcon className="ml-2 h-5 w-5" />, route: 'holidays' }] : []),
-      ...(permissions.includes('leaves.view') ? [
-        { name: 'Leaves', icon: <ArrowRightOnRectangleIcon className="ml-2 h-5 w-5" />, route: 'leaves' },
-        { name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'leave-summary' },
-        { name: 'Policy', icon: <Cog6ToothIcon className="ml-2 h-5 w-5" />, route: 'leave-settings' },
-      ] : []),
-      ...(permissions.includes('performance-reviews.view') ? [
-        { name: 'Performance', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'hr.performance.index' }
-      ] : []),
-      ...(permissions.includes('training-sessions.view') ? [
-        { name: 'Training', icon: <AcademicCapIcon className="ml-2 h-5 w-5" />, route: 'hr.training.index' }
-      ] : []),
-      ...(permissions.includes('jobs.view') ? [
-        { name: 'Recruitment', icon: <BriefcaseIcon className="ml-2 h-5 w-5" />, route: 'hr.recruitment.index' }
-      ] : []),
+      // Core Employee Management
+      ...((permissions.includes('employees.view') || permissions.includes('departments.view') || permissions.includes('designations.view')) ? [{
+        name: 'Employees',
+        icon: <UserGroupIcon  />,
+        category: 'core',
+        subMenu: [
+          ...(permissions.includes('employees.view') ? [{ name: 'Staff', icon: <UserGroupIcon  />, route: 'employees' }] : []),
+          ...(permissions.includes('departments.view') ? [{ name: 'Depts', icon: <BuildingOffice2Icon  />, route: 'departments' }] : []),
+          ...(permissions.includes('designations.view') ? [{ name: 'Roles', icon: <BriefcaseIcon  />, route: 'designations' }] : []),
+        ]
+      }] : []),
+      
+      // Time & Attendance Management
+      ...((permissions.includes('attendance.view') || permissions.includes('holidays.view') || permissions.includes('leaves.view')) ? [{
+        name: 'Time',
+        icon: <CalendarDaysIcon  />,
+        category: 'time',
+        subMenu: [
+          ...(permissions.includes('attendance.view') ? [{ name: 'Punch', icon: <CalendarDaysIcon  />, route: 'attendances' }] : []),
+          ...(permissions.includes('holidays.view') ? [{ name: 'Calendar', icon: <CalendarIcon  />, route: 'holidays' }] : []),
+          ...(permissions.includes('leaves.view') ? [
+            { name: 'Leaves', icon: <ArrowRightOnRectangleIcon  />, route: 'leaves' },
+            { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'leave-summary' },
+            { name: 'Policy', icon: <Cog6ToothIcon  />, route: 'leave-settings' },
+          ] : []),
+        ]
+      }] : []),
+      
+      // Employee Lifecycle Management
+      ...((permissions.includes('hr.onboarding.view') || permissions.includes('hr.offboarding.view') || permissions.includes('hr.checklists.view') || permissions.includes('jobs.view')) ? [{
+        name: 'Lifecycle',
+        icon: <UserIcon  />,
+        category: 'lifecycle',
+        subMenu: [
+          ...(permissions.includes('jobs.view') ? [{ name: 'Recruit', icon: <BriefcaseIcon  />, route: 'hr.recruitment.index' }] : []),
+          ...(permissions.includes('hr.onboarding.view') ? [{ name: 'Onboard', icon: <UserIcon  />, route: 'hr.onboarding.index' }] : []),
+          ...(permissions.includes('hr.offboarding.view') ? [{ name: 'Offboard', icon: <ArrowRightOnRectangleIcon  />, route: 'hr.offboarding.index' }] : []),
+          ...(permissions.includes('hr.checklists.view') ? [{ name: 'Checklists', icon: <ClipboardDocumentCheckIcon  />, route: 'hr.checklists.index' }] : []),
+        ]
+      }] : []),
+      
+      // Performance & Development
+      ...((permissions.includes('performance-reviews.view') || permissions.includes('training-sessions.view') || permissions.includes('hr.skills.view') || permissions.includes('hr.competencies.view')) ? [{
+        name: 'Dev',
+        icon: <AcademicCapIcon  />,
+        category: 'development',
+        subMenu: [
+          ...(permissions.includes('performance-reviews.view') ? [{ name: 'Reviews', icon: <ChartBarSquareIcon  />, route: 'hr.performance.index' }] : []),
+          ...(permissions.includes('training-sessions.view') ? [{ name: 'Training', icon: <AcademicCapIcon  />, route: 'hr.training.index' }] : []),
+          ...(permissions.includes('hr.skills.view') ? [{ name: 'Skills', icon: <AcademicCapIcon  />, route: 'hr.skills.index' }] : []),
+          ...(permissions.includes('hr.competencies.view') ? [{ name: 'Framework', icon: <ScaleIcon  />, route: 'hr.competencies.index' }] : []),
+        ]
+      }] : []),
+      
+      // Benefits & Compensation
+      ...(permissions.includes('hr.benefits.view') ? [{
+        name: 'Benefits',
+        icon: <CreditCardIcon  />,
+        category: 'benefits',
+        subMenu: [
+          { name: 'Plans', icon: <CreditCardIcon  />, route: 'hr.benefits.index' },
+          { name: 'Time-off', icon: <CalendarIcon  />, route: 'hr.timeoff.index' },
+        ]
+      }] : []),
+      
+      // Workplace Safety & Compliance
+      ...((permissions.includes('hr.safety.view') || permissions.includes('hr.safety.incidents.view') || permissions.includes('hr.safety.training.view')) ? [{
+        name: 'Safety',
+        icon: <ShieldCheckIcon  />,
+        category: 'safety',
+        subMenu: [
+          ...(permissions.includes('hr.safety.view') ? [{ name: 'Dashboard', icon: <ShieldCheckIcon  />, route: 'hr.safety.index' }] : []),
+          ...(permissions.includes('hr.safety.incidents.view') ? [{ name: 'Incidents', icon: <DocumentTextIcon  />, route: 'hr.safety.incidents.index' }] : []),
+          ...(permissions.includes('hr.safety.training.view') ? [{ name: 'Training', icon: <AcademicCapIcon  />, route: 'hr.safety.training.index' }] : []),
+        ]
+      }] : []),
+      
+      // Document Management
+      ...(permissions.includes('hr.documents.view') ? [{
+        name: 'Docs',
+        icon: <DocumentDuplicateIcon  />,
+        category: 'documents',
+        subMenu: [
+          { name: 'Files', icon: <DocumentDuplicateIcon  />, route: 'hr.documents.index' },
+          { name: 'Categories', icon: <FolderIcon  />, route: 'hr.documents.categories.index' },
+        ]
+      }] : []),
+      
+      // Employee Self-Service
+      ...(permissions.includes('hr.selfservice.view') ? [{
+        name: 'Self-Service',
+        icon: <UserIcon  />,
+        category: 'selfservice',
+        subMenu: [
+          { name: 'Portal', icon: <UserIcon  />, route: 'hr.selfservice.index' },
+          { name: 'Profile', icon: <UserIcon  />, route: 'hr.selfservice.profile' },
+          { name: 'Access', icon: <DocumentTextIcon  />, route: 'hr.selfservice.documents' },
+        ]
+      }] : []),
+      
+      // HR Analytics & Reporting
+      ...(permissions.includes('hr.analytics.view') ? [{
+        name: 'Analytics',
+        icon: <ChartBarSquareIcon  />,
+        category: 'analytics',
+        subMenu: [
+          { name: 'Dashboard', icon: <ChartBarSquareIcon  />, route: 'hr.analytics.index' },
+          { name: 'Attendance', icon: <CalendarDaysIcon  />, route: 'hr.analytics.attendance' },
+          { name: 'Performance', icon: <ChartBarSquareIcon  />, route: 'hr.analytics.performance' },
+          { name: 'Recruitment', icon: <UserGroupIcon  />, route: 'hr.analytics.recruitment' },
+          { name: 'Turnover', icon: <ArrowRightOnRectangleIcon  />, route: 'hr.analytics.turnover' },
+        ]
+      }] : []),
     ]
   }] : []),
   // 4. Projects (Project Management)
   ...(permissions.includes('daily-works.view') ? [{
     name: 'Projects',
-    icon: <BriefcaseIcon className="h-6 w-6" />,
+    icon: <BriefcaseIcon className="" />,
     priority: 4,
     module: 'ppm',
     subMenu: [
       ...(permissions.includes('daily-works.view') ? [
-        { name: 'Worklog', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'daily-works' }
+        { name: 'Worklog', icon: <DocumentTextIcon  />, route: 'daily-works' }
       ] : []),
       ...(permissions.includes('daily-works.view') ? [
-        { name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'daily-works-summary' }
+        { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'daily-works-summary' }
       ] : []),
     ]
   }] : []),
   // 5. DMS (Document Management)
   ...(permissions.includes('letters.view') ? [{
     name: 'DMS',
-    icon: <FolderIcon className="h-6 w-6" />,
+    icon: <FolderIcon className="" />,
     priority: 5,
     module: 'dms',
     subMenu: [
-      { name: 'Correspondence', icon: <EnvelopeIcon className="ml-2 h-5 w-5" />, route: 'letters' },
+      { name: 'Correspondence', icon: <EnvelopeIcon  />, route: 'letters' },
     ]
   }] : []),
   // 6. CRM (Customer Relationship Management)
   ...(permissions.includes('crm.view') ? [{
     name: 'CRM',
-    icon: <UserIcon className="h-6 w-6" />,
+    icon: <UserIcon className="" />,
     priority: 6,
     module: 'crm',
     subMenu: [
-      ...(permissions.includes('crm.customers.view') ? [{ name: 'Customers', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'crm.customers.index' }] : []),
-      ...(permissions.includes('crm.opportunities.view') ? [{ name: 'Opportunities', icon: <BriefcaseIcon className="ml-2 h-5 w-5" />, route: 'crm.opportunities.index' }] : []),
-      ...(permissions.includes('crm.interactions.view') ? [{ name: 'Interactions', icon: <PhoneIcon className="ml-2 h-5 w-5" />, route: 'crm.interactions.index' }] : []),
-      ...(permissions.includes('crm.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'crm.dashboard' }] : []),
+      ...(permissions.includes('crm.customers.view') ? [{ name: 'Customers', icon: <UserGroupIcon  />, route: 'crm.customers.index' }] : []),
+      ...(permissions.includes('crm.opportunities.view') ? [{ name: 'Opportunities', icon: <BriefcaseIcon  />, route: 'crm.opportunities.index' }] : []),
+      ...(permissions.includes('crm.interactions.view') ? [{ name: 'Interactions', icon: <PhoneIcon  />, route: 'crm.interactions.index' }] : []),
+      ...(permissions.includes('crm.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'crm.dashboard' }] : []),
     ]
   }] : []),
   // 7. FMS (Financial Management System)
   ...(permissions.includes('fms.view') ? [{
     name: 'Finance',
-    icon: <BanknotesIcon className="h-6 w-6" />,
+    icon: <BanknotesIcon className="" />,
     priority: 7,
     module: 'fms',
     subMenu: [
-      ...(permissions.includes('fms.transactions.view') ? [{ name: 'Transactions', icon: <CreditCardIcon className="ml-2 h-5 w-5" />, route: 'fms.transactions.index' }] : []),
-      ...(permissions.includes('fms.accounts.view') ? [{ name: 'Accounts', icon: <BanknotesIcon className="ml-2 h-5 w-5" />, route: 'fms.accounts.index' }] : []),
-      ...(permissions.includes('fms.reports.view') ? [{ name: 'Reports', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'fms.reports.index' }] : []),
-      ...(permissions.includes('fms.budgets.view') ? [{ name: 'Budgets', icon: <ScaleIcon className="ml-2 h-5 w-5" />, route: 'fms.budgets.index' }] : []),
-      ...(permissions.includes('fms.dashboard.view') ? [{ name: 'Dashboard', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'fms.dashboard' }] : []),
+      ...(permissions.includes('fms.transactions.view') ? [{ name: 'Transactions', icon: <CreditCardIcon  />, route: 'fms.transactions.index' }] : []),
+      ...(permissions.includes('fms.accounts.view') ? [{ name: 'Accounts', icon: <BanknotesIcon  />, route: 'fms.accounts.index' }] : []),
+      ...(permissions.includes('fms.reports.view') ? [{ name: 'Reports', icon: <DocumentTextIcon  />, route: 'fms.reports.index' }] : []),
+      ...(permissions.includes('fms.budgets.view') ? [{ name: 'Budgets', icon: <ScaleIcon  />, route: 'fms.budgets.index' }] : []),
+      ...(permissions.includes('fms.dashboard.view') ? [{ name: 'Dashboard', icon: <ChartBarSquareIcon  />, route: 'fms.dashboard' }] : []),
     ]
   }] : []),
   // 8. POS (Point of Sale)
   ...(permissions.includes('pos.view') ? [{
     name: 'POS',
-    icon: <ShoppingCartIcon className="h-6 w-6" />,
+    icon: <ShoppingCartIcon className="" />,
     priority: 8,
     module: 'pos',
     subMenu: [
-      ...(permissions.includes('pos.sales.view') ? [{ name: 'Sales', icon: <ShoppingCartIcon className="ml-2 h-5 w-5" />, route: 'pos.sales.index' }] : []),
-      ...(permissions.includes('pos.orders.view') ? [{ name: 'Orders', icon: <ClipboardDocumentCheckIcon className="ml-2 h-5 w-5" />, route: 'pos.orders.index' }] : []),
-      ...(permissions.includes('pos.cashier.view') ? [{ name: 'Cashier', icon: <CreditCardIcon className="ml-2 h-5 w-5" />, route: 'pos.cashier' }] : []),
-      ...(permissions.includes('pos.dashboard.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'pos.dashboard' }] : []),
+      ...(permissions.includes('pos.sales.view') ? [{ name: 'Sales', icon: <ShoppingCartIcon  />, route: 'pos.sales.index' }] : []),
+      ...(permissions.includes('pos.orders.view') ? [{ name: 'Orders', icon: <ClipboardDocumentCheckIcon  />, route: 'pos.orders.index' }] : []),
+      ...(permissions.includes('pos.cashier.view') ? [{ name: 'Cashier', icon: <CreditCardIcon  />, route: 'pos.cashier' }] : []),
+      ...(permissions.includes('pos.dashboard.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'pos.dashboard' }] : []),
     ]
   }] : []),
   // 9. IMS (Inventory Management System)
   ...(permissions.includes('ims.view') ? [{
     name: 'Inventory',
-    icon: <ArchiveBoxIcon className="h-6 w-6" />,
+    icon: <ArchiveBoxIcon className="" />,
     priority: 9,
     module: 'ims',
     subMenu: [
-      ...(permissions.includes('ims.items.view') ? [{ name: 'Items', icon: <CubeIcon className="ml-2 h-5 w-5" />, route: 'ims.items.index' }] : []),
-      ...(permissions.includes('ims.stock.view') ? [{ name: 'Stock', icon: <ArchiveBoxIcon className="ml-2 h-5 w-5" />, route: 'ims.stock.index' }] : []),
-      ...(permissions.includes('ims.transfers.view') ? [{ name: 'Transfers', icon: <TruckIcon className="ml-2 h-5 w-5" />, route: 'ims.transfers.index' }] : []),
-      ...(permissions.includes('ims.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'ims.dashboard' }] : []),
+      ...(permissions.includes('ims.items.view') ? [{ name: 'Items', icon: <CubeIcon  />, route: 'ims.items.index' }] : []),
+      ...(permissions.includes('ims.stock.view') ? [{ name: 'Stock', icon: <ArchiveBoxIcon  />, route: 'ims.stock.index' }] : []),
+      ...(permissions.includes('ims.transfers.view') ? [{ name: 'Transfers', icon: <TruckIcon  />, route: 'ims.transfers.index' }] : []),
+      ...(permissions.includes('ims.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'ims.dashboard' }] : []),
     ]
   }] : []),
   // 10. LMS (Learning Management System)
   ...(permissions.includes('lms.view') ? [{
     name: 'Learning',
-    icon: <AcademicCapIcon className="h-6 w-6" />,
+    icon: <AcademicCapIcon className="" />,
     priority: 10,
     module: 'lms',
     subMenu: [
-      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon className="ml-2 h-5 w-5" />, route: 'lms.courses.index' }] : []),
-      ...(permissions.includes('lms.enrollments.view') ? [{ name: 'Enrollments', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'lms.enrollments.index' }] : []),
-      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon className="ml-2 h-5 w-5" />, route: 'lms.assessments.index' }] : []),
-      ...(permissions.includes('lms.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'lms.dashboard' }] : []),
+      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon  />, route: 'lms.courses.index' }] : []),
+      ...(permissions.includes('lms.enrollments.view') ? [{ name: 'Enrollments', icon: <UserGroupIcon  />, route: 'lms.enrollments.index' }] : []),
+      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon  />, route: 'lms.assessments.index' }] : []),
+      ...(permissions.includes('lms.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'lms.dashboard' }] : []),
     ]
   }] : []),
   // 11. SCM (Supply Chain Management)
   ...(permissions.includes('scm.view') ? [{
-    name: 'Supply Chain',
-    icon: <TruckIcon className="h-6 w-6" />,
+    name: 'SCM',
+    icon: <TruckIcon className="" />,
     priority: 11,
     module: 'scm',
     subMenu: [
-      ...(permissions.includes('scm.suppliers.view') ? [{ name: 'Suppliers', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'scm.suppliers.index' }] : []),
-      ...(permissions.includes('scm.purchases.view') ? [{ name: 'Purchases', icon: <ShoppingBagIcon className="ml-2 h-5 w-5" />, route: 'scm.purchases.index' }] : []),
-      ...(permissions.includes('scm.logistics.view') ? [{ name: 'Logistics', icon: <TruckIcon className="ml-2 h-5 w-5" />, route: 'scm.logistics.index' }] : []),
-      ...(permissions.includes('scm.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'scm.dashboard' }] : []),
+      ...(permissions.includes('scm.suppliers.view') ? [{ name: 'Suppliers', icon: <UserGroupIcon  />, route: 'scm.suppliers.index' }] : []),
+      ...(permissions.includes('scm.purchases.view') ? [{ name: 'Purchases', icon: <ShoppingBagIcon  />, route: 'scm.purchases.index' }] : []),
+      ...(permissions.includes('scm.logistics.view') ? [{ name: 'Logistics', icon: <TruckIcon  />, route: 'scm.logistics.index' }] : []),
+      ...(permissions.includes('scm.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'scm.dashboard' }] : []),
     ]
   }] : []),
   // 12. Sales/Retail
   ...(permissions.includes('sales.view') ? [{
     name: 'Sales',
-    icon: <ShoppingBagIcon className="h-6 w-6" />,
+    icon: <ShoppingBagIcon className="" />,
     priority: 12,
     module: 'sales',
     subMenu: [
-      ...(permissions.includes('sales.orders.view') ? [{ name: 'Orders', icon: <ClipboardDocumentCheckIcon className="ml-2 h-5 w-5" />, route: 'sales.orders.index' }] : []),
-      ...(permissions.includes('sales.invoices.view') ? [{ name: 'Invoices', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'sales.invoices.index' }] : []),
-      ...(permissions.includes('sales.quotes.view') ? [{ name: 'Quotes', icon: <DocumentDuplicateIcon className="ml-2 h-5 w-5" />, route: 'sales.quotes.index' }] : []),
-      ...(permissions.includes('sales.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'sales.dashboard' }] : []),
+      ...(permissions.includes('sales.orders.view') ? [{ name: 'Orders', icon: <ClipboardDocumentCheckIcon  />, route: 'sales.orders.index' }] : []),
+      ...(permissions.includes('sales.invoices.view') ? [{ name: 'Invoices', icon: <DocumentTextIcon  />, route: 'sales.invoices.index' }] : []),
+      ...(permissions.includes('sales.quotes.view') ? [{ name: 'Quotes', icon: <DocumentDuplicateIcon  />, route: 'sales.quotes.index' }] : []),
+      ...(permissions.includes('sales.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'sales.dashboard' }] : []),
     ]
   }] : []),
   // 13. Helpdesk
   ...(permissions.includes('helpdesk.view') ? [{
     name: 'Helpdesk',
-    icon: <TicketIcon className="h-6 w-6" />,
+    icon: <TicketIcon className="" />,
     priority: 13,
     module: 'helpdesk',
     subMenu: [
-      ...(permissions.includes('helpdesk.tickets.view') ? [{ name: 'Tickets', icon: <TicketIcon className="ml-2 h-5 w-5" />, route: 'helpdesk.tickets.index' }] : []),
-      ...(permissions.includes('helpdesk.knowledge.view') ? [{ name: 'Knowledge Base', icon: <FolderIcon className="ml-2 h-5 w-5" />, route: 'helpdesk.knowledge.index' }] : []),
-      ...(permissions.includes('helpdesk.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'helpdesk.dashboard' }] : []),
+      ...(permissions.includes('helpdesk.tickets.view') ? [{ name: 'Tickets', icon: <TicketIcon  />, route: 'helpdesk.tickets.index' }] : []),
+      ...(permissions.includes('helpdesk.knowledge.view') ? [{ name: 'KB', icon: <FolderIcon  />, route: 'helpdesk.knowledge.index' }] : []),
+      ...(permissions.includes('helpdesk.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'helpdesk.dashboard' }] : []),
     ]
   }] : []),
   // 14. Assets
   ...(permissions.includes('assets.view') ? [{
     name: 'Assets',
-    icon: <ComputerDesktopIcon className="h-6 w-6" />,
+    icon: <ComputerDesktopIcon className="" />,
     priority: 14,
     module: 'assets',
     subMenu: [
-      ...(permissions.includes('assets.items.view') ? [{ name: 'Items', icon: <ComputerDesktopIcon className="ml-2 h-5 w-5" />, route: 'assets.items.index' }] : []),
-      ...(permissions.includes('assets.maintenance.view') ? [{ name: 'Maintenance', icon: <WrenchScrewdriverIcon className="ml-2 h-5 w-5" />, route: 'assets.maintenance.index' }] : []),
-      ...(permissions.includes('assets.dashboard.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'assets.dashboard' }] : []),
+      ...(permissions.includes('assets.items.view') ? [{ name: 'Items', icon: <ComputerDesktopIcon  />, route: 'assets.items.index' }] : []),
+      ...(permissions.includes('assets.maintenance.view') ? [{ name: 'Maintenance', icon: <WrenchScrewdriverIcon  />, route: 'assets.maintenance.index' }] : []),
+      ...(permissions.includes('assets.dashboard.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'assets.dashboard' }] : []),
     ]
   }] : []),
   // 15. Compliance
   ...(permissions.includes('compliance.view') ? [{
     name: 'Compliance',
-    icon: <ShieldCheckIcon className="h-6 w-6" />,
+    icon: <ShieldCheckIcon className="" />,
     priority: 15,
     module: 'compliance',
     subMenu: [
-      ...(permissions.includes('compliance.documents.view') ? [{ name: 'Documents', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'compliance.documents.index' }] : []),
-      ...(permissions.includes('compliance.audits.view') ? [{ name: 'Audits', icon: <ClipboardDocumentCheckIcon className="ml-2 h-5 w-5" />, route: 'compliance.audits.index' }] : []),
-      ...(permissions.includes('compliance.requirements.view') ? [{ name: 'Requirements', icon: <DocumentDuplicateIcon className="ml-2 h-5 w-5" />, route: 'compliance.requirements.index' }] : []),
-      ...(permissions.includes('compliance.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'compliance.dashboard' }] : []),
+      ...(permissions.includes('compliance.documents.view') ? [{ name: 'Documents', icon: <DocumentTextIcon  />, route: 'compliance.documents.index' }] : []),
+      ...(permissions.includes('compliance.audits.view') ? [{ name: 'Audits', icon: <ClipboardDocumentCheckIcon  />, route: 'compliance.audits.index' }] : []),
+      ...(permissions.includes('compliance.requirements.view') ? [{ name: 'Requirements', icon: <DocumentDuplicateIcon  />, route: 'compliance.requirements.index' }] : []),
+      ...(permissions.includes('compliance.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'compliance.dashboard' }] : []),
     ]
   }] : []),
   // 16. Procurement
   ...(permissions.includes('procurement.view') ? [{
     name: 'Procurement',
-    icon: <ShoppingBagIcon className="h-6 w-6" />,
+    icon: <ShoppingBagIcon className="" />,
     priority: 16,
     module: 'procurement',
     subMenu: [
-      ...(permissions.includes('procurement.purchase-orders.view') ? [{ name: 'Purchase Orders', icon: <ShoppingCartIcon className="ml-2 h-5 w-5" />, route: 'procurement.purchase-orders.index' }] : []),
-      ...(permissions.includes('procurement.vendors.view') ? [{ name: 'Vendors', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'procurement.vendors.index' }] : []),
-      ...(permissions.includes('procurement.rfq.view') ? [{ name: 'RFQs', icon: <DocumentDuplicateIcon className="ml-2 h-5 w-5" />, route: 'procurement.rfq.index' }] : []),
-      ...(permissions.includes('procurement.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'procurement.dashboard' }] : []),
+      ...(permissions.includes('procurement.purchase-orders.view') ? [{ name: 'POs', icon: <ShoppingCartIcon  />, route: 'procurement.purchase-orders.index' }] : []),
+      ...(permissions.includes('procurement.vendors.view') ? [{ name: 'Vendors', icon: <UserGroupIcon  />, route: 'procurement.vendors.index' }] : []),
+      ...(permissions.includes('procurement.rfq.view') ? [{ name: 'RFQs', icon: <DocumentDuplicateIcon  />, route: 'procurement.rfq.index' }] : []),
+      ...(permissions.includes('procurement.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'procurement.dashboard' }] : []),
     ]
   }] : []),
   // 17. Quality Management
   ...(permissions.includes('quality.view') ? [{
     name: 'Quality',
-    icon: <BeakerIcon className="h-6 w-6" />,
+    icon: <BeakerIcon className="" />,
     priority: 17,
     module: 'quality',
     subMenu: [
-      ...(permissions.includes('quality.inspections.view') ? [{ name: 'Inspections', icon: <ClipboardDocumentCheckIcon className="ml-2 h-5 w-5" />, route: 'quality.inspections.index' }] : []),
-      ...(permissions.includes('quality.ncr.view') ? [{ name: 'Non-Conformances', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'quality.ncrs.index' }] : []),
-      ...(permissions.includes('quality.calibrations.view') ? [{ name: 'Calibrations', icon: <ScaleIcon className="ml-2 h-5 w-5" />, route: 'quality.calibrations.index' }] : []),
-      ...(permissions.includes('quality.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'quality.dashboard' }] : []),
+      ...(permissions.includes('quality.inspections.view') ? [{ name: 'Inspections', icon: <ClipboardDocumentCheckIcon  />, route: 'quality.inspections.index' }] : []),
+      ...(permissions.includes('quality.ncr.view') ? [{ name: 'NCRs', icon: <DocumentTextIcon  />, route: 'quality.ncrs.index' }] : []),
+      ...(permissions.includes('quality.calibrations.view') ? [{ name: 'Calibrations', icon: <ScaleIcon  />, route: 'quality.calibrations.index' }] : []),
+      ...(permissions.includes('quality.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'quality.dashboard' }] : []),
     ]
   }] : []),
   // 18. Analytics
   ...(permissions.includes('analytics.view') ? [{
     name: 'Analytics',
-    icon: <ChartBarSquareIcon className="h-6 w-6" />,
+    icon: <ChartBarSquareIcon className="" />,
     priority: 18,
     module: 'analytics',
     subMenu: [
-      ...(permissions.includes('analytics.reports.view') ? [{ name: 'Reports', icon: <DocumentTextIcon className="ml-2 h-5 w-5" />, route: 'analytics.reports.index' }] : []),
-      ...(permissions.includes('analytics.dashboards.view') ? [{ name: 'Dashboards', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'analytics.dashboards.index' }] : []),
-      ...(permissions.includes('analytics.kpi.view') ? [{ name: 'KPIs', icon: <ChartBarSquareIcon className="ml-2 h-5 w-5" />, route: 'analytics.kpi.index' }] : []),
+      ...(permissions.includes('analytics.reports.view') ? [{ name: 'Reports', icon: <DocumentTextIcon  />, route: 'analytics.reports.index' }] : []),
+      ...(permissions.includes('analytics.dashboards.view') ? [{ name: 'Dashboards', icon: <ChartBarSquareIcon  />, route: 'analytics.dashboards.index' }] : []),
+      ...(permissions.includes('analytics.kpi.view') ? [{ name: 'KPIs', icon: <ChartBarSquareIcon  />, route: 'analytics.kpi.index' }] : []),
     ]
   }] : []),
   // 19. Admin (System Administration)
   ...(permissions.includes('users.view') || permissions.includes('settings.view') || permissions.includes('roles.view') ? [{
     name: 'Admin',
-    icon: <Cog6ToothIcon className="h-6 w-6" />,
+    icon: <Cog6ToothIcon className="" />,
     priority: 19,
     module: 'admin',
     subMenu: [
-      ...(permissions.includes('users.view') ? [{ name: 'Users', icon: <UsersIcon className="ml-2 h-5 w-5" />, route: 'users' }] : []),
+      ...(permissions.includes('users.view') ? [{ name: 'Users', icon: <UsersIcon  />, route: 'users' }] : []),
       ...(permissions.includes('roles.view') ? [
-        { name: 'Roles', icon: <UserGroupIcon className="ml-2 h-5 w-5" />, route: 'admin.roles-management' }
+        { name: 'Roles', icon: <UserGroupIcon  />, route: 'admin.roles-management' }
       ] : []),
       ...(auth?.user && auth?.roles?.includes('Super Administrator') ? [
-        { name: 'Monitoring', icon: <ComputerDesktopIcon className="ml-2 h-5 w-5" />, route: 'admin.system-monitoring' }
+        { name: 'Monitoring', icon: <ComputerDesktopIcon  />, route: 'admin.system-monitoring' }
       ] : []),
-      ...(permissions.includes('settings.view') ? [{ name: 'Settings', icon: <Cog6ToothIcon className="ml-2 h-5 w-5" />, route: 'admin.settings.company' }] : []),
+      ...(permissions.includes('settings.view') ? [{ name: 'Settings', icon: <Cog6ToothIcon  />, route: 'admin.settings.company' }] : []),
     ]
   }] : []),
 ];

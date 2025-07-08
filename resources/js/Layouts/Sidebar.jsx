@@ -82,20 +82,32 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
     setActivePage(url);
     
     // Auto-expand parent menu if a submenu item is active
-    pages.forEach(page => {
-      if (page.subMenu) {
-        const hasActiveSubPage = page.subMenu.some(
-          subPage => "/" + subPage.route === url
-        );
-        if (hasActiveSubPage) {
+    const expandParentMenus = (menuItems, targetUrl, parentNames = []) => {
+      for (const page of menuItems) {
+        const currentParents = [...parentNames, page.name];
+        
+        // Check if this page matches the current URL
+        if (page.route && "/" + page.route === targetUrl) {
+          // Expand all parent menus
           setOpenSubMenus(prev => {
-            const newSet = new Set([...prev, page.name]);
+            const newSet = new Set([...prev, ...currentParents.slice(0, -1)]);
             saveSubMenuState(newSet);
             return newSet;
           });
+          return true;
+        }
+        
+        // Check submenu recursively
+        if (page.subMenu) {
+          if (expandParentMenus(page.subMenu, targetUrl, currentParents)) {
+            return true;
+          }
         }
       }
-    });
+      return false;
+    };
+    
+    expandParentMenus(pages, url);
   }, [url, pages, saveSubMenuState]);
 
   const handleSubMenuToggle = useCallback((pageName) => {
@@ -132,10 +144,14 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
   const themeColor = getThemePrimaryColor(muiTheme);
   const themeColorRgba = hexToRgba(themeColor, 0.5);
 
-  const renderCompactMenuItem = useCallback((page, isSubMenu = false) => {
+  const renderCompactMenuItem = useCallback((page, isSubMenu = false, level = 0) => {
     const isActive = activePage === "/" + page.route;
     const hasActiveSubPage = page.subMenu?.some(
-      subPage => "/" + subPage.route === activePage
+      subPage => {
+        if (subPage.route) return "/" + subPage.route === activePage;
+        if (subPage.subMenu) return subPage.subMenu.some(nestedPage => "/" + nestedPage.route === activePage);
+        return false;
+      }
     );
     const isExpanded = openSubMenus.has(page.name);
     const activeStyle = isActive || hasActiveSubPage ? {
@@ -143,6 +159,12 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
       borderLeft: `2px solid ${themeColor}`,
       color: themeColor,
     } : {};
+    
+    const paddingLeft = level === 0 ? 'px-3' : level === 1 ? 'px-4' : 'px-5';
+    const height = level === 0 ? 'h-9' : level === 1 ? 'h-8' : 'h-7';
+    const iconSize = level === 0 ? 'w-3 h-3' : level === 1 ? 'w-3 h-3' : 'w-3 h-3';
+    const textSize = level === 0 ? 'text-sm' : level === 1 ? 'text-xs' : 'text-xs';
+    
     if (page.subMenu) {
       return (
         <div key={page.name} className="w-full">
@@ -151,7 +173,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
             color={hasActiveSubPage ? "primary" : "default"}
             startContent={
               <div style={hasActiveSubPage ? { color: themeColor } : {}}>
-                {React.cloneElement(page.icon, { className: "w-3 h-3" })}
+                {React.cloneElement(page.icon, { className: iconSize })}
               </div>
             }
             endContent={
@@ -160,13 +182,13 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
                 style={isExpanded ? { color: themeColor } : {}}
               />
             }
-            className="w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
+            className={`w-full justify-start ${height} ${paddingLeft} bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl`}
             style={activeStyle}
             onPress={() => handleSubMenuToggle(page.name)}
             size="sm"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-sm font-medium" style={hasActiveSubPage ? { color: themeColor } : {}}>
+              <span className={`${textSize} font-medium`} style={hasActiveSubPage ? { color: themeColor } : {}}>
                 {page.name}
               </span>
               <Chip
@@ -181,74 +203,105 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
           </Button>
           {/* Compact Submenu */}
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+            isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
           }`}>
-            <div className="ml-6 mt-1 space-y-0.5 border-l border-primary/20 pl-2">
-              {page.subMenu.map((subPage, index) => {
-                const isSubActive = activePage === "/" + subPage.route;
-                return (
-                  <Button
-                    key={subPage.name}
-                    as={Link}
-                    href={route(subPage.route)}
-                    method={subPage.method}
-                    preserveState
-                    preserveScroll
-                    variant="light"
-                    startContent={
-                      <div style={isSubActive ? { color: themeColor } : {}}>
-                        {React.cloneElement(subPage.icon, { className: "w-3 h-3" })}
-                      </div>
-                    }
-                    className="w-full justify-start h-8 px-2 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
-                    style={isSubActive ? { background: themeColorRgba, borderLeft: `2px solid ${themeColor}`, color: themeColor } : {}}
-                    onPress={() => handlePageClick(subPage.name)}
-                    size="sm"
-                  >
-                    <span className="text-xs font-medium" style={isSubActive ? { color: themeColor } : {}}>
-                      {subPage.name}
-                    </span>
-                  </Button>
-                );
-              })}
+            <div className={`${level === 0 ? 'ml-6' : 'ml-4'} mt-1 space-y-0.5 border-l border-primary/20 pl-2`}>
+              {page.subMenu.map((subPage, index) => renderCompactMenuItem(subPage, true, level + 1))}
             </div>
           </div>
         </div>
       );
     }
-    // No submenu
+    
+    // No submenu - leaf item
+    if (page.route) {
+      return (
+        <Button
+          key={page.name}
+          as={Link}
+          href={route(page.route)}
+          method={page.method}
+          preserveState
+          preserveScroll
+          variant="light"
+          startContent={
+            <div style={isActive ? { color: themeColor } : {}}>
+              {React.cloneElement(page.icon, { className: iconSize })}
+            </div>
+          }
+          className={`w-full justify-start ${height} ${paddingLeft} bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl`}
+          style={isActive ? { background: themeColorRgba, borderLeft: `2px solid ${themeColor}`, color: themeColor } : {}}
+          onPress={() => handlePageClick(page.name)}
+          size="sm"
+        >
+          <span className={`${textSize} font-medium`} style={isActive ? { color: themeColor } : {}}>
+            {page.name}
+          </span>
+        </Button>
+      );
+    }
+    
+    // Category header without route
     return (
-      <Button
-        key={page.name}
-        as={Link}
-        href={route(page.route)}
-        method={page.method}
-        preserveState
-        preserveScroll
-        variant="light"
-        startContent={
-          <div style={isActive ? { color: themeColor } : {}}>
-            {React.cloneElement(page.icon, { className: "w-3 h-3" })}
+      <div key={page.name} className="w-full">
+        <Button
+          variant="light"
+          color={hasActiveSubPage ? "primary" : "default"}
+          startContent={
+            <div style={hasActiveSubPage ? { color: themeColor } : {}}>
+              {React.cloneElement(page.icon, { className: iconSize })}
+            </div>
+          }
+          endContent={
+            <ChevronRightIcon 
+              className={`w-3 h-3 transition-all duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+              style={isExpanded ? { color: themeColor } : {}}
+            />
+          }
+          className={`w-full justify-start ${height} ${paddingLeft} bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl`}
+          style={activeStyle}
+          onPress={() => handleSubMenuToggle(page.name)}
+          size="sm"
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className={`${textSize} font-medium`} style={hasActiveSubPage ? { color: themeColor } : {}}>
+              {page.name}
+            </span>
+            <Chip
+              size="sm"
+              variant="flat"
+              className="text-xs h-4 min-w-4 px-1 transition-all duration-300"
+              style={hasActiveSubPage ? { background: themeColorRgba, color: themeColor } : {}}
+            >
+              {page.subMenu?.length || 0}
+            </Chip>
           </div>
-        }
-        className="w-full justify-start h-9 px-3 bg-transparent hover:bg-white/10 transition-all duration-200 hover:scale-105 rounded-xl"
-        style={isActive ? { background: themeColorRgba, borderLeft: `2px solid ${themeColor}`, color: themeColor } : {}}
-        onPress={() => handlePageClick(page.name)}
-        size="sm"
-      >
-        <span className="text-sm font-medium" style={isActive ? { color: themeColor } : {}}>
-          {page.name}
-        </span>
-      </Button>
+        </Button>
+        {/* Compact Submenu */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className={`${level === 0 ? 'ml-6' : 'ml-4'} mt-1 space-y-0.5 border-l border-primary/20 pl-2`}>
+            {page.subMenu?.map((subPage, index) => renderCompactMenuItem(subPage, true, level + 1))}
+          </div>
+        </div>
+      </div>
     );
   }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick, themeColor, themeColorRgba]);
 
-  const renderMenuItem = useCallback((page, isSubMenu = false) => {
-    const isActive = activePage === "/" + page.route;
+  const renderMenuItem = useCallback((page, isSubMenu = false, level = 0) => {
+    const isActive = page.route && activePage === "/" + page.route;
     const hasActiveSubPage = page.subMenu?.some(
-      subPage => "/" + subPage.route === activePage
+      subPage => {
+        if (subPage.route) return "/" + subPage.route === activePage;
+        if (subPage.subMenu) return subPage.subMenu.some(nestedPage => "/" + nestedPage.route === activePage);
+        return false;
+      }
     );
     const isExpanded = openSubMenus.has(page.name);
+
+    const marginLeft = level === 0 ? '' : level === 1 ? 'ml-8' : 'ml-12';
+    const paddingLeft = level === 0 ? 'pl-4' : level === 1 ? 'pl-6' : 'pl-8';
 
     if (page.subMenu) {
       return (
@@ -269,9 +322,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
                 style={isExpanded ? { color: themeColor } : {}}
               />
             }
-            className={`w-full justify-start h-14 ${
-              isSubMenu ? 'pl-12' : 'pl-4'
-            } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
+            className={`w-full justify-start h-14 ${paddingLeft} pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
               hasActiveSubPage 
                 ? `${GRADIENT_PRESETS.accentCard} border-l-4 border-blue-500 shadow-lg` 
                 : 'hover:border-l-4 hover:border-blue-500/30'
@@ -285,7 +336,7 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
                   {page.name}
                 </span>
                 <span className="text-xs text-default-400 group-hover:text-default-500 transition-colors">
-                  {page.subMenu.length} modules
+                  {page.subMenu.length} {level === 0 ? 'categories' : 'modules'}
                 </span>
               </div>
               <Chip
@@ -304,86 +355,70 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
           
           {/* Submenu Items with Animation */}
           <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
-            isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
           }`}>
-            <div className="ml-8 mt-2 space-y-1 border-l-2 border-primary/20 pl-4 relative">
-              {page.subMenu.map((subPage, index) => {
-                const isSubActive = activePage === "/" + subPage.route;
-                return (
-                  <div
-                    key={subPage.name}
-                    className={`transform transition-all duration-300 delay-${index * 50} ${
-                      isExpanded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'
-                    }`}
-                  >
-                    <Button
-                      as={Link}
-                      href={route(subPage.route)}
-                      method={subPage.method}
-                      preserveState
-                      preserveScroll
-                      variant="light"
-                      startContent={
-                        <div >
-                          {subPage.icon}
-                        </div>
-                      }
-                      className={`w-full justify-start h-11 pl-4 pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 hover:scale-105 ${
-                        isSubActive 
-                          ? `${GRADIENT_PRESETS.accentCard} border-l-3 border-blue-500 text-blue-600 shadow-md` 
-                          : 'hover:border-l-3 hover:border-blue-500/30'
-                      }`}
-                      onPress={() => handlePageClick(subPage.name)}
-                      size="sm"
-                    >
-                      <span className={`text-sm font-medium ${isSubActive ? 'text-blue-600' : 'text-foreground'}`}>
-                        {subPage.name}
-                      </span>
-                    </Button>
-                  </div>
-                );
-              })}
+            <div className={`${marginLeft} mt-2 space-y-1 border-l-2 border-primary/20 pl-4 relative`}>
+              {page.subMenu.map((subPage, index) => (
+                <div
+                  key={subPage.name}
+                  className={`transform transition-all duration-300 delay-${index * 50} ${
+                    isExpanded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'
+                  }`}
+                >
+                  {renderMenuItem(subPage, true, level + 1)}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       );
     }
 
-    return (
-      <Button
-        key={page.name}
-        as={Link}
-        href={route(page.route)}
-        method={page.method}
-        preserveState
-        preserveScroll
-        variant="light"
-        startContent={
-          <div >
-            {page.icon}
-          </div>
-        }
-        className={`w-full justify-start h-14 ${
-          isSubMenu ? 'pl-12' : 'pl-4'
-        } pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
-          isActive 
-            ? `${GRADIENT_PRESETS.accentCard} border-l-4 border-blue-500 shadow-lg` 
-            : 'hover:border-l-4 hover:border-blue-500/30'
-        }`}
-        onPress={() => handlePageClick(page.name)}
-        size="md"
-      >
-        <div className="flex flex-col items-start w-full">
-          <span className={`font-semibold text-sm ${isActive ? 'text-blue-600' : 'text-foreground'}`}>
+    // No submenu - either a route or category
+    if (page.route) {
+      return (
+        <Button
+          key={page.name}
+          as={Link}
+          href={route(page.route)}
+          method={page.method}
+          preserveState
+          preserveScroll
+          variant="light"
+          startContent={
+            <div >
+              {page.icon}
+            </div>
+          }
+          className={`w-full justify-start h-11 ${paddingLeft} pr-4 bg-transparent hover:bg-white/10 transition-all duration-300 group hover:scale-105 ${
+            isActive 
+              ? `${GRADIENT_PRESETS.accentCard} border-l-3 border-blue-500 text-blue-600 shadow-md` 
+              : 'hover:border-l-3 hover:border-blue-500/30'
+          }`}
+          onPress={() => handlePageClick(page.name)}
+          size="sm"
+        >
+          <span className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-foreground'}`}>
             {page.name}
           </span>
-          {page.description && (
-            <span className="text-xs text-default-400 group-hover:text-default-500 transition-colors">
-              {page.description}
+        </Button>
+      );
+    }
+
+    // Category without route - just display as header
+    return (
+      <div key={page.name} className="w-full">
+        <div className={`${paddingLeft} pr-4 py-2`}>
+          <div className="flex items-center gap-2">
+            <div>
+              {page.icon}
+            </div>
+            <span className="text-sm font-semibold text-foreground/80">
+              {page.name}
             </span>
-          )}
+          </div>
         </div>
-      </Button>
+      </div>
     );
   }, [activePage, openSubMenus, handleSubMenuToggle, handlePageClick]);
 

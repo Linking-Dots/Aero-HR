@@ -1,242 +1,446 @@
 import React from 'react';
-import { 
-    PencilIcon, 
-    TrashIcon, 
-    EyeIcon,
-    DocumentTextIcon,
-    CalendarIcon,
-    CheckCircleIcon,
-    EllipsisVerticalIcon
-} from '@heroicons/react/24/outline';
-import { 
-    Button, 
-    Chip, 
-    Table, 
-    TableHeader, 
-    TableColumn, 
-    TableBody, 
-    TableRow, 
+import {
+    Table,
+    TableBody,
     TableCell,
-    Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
-    Spinner
-} from '@heroui/react';
-import { format } from 'date-fns';
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Chip,
+    IconButton,
+    Menu,
+    MenuItem,
+    Typography,
+    Box,
+    Tooltip,
+    Avatar,
+    LinearProgress,
+    Stack,
+    Divider,
+    useTheme
+} from '@mui/material';
+import {
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Visibility as ViewIcon,
+    MoreVert as MoreVertIcon,
+    Person as PersonIcon,
+    LocationOn as LocationIcon,
+    Work as WorkIcon,
+    CalendarToday as CalendarIcon,
+    AttachMoney as MoneyIcon,
+    BusinessCenter as BusinessIcon,
+    Public as PublicIcon,
+    Lock as LockIcon,
+    Star as StarIcon,
+    StarBorder as StarBorderIcon
+} from '@mui/icons-material';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
-const JobPostingsTable = ({ data, loading, permissions, onView, onEdit, onDelete, onApplications }) => {
+dayjs.extend(relativeTime);
+
+const JobPostingsTable = ({ 
+    data = [], 
+    loading = false, 
+    permissions = [], 
+    onView, 
+    onEdit, 
+    onDelete, 
+    onApplications 
+}) => {
+    const theme = useTheme();
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [selectedJob, setSelectedJob] = React.useState(null);
+
+    const handleMenuOpen = (event, job) => {
+        setAnchorEl(event.currentTarget);
+        setSelectedJob(job);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedJob(null);
+    };
+
     const getStatusChip = (status) => {
-        switch (status) {
-            case 'draft':
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="default" 
-                        size="sm"
-                        startContent={<DocumentTextIcon className="w-4 h-4" />}
-                    >
-                        Draft
-                    </Chip>
-                );
-            case 'pending':
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="warning" 
-                        size="sm"
-                        startContent={<CalendarIcon className="w-4 h-4" />}
-                    >
-                        Pending
-                    </Chip>
-                );
-            case 'published':
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="success" 
-                        size="sm"
-                        startContent={<CheckCircleIcon className="w-4 h-4" />}
-                    >
-                        Published
-                    </Chip>
-                );
-            case 'closed':
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="danger" 
-                        size="sm"
-                    >
-                        Closed
-                    </Chip>
-                );
-            case 'on_hold':
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="secondary" 
-                        size="sm"
-                    >
-                        On Hold
-                    </Chip>
-                );
-            default:
-                return (
-                    <Chip 
-                        variant="flat" 
-                        color="default" 
-                        size="sm"
-                    >
-                        {status}
-                    </Chip>
-                );
-        }
+        const statusConfig = {
+            draft: {
+                color: 'default',
+                label: 'Draft',
+                icon: <EditIcon sx={{ fontSize: 14 }} />
+            },
+            pending: {
+                color: 'warning',
+                label: 'Pending Approval',
+                icon: <CalendarIcon sx={{ fontSize: 14 }} />
+            },
+            published: {
+                color: 'success',
+                label: 'Published',
+                icon: <PublicIcon sx={{ fontSize: 14 }} />
+            },
+            closed: {
+                color: 'error',
+                label: 'Closed',
+                icon: <LockIcon sx={{ fontSize: 14 }} />
+            },
+            on_hold: {
+                color: 'secondary',
+                label: 'On Hold',
+                icon: <CalendarIcon sx={{ fontSize: 14 }} />
+            }
+        };
+
+        const config = statusConfig[status] || statusConfig.draft;
+        
+        return (
+            <Chip
+                label={config.label}
+                color={config.color}
+                size="small"
+                icon={config.icon}
+                variant="outlined"
+                sx={{ 
+                    fontWeight: 500,
+                    '& .MuiChip-icon': {
+                        fontSize: 14
+                    }
+                }}
+            />
+        );
     };
 
-    const columns = [
-        { name: "Job Title", uid: "title" },
-        { name: "Department", uid: "department" },
-        { name: "Job Type", uid: "job_type" },
-        { name: "Status", uid: "status" },
-        { name: "Posted Date", uid: "posted_date" },
-        { name: "Closing Date", uid: "closing_date" },
-        { name: "Applications", uid: "applications" },
-        { name: "Actions", uid: "actions" }
-    ];
+    const getJobTypeChip = (jobType) => {
+        const typeConfig = {
+            full_time: { color: 'primary', label: 'Full Time' },
+            part_time: { color: 'secondary', label: 'Part Time' },
+            contract: { color: 'info', label: 'Contract' },
+            temporary: { color: 'warning', label: 'Temporary' },
+            internship: { color: 'success', label: 'Internship' }
+        };
 
-    const renderCell = (item, columnKey) => {
-        switch (columnKey) {
-            case "title":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize">{item.title}</p>
-                        <p className="text-bold text-tiny capitalize text-default-400">{item.designation?.name}</p>
-                    </div>
-                );
-            case "department":
-                return item.department?.name || 'N/A';
-            case "job_type":
-                return (
-                    <span className="capitalize">
-                        {item.job_type?.replace('_', ' ') || 'N/A'}
-                    </span>
-                );
-            case "status":
-                return getStatusChip(item.status);
-            case "posted_date":
-                return item.posted_date ? format(new Date(item.posted_date), 'MMM dd, yyyy') : 'N/A';
-            case "closing_date":
-                return item.closing_date ? format(new Date(item.closing_date), 'MMM dd, yyyy') : 'N/A';
-            case "applications":
-                return (
-                    <Chip size="sm" variant="flat" color="primary">
-                        {item.applications_count || 0}
-                    </Chip>
-                );
-            case "actions":
-                return (
-                    <div className="relative flex items-center justify-end">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    aria-label="More actions"
-                                >
-                                    <EllipsisVerticalIcon className="w-5 h-5" />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu aria-label="Actions">
-                                {permissions.includes('jobs.view') && (
-                                    <DropdownItem
-                                        key="view"
-                                        startContent={<EyeIcon className="w-4 h-4" />}
-                                        onPress={() => onView(item)}
-                                    >
-                                        View Details
-                                    </DropdownItem>
-                                )}
-                                
-                                {permissions.includes('jobs.update') && (
-                                    <DropdownItem
-                                        key="edit"
-                                        startContent={<PencilIcon className="w-4 h-4" />}
-                                        onPress={() => onEdit(item)}
-                                    >
-                                        Edit Job
-                                    </DropdownItem>
-                                )}
-                                
-                                {permissions.includes('job-applications.view') && (
-                                    <DropdownItem
-                                        key="applications"
-                                        startContent={<DocumentTextIcon className="w-4 h-4" />}
-                                        onPress={() => onApplications(item)}
-                                    >
-                                        View Applications ({item.applications_count || 0})
-                                    </DropdownItem>
-                                )}
-                                
-                                {permissions.includes('jobs.delete') && (
-                                    <DropdownItem
-                                        key="delete"
-                                        className="text-danger"
-                                        color="danger"
-                                        startContent={<TrashIcon className="w-4 h-4" />}
-                                        onPress={() => onDelete(item)}
-                                    >
-                                        Delete
-                                    </DropdownItem>
-                                )}
-                            </DropdownMenu>
-                        </Dropdown>
-                    </div>
-                );
-            default:
-                return item[columnKey];
-        }
+        const config = typeConfig[jobType] || { color: 'default', label: jobType };
+        
+        return (
+            <Chip
+                label={config.label}
+                color={config.color}
+                size="small"
+                variant="filled"
+                sx={{ 
+                    fontWeight: 500,
+                    fontSize: '0.75rem'
+                }}
+            />
+        );
     };
+
+    const formatSalary = (min, max, currency = 'USD') => {
+        const symbols = {
+            USD: '$',
+            EUR: '€',
+            GBP: '£',
+            INR: '₹',
+            JPY: '¥',
+            CAD: 'C$',
+            AUD: 'A$'
+        };
+        
+        const symbol = symbols[currency] || '$';
+        
+        if (min && max) {
+            return `${symbol}${parseInt(min).toLocaleString()} - ${symbol}${parseInt(max).toLocaleString()}`;
+        } else if (min) {
+            return `${symbol}${parseInt(min).toLocaleString()}+`;
+        } else if (max) {
+            return `Up to ${symbol}${parseInt(max).toLocaleString()}`;
+        }
+        
+        return 'Competitive';
+    };
+
+    const canView = permissions.includes('jobs.view');
+    const canEdit = permissions.includes('jobs.update');
+    const canDelete = permissions.includes('jobs.delete');
+
+    if (loading) {
+        return (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                <Box sx={{ width: '100%' }}>
+                    <LinearProgress />
+                </Box>
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="h6" color="textSecondary">
+                        Loading job postings...
+                    </Typography>
+                </Box>
+            </Paper>
+        );
+    }
+
+    if (!data || data.length === 0) {
+        return (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <BusinessIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="textSecondary" gutterBottom>
+                        No job postings found
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                        Create your first job posting to start recruiting talent.
+                    </Typography>
+                </Box>
+            </Paper>
+        );
+    }
 
     return (
-        <div className="w-full">
-            <Table
-                aria-label="Job Postings Table"
-                classNames={{
-                    wrapper: "glass-table",
-                    th: "bg-transparent",
-                    td: "group-data-[hover=true]:bg-default-50",
-                }}
-                isStriped
-                removeWrapper
-            >
-                <TableHeader columns={columns}>
-                    {(column) => (
-                        <TableColumn 
-                            key={column.uid} 
-                            align={column.uid === "actions" ? "end" : "start"}
-                        >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody 
-                    items={data} 
-                    isLoading={loading}
-                    loadingContent={<Spinner label="Loading..." />}
-                    emptyContent="No job postings found"
-                >
-                    {(item) => (
-                        <TableRow key={item.id}>
-                            {(columnKey) => (
-                                <TableCell>{renderCell(item, columnKey)}</TableCell>
-                            )}
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+            <TableContainer>
+                <Table sx={{ minWidth: 750 }} aria-labelledby="job-postings-table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Job Details
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Department & Type
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Location & Remote
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Salary Range
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Status & Dates
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Hiring Manager
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Positions
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                Actions
+                            </TableCell>
                         </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </div>
+                    </TableHead>
+                    <TableBody>
+                        {data.map((job) => (
+                            <TableRow
+                                key={job.id}
+                                hover
+                                sx={{
+                                    '&:last-child td, &:last-child th': { border: 0 },
+                                    '&:hover': {
+                                        backgroundColor: theme.palette.action.hover
+                                    }
+                                }}
+                            >
+                                {/* Job Details */}
+                                <TableCell component="th" scope="row">
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Avatar
+                                            sx={{
+                                                width: 40,
+                                                height: 40,
+                                                bgcolor: theme.palette.primary.main,
+                                                fontSize: '0.875rem'
+                                            }}
+                                        >
+                                            {job.title?.charAt(0) || 'J'}
+                                        </Avatar>
+                                        <Box>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                                {job.title || 'Untitled Job'}
+                                                {job.is_featured && (
+                                                    <StarIcon sx={{ fontSize: 16, color: 'gold', ml: 0.5 }} />
+                                                )}
+                                            </Typography>
+                                            <Typography variant="caption" color="textSecondary">
+                                                {job.designation?.name || 'No designation'}
+                                            </Typography>
+                                            <br />
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                                {job.is_internal && (
+                                                    <Chip
+                                                        label="Internal"
+                                                        size="small"
+                                                        color="info"
+                                                        sx={{ fontSize: '0.7rem', height: 20 }}
+                                                    />
+                                                )}
+                                                {job.is_featured && (
+                                                    <Chip
+                                                        label="Featured"
+                                                        size="small"
+                                                        color="warning"
+                                                        sx={{ fontSize: '0.7rem', height: 20 }}
+                                                    />
+                                                )}
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                </TableCell>
+
+                                {/* Department & Type */}
+                                <TableCell>
+                                    <Box>
+                                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                                            {job.department?.name || 'No department'}
+                                        </Typography>
+                                        {getJobTypeChip(job.job_type)}
+                                    </Box>
+                                </TableCell>
+
+                                {/* Location & Remote */}
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                        <Typography variant="body2">
+                                            {job.is_remote ? 'Remote' : (job.location || 'Not specified')}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+
+                                {/* Salary Range */}
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <MoneyIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                        <Typography variant="body2">
+                                            {formatSalary(job.salary_min, job.salary_max, job.salary_currency)}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+
+                                {/* Status & Dates */}
+                                <TableCell>
+                                    <Box>
+                                        {getStatusChip(job.status)}
+                                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                                            Posted: {dayjs(job.posted_date).format('MMM D, YYYY')}
+                                        </Typography>
+                                        {job.closing_date && (
+                                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                                                Closes: {dayjs(job.closing_date).format('MMM D, YYYY')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </TableCell>
+
+                                {/* Hiring Manager */}
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <PersonIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                        <Typography variant="body2">
+                                            {job.hiring_manager?.name || 'Not assigned'}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+
+                                {/* Positions */}
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <WorkIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                        <Typography variant="body2">
+                                            {job.positions_count || 1}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+
+                                {/* Actions */}
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        {canView && (
+                                            <Tooltip title="View Details">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => onView && onView(job)}
+                                                    sx={{ color: 'primary.main' }}
+                                                >
+                                                    <ViewIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                        
+                                        {canEdit && (
+                                            <Tooltip title="Edit Job">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => onEdit && onEdit(job)}
+                                                    sx={{ color: 'warning.main' }}
+                                                >
+                                                    <EditIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+
+                                        <Tooltip title="More Options">
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => handleMenuOpen(e, job)}
+                                                sx={{ color: 'text.secondary' }}
+                                            >
+                                                <MoreVertIcon sx={{ fontSize: 18 }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Box>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+            {/* Context Menu */}
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+            >
+                {canView && (
+                    <MenuItem onClick={() => { onView && onView(selectedJob); handleMenuClose(); }}>
+                        <ViewIcon sx={{ fontSize: 16, mr: 1 }} />
+                        View Details
+                    </MenuItem>
+                )}
+                
+                {canEdit && (
+                    <MenuItem onClick={() => { onEdit && onEdit(selectedJob); handleMenuClose(); }}>
+                        <EditIcon sx={{ fontSize: 16, mr: 1 }} />
+                        Edit Job
+                    </MenuItem>
+                )}
+                
+                <MenuItem onClick={() => { onApplications && onApplications(selectedJob); handleMenuClose(); }}>
+                    <PersonIcon sx={{ fontSize: 16, mr: 1 }} />
+                    View Applications
+                </MenuItem>
+                
+                <Divider />
+                
+                {canDelete && (
+                    <MenuItem 
+                        onClick={() => { onDelete && onDelete(selectedJob); handleMenuClose(); }}
+                        sx={{ color: 'error.main' }}
+                    >
+                        <DeleteIcon sx={{ fontSize: 16, mr: 1 }} />
+                        Delete Job
+                    </MenuItem>
+                )}
+            </Menu>
+        </Paper>
     );
 };
 

@@ -21,7 +21,7 @@ class RecruitmentController extends Controller
      */
     public function index(Request $request)
     {
-        $jobs = Job::with(['department', 'designation', 'hiringManager'])
+        $jobs = Job::with(['department', 'hiringManager'])
             ->withCount('applications')
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
@@ -34,9 +34,9 @@ class RecruitmentController extends Controller
                 $query->where('department_id', $departmentId);
             })
             ->when($request->job_type, function ($query, $jobType) {
-                $query->where('job_type', $jobType);
+                $query->where('type', $jobType);
             })
-            ->orderBy($request->input('sort_by', 'posted_date'), $request->input('sort_order', 'desc'))
+            ->orderBy($request->input('sort_by', 'posting_date'), $request->input('sort_order', 'desc'))
             ->paginate(10)
             ->withQueryString();
 
@@ -69,7 +69,6 @@ class RecruitmentController extends Controller
     {
         return Inertia::render('HR/Recruitment/Create', [
             'departments' => Department::all(['id', 'name']),
-            'designations' => Designation::all(['id', 'name']),
             'managers' => User::role(['HR Manager', 'Department Manager', 'Team Lead'])->get(['id', 'name']),
             'jobTypes' => [
                 ['id' => 'full_time', 'name' => 'Full Time'],
@@ -99,11 +98,10 @@ class RecruitmentController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'designation_id' => 'required|exists:designations,id',
             'department_id' => 'required|exists:departments,id',
-            'job_type' => 'required|string',
+            'type' => 'required|string',
             'location' => 'nullable|string|max:255',
-            'is_remote' => 'boolean',
+            'is_remote_allowed' => 'boolean',
             'description' => 'required|string',
             'responsibilities' => 'nullable|array',
             'requirements' => 'nullable|array',
@@ -111,31 +109,31 @@ class RecruitmentController extends Controller
             'salary_min' => 'nullable|numeric|min:0',
             'salary_max' => 'nullable|numeric|min:0|gte:salary_min',
             'salary_currency' => 'required|string|max:10',
+            'salary_visible' => 'boolean',
             'benefits' => 'nullable|array',
-            'posted_date' => 'nullable|date',
-            'closing_date' => 'nullable|date|after_or_equal:posted_date',
+            'posting_date' => 'nullable|date',
+            'closing_date' => 'nullable|date|after_or_equal:posting_date',
             'status' => 'required|in:draft,open,closed,on_hold,cancelled',
             'hiring_manager_id' => 'required|exists:users,id',
-            'positions_count' => 'required|integer|min:1',
-            'is_internal' => 'boolean',
+            'positions' => 'required|integer|min:1',
             'is_featured' => 'boolean',
         ]);
 
-        // Set posted date to today if not provided and status is open
-        if ($validated['status'] === 'open' && !isset($validated['posted_date'])) {
-            $validated['posted_date'] = now();
+        // Set posting date to today if not provided and status is open
+        if ($validated['status'] === 'open' && !isset($validated['posting_date'])) {
+            $validated['posting_date'] = now();
         }
 
         $job = Job::create($validated);
 
         // Create default hiring stages
         $defaultStages = [
-            ['name' => 'Application Review', 'order' => 1, 'is_required' => true, 'stage_type' => 'review'],
-            ['name' => 'Phone Screening', 'order' => 2, 'is_required' => true, 'stage_type' => 'interview'],
-            ['name' => 'Technical Interview', 'order' => 3, 'is_required' => true, 'stage_type' => 'interview'],
-            ['name' => 'Final Interview', 'order' => 4, 'is_required' => true, 'stage_type' => 'interview'],
-            ['name' => 'Offer', 'order' => 5, 'is_required' => true, 'stage_type' => 'offer'],
-            ['name' => 'Hired', 'order' => 6, 'is_required' => true, 'stage_type' => 'hired'],
+            ['name' => 'Application Review', 'sequence' => 1, 'is_active' => true, 'is_final' => false],
+            ['name' => 'Phone Screening', 'sequence' => 2, 'is_active' => true, 'is_final' => false],
+            ['name' => 'Technical Interview', 'sequence' => 3, 'is_active' => true, 'is_final' => false],
+            ['name' => 'Final Interview', 'sequence' => 4, 'is_active' => true, 'is_final' => false],
+            ['name' => 'Offer', 'sequence' => 5, 'is_active' => true, 'is_final' => false],
+            ['name' => 'Hired', 'sequence' => 6, 'is_active' => true, 'is_final' => true],
         ];
 
         foreach ($defaultStages as $stage) {
@@ -143,9 +141,9 @@ class RecruitmentController extends Controller
                 'job_id' => $job->id,
                 'name' => $stage['name'],
                 'description' => 'Default stage: ' . $stage['name'],
-                'order' => $stage['order'],
-                'is_required' => $stage['is_required'],
-                'stage_type' => $stage['stage_type'],
+                'sequence' => $stage['sequence'],
+                'is_active' => $stage['is_active'],
+                'is_final' => $stage['is_final']
             ]);
         }
 
@@ -160,13 +158,12 @@ class RecruitmentController extends Controller
     {
         $job = Job::with([
             'department',
-            'designation',
             'hiringManager',
             'hiringStages',
         ])->findOrFail($id);
 
         $applicationsByStage = [];
-        $hiringStages = $job->hiringStages()->orderBy('order')->get();
+        $hiringStages = $job->hiringStages()->orderBy('sequence')->get();
 
         foreach ($hiringStages as $stage) {
             $applications = JobApplication::where('job_id', $job->id)
@@ -197,17 +194,15 @@ class RecruitmentController extends Controller
     {
         $job = Job::with([
             'department',
-            'designation',
             'hiringManager',
             'hiringStages' => function ($query) {
-                $query->orderBy('order');
+                $query->orderBy('sequence');
             },
         ])->findOrFail($id);
 
         return Inertia::render('HR/Recruitment/Edit', [
             'job' => $job,
             'departments' => Department::all(['id', 'name']),
-            'designations' => Designation::all(['id', 'name']),
             'managers' => User::role(['HR Manager', 'Department Manager', 'Team Lead'])->get(['id', 'name']),
             'jobTypes' => [
                 ['id' => 'full_time', 'name' => 'Full Time'],
@@ -239,11 +234,10 @@ class RecruitmentController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'designation_id' => 'required|exists:designations,id',
             'department_id' => 'required|exists:departments,id',
-            'job_type' => 'required|string',
+            'type' => 'required|string',
             'location' => 'nullable|string|max:255',
-            'is_remote' => 'boolean',
+            'is_remote_allowed' => 'boolean',
             'description' => 'required|string',
             'responsibilities' => 'nullable|array',
             'requirements' => 'nullable|array',
@@ -251,19 +245,19 @@ class RecruitmentController extends Controller
             'salary_min' => 'nullable|numeric|min:0',
             'salary_max' => 'nullable|numeric|min:0|gte:salary_min',
             'salary_currency' => 'required|string|max:10',
+            'salary_visible' => 'boolean',
             'benefits' => 'nullable|array',
-            'posted_date' => 'nullable|date',
-            'closing_date' => 'nullable|date|after_or_equal:posted_date',
+            'posting_date' => 'nullable|date',
+            'closing_date' => 'nullable|date|after_or_equal:posting_date',
             'status' => 'required|in:draft,open,closed,on_hold,cancelled',
             'hiring_manager_id' => 'required|exists:users,id',
-            'positions_count' => 'required|integer|min:1',
-            'is_internal' => 'boolean',
+            'positions' => 'required|integer|min:1',
             'is_featured' => 'boolean',
         ]);
 
-        // If status changed from draft to open, set posted date to today if not provided
-        if ($job->status === 'draft' && $validated['status'] === 'open' && !isset($validated['posted_date'])) {
-            $validated['posted_date'] = now();
+        // If status changed from draft to open, set posting date to today if not provided
+        if ($job->status === 'draft' && $validated['status'] === 'open' && !isset($validated['posting_date'])) {
+            $validated['posting_date'] = now();
         }
 
         $job->update($validated);

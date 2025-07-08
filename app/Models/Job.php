@@ -12,13 +12,14 @@ class Job extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'jobs_recruitment';
+
     protected $fillable = [
         'title',
-        'designation_id',
         'department_id',
-        'job_type',
+        'type',
         'location',
-        'is_remote',
+        'is_remote_allowed',
         'description',
         'responsibilities',
         'requirements',
@@ -26,23 +27,23 @@ class Job extends Model
         'salary_min',
         'salary_max',
         'salary_currency',
+        'salary_visible',
         'benefits',
-        'posted_date',
+        'posting_date',
         'closing_date',
         'status',
         'hiring_manager_id',
-        'positions_count',
-        'is_internal',
+        'positions',
         'is_featured'
     ];
 
     protected $casts = [
-        'posted_date' => 'date',
+        'posting_date' => 'date',
         'closing_date' => 'date',
-        'is_remote' => 'boolean',
-        'is_internal' => 'boolean',
+        'is_remote_allowed' => 'boolean',
+        'salary_visible' => 'boolean',
         'is_featured' => 'boolean',
-        'positions_count' => 'integer',
+        'positions' => 'integer',
         'responsibilities' => 'array',
         'requirements' => 'array',
         'qualifications' => 'array',
@@ -57,14 +58,6 @@ class Job extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
-    }
-
-    /**
-     * Get the designation/position for the job.
-     */
-    public function designation()
-    {
-        return $this->belongsTo(Designation::class);
     }
 
     /**
@@ -88,7 +81,7 @@ class Job extends Model
      */
     public function hiringStages()
     {
-        return $this->hasMany(JobHiringStage::class)->orderBy('order');
+        return $this->hasMany(JobHiringStage::class)->orderBy('sequence');
     }
 
     /**
@@ -98,8 +91,8 @@ class Job extends Model
     {
         $now = now();
         return $this->status === 'open' &&
-            ($now->between($this->posted_date, $this->closing_date) ||
-                ($now->gte($this->posted_date) && $this->closing_date === null));
+            ($now->between($this->posting_date, $this->closing_date) ||
+                ($now->gte($this->posting_date) && $this->closing_date === null));
     }
 
     /**
@@ -157,6 +150,6 @@ class Job extends Model
             'volunteer' => 'Volunteer',
         ];
 
-        return $typeMap[$this->job_type] ?? $this->job_type;
+        return $typeMap[$this->type] ?? $this->type;
     }
 }
