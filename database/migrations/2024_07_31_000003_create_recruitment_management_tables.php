@@ -22,8 +22,8 @@ return new class extends Migration
             $table->text('benefits')->nullable();
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
             $table->string('location')->nullable();
-            $table->enum('type', ['full_time', 'part_time', 'contract', 'internship', 'remote'])->default('full_time');
-            $table->enum('status', ['draft', 'open', 'closed', 'on_hold'])->default('draft');
+            $table->enum('type', ['full_time', 'part_time', 'contract', 'temporary', 'internship', 'remote'])->default('full_time');
+            $table->enum('status', ['draft', 'open', 'closed', 'on_hold', 'cancelled'])->default('draft');
             $table->integer('positions')->default(1);
             $table->decimal('salary_min', 10, 2)->nullable();
             $table->decimal('salary_max', 10, 2)->nullable();

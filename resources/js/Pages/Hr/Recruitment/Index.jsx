@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import {
     Box,
     Typography,
@@ -47,7 +47,7 @@ import DeleteJobForm from '@/Forms/DeleteJobForm.jsx';
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const JobPostings = React.memo(({ auth, title }) => {
+const JobPostings = React.memo(({ auth, title, jobs, filters: initialFilters, departments, managers }) => {
     const { auth: pageAuth } = usePage().props;
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -55,26 +55,26 @@ const JobPostings = React.memo(({ auth, title }) => {
 
     // State management - Enhanced for recruitment view
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState([]);
-    const [totalRows, setTotalRows] = useState(0);
-    const [lastPage, setLastPage] = useState(0);
+    const [data, setData] = useState(jobs?.data || []);
+    const [totalRows, setTotalRows] = useState(jobs?.total || 0);
+    const [lastPage, setLastPage] = useState(jobs?.last_page || 0);
     const [currentJob, setCurrentJob] = useState();
     const [error, setError] = useState('');
 
     // Enhanced filters for recruitment view
     const [filters, setFilters] = useState({
-        search: '',
-        status: 'all',
-        department: 'all',
-        jobType: 'all',
+        search: initialFilters?.search || '',
+        status: initialFilters?.status || 'all',
+        department: initialFilters?.department_id || 'all',
+        jobType: initialFilters?.job_type || 'all',
         startDate: '',
         endDate: ''
     });
 
     // Pagination
     const [pagination, setPagination] = useState({
-        perPage: 30,
-        currentPage: 1
+        perPage: jobs?.per_page || 30,
+        currentPage: jobs?.current_page || 1
     });
 
     // Modal states
@@ -91,6 +91,65 @@ const JobPostings = React.memo(({ auth, title }) => {
         draft: 0,
         total: 0
     });
+
+    // Optimized data manipulation functions like LeavesAdmin
+    const sortJobsByDate = useCallback((jobsArray) => {
+        return [...jobsArray].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }, []);
+
+    // Optimized pagination update without full reload
+    const updatePaginationMetadata = useCallback((totalCount, affectedPage = null) => {
+        setTotalRows(totalCount);
+        const newLastPage = Math.max(1, Math.ceil(totalCount / pagination.perPage));
+        setLastPage(newLastPage);
+        
+        if (pagination.currentPage > newLastPage) {
+            setPagination(prev => ({
+                ...prev,
+                currentPage: newLastPage
+            }));
+        }
+        
+        console.log(`Pagination metadata updated: ${totalCount} total rows, ${newLastPage} pages`);
+    }, [pagination.perPage, pagination.currentPage]);
+
+    const addJobOptimized = useCallback((newJob) => {
+        // Only add to current page if we're on page 1
+        if (pagination.currentPage === 1) {
+            setData(prevJobs => {
+                const updatedJobs = [...prevJobs, newJob];
+                return sortJobsByDate(updatedJobs).slice(0, pagination.perPage);
+            });
+            
+            updatePaginationMetadata(totalRows + 1);
+        }
+    }, [sortJobsByDate, pagination.currentPage, pagination.perPage, totalRows, updatePaginationMetadata]);
+
+    const updateJobOptimized = useCallback((updatedJob) => {
+        // Check if the job exists in the current page's data
+        const jobExistsInCurrentPage = data.some(job => job.id === updatedJob.id);
+        
+        if (jobExistsInCurrentPage) {
+            setData(prevJobs => {
+                const updatedJobs = prevJobs.map(job =>
+                    job.id === updatedJob.id ? updatedJob : job
+                );
+                return sortJobsByDate(updatedJobs);
+            });
+        }
+    }, [sortJobsByDate, data]);
+
+    const deleteJobOptimized = useCallback((jobId) => {
+        const jobExistsInCurrentPage = data.some(job => job.id === jobId);
+        
+        if (jobExistsInCurrentPage) {
+            setData(prevJobs => {
+                return prevJobs.filter(job => job.id !== jobId);
+            });
+            
+            updatePaginationMetadata(totalRows - 1);
+        }
+    }, [data, totalRows, updatePaginationMetadata]);
 
     // Check permissions
     const canManageJobs = pageAuth.permissions?.includes('jobs.view') || false;
@@ -174,6 +233,7 @@ const JobPostings = React.memo(({ auth, title }) => {
             });
 
             if (response.status === 200) {
+                console.log('Fetched jobs:', response.data);
                 setData(response.data.jobs?.data || []);
                 setTotalRows(response.data.jobs?.total || 0);
                 setLastPage(response.data.jobs?.last_page || 1);
@@ -211,6 +271,85 @@ const JobPostings = React.memo(({ auth, title }) => {
             console.error('Failed to calculate job stats:', error);
         }
     }, [data, totalRows]);
+
+    // Navigation handlers for SPA routing
+    const handleViewJob = useCallback((job) => {
+        console.log('handleViewJob called with:', job);
+        
+        if (!job) {
+            console.error('Job object is null or undefined');
+            toast.error('No job selected');
+            return;
+        }
+        
+        if (!job.id) {
+            console.error('Job ID is missing. Job object:', job);
+            toast.error('Job ID is missing');
+            return;
+        }
+        
+        console.log('Navigating to job show page for ID:', job.id);
+        
+        try {
+            // Try generating the route first to debug
+            const jobShowUrl = route('hr.recruitment.show', job.id);
+            console.log('Generated URL:', jobShowUrl);
+            
+            router.visit(jobShowUrl, {
+                preserveState: true,
+                preserveScroll: true,
+                onError: (errors) => {
+                    console.error('Navigation error:', errors);
+                    toast.error('Failed to navigate to job details');
+                },
+                onSuccess: () => {
+                    console.log('Successfully navigated to job details');
+                }
+            });
+        } catch (error) {
+            console.error('Error during navigation:', error);
+            toast.error('Navigation failed: ' + error.message);
+        }
+    }, []);
+
+    const handleViewApplications = useCallback((job) => {
+        console.log('handleViewApplications called with:', job);
+        
+        if (!job) {
+            console.error('Job object is null or undefined');
+            toast.error('No job selected');
+            return;
+        }
+        
+        if (!job.id) {
+            console.error('Job ID is missing. Job object:', job);
+            toast.error('Job ID is missing');
+            return;
+        }
+        
+        console.log('Navigating to applications page for job ID:', job.id);
+        
+        try {
+            // Try generating the route first to debug
+            const applicationsUrl = route('hr.recruitment.applications.index', job.id);
+            console.log('Generated applications URL:', applicationsUrl);
+            
+            router.visit(applicationsUrl, {
+                preserveState: true,
+                preserveScroll: true,
+                onError: (errors) => {
+                    console.error('Navigation error:', errors);
+                    toast.error('Failed to navigate to applications');
+                },
+                onSuccess: () => {
+                    console.log('Successfully navigated to applications');
+                }
+            });
+        } catch (error) {
+            console.error('Error during navigation:', error);
+            toast.error('Navigation failed: ' + error.message);
+        }
+    }, []);
 
     // Modal handlers
     const openModal = useCallback((modalType, job = null) => {
@@ -283,10 +422,29 @@ const JobPostings = React.memo(({ auth, title }) => {
 
     // Effects
     useEffect(() => {
-        if (canManageJobs) {
+        // Only fetch data if we don't have initial data or if this is a filter change
+        if (canManageJobs && (!jobs || jobs.data?.length === 0)) {
             fetchData();
         }
-    }, [fetchData, canManageJobs]);
+    }, [canManageJobs, jobs]);
+
+    // Separate effect for when filters or pagination changes
+    useEffect(() => {
+        if (canManageJobs && jobs && jobs.data?.length > 0) {
+            // Only fetch if pagination changed or filters changed (but not on initial load)
+            const shouldFetch = pagination.currentPage > 1 || 
+                               filters.search || 
+                               filters.status !== 'all' || 
+                               filters.department !== 'all' || 
+                               filters.jobType !== 'all' ||
+                               filters.startDate ||
+                               filters.endDate;
+            
+            if (shouldFetch) {
+                fetchData();
+            }
+        }
+    }, [pagination.currentPage, pagination.perPage, filters, canManageJobs]);
 
     useEffect(() => {
         if (canManageJobs) {
@@ -304,9 +462,11 @@ const JobPostings = React.memo(({ auth, title }) => {
                     open={modalStates.addJob}
                     onClose={() => closeModal('addJob')}
                     job={null}
+                    departments={departments || []}
+                    managers={managers || []}
+                    addJobOptimized={addJobOptimized}
+                    fetchJobStats={fetchJobStats}
                     onSuccess={() => {
-                        fetchData();
-                        fetchJobStats();
                         closeModal('addJob');
                     }}
                 />
@@ -317,9 +477,11 @@ const JobPostings = React.memo(({ auth, title }) => {
                     open={modalStates.editJob}
                     onClose={() => closeModal('editJob')}
                     job={currentJob}
+                    departments={departments || []}
+                    managers={managers || []}
+                    updateJobOptimized={updateJobOptimized}
+                    fetchJobStats={fetchJobStats}
                     onSuccess={() => {
-                        fetchData();
-                        fetchJobStats();
                         closeModal('editJob');
                     }}
                 />
@@ -330,9 +492,9 @@ const JobPostings = React.memo(({ auth, title }) => {
                     open={modalStates.deleteJob}
                     onClose={() => closeModal('deleteJob')}
                     job={currentJob}
+                    deleteJobOptimized={deleteJobOptimized}
+                    fetchJobStats={fetchJobStats}
                     onSuccess={() => {
-                        fetchData();
-                        fetchJobStats();
                         closeModal('deleteJob');
                     }}
                 />
@@ -464,9 +626,10 @@ const JobPostings = React.memo(({ auth, title }) => {
                                                 perPage={pagination.perPage}
                                                 onPageChange={handlePageChange}
                                                 onPerPageChange={handlePerPageChange}
+                                                onView={handleViewJob}
                                                 onEdit={(job) => openModal('editJob', job)}
                                                 onDelete={(job) => openModal('deleteJob', job)}
-                                                onApplications={(job) => window.location.href = route('hr.recruitment.applications.index', job.id)}
+                                                onApplications={handleViewApplications}
                                                 canEdit={canEditJobs}
                                                 canDelete={canDeleteJobs}
                                                 loading={loading}

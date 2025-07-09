@@ -13,30 +13,23 @@ class JobInterview extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'job_application_id',
+        'application_id',
         'title',
         'description',
-        'interview_date',
+        'scheduled_at',
         'duration_minutes',
         'location',
-        'is_online',
         'meeting_link',
-        'interview_type',
+        'type',
         'status',
-        'scheduled_by',
-        'interviewer_ids',
-        'interview_notes',
-        'feedback',
-        'rating',
-        'recommendation'
+        'interviewers',
+        'scheduled_by'
     ];
 
     protected $casts = [
-        'interview_date' => 'datetime',
+        'scheduled_at' => 'datetime',
         'duration_minutes' => 'integer',
-        'is_online' => 'boolean',
-        'interviewer_ids' => 'array',
-        'rating' => 'float',
+        'interviewers' => 'array',
     ];
 
     /**
@@ -44,7 +37,7 @@ class JobInterview extends Model
      */
     public function jobApplication()
     {
-        return $this->belongsTo(JobApplication::class);
+        return $this->belongsTo(JobApplication::class, 'application_id');
     }
 
     /**
@@ -68,7 +61,28 @@ class JobInterview extends Model
      */
     public function feedbackEntries()
     {
-        return $this->hasMany(JobInterviewFeedback::class);
+        return $this->hasMany(JobInterviewFeedback::class, 'interview_id');
+    }
+
+    /**
+     * Get the average overall rating from all feedback.
+     */
+    public function getAverageRatingAttribute(): float
+    {
+        return $this->feedbackEntries()
+            ->whereNotNull('overall_rating')
+            ->avg('overall_rating') ?? 0;
+    }
+
+    /**
+     * Check if all assigned interviewers have provided feedback.
+     */
+    public function hasCompleteFeedback(): bool
+    {
+        $interviewerIds = $this->interviewers ?? [];
+        $feedbackCount = $this->feedbackEntries()->count();
+        
+        return count($interviewerIds) > 0 && $feedbackCount >= count($interviewerIds);
     }
 
     /**
@@ -76,7 +90,7 @@ class JobInterview extends Model
      */
     public function isUpcoming()
     {
-        return now()->lt($this->interview_date);
+        return now()->lt($this->scheduled_at);
     }
 
     /**
@@ -85,8 +99,8 @@ class JobInterview extends Model
     public function isInProgress()
     {
         $now = now();
-        $endTime = $this->interview_date->copy()->addMinutes($this->duration_minutes);
-        return $now->gte($this->interview_date) && $now->lte($endTime);
+        $endTime = $this->scheduled_at->copy()->addMinutes($this->duration_minutes);
+        return $now->gte($this->scheduled_at) && $now->lte($endTime);
     }
 
     /**
@@ -94,7 +108,7 @@ class JobInterview extends Model
      */
     public function hasEnded()
     {
-        $endTime = $this->interview_date->copy()->addMinutes($this->duration_minutes);
+        $endTime = $this->scheduled_at->copy()->addMinutes($this->duration_minutes);
         return now()->gt($endTime);
     }
 
@@ -107,6 +121,6 @@ class JobInterview extends Model
             return null;
         }
 
-        return now()->diffForHumans($this->interview_date, ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]);
+        return now()->diffForHumans($this->scheduled_at, ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]);
     }
 }

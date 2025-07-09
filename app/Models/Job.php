@@ -34,7 +34,9 @@ class Job extends Model
         'status',
         'hiring_manager_id',
         'positions',
-        'is_featured'
+        'is_featured',
+        'skills_required',
+        'custom_fields'
     ];
 
     protected $casts = [
@@ -50,6 +52,8 @@ class Job extends Model
         'benefits' => 'array',
         'salary_min' => 'float',
         'salary_max' => 'float',
+        'skills_required' => 'array',
+        'custom_fields' => 'array',
     ];
 
     /**
@@ -147,9 +151,81 @@ class Job extends Model
             'contract' => 'Contract',
             'temporary' => 'Temporary',
             'internship' => 'Internship',
-            'volunteer' => 'Volunteer',
+            'remote' => 'Remote',
         ];
 
         return $typeMap[$this->type] ?? $this->type;
+    }
+
+    /**
+     * Get the status text with proper formatting.
+     */
+    public function getStatusTextAttribute()
+    {
+        $statusMap = [
+            'draft' => 'Draft',
+            'open' => 'Open',
+            'closed' => 'Closed',
+            'on_hold' => 'On Hold',
+            'cancelled' => 'Cancelled',
+        ];
+
+        return $statusMap[$this->status] ?? $this->status;
+    }
+
+    /**
+     * Get applications count by status.
+     */
+    public function getApplicationsCountByStatus()
+    {
+        return $this->applications()
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+    }
+
+    /**
+     * Get recent applications (last 7 days).
+     */
+    public function recentApplications()
+    {
+        return $this->applications()
+            ->where('application_date', '>=', now()->subDays(7))
+            ->orderBy('application_date', 'desc');
+    }
+
+    /**
+     * Check if position has multiple openings.
+     */
+    public function hasMultiplePositions(): bool
+    {
+        return $this->positions > 1;
+    }
+
+    /**
+     * Get filled positions count.
+     */
+    public function getFilledPositionsCount(): int
+    {
+        return $this->applications()
+            ->where('status', 'hired')
+            ->count();
+    }
+
+    /**
+     * Get remaining positions.
+     */
+    public function getRemainingPositionsAttribute(): int
+    {
+        return max(0, $this->positions - $this->getFilledPositionsCount());
+    }
+
+    /**
+     * Check if all positions are filled.
+     */
+    public function isFullyFilled(): bool
+    {
+        return $this->getRemainingPositionsAttribute() === 0;
     }
 }

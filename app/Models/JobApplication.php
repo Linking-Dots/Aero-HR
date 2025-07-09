@@ -17,32 +17,39 @@ class JobApplication extends Model implements HasMedia
     protected $fillable = [
         'job_id',
         'applicant_id',
-        'name',
+        'applicant_name',
         'email',
         'phone',
+        'address',
         'cover_letter',
+        'resume_path',
         'status',
         'rating',
         'source',
         'current_stage_id',
-        'applied_date',
+        'application_date',
         'last_status_change',
-        'application_notes',
+        'notes',
         'expected_salary',
+        'salary_currency',
         'notice_period',
         'experience_years',
         'application_ip',
         'referral_source',
-        'referrer_id'
+        'referrer_id',
+        'skills',
+        'custom_fields'
     ];
 
     protected $casts = [
-        'applied_date' => 'date',
+        'application_date' => 'date',
         'last_status_change' => 'date',
         'rating' => 'float',
         'expected_salary' => 'float',
         'notice_period' => 'integer',
         'experience_years' => 'float',
+        'skills' => 'array',
+        'custom_fields' => 'array',
     ];
 
     /**
@@ -74,7 +81,7 @@ class JobApplication extends Model implements HasMedia
      */
     public function interviews()
     {
-        return $this->hasMany(JobInterview::class);
+        return $this->hasMany(JobInterview::class, 'application_id');
     }
 
     /**
@@ -106,7 +113,7 @@ class JobApplication extends Model implements HasMedia
      */
     public function stageHistory()
     {
-        return $this->hasMany(JobApplicationStageHistory::class)->orderBy('changed_at', 'desc');
+        return $this->hasMany(JobApplicationStageHistory::class, 'application_id')->orderBy('moved_at', 'desc');
     }
 
     /**
@@ -118,11 +125,28 @@ class JobApplication extends Model implements HasMedia
     }
 
     /**
+     * Get the offers for this application.
+     */
+    public function offers()
+    {
+        return $this->hasMany(JobOffer::class, 'application_id');
+    }
+
+    /**
+     * Get the active offer for this application.
+     */
+    public function activeOffer()
+    {
+        return $this->hasOne(JobOffer::class, 'application_id')
+            ->whereIn('status', ['draft', 'sent', 'negotiating']);
+    }
+
+    /**
      * Calculate the age of the application in days.
      */
     public function ageInDays()
     {
-        return $this->applied_date->diffInDays(now());
+        return $this->application_date->diffInDays(now());
     }
 
     /**

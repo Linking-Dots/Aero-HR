@@ -12,6 +12,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Button } from '@heroui/react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { router } from '@inertiajs/react';
 
 const DeleteJobForm = ({ open, onClose, job, fetchData, currentPage, perPage, filterData }) => {
     const [loading, setLoading] = useState(false);
@@ -21,17 +22,25 @@ const DeleteJobForm = ({ open, onClose, job, fetchData, currentPage, perPage, fi
         
         setLoading(true);
         
-        try {
-            await axios.delete(route('hr.recruitment.jobs.destroy', job.id));
-            toast.success('Job posting deleted successfully');
-            fetchData({ page: currentPage, perPage, ...filterData });
-            onClose();
-        } catch (error) {
-            console.error('Error deleting job posting:', error);
-            toast.error('Failed to delete job posting');
-        } finally {
-            setLoading(false);
-        }
+        // Use the specific visitRoute option of Inertia for delete operations
+        router.delete(route('hr.recruitment.destroy', job.id), {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Job posting deleted successfully');
+                if (typeof fetchData === 'function') {
+                    fetchData({ page: currentPage, perPage, ...filterData });
+                } else {
+                    // If no fetchData function is provided, navigate to index
+                    router.visit(route('hr.recruitment.index'));
+                }
+                onClose();
+            },
+            onError: (errors) => {
+                console.error('Error deleting job posting:', errors);
+                toast.error(errors.message || 'Failed to delete job posting');
+            },
+            onFinish: () => setLoading(false)
+        });
     };
     
     if (!job) return null;

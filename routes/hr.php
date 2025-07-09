@@ -70,12 +70,30 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
     // Recruitment Management
     Route::middleware(['permission:hr.recruitment.view'])->group(function () {
         Route::get('/recruitment', [RecruitmentController::class, 'index'])->name('recruitment.index');
-        Route::get('/recruitment/create', [RecruitmentController::class, 'create'])->name('recruitment.create');
         Route::post('/recruitment', [RecruitmentController::class, 'store'])->name('recruitment.store');
         Route::get('/recruitment/{id}', [RecruitmentController::class, 'show'])->name('recruitment.show');
         Route::get('/recruitment/{id}/edit', [RecruitmentController::class, 'edit'])->name('recruitment.edit');
         Route::put('/recruitment/{id}', [RecruitmentController::class, 'update'])->name('recruitment.update');
         Route::delete('/recruitment/{id}', [RecruitmentController::class, 'destroy'])->name('recruitment.destroy');
+
+        // AJAX API routes for modal operations
+        Route::put('/recruitment/{id}/ajax', [RecruitmentController::class, 'updateAjax'])->name('recruitment.update.ajax');
+        Route::post('/recruitment/ajax', [RecruitmentController::class, 'storeAjax'])->name('recruitment.store.ajax');
+
+        // AJAX/Data Routes for SPA refreshes
+        Route::get('/recruitment/data', [RecruitmentController::class, 'indexData'])->name('recruitment.data.index');
+        Route::get('/recruitment/{id}/data', [RecruitmentController::class, 'showData'])->name('recruitment.data.show');
+        Route::get('/recruitment/{id}/applications/data', [RecruitmentController::class, 'applicationsData'])->name('recruitment.data.applications');
+
+        // Job status management
+        Route::post('/recruitment/{id}/publish', [RecruitmentController::class, 'publish'])->name('recruitment.publish');
+        Route::post('/recruitment/{id}/unpublish', [RecruitmentController::class, 'unpublish'])->name('recruitment.unpublish');
+        Route::post('/recruitment/{id}/close', [RecruitmentController::class, 'close'])->name('recruitment.close');
+
+        // Statistics and Reports
+        Route::get('/recruitment/statistics', [RecruitmentController::class, 'getStatistics'])->name('recruitment.statistics');
+        Route::get('/recruitment/{id}/report', [RecruitmentController::class, 'generateJobReport'])->name('recruitment.report');
+        Route::get('/recruitment/{id}/applications/export', [RecruitmentController::class, 'exportApplications'])->name('recruitment.applications.export');
 
         // Job Applications
         Route::get('/recruitment/{id}/applications', [RecruitmentController::class, 'applications'])->name('recruitment.applications.index');
@@ -84,6 +102,9 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/recruitment/{id}/applications/{applicationId}', [RecruitmentController::class, 'showApplication'])->name('recruitment.applications.show');
         Route::put('/recruitment/{id}/applications/{applicationId}', [RecruitmentController::class, 'updateApplication'])->name('recruitment.applications.update');
         Route::delete('/recruitment/{id}/applications/{applicationId}', [RecruitmentController::class, 'destroyApplication'])->name('recruitment.applications.destroy');
+
+        // Bulk Operations
+        Route::patch('/recruitment/applications/bulk-update', [RecruitmentController::class, 'bulkUpdateApplications'])->name('recruitment.applications.bulk-update');
 
         // Interviews
         Route::get('/recruitment/{id}/applications/{applicationId}/interviews', [RecruitmentController::class, 'interviews'])->name('recruitment.interviews.index');
@@ -237,4 +258,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/self-service/payslips', [EmployeeSelfServiceController::class, 'payslips'])->name('selfservice.payslips');
         Route::get('/self-service/performance', [EmployeeSelfServiceController::class, 'performance'])->name('selfservice.performance');
     });
+
+    // Managers for dropdowns
+    Route::get('/managers', [\App\Http\Controllers\HR\ManagersController::class, 'index'])->name('managers.list');
 });

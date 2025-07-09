@@ -26,7 +26,7 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import GlassDialog from "@/Components/GlassDialog.jsx";
-import { usePage } from "@inertiajs/react";
+import { usePage, router } from "@inertiajs/react";
 import axios from 'axios';
 import dayjs from 'dayjs';
 
@@ -34,49 +34,83 @@ const AddEditJobForm = ({
     open,
     onClose,
     job = null,
-    onSuccess
+    onSuccess,
+    departments: propDepartments = [],
+    managers: propManagers = [],
+    addJobOptimized,
+    updateJobOptimized,
+    fetchJobStats
 }) => {
     const { auth } = usePage().props;
     const theme = useTheme();
     const isEditing = !!job;
 
-    // Initialize state variables
-    const [loading, setLoading] = useState(false);
-    const [designations, setDesignations] = useState([]);
-    const [departments, setDepartments] = useState([]);
-    const [managers, setManagers] = useState([]);
+    // State management like LeaveForm
+    const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState({});
 
     // Form data state
     const [formData, setFormData] = useState({
-        title: '',
-        // designation_id field is not in the database schema
-        department_id: '',
-        type: 'full_time', // Changed from job_type to type to match DB column
-        location: '',
-        is_remote_allowed: false, // Changed from is_remote to is_remote_allowed to match DB
-        description: '',
-        responsibilities: [],
-        requirements: [],
-        qualifications: [],
-        salary_min: '',
-        salary_max: '',
-        salary_currency: 'USD',
-        benefits: [],
-        posting_date: dayjs().format('YYYY-MM-DD'), // Changed from posted_date to posting_date
-        closing_date: '',
-        status: 'draft', // Must be one of: draft, open, closed, on_hold, cancelled
-        hiring_manager_id: '',
-        positions: 1, // Changed from positions_count to positions
-        salary_visible: false, // Added to match DB schema
-        is_featured: false
+        title: job?.title || '',
+        department_id: job?.department_id || '',
+        type: job?.type || 'full_time',
+        location: job?.location || '',
+        is_remote_allowed: job?.is_remote_allowed || false,
+        description: job?.description || '',
+        responsibilities: job?.responsibilities || [],
+        requirements: job?.requirements || [],
+        qualifications: job?.qualifications || [],
+        salary_min: job?.salary_min || '',
+        salary_max: job?.salary_max || '',
+        salary_currency: job?.salary_currency || 'USD',
+        benefits: job?.benefits || [],
+        posting_date: job?.posting_date ? dayjs(job.posting_date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+        closing_date: job?.closing_date ? dayjs(job.closing_date).format('YYYY-MM-DD') : '',
+        status: job?.status || 'draft',
+        hiring_manager_id: job?.hiring_manager_id || '',
+        positions: job?.positions || 1,
+        salary_visible: job?.salary_visible || false,
+        is_featured: job?.is_featured || false,
+        skills_required: job?.skills_required || [],
+        custom_fields: job?.custom_fields || []
     });
+
+    // Initialize state variables
+    const [departments, setDepartments] = useState(propDepartments);
+    const [managers, setManagers] = useState(propManagers);
+    const [loadingManagers, setLoadingManagers] = useState(false);
 
     // Array item management - separate states for each type
     const [newResponsibility, setNewResponsibility] = useState('');
     const [newRequirement, setNewRequirement] = useState('');
     const [newQualification, setNewQualification] = useState('');
     const [newBenefit, setNewBenefit] = useState('');
+    const [newSkill, setNewSkill] = useState('');
+    const [newCustomField, setNewCustomField] = useState({ key: '', value: '' });
+
+    // Fetch all managers when form opens
+    useEffect(() => {
+        if (open && managers && managers.length === 0) {
+            // Only fetch managers if they're not already provided
+            setLoadingManagers(true);
+            axios.get(route('hr.managers.list'))
+                .then(response => {
+                    if (response.data && Array.isArray(response.data)) {
+                        setManagers(response.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching managers:', error);
+                })
+                .finally(() => {
+                    setLoadingManagers(false);
+                });
+        } else if (open && managers && managers.length > 0) {
+            // Use the managers passed in from props
+            setManagers(managers);
+            setLoadingManagers(false);
+        }
+    }, [open, managers]);
 
     // Format date helper
     const formatDate = (dateString) => {
@@ -106,93 +140,39 @@ const AddEditJobForm = ({
         }
     };
 
-    // Load required data
+    // Load form data if editing
     useEffect(() => {
-        const fetchRequiredData = async () => {
-            try {
-                const [
-                    designationsResponse, 
-                    departmentsResponse, 
-                    managersResponse
-                ] = await Promise.all([
-                    axios.get(route('designations.list')),
-                    axios.get(route('departments.list')),
-                    axios.get(route('users.managers.list'))
-                ]);
-                
-                setDesignations(designationsResponse.data || []);
-                setDepartments(departmentsResponse.data || []);
-                setManagers(managersResponse.data || []);
-            } catch (error) {
-                console.error('Failed to fetch required data:', error);
-                toast.error('Failed to load required data for the form.', {
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
-                        border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                        color: theme.palette.text.primary,
-                    }
-                });
-            }
-        };
-        
+        if (open && isEditing && job) {
+            setFormData({
+                title: job.title || '',
+                department_id: job.department_id || '',
+                type: job.type || 'full_time',
+                location: job.location || '',
+                is_remote_allowed: job.is_remote_allowed || false,
+                description: job.description || '',
+                responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities : [],
+                requirements: Array.isArray(job.requirements) ? job.requirements : [],
+                qualifications: Array.isArray(job.qualifications) ? job.qualifications : [],
+                salary_min: job.salary_min || '',
+                salary_max: job.salary_max || '',
+                salary_currency: job.salary_currency || 'USD',
+                benefits: Array.isArray(job.benefits) ? job.benefits : [],
+                posting_date: job.posting_date ? formatDate(job.posting_date) : dayjs().format('YYYY-MM-DD'),
+                closing_date: job.closing_date ? formatDate(job.closing_date) : '',
+                status: job.status || 'draft',
+                hiring_manager_id: job.hiring_manager_id || '',
+                positions: job.positions || 1,
+                salary_visible: job.salary_visible || false,
+                is_featured: job.is_featured || false,
+                skills_required: Array.isArray(job.skills_required) ? job.skills_required : [],
+                custom_fields: Array.isArray(job.custom_fields) ? job.custom_fields : []
+            });
+        }
         if (open) {
-            fetchRequiredData();
-            
-            // Set form data if editing
-            if (isEditing && job) {
-                setFormData({
-                    title: job.title || '',
-                    // designation_id not used
-                    department_id: job.department_id || '',
-                    type: job.type || 'full_time',
-                    location: job.location || '',
-                    is_remote_allowed: job.is_remote_allowed || false,
-                    description: job.description || '',
-                    responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities : [],
-                    requirements: Array.isArray(job.requirements) ? job.requirements : [],
-                    qualifications: Array.isArray(job.qualifications) ? job.qualifications : [],
-                    salary_min: job.salary_min || '',
-                    salary_max: job.salary_max || '',
-                    salary_currency: job.salary_currency || 'USD',
-                    benefits: Array.isArray(job.benefits) ? job.benefits : [],
-                    posting_date: formatDate(job.posting_date) || dayjs().format('YYYY-MM-DD'),
-                    closing_date: formatDate(job.closing_date) || '',
-                    status: job.status || 'draft',
-                    hiring_manager_id: job.hiring_manager_id || '',
-                    positions: job.positions || 1,
-                    salary_visible: job.salary_visible || false,
-                    is_featured: job.is_featured || false
-                });
-            } else {
-                // Reset form for new job
-                setFormData({
-                    title: '',
-                    // designation_id field is not in the database schema
-                    department_id: '',
-                    type: 'full_time', // Changed from job_type to type
-                    location: '',
-                    is_remote_allowed: false, // Changed from is_remote to is_remote_allowed
-                    description: '',
-                    responsibilities: [],
-                    requirements: [],
-                    qualifications: [],
-                    salary_min: '',
-                    salary_max: '',
-                    salary_currency: 'USD',
-                    benefits: [],
-                    posting_date: dayjs().format('YYYY-MM-DD'), // Changed from posted_date to posting_date
-                    closing_date: '',
-                    status: 'draft', // Must be one of: draft, open, closed, on_hold, cancelled
-                    hiring_manager_id: '',
-                    positions: 1, // Changed from positions_count to positions
-                    salary_visible: false, // Added to match DB schema
-                    is_featured: false
-                });
-            }
             setErrors({});
         }
-    }, [open, isEditing, job, theme]);
+    }, [open, isEditing, job]);
+            
 
     // Form handlers
     const handleChange = (e) => {
@@ -203,14 +183,6 @@ const AddEditJobForm = ({
             ...prev,
             [name]: fieldValue
         }));
-        
-        // Clear error when field is changed
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: null
-            }));
-        }
     };
 
     const handleSelectChange = (name, value) => {
@@ -218,14 +190,6 @@ const AddEditJobForm = ({
             ...prev,
             [name]: value
         }));
-        
-        // Clear error when field is changed
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: null
-            }));
-        }
     };
 
     // Array item handlers - separate for each type
@@ -272,175 +236,161 @@ const AddEditJobForm = ({
         
         setNewBenefit('');
     };
+
+    const handleAddSkill = () => {
+        if (!newSkill.trim()) return;
+        
+        setFormData(prev => ({
+            ...prev,
+            skills_required: [...prev.skills_required, newSkill.trim()]
+        }));
+        
+        setNewSkill('');
+    };
+
+    const handleAddCustomField = () => {
+        if (!newCustomField.key.trim() || !newCustomField.value.trim()) return;
+        
+        setFormData(prev => ({
+            ...prev,
+            custom_fields: [
+                ...prev.custom_fields, 
+                { 
+                    key: newCustomField.key.trim(), 
+                    value: newCustomField.value.trim(),
+                    id: Date.now() // Simple ID for tracking
+                }
+            ]
+        }));
+        
+        setNewCustomField({ key: '', value: '' });
+    };
     
     const handleDeleteItem = (item, type) => {
         setFormData(prev => ({
             ...prev,
-            [type]: prev[type].filter(i => i !== item)
+            [type]: type === 'custom_fields' 
+                ? prev[type].filter(field => field.id !== item.id)
+                : prev[type].filter(i => i !== item)
         }));
     };
 
-    // Validation
-    const validateForm = () => {
-        const newErrors = {};
-        const validStatuses = ['draft', 'open', 'closed', 'on_hold', 'cancelled'];
-        
-        if (!formData.title) newErrors.title = 'Job title is required';
-        // Removed designation_id validation
-        if (!formData.department_id) newErrors.department_id = 'Department is required';
-        if (!formData.type) newErrors.type = 'Job type is required';
-        if (!formData.location && !formData.is_remote_allowed) newErrors.location = 'Location is required for non-remote jobs';
-        if (!formData.description) newErrors.description = 'Job description is required';
-        if (formData.responsibilities.length === 0) newErrors.responsibilities = 'At least one responsibility is required';
-        if (formData.requirements.length === 0) newErrors.requirements = 'At least one requirement is required';
-        if (!formData.hiring_manager_id) newErrors.hiring_manager_id = 'Hiring manager is required';
-        if (!formData.positions || formData.positions < 1) newErrors.positions = 'Number of positions must be at least 1';
-        if (!formData.status || !validStatuses.includes(formData.status)) newErrors.status = `Status must be one of: ${validStatuses.join(', ')}`;
-        
-        // Check salary range
-        if (formData.salary_min && formData.salary_max) {
-            if (parseFloat(formData.salary_min) > parseFloat(formData.salary_max)) {
-                newErrors.salary_max = 'Maximum salary must be greater than or equal to minimum salary';
-            }
-        }
-        
-        // Check dates
-        if (formData.posting_date && formData.closing_date) {
-            const postedDate = new Date(formData.posting_date);
-            const closingDate = new Date(formData.closing_date);
-            
-            if (closingDate < postedDate) {
-                newErrors.closing_date = 'Closing date must be after posted date';
-            }
-        }
-        
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+    // Submit handler - Updated to use AJAX like LeaveForm
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setProcessing(true);
 
-    // Submit handler
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!validateForm()) {
-            toast.error('Please correct the form errors before submitting.', {
-                style: {
-                    backdropFilter: 'blur(16px) saturate(200%)',
-                    background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
-                    border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                    color: theme.palette.text.primary,
-                }
-            });
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            const endpoint = isEditing 
-                ? route('hr.recruitment.update', job.id)
-                : route('hr.recruitment.store');
-            
-            const method = isEditing ? 'put' : 'post';
-            
-            // Debug data being sent
-            console.log('Submitting job data:', formData);
-            console.log('Endpoint:', endpoint);
-            
-            // Make sure status is one of the valid values (draft, open, closed, on_hold, cancelled)
-            if (!['draft', 'open', 'closed', 'on_hold', 'cancelled'].includes(formData.status)) {
-                formData.status = 'draft'; // Default to draft if invalid
-            }
-            
-            // Build correct data structure that matches database schema
-            const dataToSubmit = {
-                title: formData.title,
-                department_id: formData.department_id,
-                type: formData.type,
-                location: formData.location,
-                is_remote_allowed: formData.is_remote_allowed,
-                description: formData.description,
-                responsibilities: formData.responsibilities,
-                requirements: formData.requirements,
-                qualifications: formData.qualifications,
-                salary_min: formData.salary_min,
-                salary_max: formData.salary_max,
-                salary_currency: formData.salary_currency,
-                salary_visible: formData.salary_visible,
-                benefits: formData.benefits,
-                posting_date: formData.posting_date,
-                closing_date: formData.closing_date,
-                status: formData.status,
-                hiring_manager_id: formData.hiring_manager_id,
-                positions: formData.positions,
-                is_featured: formData.is_featured
-            };
-            
-            console.log('Submitting job data:', dataToSubmit);
-            
-            const response = await axios[method](endpoint, dataToSubmit);
-            
-            if (response.status === 200 || response.status === 201) {
-                toast.success(
-                    isEditing ? 'Job updated successfully!' : 'Job created successfully!',
-                    {
-                        icon: '✅',
-                        style: {
-                            backdropFilter: 'blur(16px) saturate(200%)',
-                            background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
-                            border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                            color: theme.palette.text.primary,
-                        }
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                const apiRoute = isEditing 
+                    ? route('hr.recruitment.update.ajax', job.id) 
+                    : route('hr.recruitment.store.ajax');
+
+                const requestData = {
+                    ...formData,
+                    _method: isEditing ? 'PUT' : 'POST'
+                };
+
+                const response = await axios.post(apiRoute, requestData);
+
+                if (response.status === 200) {
+                    // Use optimized data manipulation like LeaveForm
+                    if (isEditing && updateJobOptimized && response.data.job) {
+                        updateJobOptimized(response.data.job);
+                        fetchJobStats && fetchJobStats();
+                    } else if (addJobOptimized && response.data.job) {
+                        addJobOptimized(response.data.job);
+                        fetchJobStats && fetchJobStats();
                     }
-                );
-                
-                if (onSuccess) {
-                    onSuccess();
+                    
+                    onClose();
+                    resolve([response.data.message || (isEditing ? 'Job updated successfully!' : 'Job created successfully!')]);
                 }
+            } catch (error) {
+                console.error(error);
+                setProcessing(false);
+
+                if (error.response) {
+                    if (error.response.status === 422) {
+                        setErrors(error.response.data.errors || {});
+                        reject(error.response.data.message || 'Please correct the validation errors.');
+                    } else {
+                        reject('An unexpected error occurred. Please try again later.');
+                    }
+                } else if (error.request) {
+                    reject('No response received from the server. Please check your internet connection.');
+                } else {
+                    reject('An error occurred while setting up the request.');
+                }
+            } finally {
+                setProcessing(false);
             }
-        } catch (error) {
-            console.error('Form submission error:', error);
-            console.error('Error details:', error.response?.data);
-            
-            if (error.response?.status === 422) {
-                // Handle validation errors
-                const validationErrors = error.response.data.errors || {};
-                console.log('Validation errors:', validationErrors);
-                setErrors(validationErrors);
-                toast.error('Please correct the validation errors.', {
+        });
+
+        toast.promise(
+            promise,
+            {
+                pending: {
+                    render() {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <CircularProgress />
+                                <span style={{ marginLeft: '8px' }}>
+                                    {isEditing ? 'Updating job...' : 'Creating job...'}
+                                </span>
+                            </div>
+                        );
+                    },
+                    icon: false,
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
                         background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
                         border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
                         color: theme.palette.text.primary,
-                    }
-                });
-            } else {
-                toast.error(
-                    error.response?.data?.message || 
-                    `Failed to ${isEditing ? 'update' : 'create'} job posting.`,
-                    {
-                        icon: '🔴',
-                        style: {
-                            backdropFilter: 'blur(16px) saturate(200%)',
-                            background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
-                            border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
-                            color: theme.palette.text.primary,
-                        }
-                    }
-                );
+                    },
+                },
+                success: {
+                    render({ data }) {
+                        return (
+                            <>
+                                {data.map((message, index) => (
+                                    <div key={index}>{message}</div>
+                                ))}
+                            </>
+                        );
+                    },
+                    icon: '🟢',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
+                        border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+                        color: theme.palette.text.primary,
+                    },
+                },
+                error: {
+                    render({ data }) {
+                        return <>{data}</>;
+                    },
+                    icon: '🔴',
+                    style: {
+                        backdropFilter: 'blur(16px) saturate(200%)',
+                        background: theme.glassCard?.background || 'rgba(255, 255, 255, 0.1)',
+                        border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+                        color: theme.palette.text.primary,
+                    },
+                },
             }
-        } finally {
-            setLoading(false);
-        }
+        );
     };
+    
     
     const jobTypeOptions = [
         { value: 'full_time', label: 'Full Time' },
         { value: 'part_time', label: 'Part Time' },
         { value: 'contract', label: 'Contract' },
         { value: 'temporary', label: 'Temporary' },
-        { value: 'internship', label: 'Internship' }
+        { value: 'internship', label: 'Internship' },
+        { value: 'remote', label: 'Remote' }
     ];
     
     const currencyOptions = [
@@ -617,10 +567,21 @@ const AddEditJobForm = ({
                                 <InputLabel>Hiring Manager</InputLabel>
                                 <Select
                                     name="hiring_manager_id"
-                                    value={formData.hiring_manager_id}
+                                    value={formData.hiring_manager_id || ''}
                                     onChange={(e) => handleSelectChange('hiring_manager_id', e.target.value)}
                                     label="Hiring Manager"
+                                    disabled={loadingManagers}
+                                    startAdornment={
+                                        loadingManagers ? (
+                                            <InputAdornment position="start">
+                                                <CircularProgress size={20} />
+                                            </InputAdornment>
+                                        ) : null
+                                    }
                                 >
+                                    <MenuItem value="">
+                                        <em>Select a Manager</em>
+                                    </MenuItem>
                                     {managers.map((manager) => (
                                         <MenuItem key={manager.id} value={manager.id}>
                                             {manager.name}
@@ -868,6 +829,108 @@ const AddEditJobForm = ({
                             </Box>
                         </Grid>
 
+                        {/* Required Skills */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mt: 3 }}>
+                                Required Skills
+                            </Typography>
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Add Skill"
+                                    value={newSkill}
+                                    onChange={(e) => setNewSkill(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddSkill();
+                                        }
+                                    }}
+                                    size="small"
+                                    placeholder="e.g., JavaScript, React, Node.js"
+                                />
+                                <Button
+                                    variant="contained"
+                                    color="info"
+                                    onClick={handleAddSkill}
+                                    disabled={!newSkill.trim()}
+                                    startIcon={<AddIcon />}
+                                    sx={{ minWidth: 100 }}
+                                >
+                                    Add
+                                </Button>
+                            </Box>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {formData.skills_required.map((skill, index) => (
+                                    <Chip
+                                        key={index}
+                                        label={skill}
+                                        onDelete={() => handleDeleteItem(skill, 'skills_required')}
+                                        color="info"
+                                        variant="outlined"
+                                    />
+                                ))}
+                            </Box>
+                        </Grid>
+
+                        {/* Custom Fields */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mt: 3 }}>
+                                Additional Information
+                            </Typography>
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Field Name"
+                                    value={newCustomField.key}
+                                    onChange={(e) => setNewCustomField(prev => ({ ...prev, key: e.target.value }))}
+                                    size="small"
+                                    placeholder="e.g., Travel Required, Security Clearance"
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Field Value"
+                                    value={newCustomField.value}
+                                    onChange={(e) => setNewCustomField(prev => ({ ...prev, value: e.target.value }))}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddCustomField();
+                                        }
+                                    }}
+                                    size="small"
+                                    placeholder="e.g., 25%, Required"
+                                />
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    onClick={handleAddCustomField}
+                                    disabled={!newCustomField.key.trim() || !newCustomField.value.trim()}
+                                    startIcon={<AddIcon />}
+                                    sx={{ minWidth: 100 }}
+                                >
+                                    Add
+                                </Button>
+                            </Box>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {formData.custom_fields.map((field, index) => (
+                                    <Chip
+                                        key={field.id || index}
+                                        label={`${field.key}: ${field.value}`}
+                                        onDelete={() => handleDeleteItem(field, 'custom_fields')}
+                                        color="warning"
+                                        variant="outlined"
+                                    />
+                                ))}
+                            </Box>
+                        </Grid>
+
                         {/* Salary Information */}
                         <Grid item xs={12}>
                             <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mt: 3 }}>
@@ -1026,7 +1089,7 @@ const AddEditJobForm = ({
                 }}>
                     <LoadingButton
                         onClick={onClose}
-                        disabled={loading}
+                        disabled={processing}
                         variant="outlined"
                         color="primary"
                         sx={{ borderRadius: '50px' }}
@@ -1037,7 +1100,7 @@ const AddEditJobForm = ({
                         type="submit"
                         variant="outlined"
                         color="primary"
-                        loading={loading}
+                        loading={processing}
                         sx={{ borderRadius: '50px' }}
                     >
                         {isEditing ? 'Update Job Posting' : 'Create Job Posting'}
