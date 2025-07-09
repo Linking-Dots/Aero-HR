@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Designation;
-use Inertia\Inertia;
+use App\Models\HRM\Designation;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+
 class DesignationController extends Controller
 {
     public function index(): \Inertia\Response

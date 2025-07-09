@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\HRM\AttendanceSetting;
+use App\Models\HRM\AttendanceType;
 use Illuminate\Http\Request;
-use App\Models\AttendanceSetting;
-use App\Models\AttendanceType;
 use Inertia\Inertia;
 use Inertia\Response;
 

@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\HRM\Department;
 use App\Models\SafetyIncident;
 use App\Models\SafetyIncidentParticipant;
 use App\Models\User;
-use App\Models\Department;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class SafetyIncidentController extends Controller
 {
@@ -21,47 +21,47 @@ class SafetyIncidentController extends Controller
     public function index()
     {
         $this->authorize('viewAny', SafetyIncident::class);
-        
+
         $incidents = SafetyIncident::with(['department', 'reportedBy'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-            
+
         return Inertia::render('HR/Safety/Incidents/Index', [
             'title' => 'Safety Incidents',
             'incidents' => $incidents
         ]);
     }
-    
+
     /**
      * Show the form for creating a new safety incident.
      */
     public function create()
     {
         $this->authorize('create', SafetyIncident::class);
-        
+
         $employees = User::select('id', 'name')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-            
+
         $departments = Department::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         return Inertia::render('HR/Safety/Incidents/Create', [
             'title' => 'Report Safety Incident',
             'employees' => $employees,
             'departments' => $departments
         ]);
     }
-    
+
     /**
      * Store a newly created safety incident.
      */
     public function store(Request $request)
     {
         $this->authorize('create', SafetyIncident::class);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -80,9 +80,9 @@ class SafetyIncidentController extends Controller
             'participants.*.role' => 'required|string|max:255',
             'participants.*.description' => 'nullable|string',
         ]);
-        
+
         DB::beginTransaction();
-        
+
         try {
             $incident = SafetyIncident::create([
                 'title' => $validated['title'],
@@ -99,7 +99,7 @@ class SafetyIncidentController extends Controller
                 'status' => $validated['status'],
                 'reported_by' => Auth::id(),
             ]);
-            
+
             if (isset($validated['participants']) && count($validated['participants']) > 0) {
                 foreach ($validated['participants'] as $participant) {
                     SafetyIncidentParticipant::create([
@@ -110,21 +110,21 @@ class SafetyIncidentController extends Controller
                     ]);
                 }
             }
-            
+
             DB::commit();
-            
+
             return redirect()->route('hr.safety.incidents.show', $incident->id)
                 ->with('success', 'Safety incident reported successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to report safety incident: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to report safety incident. Please try again.')
                 ->withInput();
         }
     }
-    
+
     /**
      * Display the specified safety incident.
      */
@@ -132,15 +132,15 @@ class SafetyIncidentController extends Controller
     {
         $incident = SafetyIncident::with(['department', 'reportedBy', 'participants.user'])
             ->findOrFail($id);
-            
+
         $this->authorize('view', $incident);
-        
+
         return Inertia::render('HR/Safety/Incidents/Show', [
             'title' => 'Safety Incident Details',
             'incident' => $incident
         ]);
     }
-    
+
     /**
      * Show the form for editing the specified safety incident.
      */
@@ -148,18 +148,18 @@ class SafetyIncidentController extends Controller
     {
         $incident = SafetyIncident::with(['department', 'participants'])
             ->findOrFail($id);
-            
+
         $this->authorize('update', $incident);
-        
+
         $employees = User::select('id', 'name')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-            
+
         $departments = Department::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         return Inertia::render('HR/Safety/Incidents/Edit', [
             'title' => 'Edit Safety Incident',
             'incident' => $incident,
@@ -167,16 +167,16 @@ class SafetyIncidentController extends Controller
             'departments' => $departments
         ]);
     }
-    
+
     /**
      * Update the specified safety incident.
      */
     public function update(Request $request, $id)
     {
         $incident = SafetyIncident::findOrFail($id);
-        
+
         $this->authorize('update', $incident);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -196,9 +196,9 @@ class SafetyIncidentController extends Controller
             'participants.*.role' => 'required|string|max:255',
             'participants.*.description' => 'nullable|string',
         ]);
-        
+
         DB::beginTransaction();
-        
+
         try {
             $incident->update([
                 'title' => $validated['title'],
@@ -215,11 +215,11 @@ class SafetyIncidentController extends Controller
                 'status' => $validated['status'],
                 'updated_by' => Auth::id(),
             ]);
-            
+
             // Track existing participant IDs to determine which ones to delete
             $existingParticipantIds = $incident->participants->pluck('id')->toArray();
             $updatedParticipantIds = [];
-            
+
             if (isset($validated['participants']) && count($validated['participants']) > 0) {
                 foreach ($validated['participants'] as $participantData) {
                     if (isset($participantData['id'])) {
@@ -243,44 +243,44 @@ class SafetyIncidentController extends Controller
                     }
                 }
             }
-            
+
             // Delete participants that weren't updated
             $participantsToDelete = array_diff($existingParticipantIds, $updatedParticipantIds);
             if (!empty($participantsToDelete)) {
                 SafetyIncidentParticipant::whereIn('id', $participantsToDelete)->delete();
             }
-            
+
             DB::commit();
-            
+
             return redirect()->route('hr.safety.incidents.show', $incident->id)
                 ->with('success', 'Safety incident updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update safety incident: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to update safety incident. Please try again.')
                 ->withInput();
         }
     }
-    
+
     /**
      * Remove the specified safety incident.
      */
     public function destroy($id)
     {
         $incident = SafetyIncident::findOrFail($id);
-        
+
         $this->authorize('delete', $incident);
-        
+
         try {
             $incident->delete();
-            
+
             return redirect()->route('hr.safety.incidents.index')
                 ->with('success', 'Safety incident deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete safety incident: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to delete safety incident.');
         }

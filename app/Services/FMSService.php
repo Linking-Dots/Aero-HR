@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\HRM\Department;
 use App\Models\User;
-use App\Models\Department;
-use Illuminate\Support\Facades\DB;
 
 class FMSService
 {

@@ -11,6 +11,7 @@ use App\Http\Controllers\HR\WorkplaceSafetyController;
 use App\Http\Controllers\HR\HrAnalyticsController;
 use App\Http\Controllers\HR\HrDocumentController;
 use App\Http\Controllers\HR\EmployeeSelfServiceController;
+use App\Http\Controllers\HR\PayrollController;
 use Illuminate\Support\Facades\Route;
 
 // Human Resources Module Routes
@@ -112,7 +113,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::put('/recruitment/{id}/applications/{applicationId}/interviews/{interviewId}', [RecruitmentController::class, 'updateInterview'])->name('recruitment.interviews.update');
         Route::delete('/recruitment/{id}/applications/{applicationId}/interviews/{interviewId}', [RecruitmentController::class, 'destroyInterview'])->name('recruitment.interviews.destroy');
     });
-    
+
     // Employee Onboarding & Offboarding
     Route::middleware(['permission:hr.onboarding.view'])->group(function () {
         Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
@@ -122,7 +123,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/onboarding/{id}/edit', [OnboardingController::class, 'edit'])->name('onboarding.edit');
         Route::put('/onboarding/{id}', [OnboardingController::class, 'update'])->name('onboarding.update');
         Route::delete('/onboarding/{id}', [OnboardingController::class, 'destroy'])->name('onboarding.destroy');
-        
+
         // Offboarding
         Route::get('/offboarding', [OnboardingController::class, 'offboardingIndex'])->name('offboarding.index');
         Route::get('/offboarding/create', [OnboardingController::class, 'createOffboarding'])->name('offboarding.create');
@@ -130,34 +131,34 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/offboarding/{id}', [OnboardingController::class, 'showOffboarding'])->name('offboarding.show');
         Route::put('/offboarding/{id}', [OnboardingController::class, 'updateOffboarding'])->name('offboarding.update');
         Route::delete('/offboarding/{id}', [OnboardingController::class, 'destroyOffboarding'])->name('offboarding.destroy');
-        
+
         // Checklists
         Route::get('/checklists', [OnboardingController::class, 'checklists'])->name('checklists.index');
         Route::post('/checklists', [OnboardingController::class, 'storeChecklist'])->name('checklists.store');
         Route::put('/checklists/{id}', [OnboardingController::class, 'updateChecklist'])->name('checklists.update');
         Route::delete('/checklists/{id}', [OnboardingController::class, 'destroyChecklist'])->name('checklists.destroy');
     });
-    
+
     // Skills & Competency Management
     Route::middleware(['permission:hr.skills.view'])->group(function () {
         Route::get('/skills', [SkillsController::class, 'index'])->name('skills.index');
         Route::post('/skills', [SkillsController::class, 'store'])->name('skills.store');
         Route::put('/skills/{id}', [SkillsController::class, 'update'])->name('skills.update');
         Route::delete('/skills/{id}', [SkillsController::class, 'destroy'])->name('skills.destroy');
-        
+
         // Competencies
         Route::get('/competencies', [SkillsController::class, 'competencies'])->name('competencies.index');
         Route::post('/competencies', [SkillsController::class, 'storeCompetency'])->name('competencies.store');
         Route::put('/competencies/{id}', [SkillsController::class, 'updateCompetency'])->name('competencies.update');
         Route::delete('/competencies/{id}', [SkillsController::class, 'destroyCompetency'])->name('competencies.destroy');
-        
+
         // Employee Skills
         Route::get('/employee-skills/{employeeId}', [SkillsController::class, 'employeeSkills'])->name('employee.skills.index');
         Route::post('/employee-skills/{employeeId}', [SkillsController::class, 'storeEmployeeSkill'])->name('employee.skills.store');
         Route::put('/employee-skills/{employeeId}/{skillId}', [SkillsController::class, 'updateEmployeeSkill'])->name('employee.skills.update');
         Route::delete('/employee-skills/{employeeId}/{skillId}', [SkillsController::class, 'destroyEmployeeSkill'])->name('employee.skills.destroy');
     });
-    
+
     // Employee Benefits Administration
     Route::middleware(['permission:hr.benefits.view'])->group(function () {
         Route::get('/benefits', [BenefitsController::class, 'index'])->name('benefits.index');
@@ -167,14 +168,14 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/benefits/{id}/edit', [BenefitsController::class, 'edit'])->name('benefits.edit');
         Route::put('/benefits/{id}', [BenefitsController::class, 'update'])->name('benefits.update');
         Route::delete('/benefits/{id}', [BenefitsController::class, 'destroy'])->name('benefits.destroy');
-        
+
         // Employee Benefits
         Route::get('/employee-benefits/{employeeId}', [BenefitsController::class, 'employeeBenefits'])->name('employee.benefits.index');
         Route::post('/employee-benefits/{employeeId}', [BenefitsController::class, 'assignBenefit'])->name('employee.benefits.assign');
         Route::put('/employee-benefits/{employeeId}/{benefitId}', [BenefitsController::class, 'updateEmployeeBenefit'])->name('employee.benefits.update');
         Route::delete('/employee-benefits/{employeeId}/{benefitId}', [BenefitsController::class, 'removeEmployeeBenefit'])->name('employee.benefits.remove');
     });
-    
+
     // Enhanced Time-off Management
     Route::middleware(['permission:hr.timeoff.view'])->group(function () {
         Route::get('/time-off', [TimeOffController::class, 'index'])->name('timeoff.index');
@@ -186,7 +187,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/time-off/settings', [TimeOffController::class, 'settings'])->name('timeoff.settings');
         Route::put('/time-off/settings', [TimeOffController::class, 'updateSettings'])->name('timeoff.settings.update');
     });
-    
+
     // Workplace Health & Safety
     Route::middleware(['permission:hr.safety.view'])->group(function () {
         Route::get('/safety', [WorkplaceSafetyController::class, 'index'])->name('safety.index');
@@ -195,14 +196,14 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::post('/safety/incidents', [WorkplaceSafetyController::class, 'storeIncident'])->name('safety.incidents.store');
         Route::get('/safety/incidents/{id}', [WorkplaceSafetyController::class, 'showIncident'])->name('safety.incidents.show');
         Route::put('/safety/incidents/{id}', [WorkplaceSafetyController::class, 'updateIncident'])->name('safety.incidents.update');
-        
+
         // Safety Inspections
         Route::get('/safety/inspections', [WorkplaceSafetyController::class, 'inspections'])->name('safety.inspections.index');
         Route::get('/safety/inspections/create', [WorkplaceSafetyController::class, 'createInspection'])->name('safety.inspections.create');
         Route::post('/safety/inspections', [WorkplaceSafetyController::class, 'storeInspection'])->name('safety.inspections.store');
         Route::get('/safety/inspections/{id}', [WorkplaceSafetyController::class, 'showInspection'])->name('safety.inspections.show');
         Route::put('/safety/inspections/{id}', [WorkplaceSafetyController::class, 'updateInspection'])->name('safety.inspections.update');
-        
+
         // Safety Training
         Route::get('/safety/training', [WorkplaceSafetyController::class, 'training'])->name('safety.training.index');
         Route::get('/safety/training/create', [WorkplaceSafetyController::class, 'createTraining'])->name('safety.training.create');
@@ -210,7 +211,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/safety/training/{id}', [WorkplaceSafetyController::class, 'showTraining'])->name('safety.training.show');
         Route::put('/safety/training/{id}', [WorkplaceSafetyController::class, 'updateTraining'])->name('safety.training.update');
     });
-    
+
     // HR Analytics & Reporting
     Route::middleware(['permission:hr.analytics.view'])->group(function () {
         Route::get('/analytics', [HrAnalyticsController::class, 'index'])->name('analytics.index');
@@ -222,7 +223,7 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/analytics/reports', [HrAnalyticsController::class, 'reports'])->name('analytics.reports');
         Route::post('/analytics/reports/generate', [HrAnalyticsController::class, 'generateReport'])->name('analytics.reports.generate');
     });
-    
+
     // HR Document Management
     Route::middleware(['permission:hr.documents.view'])->group(function () {
         Route::get('/documents', [HrDocumentController::class, 'index'])->name('documents.index');
@@ -231,20 +232,20 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/documents/{id}', [HrDocumentController::class, 'show'])->name('documents.show');
         Route::put('/documents/{id}', [HrDocumentController::class, 'update'])->name('documents.update');
         Route::delete('/documents/{id}', [HrDocumentController::class, 'destroy'])->name('documents.destroy');
-        
+
         // Document Categories
         Route::get('/document-categories', [HrDocumentController::class, 'categories'])->name('documents.categories.index');
         Route::post('/document-categories', [HrDocumentController::class, 'storeCategory'])->name('documents.categories.store');
         Route::put('/document-categories/{id}', [HrDocumentController::class, 'updateCategory'])->name('documents.categories.update');
         Route::delete('/document-categories/{id}', [HrDocumentController::class, 'destroyCategory'])->name('documents.categories.destroy');
-        
+
         // Employee Documents
         Route::get('/employee-documents/{employeeId}', [HrDocumentController::class, 'employeeDocuments'])->name('employee.documents.index');
         Route::post('/employee-documents/{employeeId}', [HrDocumentController::class, 'storeEmployeeDocument'])->name('employee.documents.store');
         Route::get('/employee-documents/{employeeId}/{documentId}', [HrDocumentController::class, 'showEmployeeDocument'])->name('employee.documents.show');
         Route::delete('/employee-documents/{employeeId}/{documentId}', [HrDocumentController::class, 'destroyEmployeeDocument'])->name('employee.documents.destroy');
     });
-    
+
     // Enhanced Employee Self-Service Portal
     Route::middleware(['permission:hr.selfservice.view'])->group(function () {
         Route::get('/self-service', [EmployeeSelfServiceController::class, 'index'])->name('selfservice.index');
@@ -257,6 +258,37 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::get('/self-service/trainings', [EmployeeSelfServiceController::class, 'trainings'])->name('selfservice.trainings');
         Route::get('/self-service/payslips', [EmployeeSelfServiceController::class, 'payslips'])->name('selfservice.payslips');
         Route::get('/self-service/performance', [EmployeeSelfServiceController::class, 'performance'])->name('selfservice.performance');
+    });
+
+    // Payroll Management System
+    Route::middleware(['permission:hr.payroll.view'])->group(function () {
+        Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('/payroll/create', [PayrollController::class, 'create'])->name('payroll.create');
+        Route::post('/payroll', [PayrollController::class, 'store'])->name('payroll.store');
+        Route::get('/payroll/{id}', [PayrollController::class, 'show'])->name('payroll.show');
+        Route::get('/payroll/{id}/edit', [PayrollController::class, 'edit'])->name('payroll.edit');
+        Route::put('/payroll/{id}', [PayrollController::class, 'update'])->name('payroll.update');
+        Route::delete('/payroll/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
+
+        // Process Payroll
+        Route::post('/payroll/{id}/process', [PayrollController::class, 'processPayroll'])->name('payroll.process');
+
+        // Bulk Operations
+        Route::post('/payroll/bulk/generate', [PayrollController::class, 'bulkGenerate'])->name('payroll.bulk.generate');
+        Route::post('/payroll/bulk/process', [PayrollController::class, 'bulkProcess'])->name('payroll.bulk.process');
+
+        // Payslips
+        Route::post('/payroll/{id}/payslip/generate', [PayrollController::class, 'generatePayslip'])->name('payroll.payslip.generate');
+        Route::post('/payroll/payslips/bulk-generate', [PayrollController::class, 'bulkGeneratePayslips'])->name('payroll.payslips.bulk.generate');
+        Route::get('/payroll/{id}/payslip/download', [PayrollController::class, 'downloadPayslip'])->name('payroll.payslip.download');
+        Route::post('/payroll/{id}/payslip/email', [PayrollController::class, 'sendPayslipEmail'])->name('payroll.payslip.email');
+
+        // Reports
+        Route::get('/payroll/reports', [PayrollController::class, 'reports'])->name('payroll.reports');
+        Route::post('/payroll/reports/monthly-summary', [PayrollController::class, 'monthlySummaryReport'])->name('payroll.reports.monthly');
+        Route::post('/payroll/reports/tax', [PayrollController::class, 'taxReport'])->name('payroll.reports.tax');
+        Route::post('/payroll/reports/bank-transfer', [PayrollController::class, 'bankTransferReport'])->name('payroll.reports.bank');
+        Route::post('/payroll/reports/statutory', [PayrollController::class, 'statutoryReport'])->name('payroll.reports.statutory');
     });
 
     // Managers for dropdowns

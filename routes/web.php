@@ -1,33 +1,32 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\CRMController;
-use App\Http\Controllers\FMSController;
-use App\Http\Controllers\IMSController;
-use App\Http\Controllers\LMSController;
-use App\Http\Controllers\POSController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailyWorkSummaryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EducationController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\ExperienceController;
+use App\Http\Controllers\FMSController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\IMSController;
 use App\Http\Controllers\JurisdictionController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LetterController;
+use App\Http\Controllers\LMSController;
 use App\Http\Controllers\PicnicController;
+use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Settings\LeaveSettingController;
-use App\Http\Controllers\Settings\CompanySettingController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\Settings\AttendanceSettingController;
+use App\Http\Controllers\Settings\CompanySettingController;
+use App\Http\Controllers\Settings\LeaveSettingController;
 use App\Http\Controllers\SystemMonitoringController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -475,11 +474,11 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
 // API routes for dropdown data
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/designations/list', function () {
-        return response()->json(\App\Models\Designation::select('id', 'title as name')->get());
+        return response()->json(\App\Models\HRM\Designation::select('id', 'title as name')->get());
     })->name('designations.list');
 
     Route::get('/api/departments/list', function () {
-        return response()->json(\App\Models\Department::select('id', 'name')->get());
+        return response()->json(\App\Models\HRM\Department::select('id', 'name')->get());
     })->name('departments.list');
 
     Route::get('/api/users/managers/list', function () {

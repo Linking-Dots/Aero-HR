@@ -2,7 +2,7 @@
 
 namespace App\Services\Attendance;
 
-use App\Models\Attendance;
+use App\Models\HRM\Attendance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +19,7 @@ class AttendancePunchService
     {
         try {
             $today = Carbon::today();
-            
+
             $existingAttendance = $this->getExistingAttendance($user->id, $today);
 
             if ($existingAttendance && !$existingAttendance->punchout) {
@@ -33,7 +33,7 @@ class AttendancePunchService
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'status' => 'error',
                 'message' => 'Failed to record attendance. Please try again.',
@@ -62,7 +62,7 @@ class AttendancePunchService
             'punchout' => Carbon::now(),
             'punchout_location' => $this->formatLocation($request),
         ]);
-        
+
         return [
             'status' => 'success',
             'message' => 'Successfully punched out!',
@@ -82,7 +82,7 @@ class AttendancePunchService
             'punchin' => Carbon::now(),
             'punchin_location' => $this->formatLocation($request),
         ]);
-        
+
         return [
             'status' => 'success',
             'message' => 'Successfully punched in!',
@@ -96,7 +96,7 @@ class AttendancePunchService
     {
         $lat = $request->input('lat');
         $lng = $request->input('lng');
-        
+
         if (!$lat || !$lng) {
             return null;
         }

@@ -2,12 +2,9 @@
 
 namespace App\Services\Leave;
 
-use App\Models\Holiday;
-use App\Models\Leave;
-use App\Models\LeaveSetting;
+use App\Models\HRM\Holiday;
+use App\Models\HRM\Leave;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
-use Exception;
 
 class LeaveOverlapService
 {
@@ -43,7 +40,7 @@ class LeaveOverlapService
             // Convert string dates to Carbon instances if they're not already
             $fromDate = $leave->from_date instanceof Carbon ? $leave->from_date : new Carbon($leave->from_date);
             $toDate = $leave->to_date instanceof Carbon ? $leave->to_date : new Carbon($leave->to_date);
-            
+
             return $fromDate->equalTo($toDate)
                 ? "\"{$leave->leave_type}\" leave already exists for: " . $fromDate->format('Y-m-d')
                 : "\"{$leave->leave_type}\" leave already exists from " . $fromDate->format('Y-m-d') . ' to ' . $toDate->format('Y-m-d');
@@ -75,7 +72,7 @@ class LeaveOverlapService
             // Convert string dates to Carbon instances if they're not already
             $fromDate = $holiday->from_date instanceof Carbon ? $holiday->from_date : new Carbon($holiday->from_date);
             $toDate = $holiday->to_date instanceof Carbon ? $holiday->to_date : new Carbon($holiday->to_date);
-            
+
             return $fromDate->equalTo($toDate)
                 ? "\"{$holiday->title}\" holiday on this date: " . $fromDate->format('Y-m-d')
                 : "\"{$holiday->title}\" holiday on this dates: " . $fromDate->format('Y-m-d') . ' to ' . $toDate->format('Y-m-d');

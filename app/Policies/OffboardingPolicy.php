@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Offboarding;
+use App\Models\HRM\Offboarding;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

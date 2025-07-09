@@ -111,7 +111,7 @@ return new class extends Migration
             Schema::create('return_requests', function (Blueprint $table) {
                 $table->id();
                 $table->string('rma_number')->unique();
-                $table->morphs('returnable'); // Can be from purchase_orders, sales, etc.
+                $table->morphs('returnable', 'return_requests_returnable_index'); // Can be from purchase_orders, sales, etc.
                 $table->foreignId('requested_by')->constrained('users')->cascadeOnDelete();
                 $table->enum('return_type', ['defective', 'wrong_item', 'overage', 'damaged', 'expired', 'other'])->default('defective');
                 $table->text('reason');
@@ -136,7 +136,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('document_number')->unique();
                 $table->enum('document_type', ['invoice', 'bill_of_lading', 'packing_list', 'certificate_of_origin', 'customs_declaration', 'other']);
-                $table->morphs('trade_transaction'); // Can link to imports or exports
+                $table->morphs('trade_transaction', 'trade_docs_transaction_index'); // Can link to imports or exports
                 $table->string('document_name');
                 $table->string('file_path')->nullable();
                 $table->string('file_name')->nullable();
@@ -157,7 +157,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('declaration_number')->unique();
                 $table->enum('declaration_type', ['import', 'export']);
-                $table->morphs('declarable'); // Links to shipments or orders
+                $table->morphs('declarable', 'customs_declarable_index'); // Links to shipments or orders
                 $table->string('origin_country', 3); // ISO country code
                 $table->string('destination_country', 3); // ISO country code
                 $table->string('port_of_entry')->nullable();

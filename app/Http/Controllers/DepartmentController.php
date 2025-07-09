@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use Inertia\Inertia;
+use App\Models\HRM\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+
 class DepartmentController extends Controller
 {
     public function index(): \Inertia\Response

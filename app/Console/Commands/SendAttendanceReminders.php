@@ -3,18 +3,17 @@
 namespace App\Console\Commands;
 
 use App\Jobs\SendAttendanceReminder;
+use App\Models\HRM\AttendanceSetting;
 use App\Models\User;
-use App\Models\AttendanceSetting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class SendAttendanceReminders extends Command
 {
     protected $signature = 'attendance:reminders
                             {--test : Run in test mode for a single user}
                             {--user-id= : Send to a specific user ID (for testing)}';
-    
+
     protected $description = 'Send attendance reminders to all eligible users';
 
     public function handle()
@@ -53,7 +52,7 @@ class SendAttendanceReminders extends Command
                 ->chunk($batchSize, function ($users) use ($attendanceSetting, &$totalUsers, &$dispatchedCount, &$skippedCount) {
                     foreach ($users as $user) {
                         $totalUsers++;
-                        
+
                         // Skip if user has no FCM token
                         if (empty($user->fcm_token)) {
                             $skippedCount++;
@@ -64,14 +63,14 @@ class SendAttendanceReminders extends Command
                         // Dispatch the job
                         SendAttendanceReminder::dispatch($user, $attendanceSetting)
                             ->onQueue('notifications');
-                            
+
                         $dispatchedCount++;
                         $this->info("✅ Dispatched reminder for user: {$user->name} (ID: {$user->id})");
                     }
                 });
 
             $executionTime = round(microtime(true) - $startTime, 2);
-            
+
             $summary = [
                 'total_users' => $totalUsers,
                 'dispatched' => $dispatchedCount,
@@ -101,40 +100,40 @@ class SendAttendanceReminders extends Command
     protected function handleTestMode($attendanceSetting)
     {
         $userId = $this->option('user-id');
-        
+
         if ($userId) {
             $user = User::find($userId);
-            
+
             if (!$user) {
                 $this->error("User with ID {$userId} not found");
                 return 1;
             }
-            
+
             $users = collect([$user]);
         } else {
             // Get a single test user with FCM token
             $user = User::where('active', true)
                 ->whereNotNull('fcm_token')
                 ->first();
-                
+
             if (!$user) {
                 $this->error('No active users with FCM tokens found for testing');
                 return 1;
             }
-            
+
             $users = collect([$user]);
         }
-        
+
         $this->info("\n🧪 Running in test mode");
         $this->info("Sending test notification to: {$user->email} (ID: {$user->id})\n");
-        
+
         foreach ($users as $user) {
             $job = new SendAttendanceReminder($user, $attendanceSetting);
             $job->handle(app()->make(\App\Services\Notification\FcmNotificationService::class));
-            
+
             $this->info("✅ Test notification sent to: {$user->email}");
         }
-        
+
         return 0;
     }
 }

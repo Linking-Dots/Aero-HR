@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Quality;
 
 use App\Http\Controllers\Controller;
+use App\Models\HRM\Department;
 use App\Models\QualityNCR;
-use App\Models\Department;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
 
 class NCRController extends Controller

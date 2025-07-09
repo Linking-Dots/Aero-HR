@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
-use App\Models\Job;
-use App\Models\JobApplication;
-use App\Models\JobHiringStage;
-use App\Models\JobInterview;
+use App\Models\HRM\Department;
+use App\Models\HRM\Job;
+use App\Models\HRM\JobApplication;
+use App\Models\HRM\JobHiringStage;
+use App\Models\HRM\JobInterview;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +21,7 @@ class RecruitmentController extends Controller
     public function index(Request $request)
     {
         $jobs = Job::with([
-                'department', 
+                'department',
                 'hiringManager',
                 'applications' => function($query) {
                     $query->with(['applicant', 'currentStage']);
@@ -89,7 +89,7 @@ class RecruitmentController extends Controller
     public function indexData(Request $request)
     {
         $jobs = Job::with([
-                'department', 
+                'department',
                 'hiringManager',
                 'applications' => function($query) {
                     $query->with(['applicant', 'currentStage']);
@@ -304,7 +304,7 @@ class RecruitmentController extends Controller
         // Get applications with detailed statistics
         $applications = $job->applications;
         $totalApplications = $applications->count();
-        
+
         // Application statistics by status
         $applicationStats = [
             'total' => $totalApplications,
@@ -324,7 +324,7 @@ class RecruitmentController extends Controller
 
         foreach ($hiringStages as $stage) {
             $stageApplications = $applications->where('current_stage_id', $stage->id);
-            
+
             $applicationsByStage[$stage->id] = [
                 'stage' => $stage,
                 'applications' => $stageApplications->values(),
@@ -337,11 +337,11 @@ class RecruitmentController extends Controller
             'days_active' => $job->posting_date ? $job->posting_date->diffInDays(now()) : 0,
             'days_until_closing' => $job->daysUntilClosing(),
             'is_active' => $job->isOpen(),
-            'applications_per_day' => $totalApplications > 0 && $job->posting_date ? 
+            'applications_per_day' => $totalApplications > 0 && $job->posting_date ?
                 round($totalApplications / max($job->posting_date->diffInDays(now()), 1), 2) : 0,
-            'hire_rate' => $totalApplications > 0 ? 
+            'hire_rate' => $totalApplications > 0 ?
                 round(($applicationStats['hired'] / $totalApplications) * 100, 2) : 0,
-            'interview_rate' => $totalApplications > 0 ? 
+            'interview_rate' => $totalApplications > 0 ?
                 round(($applicationStats['interviewed'] / $totalApplications) * 100, 2) : 0,
         ];
 
@@ -398,7 +398,7 @@ class RecruitmentController extends Controller
         // Get applications with detailed statistics
         $applications = $job->applications;
         $totalApplications = $applications->count();
-        
+
         // Application statistics by status
         $applicationStats = [
             'total' => $totalApplications,
@@ -418,7 +418,7 @@ class RecruitmentController extends Controller
 
         foreach ($hiringStages as $stage) {
             $stageApplications = $applications->where('current_stage_id', $stage->id);
-            
+
             $applicationsByStage[$stage->id] = [
                 'stage' => $stage,
                 'applications' => $stageApplications->values(),
@@ -431,11 +431,11 @@ class RecruitmentController extends Controller
             'days_active' => $job->posting_date ? $job->posting_date->diffInDays(now()) : 0,
             'days_until_closing' => $job->daysUntilClosing(),
             'is_active' => $job->isOpen(),
-            'applications_per_day' => $totalApplications > 0 && $job->posting_date ? 
+            'applications_per_day' => $totalApplications > 0 && $job->posting_date ?
                 round($totalApplications / max($job->posting_date->diffInDays(now()), 1), 2) : 0,
-            'hire_rate' => $totalApplications > 0 ? 
+            'hire_rate' => $totalApplications > 0 ?
                 round(($applicationStats['hired'] / $totalApplications) * 100, 2) : 0,
-            'interview_rate' => $totalApplications > 0 ? 
+            'interview_rate' => $totalApplications > 0 ?
                 round(($applicationStats['interviewed'] / $totalApplications) * 100, 2) : 0,
         ];
 
@@ -619,7 +619,7 @@ class RecruitmentController extends Controller
                     'message' => 'Cannot delete job with existing applications.'
                 ], 422);
             }
-            
+
             return redirect()->back()
                 ->with('error', 'Cannot delete job with existing applications.');
         }
@@ -636,7 +636,7 @@ class RecruitmentController extends Controller
                 'message' => 'Job position deleted successfully.'
             ]);
         }
-        
+
         return redirect()->route('hr.recruitment.index')
             ->with('success', 'Job position deleted successfully.');
     }
@@ -788,7 +788,7 @@ class RecruitmentController extends Controller
         $validated['application_date'] = now();
         $validated['last_status_change'] = now();
         $validated['application_ip'] = $request->ip();
-        
+
         // Set default salary currency if not provided
         if (empty($validated['salary_currency'])) {
             $validated['salary_currency'] = $job->salary_currency ?? 'USD';
@@ -1028,14 +1028,14 @@ class RecruitmentController extends Controller
         ]);
 
         $applications = JobApplication::whereIn('id', $validated['application_ids'])->get();
-        
+
         foreach ($applications as $application) {
             $updateData = ['status' => $validated['status']];
-            
+
             if (isset($validated['stage_id'])) {
                 $updateData['current_stage_id'] = $validated['stage_id'];
             }
-            
+
             $application->update($updateData);
 
             // Create stage history if stage changed
@@ -1071,7 +1071,7 @@ class RecruitmentController extends Controller
 
         $callback = function() use ($applications) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
                 'Application ID',
@@ -1186,7 +1186,7 @@ class RecruitmentController extends Controller
     public function publish($id)
     {
         $job = Job::findOrFail($id);
-        
+
         $job->update([
             'status' => 'published',
             'posting_date' => now()
@@ -1204,7 +1204,7 @@ class RecruitmentController extends Controller
     public function unpublish($id)
     {
         $job = Job::findOrFail($id);
-        
+
         $job->update([
             'status' => 'draft'
         ]);
@@ -1221,7 +1221,7 @@ class RecruitmentController extends Controller
     public function close($id)
     {
         $job = Job::findOrFail($id);
-        
+
         $job->update([
             'status' => 'closed',
             'closing_date' => now()

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
-use App\Models\PerformanceReview;
-use App\Models\PerformanceReviewTemplate;
+use App\Models\HRM\Department;
+use App\Models\HRM\PerformanceReview;
+use App\Models\HRM\PerformanceReviewTemplate;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

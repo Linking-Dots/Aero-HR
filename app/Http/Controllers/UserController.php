@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\Designation;
+use App\Models\HRM\AttendanceType;
+use App\Models\HRM\Department;
+use App\Models\HRM\Designation;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
-use App\Models\AttendanceType;
 
 class UserController extends Controller
 {

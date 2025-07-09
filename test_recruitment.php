@@ -6,7 +6,9 @@ require_once 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
-use App\Models\Job;
+use App\Http\Controllers\HR\RecruitmentController;
+use App\Models\HRM\Job;
+use Illuminate\Http\Request;
 
 echo "Testing Jobs in Database:\n";
 echo "========================\n\n";
@@ -29,9 +31,6 @@ foreach ($jobs as $job) {
 echo "\nTesting Controller Index Method:\n";
 echo "===============================\n";
 
-use App\Http\Controllers\HR\RecruitmentController;
-use Illuminate\Http\Request;
-
 $controller = new RecruitmentController();
 $request = new Request();
 
@@ -42,7 +41,7 @@ $request->headers->set('X-Requested-With', 'XMLHttpRequest');
 try {
     $response = $controller->index($request);
     echo "Controller response type: " . get_class($response) . "\n";
-    
+
     if (method_exists($response, 'getData')) {
         $data = $response->getData(true);
         echo "Jobs returned: " . count($data['jobs']['data'] ?? []) . "\n";

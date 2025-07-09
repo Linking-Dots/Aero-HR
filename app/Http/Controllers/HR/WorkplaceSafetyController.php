@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\HRM\Department;
 use App\Models\SafetyInspection;
 use App\Models\SafetyTraining;
-use App\Models\Department;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class WorkplaceSafetyController extends Controller
 {
@@ -21,18 +21,18 @@ class WorkplaceSafetyController extends Controller
     public function index()
     {
         $this->authorize('viewAny', SafetyInspection::class);
-        
+
         // Get summary data for dashboard
         $inspectionCount = SafetyInspection::count();
         $incidentCount = DB::table('safety_incidents')->count();
         $trainingCount = SafetyTraining::count();
-        
+
         // Get recent inspections
         $recentInspections = SafetyInspection::with('department')
             ->orderBy('inspection_date', 'desc')
             ->limit(5)
             ->get();
-            
+
         // Get recent incidents
         $recentIncidents = DB::table('safety_incidents')
             ->join('departments', 'safety_incidents.department_id', '=', 'departments.id')
@@ -41,13 +41,13 @@ class WorkplaceSafetyController extends Controller
             ->orderBy('safety_incidents.created_at', 'desc')
             ->limit(5)
             ->get();
-            
+
         // Get upcoming trainings
         $upcomingTrainings = SafetyTraining::where('training_date', '>=', now())
             ->orderBy('training_date')
             ->limit(5)
             ->get();
-            
+
         return Inertia::render('HR/Safety/Index', [
             'title' => 'Workplace Safety',
             'summary' => [
@@ -60,54 +60,54 @@ class WorkplaceSafetyController extends Controller
             'upcomingTrainings' => $upcomingTrainings
         ]);
     }
-    
+
     /**
      * Display a listing of safety inspections.
      */
     public function inspections()
     {
         $this->authorize('viewAny', SafetyInspection::class);
-        
+
         $inspections = SafetyInspection::with(['department', 'inspector'])
             ->orderBy('inspection_date', 'desc')
             ->paginate(10);
-            
+
         return Inertia::render('HR/Safety/Inspections/Index', [
             'title' => 'Safety Inspections',
             'inspections' => $inspections
         ]);
     }
-    
+
     /**
      * Show the form for creating a new safety inspection.
      */
     public function createInspection()
     {
         $this->authorize('create', SafetyInspection::class);
-        
+
         $departments = Department::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         $inspectors = User::select('id', 'name')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-            
+
         return Inertia::render('HR/Safety/Inspections/Create', [
             'title' => 'Create Safety Inspection',
             'departments' => $departments,
             'inspectors' => $inspectors
         ]);
     }
-    
+
     /**
      * Store a newly created safety inspection.
      */
     public function storeInspection(Request $request)
     {
         $this->authorize('create', SafetyInspection::class);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
@@ -120,7 +120,7 @@ class WorkplaceSafetyController extends Controller
             'status' => 'required|in:scheduled,in-progress,completed,cancelled',
             'follow_up_date' => 'nullable|date|after_or_equal:inspection_date',
         ]);
-        
+
         try {
             $inspection = SafetyInspection::create([
                 'title' => $validated['title'],
@@ -135,18 +135,18 @@ class WorkplaceSafetyController extends Controller
                 'follow_up_date' => $validated['follow_up_date'] ?? null,
                 'created_by' => Auth::id(),
             ]);
-            
+
             return redirect()->route('hr.safety.inspections.show', $inspection->id)
                 ->with('success', 'Safety inspection created successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to create safety inspection: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to create safety inspection. Please try again.')
                 ->withInput();
         }
     }
-    
+
     /**
      * Display the specified safety inspection.
      */
@@ -154,33 +154,33 @@ class WorkplaceSafetyController extends Controller
     {
         $inspection = SafetyInspection::with(['department', 'inspector', 'creator'])
             ->findOrFail($id);
-            
+
         $this->authorize('view', $inspection);
-        
+
         return Inertia::render('HR/Safety/Inspections/Show', [
             'title' => 'Safety Inspection Details',
             'inspection' => $inspection
         ]);
     }
-    
+
     /**
      * Show the form for editing the specified safety inspection.
      */
     public function editInspection($id)
     {
         $inspection = SafetyInspection::findOrFail($id);
-        
+
         $this->authorize('update', $inspection);
-        
+
         $departments = Department::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         $inspectors = User::select('id', 'name')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-            
+
         return Inertia::render('HR/Safety/Inspections/Edit', [
             'title' => 'Edit Safety Inspection',
             'inspection' => $inspection,
@@ -188,16 +188,16 @@ class WorkplaceSafetyController extends Controller
             'inspectors' => $inspectors
         ]);
     }
-    
+
     /**
      * Update the specified safety inspection.
      */
     public function updateInspection(Request $request, $id)
     {
         $inspection = SafetyInspection::findOrFail($id);
-        
+
         $this->authorize('update', $inspection);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
@@ -210,7 +210,7 @@ class WorkplaceSafetyController extends Controller
             'status' => 'required|in:scheduled,in-progress,completed,cancelled',
             'follow_up_date' => 'nullable|date|after_or_equal:inspection_date',
         ]);
-        
+
         try {
             $inspection->update([
                 'title' => $validated['title'],
@@ -225,65 +225,65 @@ class WorkplaceSafetyController extends Controller
                 'follow_up_date' => $validated['follow_up_date'] ?? null,
                 'updated_by' => Auth::id(),
             ]);
-            
+
             return redirect()->route('hr.safety.inspections.show', $inspection->id)
                 ->with('success', 'Safety inspection updated successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to update safety inspection: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to update safety inspection. Please try again.')
                 ->withInput();
         }
     }
-    
+
     /**
      * Display a listing of safety trainings.
      */
     public function training()
     {
         $this->authorize('viewAny', SafetyTraining::class);
-        
+
         $trainings = SafetyTraining::with(['department', 'trainer'])
             ->orderBy('training_date', 'desc')
             ->paginate(10);
-            
+
         return Inertia::render('HR/Safety/Training/Index', [
             'title' => 'Safety Training',
             'trainings' => $trainings
         ]);
     }
-    
+
     /**
      * Show the form for creating a new safety training.
      */
     public function createTraining()
     {
         $this->authorize('create', SafetyTraining::class);
-        
+
         $departments = Department::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         $trainers = User::select('id', 'name')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
-            
+
         return Inertia::render('HR/Safety/Training/Create', [
             'title' => 'Schedule Safety Training',
             'departments' => $departments,
             'trainers' => $trainers
         ]);
     }
-    
+
     /**
      * Store a newly created safety training.
      */
     public function storeTraining(Request $request)
     {
         $this->authorize('create', SafetyTraining::class);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -297,7 +297,7 @@ class WorkplaceSafetyController extends Controller
             'materials' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
-        
+
         try {
             $training = SafetyTraining::create([
                 'title' => $validated['title'],
@@ -313,18 +313,18 @@ class WorkplaceSafetyController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => Auth::id(),
             ]);
-            
+
             return redirect()->route('hr.safety.training.show', $training->id)
                 ->with('success', 'Safety training scheduled successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to schedule safety training: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to schedule safety training. Please try again.')
                 ->withInput();
         }
     }
-    
+
     /**
      * Display the specified safety training.
      */
@@ -332,24 +332,24 @@ class WorkplaceSafetyController extends Controller
     {
         $training = SafetyTraining::with(['department', 'trainer', 'participants.user'])
             ->findOrFail($id);
-            
+
         $this->authorize('view', $training);
-        
+
         return Inertia::render('HR/Safety/Training/Show', [
             'title' => 'Safety Training Details',
             'training' => $training
         ]);
     }
-    
+
     /**
      * Update the specified safety training.
      */
     public function updateTraining(Request $request, $id)
     {
         $training = SafetyTraining::findOrFail($id);
-        
+
         $this->authorize('update', $training);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -363,7 +363,7 @@ class WorkplaceSafetyController extends Controller
             'materials' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
-        
+
         try {
             $training->update([
                 'title' => $validated['title'],
@@ -379,12 +379,12 @@ class WorkplaceSafetyController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'updated_by' => Auth::id(),
             ]);
-            
+
             return redirect()->route('hr.safety.training.show', $training->id)
                 ->with('success', 'Safety training updated successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to update safety training: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to update safety training. Please try again.')
                 ->withInput();

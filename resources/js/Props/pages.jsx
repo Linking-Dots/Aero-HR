@@ -29,7 +29,10 @@ import {
   TicketIcon,
   BeakerIcon,
   CubeIcon,
-  ScaleIcon
+  ScaleIcon,
+  BuildingStorefrontIcon,
+  ArrowPathIcon,
+
 } from '@heroicons/react/24/outline';
 
 export const getPages = (permissions, auth = null) => [

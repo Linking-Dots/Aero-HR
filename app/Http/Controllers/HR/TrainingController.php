@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
-use App\Models\Training;
-use App\Models\TrainingCategory;
-use App\Models\TrainingEnrollment;
-use App\Models\TrainingMaterial;
+use App\Models\HRM\Department;
+use App\Models\HRM\Training;
+use App\Models\HRM\TrainingCategory;
+use App\Models\HRM\TrainingEnrollment;
+use App\Models\HRM\TrainingMaterial;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

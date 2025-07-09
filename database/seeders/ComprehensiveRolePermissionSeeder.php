@@ -210,7 +210,20 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.selfservice.timeoff.request' => 'Request time-off in self-service',
                 'hr.selfservice.trainings.view' => 'View own trainings in self-service',
                 'hr.selfservice.payslips.view' => 'View own payslips in self-service',
-                'hr.selfservice.performance.view' => 'View own performance in self-service'
+                'hr.selfservice.performance.view' => 'View own performance in self-service',
+
+                // Payroll Management System
+                'hr.payroll.view' => 'View payroll records',
+                'hr.payroll.create' => 'Create payroll records',
+                'hr.payroll.update' => 'Update payroll records',
+                'hr.payroll.delete' => 'Delete payroll records',
+                'hr.payroll.process' => 'Process payroll records',
+                'hr.payroll.bulk' => 'Bulk payroll operations',
+                'hr.payslips.view' => 'View payslips',
+                'hr.payslips.download' => 'Download payslips',
+                'hr.payslips.email' => 'Email payslips',
+                'hr.payroll.reports' => 'View payroll reports',
+                'hr.payroll.analytics' => 'View payroll analytics'
             ],
 
             // Project & Portfolio Management

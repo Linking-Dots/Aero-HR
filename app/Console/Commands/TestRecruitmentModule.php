@@ -2,16 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Models\HRM\Job;
+use App\Models\HRM\JobApplicantEducation;
+use App\Models\HRM\JobApplicantExperience;
+use App\Models\HRM\JobApplication;
+use App\Models\HRM\JobApplicationStageHistory;
+use App\Models\HRM\JobHiringStage;
+use App\Models\HRM\JobInterview;
+use App\Models\HRM\JobInterviewFeedback;
+use App\Models\HRM\JobOffer;
 use Illuminate\Console\Command;
-use App\Models\Job;
-use App\Models\JobApplication;
-use App\Models\JobInterview;
-use App\Models\JobHiringStage;
-use App\Models\JobApplicationStageHistory;
-use App\Models\JobInterviewFeedback;
-use App\Models\JobApplicantEducation;
-use App\Models\JobApplicantExperience;
-use App\Models\JobOffer;
 use Illuminate\Support\Facades\DB;
 
 class TestRecruitmentModule extends Command
@@ -87,10 +87,10 @@ class TestRecruitmentModule extends Command
         // 3. Test Model Relationships
         $this->newLine();
         $this->info('3. Testing Model Relationships...');
-        
+
         $job = new Job();
         $jobMethods = ['department', 'hiringManager', 'applications', 'hiringStages'];
-        
+
         foreach ($jobMethods as $method) {
             if (method_exists($job, $method)) {
                 $this->line("   ✅ Job model has relationship: $method");
@@ -103,7 +103,7 @@ class TestRecruitmentModule extends Command
 
         $application = new JobApplication();
         $appMethods = ['job', 'applicant', 'currentStage', 'interviews', 'stageHistory', 'offers'];
-        
+
         foreach ($appMethods as $method) {
             if (method_exists($application, $method)) {
                 $this->line("   ✅ JobApplication model has relationship: $method");
@@ -117,7 +117,7 @@ class TestRecruitmentModule extends Command
         // 4. Test Industry Standard Methods
         $this->newLine();
         $this->info('4. Testing Industry Standard Methods...');
-        
+
         $industryMethods = [
             'isOpen', 'isClosed', 'daysUntilClosing', 'getSalaryRangeAttribute',
             'getJobTypeTextAttribute', 'getStatusTextAttribute', 'hasMultiplePositions',
@@ -137,11 +137,11 @@ class TestRecruitmentModule extends Command
         // 5. Test Enum Values
         $this->newLine();
         $this->info('5. Validating Enum Values...');
-        
+
         $jobTypeEnums = ['full_time', 'part_time', 'contract', 'temporary', 'internship', 'remote'];
         $jobStatusEnums = ['draft', 'open', 'closed', 'on_hold', 'cancelled'];
         $applicationStatusEnums = ['new', 'in_review', 'shortlisted', 'interviewed', 'offered', 'hired', 'rejected', 'withdrawn'];
-        
+
         $this->line("   ✅ Job Types: " . implode(', ', $jobTypeEnums));
         $this->line("   ✅ Job Statuses: " . implode(', ', $jobStatusEnums));
         $this->line("   ✅ Application Statuses: " . implode(', ', $applicationStatusEnums));
@@ -150,7 +150,7 @@ class TestRecruitmentModule extends Command
         // 6. Test Field Consistency
         $this->newLine();
         $this->info('6. Testing Field Consistency...');
-        
+
         $jobFillable = $job->getFillable();
         $requiredFields = [
             'title', 'department_id', 'type', 'location', 'is_remote_allowed',
@@ -159,7 +159,7 @@ class TestRecruitmentModule extends Command
             'benefits', 'posting_date', 'closing_date', 'status', 'hiring_manager_id',
             'positions', 'is_featured', 'skills_required', 'custom_fields'
         ];
-        
+
         foreach ($requiredFields as $field) {
             if (in_array($field, $jobFillable)) {
                 $this->line("   ✅ Job model has field: $field");

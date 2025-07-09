@@ -6,7 +6,7 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== Jobs in Database ===\n";
 
-$jobs = \App\Models\Job::with(['department', 'hiringManager'])->withCount('applications')->get();
+$jobs = \App\Models\HRM\Job::with(['department', 'hiringManager'])->withCount('applications')->get();
 
 echo "Jobs found: " . $jobs->count() . "\n\n";
 
@@ -24,7 +24,7 @@ foreach($jobs as $job) {
 echo "\n=== Testing Controller Logic ===\n";
 
 // Simulate the controller query
-$controllerJobs = \App\Models\Job::with(['department', 'hiringManager'])
+$controllerJobs = \App\Models\HRM\Job::with(['department', 'hiringManager'])
     ->withCount('applications')
     ->orderBy('posting_date', 'desc')
     ->paginate(10);

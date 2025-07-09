@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Analytics;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Project;
 use App\Models\DailyWork;
-use App\Models\Attendance;
-use App\Models\Leave;
+use App\Models\HRM\Attendance;
+use App\Models\HRM\Leave;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller

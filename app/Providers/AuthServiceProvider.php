@@ -2,28 +2,28 @@
 
 namespace App\Providers;
 
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use App\Models\Onboarding;
-use App\Models\Offboarding;
-use App\Models\HrDocument;
-use App\Models\Skill;
-use App\Models\Competency;
 use App\Models\Benefit;
+use App\Models\Competency;
+use App\Models\DocumentCategory;
+use App\Models\HRM\HrDocument;
+use App\Models\HRM\Offboarding;
+use App\Models\HRM\Onboarding;
 use App\Models\SafetyIncident;
 use App\Models\SafetyInspection;
 use App\Models\SafetyTraining;
-use App\Models\DocumentCategory;
-use App\Policies\OnboardingPolicy;
-use App\Policies\OffboardingPolicy;
-use App\Policies\HrDocumentPolicy;
-use App\Policies\SkillPolicy;
-use App\Policies\CompetencyPolicy;
+use App\Models\Skill;
 use App\Policies\BenefitPolicy;
+use App\Policies\CompetencyPolicy;
+use App\Policies\DocumentCategoryPolicy;
+use App\Policies\HrDocumentPolicy;
+use App\Policies\OffboardingPolicy;
+use App\Policies\OnboardingPolicy;
 use App\Policies\SafetyIncidentPolicy;
 use App\Policies\SafetyInspectionPolicy;
 use App\Policies\SafetyTrainingPolicy;
-use App\Policies\DocumentCategoryPolicy;
+use App\Policies\SkillPolicy;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -59,7 +59,7 @@ class AuthServiceProvider extends ServiceProvider
             if ($user->hasRole('Super Administrator')) {
                 return true;
             }
-            
+
             return null; // Fall through to other authorization checks
         });
     }

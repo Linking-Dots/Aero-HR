@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Onboarding;
+use App\Models\HRM\Onboarding;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

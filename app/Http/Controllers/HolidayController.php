@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Holiday;
+use App\Models\HRM\Holiday;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;

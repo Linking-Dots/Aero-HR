@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attendance;
-use App\Models\AttendanceSetting;
-use App\Models\Designation;
-use App\Models\Holiday;
-use App\Models\LeaveSetting;
+use App\Exports\AttendanceAdminExport;
+use App\Exports\AttendanceExport;
+use App\Models\HRM\Attendance;
+use App\Models\HRM\AttendanceSetting;
+use App\Models\HRM\Designation;
+use App\Models\HRM\Holiday;
+use App\Models\HRM\LeaveSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,10 +17,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
+use PDF;
 use Throwable;
-use PDF; // Barryvdh\DomPDF\Facade as PDF
-use App\Exports\AttendanceExport;
-use App\Exports\AttendanceAdminExport;
+
+// Barryvdh\DomPDF\Facade as PDF
 
 class AttendanceController extends Controller
 {
@@ -172,12 +174,12 @@ class AttendanceController extends Controller
                 ->sortBy('punchin');
 
             $holiday = $holidays->first(fn($h) => $date->between(
-                Carbon::parse($h->from_date)->startOfDay(), 
+                Carbon::parse($h->from_date)->startOfDay(),
                 Carbon::parse($h->to_date)->endOfDay()
             ));
             $leave = $user->leaves
                 ->first(fn($l) => $date->between(
-                    Carbon::parse($l->from_date)->startOfDay(), 
+                    Carbon::parse($l->from_date)->startOfDay(),
                     Carbon::parse($l->to_date)->endOfDay()
                 ));
 
@@ -1173,7 +1175,7 @@ class AttendanceController extends Controller
             $leaves = $leaveQuery->select(
                 'leave_settings.type as leave_type',
                 DB::raw('SUM(DATEDIFF(
-                    LEAST(leaves.to_date, LAST_DAY(STR_TO_DATE(CONCAT(' . $currentYear . ',"-",' . $currentMonth . ',"-01"), "%Y-%m-%d"))), 
+                    LEAST(leaves.to_date, LAST_DAY(STR_TO_DATE(CONCAT(' . $currentYear . ',"-",' . $currentMonth . ',"-01"), "%Y-%m-%d"))),
                     GREATEST(leaves.from_date, STR_TO_DATE(CONCAT(' . $currentYear . ',"-",' . $currentMonth . ',"-01"), "%Y-%m-%d"))
                 ) + 1) as total_days')
             )->groupBy('leave_settings.type')->get();
@@ -1393,7 +1395,7 @@ class AttendanceController extends Controller
             }
 
             // Get the most recent update timestamp for locations on the given date
-            $lastUpdate = \App\Models\Attendance::whereDate('date', $date)
+            $lastUpdate = \App\Models\HRM\Attendance::whereDate('date', $date)
                 ->max('updated_at');
 
             // Convert the timestamp to a Carbon instance if it exists
@@ -1443,7 +1445,7 @@ class AttendanceController extends Controller
                 ], 400);
             }
 
-            $query = \App\Models\Attendance::query();
+            $query = \App\Models\HRM\Attendance::query();
 
             // Check for updates on the specific date
             $query->whereDate('date', $date);
@@ -1460,7 +1462,7 @@ class AttendanceController extends Controller
             $lastUpdate = $query->max('updated_at');
 
             // Also check if there are any records for the date
-            $hasRecords = \App\Models\Attendance::whereDate('date', $date)->exists();
+            $hasRecords = \App\Models\HRM\Attendance::whereDate('date', $date)->exists();
 
             return response()->json([
                 'success' => true,

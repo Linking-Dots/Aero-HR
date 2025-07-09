@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\SCM;
 
 use App\Http\Controllers\Controller;
+use App\Models\HRM\Department;
 use App\Models\SCM\ProcurementRequest;
 use App\Models\SCM\ProcurementRequestItem;
-use App\Models\User;
-use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

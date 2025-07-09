@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\LeaveSetting;
+use App\Models\HRM\LeaveSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class LeaveSettingController extends Controller

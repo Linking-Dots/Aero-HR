@@ -2,10 +2,9 @@
 
 namespace App\Services\Leave;
 
-use App\Models\Leave;
-use App\Models\LeaveSetting;
+use App\Models\HRM\Leave;
+use App\Models\HRM\LeaveSetting;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class LeaveCrudService
 {
@@ -36,11 +35,11 @@ class LeaveCrudService
     public function updateLeave(int $leaveId, array $data): Leave
     {
         $leave = Leave::findOrFail($leaveId);
-        
+
         // Parse dates correctly for consistent format
         $fromDate = Carbon::parse($data['fromDate']);
         $toDate = Carbon::parse($data['toDate']);
-        
+
         // Get leave type ID
         $leaveTypeId = LeaveSetting::where('type', $data['leaveType'])->value('id');
         if (!$leaveTypeId) {

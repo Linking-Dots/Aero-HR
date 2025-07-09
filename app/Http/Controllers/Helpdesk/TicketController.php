@@ -7,7 +7,6 @@ use App\Models\HelpDeskTicket;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 class TicketController extends Controller
@@ -40,7 +39,7 @@ class TicketController extends Controller
     {
         return Inertia::render('Helpdesk/Tickets/Create', [
             'users' => User::select('id', 'name')->orderBy('name')->get(),
-            'departments' => \App\Models\Department::select('id', 'name')->orderBy('name')->get(),
+            'departments' => \App\Models\HRM\Department::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -104,7 +103,7 @@ class TicketController extends Controller
         return Inertia::render('Helpdesk/Tickets/Edit', [
             'ticket' => $ticket,
             'users' => User::select('id', 'name')->orderBy('name')->get(),
-            'departments' => \App\Models\Department::select('id', 'name')->orderBy('name')->get(),
+            'departments' => \App\Models\HRM\Department::select('id', 'name')->orderBy('name')->get(),
             'attachments' => $ticket->getMedia('ticket_attachments'),
         ]);
     }

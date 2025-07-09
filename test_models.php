@@ -7,15 +7,15 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 echo "=== Job Model Test ===\n";
 
 try {
-    $job = new \App\Models\Job();
+    $job = new \App\Models\HRM\Job();
     echo "✓ Job model loaded successfully!\n";
     echo "✓ Table name: " . $job->getTable() . "\n";
     echo "✓ Fillable fields: " . implode(', ', $job->getFillable()) . "\n";
-    
+
     // Test database connection
-    $count = \App\Models\Job::count();
+    $count = \App\Models\HRM\Job::count();
     echo "✓ Jobs in database: " . $count . "\n";
-    
+
 } catch (Exception $e) {
     echo "✗ Error: " . $e->getMessage() . "\n";
 }
@@ -23,15 +23,15 @@ try {
 echo "\n=== JobApplication Model Test ===\n";
 
 try {
-    $app = new \App\Models\JobApplication();
+    $app = new \App\Models\HRM\JobApplication();
     echo "✓ JobApplication model loaded successfully!\n";
     echo "✓ Table name: " . $app->getTable() . "\n";
     echo "✓ Fillable fields: " . implode(', ', $app->getFillable()) . "\n";
-    
+
     // Test database connection
-    $count = \App\Models\JobApplication::count();
+    $count = \App\Models\HRM\JobApplication::count();
     echo "✓ Job applications in database: " . $count . "\n";
-    
+
 } catch (Exception $e) {
     echo "✗ Error: " . $e->getMessage() . "\n";
 }
@@ -41,7 +41,7 @@ echo "\n=== Field Mapping Test ===\n";
 // Test the key field mappings
 $testFields = [
     'type' => 'Job type field',
-    'posting_date' => 'Posting date field', 
+    'posting_date' => 'Posting date field',
     'positions' => 'Positions field',
     'is_remote_allowed' => 'Remote allowed field',
     'status' => 'Status field'

@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Models\AttendanceSetting;
-use App\Models\Leave;
-use App\Models\Holiday;
+use App\Models\HRM\AttendanceSetting;
+use App\Models\HRM\Holiday;
+use App\Models\HRM\Leave;
 use App\Models\User;
 use App\Services\Notification\FcmNotificationService;
 use Carbon\Carbon;

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\Designation;
+use App\Models\HRM\Department;
+use App\Models\HRM\Designation;
 use App\Models\User;
-use App\Services\Profile\ProfileValidationService;
 use App\Services\Profile\ProfileCrudService;
-use App\Services\Profile\ProfileUpdateService;
 use App\Services\Profile\ProfileMediaService;
+use App\Services\Profile\ProfileUpdateService;
+use App\Services\Profile\ProfileValidationService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,7 +81,7 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = $this->crudService->findUser($request->id);
-        
+
         try {
             // Validate the request
             $validated = $this->validationService->validateUserUpdate($request);
@@ -112,7 +112,7 @@ class ProfileController extends Controller
     public function delete(Request $request)
     {
         $userId = $request->input('user_id');
-        
+
         if (!$this->crudService->deleteUser($userId)) {
             return response()->json(['message' => 'User not found.'], 404);
         }

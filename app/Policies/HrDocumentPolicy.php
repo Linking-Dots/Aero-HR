@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\HrDocument;
+use App\Models\HRM\HrDocument;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

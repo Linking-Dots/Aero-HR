@@ -2,8 +2,8 @@
 
 namespace App\Services\Leave;
 
-use App\Models\Leave;
-use App\Models\LeaveSetting;
+use App\Models\HRM\Leave;
+use App\Models\HRM\LeaveSetting;
 use App\Models\User;
 use Carbon\Carbon;
 

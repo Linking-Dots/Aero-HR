@@ -2,7 +2,7 @@
 
 /**
  * Comprehensive Recruitment Module Test
- * 
+ *
  * This test validates all recruitment functionality including:
  * - Model relationships and data consistency
  * - Industry-standard fields and enums
@@ -18,16 +18,16 @@ if (!function_exists('app')) {
     exit(1);
 }
 
-use App\Models\Job;
-use App\Models\JobApplication;
-use App\Models\JobInterview;
-use App\Models\JobHiringStage;
-use App\Models\JobApplicationStageHistory;
-use App\Models\JobInterviewFeedback;
-use App\Models\JobApplicantEducation;
-use App\Models\JobApplicantExperience;
-use App\Models\JobOffer;
-use App\Models\Department;
+use App\Models\HRM\Department;
+use App\Models\HRM\Job;
+use App\Models\HRM\JobApplicantEducation;
+use App\Models\HRM\JobApplicantExperience;
+use App\Models\HRM\JobApplication;
+use App\Models\HRM\JobApplicationStageHistory;
+use App\Models\HRM\JobHiringStage;
+use App\Models\HRM\JobInterview;
+use App\Models\HRM\JobInterviewFeedback;
+use App\Models\HRM\JobOffer;
 use App\Models\User;
 
 $errors = [];
@@ -93,7 +93,7 @@ echo "\n3. Testing Field Consistency...\n";
 try {
     $job = new Job();
     $fillable = $job->getFillable();
-    
+
     // Check if all required fields are in fillable
     $requiredJobFields = [
         'title', 'department_id', 'type', 'location', 'is_remote_allowed',
@@ -102,7 +102,7 @@ try {
         'benefits', 'posting_date', 'closing_date', 'status', 'hiring_manager_id',
         'positions', 'is_featured', 'skills_required', 'custom_fields'
     ];
-    
+
     foreach ($requiredJobFields as $field) {
         if (in_array($field, $fillable)) {
             $success[] = "✅ Job model has required field: $field";
@@ -138,16 +138,16 @@ try {
     // Test if we can create a department and user for testing
     $department = Department::first();
     $user = User::first();
-    
+
     if (!$department || !$user) {
         $warnings[] = "⚠️ No department or user found for relationship testing";
     } else {
         $success[] = "✅ Found department and user for relationship testing";
-        
+
         // Test relationships exist (method existence)
         $job = new Job();
         $methods = ['department', 'hiringManager', 'applications', 'hiringStages'];
-        
+
         foreach ($methods as $method) {
             if (method_exists($job, $method)) {
                 $success[] = "✅ Job model has relationship method: $method";
@@ -155,10 +155,10 @@ try {
                 $errors[] = "❌ Job model missing relationship method: $method";
             }
         }
-        
+
         $application = new JobApplication();
         $appMethods = ['job', 'applicant', 'currentStage', 'interviews', 'stageHistory', 'offers'];
-        
+
         foreach ($appMethods as $method) {
             if (method_exists($application, $method)) {
                 $success[] = "✅ JobApplication model has relationship method: $method";
@@ -224,11 +224,11 @@ try {
     if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses(Job::class))) {
         $success[] = "✅ Job model uses SoftDeletes for data integrity";
     }
-    
+
     if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses(JobApplication::class))) {
         $success[] = "✅ JobApplication model uses SoftDeletes for data integrity";
     }
-    
+
     if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses(JobInterview::class))) {
         $success[] = "✅ JobInterview model uses SoftDeletes for data integrity";
     }

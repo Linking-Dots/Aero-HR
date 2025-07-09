@@ -2,18 +2,18 @@
 
 namespace App\Exports;
 
-use App\Models\Attendance;
-use App\Models\Leave;
+use App\Models\HRM\Attendance;
+use App\Models\HRM\Leave;
+use App\Models\HRM\LeaveSetting;
 use App\Models\User;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use Carbon\Carbon;
 use Log;
-use App\Models\LeaveSetting;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
@@ -216,7 +216,7 @@ class AttendanceExport implements FromCollection, WithHeadings, ShouldAutoSize, 
     $present  = $rows->where('L', 'Present')->count();
     $absent   = $rows->where('L', 'Absent')->count();
     $onLeave  = $rows->where('L', 'On Leave')->count();
-    $total    = $rows->count();       
+    $total    = $rows->count();
                 $sheet->insertNewRowBefore(1, 3); // Shift everything down by 4 rows
 
                 // ====== Title ======

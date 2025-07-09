@@ -2,10 +2,9 @@
 
 namespace App\Services\Profile;
 
+use App\Models\HRM\Department;
+use App\Models\HRM\Designation;
 use App\Models\User;
-use App\Models\Department;
-use App\Models\Designation;
-use Illuminate\Http\Request;
 
 class ProfileUpdateService
 {
@@ -116,27 +115,27 @@ class ProfileUpdateService
             case 'pf_contribution':
                 $user->{$key} = $value;
                 $messageValue = $value === 0 ? 'No' : ($value === 1 ? 'Yes' : $value);
-                
+
                 if ($value === 0) {
                     $user->pf_no = null;
                     $user->employee_pf_rate = 0;
                     $user->additional_pf_rate = 0;
                     $user->total_pf_rate = 0;
                 }
-                
+
                 return $this->getFieldDisplayName($key) . ' updated to ' . $messageValue . '.';
 
             case 'esi_contribution':
                 $user->{$key} = $value;
                 $messageValue = $value === 0 ? 'No' : ($value === 1 ? 'Yes' : $value);
-                
+
                 if ($value === 0) {
                     $user->esi_no = null;
                     $user->employee_esi_rate = 0;
                     $user->additional_esi_rate = 0;
                     $user->total_esi_rate = 0;
                 }
-                
+
                 return $this->getFieldDisplayName($key) . ' updated to ' . $messageValue . '.';
 
             default:

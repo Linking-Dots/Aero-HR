@@ -4,7 +4,7 @@ namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\Opportunity;
+use App\Models\HRM\Opportunity;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
