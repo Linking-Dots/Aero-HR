@@ -116,7 +116,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'jurisdiction.create' => 'Create work locations',
                 'jurisdiction.update' => 'Update work locations',
                 'jurisdiction.delete' => 'Delete work locations',
-                
+
                 // New HRM Permissions
                 // Onboarding & Offboarding
                 'hr.onboarding.view' => 'View employee onboarding',
@@ -131,7 +131,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.checklists.create' => 'Create HR checklists',
                 'hr.checklists.update' => 'Update HR checklists',
                 'hr.checklists.delete' => 'Delete HR checklists',
-                
+
                 // Skills & Competency Management
                 'hr.skills.view' => 'View skills database',
                 'hr.skills.create' => 'Create skills',
@@ -145,7 +145,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.employee.skills.create' => 'Add employee skills',
                 'hr.employee.skills.update' => 'Update employee skills',
                 'hr.employee.skills.delete' => 'Remove employee skills',
-                
+
                 // Employee Benefits Administration
                 'hr.benefits.view' => 'View benefits programs',
                 'hr.benefits.create' => 'Create benefits programs',
@@ -155,7 +155,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.employee.benefits.assign' => 'Assign benefits to employees',
                 'hr.employee.benefits.update' => 'Update employee benefits',
                 'hr.employee.benefits.remove' => 'Remove employee benefits',
-                
+
                 // Enhanced Time-off Management
                 'hr.timeoff.view' => 'View time-off management',
                 'hr.timeoff.calendar.view' => 'View time-off calendar',
@@ -164,7 +164,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.timeoff.reports.view' => 'View time-off reports',
                 'hr.timeoff.settings.view' => 'View time-off settings',
                 'hr.timeoff.settings.update' => 'Update time-off settings',
-                
+
                 // Workplace Health & Safety
                 'hr.safety.view' => 'View workplace safety',
                 'hr.safety.incidents.view' => 'View safety incidents',
@@ -176,7 +176,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.safety.training.view' => 'View safety training',
                 'hr.safety.training.create' => 'Create safety training',
                 'hr.safety.training.update' => 'Update safety training',
-                
+
                 // HR Analytics & Reporting
                 'hr.analytics.view' => 'View HR analytics',
                 'hr.analytics.attendance' => 'View attendance analytics',
@@ -186,7 +186,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.analytics.training' => 'View training analytics',
                 'hr.analytics.reports.view' => 'View HR reports',
                 'hr.analytics.reports.generate' => 'Generate HR reports',
-                
+
                 // HR Document Management
                 'hr.documents.view' => 'View HR documents',
                 'hr.documents.create' => 'Create HR documents',
@@ -199,7 +199,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'hr.employee.documents.view' => 'View employee documents',
                 'hr.employee.documents.create' => 'Create employee documents',
                 'hr.employee.documents.delete' => 'Delete employee documents',
-                
+
                 // Enhanced Employee Self-Service
                 'hr.selfservice.view' => 'Access self-service portal',
                 'hr.selfservice.profile.view' => 'View own profile in self-service',
@@ -494,6 +494,47 @@ class ComprehensiveRolePermissionSeeder extends Seeder
                 'project-management.reports.view' => 'View project reports',
                 'project-management.settings' => 'Manage project settings'
             ],
+
+            // Learning Management System (LMS)
+            'lms' => [
+                'lms.view' => 'View LMS dashboard',
+
+                // Course Management
+                'lms.courses.view' => 'View courses',
+                'lms.courses.create' => 'Create courses',
+                'lms.courses.update' => 'Update courses',
+                'lms.courses.delete' => 'Delete courses',
+
+                // Student Management
+                'lms.students.view' => 'View students',
+                'lms.students.create' => 'Enroll students',
+                'lms.students.update' => 'Update student records',
+                'lms.students.delete' => 'Remove students',
+
+                // Instructor Management
+                'lms.instructors.view' => 'View instructors',
+                'lms.instructors.create' => 'Add instructors',
+                'lms.instructors.update' => 'Update instructor records',
+                'lms.instructors.delete' => 'Remove instructors',
+
+                // Assessment Management
+                'lms.assessments.view' => 'View assessments',
+                'lms.assessments.create' => 'Create assessments',
+                'lms.assessments.update' => 'Update assessments',
+                'lms.assessments.delete' => 'Delete assessments',
+
+                // Certificate Management
+                'lms.certificates.view' => 'View certificates',
+                'lms.certificates.create' => 'Issue certificates',
+                'lms.certificates.update' => 'Update certificates',
+                'lms.certificates.delete' => 'Revoke certificates',
+
+                // Reports and Analytics
+                'lms.reports.view' => 'View LMS reports',
+
+                // Settings
+                'lms.settings.manage' => 'Manage LMS settings'
+            ],
         ];
 
         foreach ($modules as $module => $permissions) {
@@ -585,7 +626,7 @@ class ComprehensiveRolePermissionSeeder extends Seeder
             Role::firstOrCreate([
                 'name' => $roleData['name'],
                 'guard_name' => 'web'
-            ], $roleData            );
+            ], $roleData);
         }
 
         if ($this->command) {

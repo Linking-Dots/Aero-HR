@@ -3,6 +3,8 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CRMController;
 use App\Http\Controllers\FMSController;
+use App\Http\Controllers\IMSController;
+use App\Http\Controllers\LMSController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailyWorkSummaryController;
@@ -219,7 +221,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('settings/attendance-type/{id}', [AttendanceSettingController::class, 'updateType'])->name('attendance-types.update');
         Route::delete('settings/attendance-type/{id}', [AttendanceSettingController::class, 'destroyType'])->name('attendance-types.destroy');
     });
-    
+
     // HR Module Settings
     Route::prefix('settings/hr')->middleware(['auth', 'verified'])->group(function () {
         Route::middleware(['permission:hr.onboarding.view'])->get('/onboarding', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.onboarding');
@@ -227,7 +229,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware(['permission:hr.benefits.view'])->get('/benefits', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.benefits');
         Route::middleware(['permission:hr.safety.view'])->get('/safety', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.safety');
         Route::middleware(['permission:hr.documents.view'])->get('/documents', [\App\Http\Controllers\Settings\HrmSettingController::class, 'index'])->name('settings.hr.documents');
-        
+
         // Update routes
         Route::middleware(['permission:hr.onboarding.update'])->post('/onboarding', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateOnboardingSettings'])->name('settings.hr.onboarding.update');
         Route::middleware(['permission:hr.skills.update'])->post('/skills', [\App\Http\Controllers\Settings\HrmSettingController::class, 'updateSkillsSettings'])->name('settings.hr.skills.update');
@@ -398,6 +400,76 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
         Route::get('/settings', [POSController::class, 'settings'])->name('pos.settings')->middleware('permission:retail.manage');
         Route::put('/settings', [POSController::class, 'updateSettings'])->name('pos.settings.update')->middleware('permission:retail.manage');
     });
+
+    // IMS Module routes (Inventory Management System)
+    Route::middleware(['permission:inventory.view'])->prefix('ims')->group(function () {
+        Route::get('/', [IMSController::class, 'index'])->name('ims.index');
+
+        // Products Management
+        Route::get('/products', [IMSController::class, 'products'])->name('ims.products')->middleware('permission:inventory.view');
+        Route::post('/products', [IMSController::class, 'storeProduct'])->name('ims.products.store')->middleware('permission:inventory.create');
+
+        // Warehouse Management
+        Route::get('/warehouse', [IMSController::class, 'warehouse'])->name('ims.warehouse')->middleware('permission:inventory.view');
+        Route::post('/warehouse', [IMSController::class, 'storeWarehouse'])->name('ims.warehouse.store')->middleware('permission:warehousing.manage');
+
+        // Stock Movements
+        Route::get('/stock-movements', [IMSController::class, 'stockMovements'])->name('ims.stock-movements')->middleware('permission:inventory.view');
+        Route::post('/stock-movements', [IMSController::class, 'createMovement'])->name('ims.stock-movements.store')->middleware('permission:inventory.update');
+
+        // Suppliers
+        Route::get('/suppliers', [IMSController::class, 'suppliers'])->name('ims.suppliers')->middleware('permission:suppliers.view');
+        Route::post('/suppliers', [IMSController::class, 'storeSupplier'])->name('ims.suppliers.store')->middleware('permission:suppliers.create');
+
+        // Purchase Orders
+        Route::get('/purchase-orders', [IMSController::class, 'purchaseOrders'])->name('ims.purchase-orders')->middleware('permission:purchase-orders.view');
+        Route::post('/purchase-orders', [IMSController::class, 'storePurchaseOrder'])->name('ims.purchase-orders.store')->middleware('permission:purchase-orders.create');
+
+        // Reports
+        Route::get('/reports', [IMSController::class, 'reports'])->name('ims.reports')->middleware('permission:inventory.view');
+
+        // Settings
+        Route::get('/settings', [IMSController::class, 'settings'])->name('ims.settings')->middleware('permission:warehousing.manage');
+        Route::put('/settings', [IMSController::class, 'updateSettings'])->name('ims.settings.update')->middleware('permission:warehousing.manage');
+    });
+
+    // LMS Module routes (Learning Management System)
+    Route::middleware(['permission:lms.view'])->prefix('lms')->group(function () {
+        Route::get('/', [LMSController::class, 'index'])->name('lms.index');
+
+        // Course Management
+        Route::get('/courses', [LMSController::class, 'courses'])->name('lms.courses')->middleware('permission:lms.courses.view');
+        Route::post('/courses', [LMSController::class, 'storeCourse'])->name('lms.courses.store')->middleware('permission:lms.courses.create');
+        Route::put('/courses/{id}', [LMSController::class, 'updateCourse'])->name('lms.courses.update')->middleware('permission:lms.courses.update');
+        Route::delete('/courses/{id}', [LMSController::class, 'destroyCourse'])->name('lms.courses.destroy')->middleware('permission:lms.courses.delete');
+
+        // Student Management
+        Route::get('/students', [LMSController::class, 'students'])->name('lms.students')->middleware('permission:lms.students.view');
+        Route::post('/students', [LMSController::class, 'storeStudent'])->name('lms.students.store')->middleware('permission:lms.students.create');
+        Route::put('/students/{id}', [LMSController::class, 'updateStudent'])->name('lms.students.update')->middleware('permission:lms.students.update');
+        Route::delete('/students/{id}', [LMSController::class, 'destroyStudent'])->name('lms.students.destroy')->middleware('permission:lms.students.delete');
+
+        // Instructor Management
+        Route::get('/instructors', [LMSController::class, 'instructors'])->name('lms.instructors')->middleware('permission:lms.instructors.view');
+        Route::post('/instructors', [LMSController::class, 'storeInstructor'])->name('lms.instructors.store')->middleware('permission:lms.instructors.create');
+        Route::put('/instructors/{id}', [LMSController::class, 'updateInstructor'])->name('lms.instructors.update')->middleware('permission:lms.instructors.update');
+        Route::delete('/instructors/{id}', [LMSController::class, 'destroyInstructor'])->name('lms.instructors.destroy')->middleware('permission:lms.instructors.delete');
+
+        // Assessment Management
+        Route::get('/assessments', [LMSController::class, 'assessments'])->name('lms.assessments')->middleware('permission:lms.assessments.view');
+        Route::post('/assessments', [LMSController::class, 'storeAssessment'])->name('lms.assessments.store')->middleware('permission:lms.assessments.create');
+        Route::put('/assessments/{id}', [LMSController::class, 'updateAssessment'])->name('lms.assessments.update')->middleware('permission:lms.assessments.update');
+        Route::delete('/assessments/{id}', [LMSController::class, 'destroyAssessment'])->name('lms.assessments.destroy')->middleware('permission:lms.assessments.delete');
+
+        // Certificate Management
+        Route::get('/certificates', [LMSController::class, 'certificates'])->name('lms.certificates')->middleware('permission:lms.certificates.view');
+        Route::post('/certificates', [LMSController::class, 'storeCertificate'])->name('lms.certificates.store')->middleware('permission:lms.certificates.create');
+        Route::put('/certificates/{id}', [LMSController::class, 'updateCertificate'])->name('lms.certificates.update')->middleware('permission:lms.certificates.update');
+        Route::delete('/certificates/{id}', [LMSController::class, 'destroyCertificate'])->name('lms.certificates.destroy')->middleware('permission:lms.certificates.delete');
+
+        // Reports
+        Route::get('/reports', [LMSController::class, 'reports'])->name('lms.reports')->middleware('permission:lms.reports.view');
+    });
 });
 
 // API routes for dropdown data
@@ -405,24 +477,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/designations/list', function () {
         return response()->json(\App\Models\Designation::select('id', 'title as name')->get());
     })->name('designations.list');
-    
+
     Route::get('/api/departments/list', function () {
         return response()->json(\App\Models\Department::select('id', 'name')->get());
     })->name('departments.list');
-    
+
     Route::get('/api/users/managers/list', function () {
         return response()->json(\App\Models\User::whereHas('roles', function ($query) {
             $query->whereIn('name', [
                 'Super Administrator',
-                'Administrator', 
+                'Administrator',
                 'HR Manager',
                 'Project Manager',
                 'Department Manager',
                 'Team Lead'
             ]);
         })
-        ->select('id', 'name')
-        ->get());
+            ->select('id', 'name')
+            ->get());
     })->name('users.managers.list');
 });
 
@@ -435,6 +507,7 @@ require __DIR__ . '/quality.php';
 require __DIR__ . '/analytics.php';
 require __DIR__ . '/project-management.php';
 require __DIR__ . '/hr.php';
+require __DIR__ . '/dms.php';
 
 require __DIR__ . '/auth.php';
 

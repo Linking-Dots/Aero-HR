@@ -203,14 +203,23 @@ export const getPages = (permissions, auth = null) => [
       ] : []),
     ]
   }] : []),
-  // 5. DMS (Document Management)
-  ...(permissions.includes('letters.view') ? [{
+  // 5. DMS (Document Management System)
+  ...(permissions.includes('dms.view') ? [{
     name: 'DMS',
     icon: <FolderIcon className="" />,
     priority: 5,
     module: 'dms',
     subMenu: [
-      { name: 'Correspondence', icon: <EnvelopeIcon  />, route: 'letters' },
+      { name: 'Dashboard', icon: <HomeIcon  />, route: 'dms.index' },
+      { name: 'Documents', icon: <DocumentTextIcon  />, route: 'dms.documents' },
+      { name: 'Upload', icon: <DocumentDuplicateIcon  />, route: 'dms.documents.create' },
+      { name: 'Categories', icon: <FolderIcon  />, route: 'dms.categories' },
+      { name: 'Shared', icon: <UserGroupIcon  />, route: 'dms.shared' },
+      { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'dms.analytics' },
+      // Legacy document routes
+      ...(permissions.includes('letters.view') ? [
+        { name: 'Correspondence', icon: <EnvelopeIcon  />, route: 'letters' },
+      ] : []),
     ]
   }] : []),
   // 6. CRM (Customer Relationship Management)
@@ -254,16 +263,19 @@ export const getPages = (permissions, auth = null) => [
     ]
   }] : []),
   // 9. IMS (Inventory Management System)
-  ...(permissions.includes('ims.view') ? [{
+  ...(permissions.includes('inventory.view') ? [{
     name: 'Inventory',
     icon: <ArchiveBoxIcon className="" />,
     priority: 9,
     module: 'ims',
     subMenu: [
-      ...(permissions.includes('ims.items.view') ? [{ name: 'Items', icon: <CubeIcon  />, route: 'ims.items.index' }] : []),
-      ...(permissions.includes('ims.stock.view') ? [{ name: 'Stock', icon: <ArchiveBoxIcon  />, route: 'ims.stock.index' }] : []),
-      ...(permissions.includes('ims.transfers.view') ? [{ name: 'Transfers', icon: <TruckIcon  />, route: 'ims.transfers.index' }] : []),
-      ...(permissions.includes('ims.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'ims.dashboard' }] : []),
+      ...(permissions.includes('inventory.view') ? [{ name: 'Dashboard', icon: <HomeIcon  />, route: 'ims.index' }] : []),
+      ...(permissions.includes('inventory.view') ? [{ name: 'Products', icon: <CubeIcon  />, route: 'ims.products' }] : []),
+      ...(permissions.includes('inventory.view') ? [{ name: 'Warehouse', icon: <BuildingStorefrontIcon  />, route: 'ims.warehouse' }] : []),
+      ...(permissions.includes('inventory.view') ? [{ name: 'Stock Movements', icon: <ArrowPathIcon  />, route: 'ims.stock-movements' }] : []),
+      ...(permissions.includes('suppliers.view') ? [{ name: 'Suppliers', icon: <TruckIcon  />, route: 'ims.suppliers' }] : []),
+      ...(permissions.includes('purchase-orders.view') ? [{ name: 'Purchase Orders', icon: <DocumentTextIcon  />, route: 'ims.purchase-orders' }] : []),
+      ...(permissions.includes('inventory.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'ims.reports' }] : []),
     ]
   }] : []),
   // 10. LMS (Learning Management System)
@@ -273,10 +285,13 @@ export const getPages = (permissions, auth = null) => [
     priority: 10,
     module: 'lms',
     subMenu: [
-      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon  />, route: 'lms.courses.index' }] : []),
-      ...(permissions.includes('lms.enrollments.view') ? [{ name: 'Enrollments', icon: <UserGroupIcon  />, route: 'lms.enrollments.index' }] : []),
-      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon  />, route: 'lms.assessments.index' }] : []),
-      ...(permissions.includes('lms.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'lms.dashboard' }] : []),
+      ...(permissions.includes('lms.view') ? [{ name: 'Dashboard', icon: <HomeIcon  />, route: 'lms.index' }] : []),
+      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon  />, route: 'lms.courses' }] : []),
+      ...(permissions.includes('lms.students.view') ? [{ name: 'Students', icon: <UserGroupIcon  />, route: 'lms.students' }] : []),
+      ...(permissions.includes('lms.instructors.view') ? [{ name: 'Instructors', icon: <UserIcon  />, route: 'lms.instructors' }] : []),
+      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon  />, route: 'lms.assessments' }] : []),
+      ...(permissions.includes('lms.certificates.view') ? [{ name: 'Certificates', icon: <DocumentTextIcon  />, route: 'lms.certificates' }] : []),
+      ...(permissions.includes('lms.reports.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'lms.reports' }] : []),
     ]
   }] : []),
   // 11. SCM (Supply Chain Management)
@@ -336,10 +351,13 @@ export const getPages = (permissions, auth = null) => [
     priority: 15,
     module: 'compliance',
     subMenu: [
-      ...(permissions.includes('compliance.documents.view') ? [{ name: 'Documents', icon: <DocumentTextIcon  />, route: 'compliance.documents.index' }] : []),
+      ...(permissions.includes('compliance.dashboard.view') ? [{ name: 'Dashboard', icon: <ChartBarSquareIcon  />, route: 'compliance.dashboard' }] : []),
+      ...(permissions.includes('compliance.policies.view') ? [{ name: 'Policies', icon: <DocumentTextIcon  />, route: 'compliance.policies.index' }] : []),
+      ...(permissions.includes('compliance.regulatory_requirements.view') ? [{ name: 'Regulatory Requirements', icon: <ScaleIcon  />, route: 'compliance.regulatory-requirements.index' }] : []),
+      ...(permissions.includes('compliance.risks.view') ? [{ name: 'Risk Assessments', icon: <ShieldCheckIcon  />, route: 'compliance.risks.index' }] : []),
       ...(permissions.includes('compliance.audits.view') ? [{ name: 'Audits', icon: <ClipboardDocumentCheckIcon  />, route: 'compliance.audits.index' }] : []),
-      ...(permissions.includes('compliance.requirements.view') ? [{ name: 'Requirements', icon: <DocumentDuplicateIcon  />, route: 'compliance.requirements.index' }] : []),
-      ...(permissions.includes('compliance.dashboard.view') ? [{ name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'compliance.dashboard' }] : []),
+      ...(permissions.includes('compliance.training_records.view') ? [{ name: 'Training Records', icon: <AcademicCapIcon  />, route: 'compliance.training-records.index' }] : []),
+      ...(permissions.includes('compliance.controlled_documents.view') ? [{ name: 'Controlled Documents', icon: <DocumentDuplicateIcon  />, route: 'compliance.controlled-documents.index' }] : []),
     ]
   }] : []),
   // 16. Procurement

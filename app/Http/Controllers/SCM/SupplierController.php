@@ -4,6 +4,8 @@ namespace App\Http\Controllers\SCM;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
+use App\Models\PurchaseOrder;
+use App\Models\LogisticsShipment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -98,5 +100,42 @@ class SupplierController extends Controller
         $supplier->delete();
 
         return redirect()->route('scm.suppliers.index')->with('status', 'Supplier deleted successfully');
+    }
+
+    public function dashboard()
+    {
+        return Inertia::render('SCM/Dashboard', [
+            'stats' => [
+                // Supplier Stats
+                'total_suppliers' => Supplier::count(),
+                'active_suppliers' => Supplier::where('status', 'active')->count(),
+                'inactive_suppliers' => Supplier::where('status', 'inactive')->count(),
+
+                // Purchase Order Stats
+                'total_purchase_orders' => PurchaseOrder::count(),
+                'pending_approval' => PurchaseOrder::where('status', 'pending_approval')->count(),
+                'approved_orders' => PurchaseOrder::where('status', 'approved')->count(),
+                'total_po_value' => PurchaseOrder::where('status', '!=', 'cancelled')->sum('total'),
+
+                // Logistics Stats
+                'total_shipments' => LogisticsShipment::count(),
+                'in_transit_shipments' => LogisticsShipment::where('status', 'in_transit')->count(),
+                'delivered_shipments' => LogisticsShipment::where('status', 'delivered')->count(),
+                'pending_shipments' => LogisticsShipment::where('status', 'pending')->count(),
+            ],
+            'recent_activities' => [
+                'recent_purchase_orders' => PurchaseOrder::with(['supplier', 'user'])
+                    ->latest()
+                    ->take(5)
+                    ->get(),
+                'recent_shipments' => LogisticsShipment::with(['carrier'])
+                    ->latest()
+                    ->take(5)
+                    ->get(),
+                'recent_suppliers' => Supplier::latest()
+                    ->take(5)
+                    ->get(),
+            ],
+        ]);
     }
 }

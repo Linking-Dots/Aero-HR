@@ -217,11 +217,11 @@ export const getSettingsPages = (permissions = []) => {
     }
 
     // 7. Inventory Settings
-    if (permissions.includes('ims.settings')) {
+    if (permissions.includes('warehousing.manage')) {
         settings.push({
             name: 'Inventory Management System', 
             icon: <ArchiveBoxIcon className="w-5 h-5" />, 
-            route: 'admin.settings.inventory',
+            route: 'ims.settings',
             category: 'business-process',
             priority: 13,
             description: 'Configure inventory categories, locations, and units'
@@ -229,11 +229,11 @@ export const getSettingsPages = (permissions = []) => {
     }
 
     // 8. Learning Settings
-    if (permissions.includes('lms.settings')) {
+    if (permissions.includes('lms.settings.manage')) {
         settings.push({
             name: 'Learning Management System', 
             icon: <AcademicCapIcon className="w-5 h-5" />, 
-            route: 'admin.settings.learning',
+            route: 'lms.settings',
             category: 'business-process',
             priority: 14,
             description: 'Configure course categories, assessments, and certificates'

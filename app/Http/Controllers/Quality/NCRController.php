@@ -8,10 +8,13 @@ use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
 
 class NCRController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', QualityNCR::class);

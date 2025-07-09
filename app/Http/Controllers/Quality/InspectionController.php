@@ -10,10 +10,13 @@ use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
 
 class InspectionController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', QualityInspection::class);
@@ -307,5 +310,70 @@ class InspectionController extends Controller
 
         return redirect()->route('quality.inspections.index')
             ->with('success', 'Inspection deleted successfully.');
+    }
+
+    public function dashboard()
+    {
+        $this->authorize('viewAny', QualityInspection::class);
+
+        // Get dashboard statistics
+        $totalInspections = QualityInspection::count();
+        $pendingInspections = QualityInspection::where('status', 'scheduled')->count();
+        $passedInspections = QualityInspection::where('result_status', 'passed')->count();
+        $failedInspections = QualityInspection::where('result_status', 'failed')->count();
+
+        $totalNCRs = QualityNCR::count();
+        $openNCRs = QualityNCR::where('status', 'open')->count();
+        $closedNCRs = QualityNCR::where('status', 'closed')->count();
+
+        // Get recent inspections
+        $recentInspections = QualityInspection::with(['inspector', 'department'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get overdue NCRs
+        $overdueNCRs = QualityNCR::where('target_completion_date', '<', now())
+            ->where('status', '!=', 'closed')
+            ->with(['inspector', 'department'])
+            ->take(5)
+            ->get();
+
+        // Get inspection trends (last 12 months)
+        $inspectionTrends = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthData = [
+                'month' => $month->format('M Y'),
+                'total' => QualityInspection::whereYear('inspection_date', $month->year)
+                    ->whereMonth('inspection_date', $month->month)
+                    ->count(),
+                'passed' => QualityInspection::whereYear('inspection_date', $month->year)
+                    ->whereMonth('inspection_date', $month->month)
+                    ->where('result_status', 'passed')
+                    ->count(),
+                'failed' => QualityInspection::whereYear('inspection_date', $month->year)
+                    ->whereMonth('inspection_date', $month->month)
+                    ->where('result_status', 'failed')
+                    ->count(),
+            ];
+            $inspectionTrends->push($monthData);
+        }
+
+        return Inertia::render('Quality/Dashboard', [
+            'statistics' => [
+                'totalInspections' => $totalInspections,
+                'pendingInspections' => $pendingInspections,
+                'passedInspections' => $passedInspections,
+                'failedInspections' => $failedInspections,
+                'totalNCRs' => $totalNCRs,
+                'openNCRs' => $openNCRs,
+                'closedNCRs' => $closedNCRs,
+                'passRate' => $totalInspections > 0 ? round(($passedInspections / $totalInspections) * 100, 1) : 0,
+            ],
+            'recentInspections' => $recentInspections,
+            'overdueNCRs' => $overdueNCRs,
+            'inspectionTrends' => $inspectionTrends,
+        ]);
     }
 }
