@@ -18,9 +18,10 @@ import {
   DropdownMenu,
   DropdownItem,
   Switch,
+  Pagination,
+  Spinner,
   Select,
-  SelectItem,
-  Spinner
+  SelectItem
 } from "@heroui/react";
 import {
   PencilIcon,
@@ -31,25 +32,31 @@ import {
   CalendarIcon,
   EnvelopeIcon,
   PhoneIcon,
-  HashtagIcon
+  HashtagIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  BuildingOfficeIcon 
 } from "@heroicons/react/24/outline";
 
-const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
-  const [users, setLocalUsers] = useState(allUsers);
+const UsersTable = ({ 
+  allUsers, 
+  roles, 
+  isMobile, 
+  isTablet, 
+  setUsers,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange,
+  totalUsers = 0,
+  onEdit,
+  loading = false,
+  updateUserOptimized,
+  deleteUserOptimized,
+  toggleUserStatusOptimized,
+  updateUserRolesOptimized,
+}) => {
   const [loadingStates, setLoadingStates] = useState({});
   const theme = useTheme();
-
-  // Sync with parent component's filtered data
-  useEffect(() => {
-    setLocalUsers(allUsers);
-  }, [allUsers]);
-
-  // Remove this problematic useEffect that causes infinite re-renders
-  // useEffect(() => {
-  //   if (setUsers) {
-  //     setUsers(users);
-  //   }
-  // }, [users, setUsers]);
 
   const statusColorMap = {
     active: "success",
@@ -68,38 +75,19 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
     return loadingStates[`${userId}-${operation}`] || false;
   };
 
-  async function handleRoleChange(userId, newRoles) {
+  async function handleRoleChange(userId, newRoleNames) {
     setLoading(userId, 'role', true);
-    
     const promise = new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(route('user.updateRole', { id: userId }), {
-          roles: newRoles,
+          roles: newRoleNames,
         });
-
         if (response.status === 200) {
-          const updatedUsers = users.map((user) => {
-            if (user.id === userId) {
-              return { ...user, roles: newRoles };
-            }
-            return user;
-          });
-          
-          setLocalUsers(updatedUsers);
-          
-          // Update parent only when necessary
-          if (setUsers) {
-            setUsers(prevUsers => 
-              prevUsers.map((user) => {
-                if (user.id === userId) {
-                  return { ...user, roles: newRoles };
-                }
-                return user;
-              })
-            );
+          // Only update the affected user locally without refreshing the entire table
+          if (updateUserRolesOptimized) {
+            updateUserRolesOptimized(userId, newRoleNames);
           }
-          
-          resolve([response.data.messages || 'Role updated successfully']);
+          resolve([response.data.message || 'Role updated successfully']);
         }
       } catch (error) {
         if (error.response?.status === 422) {
@@ -111,7 +99,6 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
         setLoading(userId, 'role', false);
       }
     });
-
     toast.promise(promise, {
       pending: 'Updating employee role...',
       success: {
@@ -125,39 +112,22 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
         },
       },
     });
+    
+    // Return the promise to allow parent components to track completion
+    return promise;
   }
 
   const handleStatusToggle = async (userId, value) => {
     setLoading(userId, 'status', true);
-    
     const promise = new Promise(async (resolve, reject) => {
       try {
         const response = await axios.put(route('user.toggleStatus', { id: userId }), {
           active: value,
         });
-
         if (response.status === 200) {
-          const updatedUsers = users.map((user) => {
-            if (user.id === userId) {
-              return { ...user, active: value };
-            }
-            return user;
-          });
-          
-          setLocalUsers(updatedUsers);
-          
-          // Update parent only when necessary
-          if (setUsers) {
-            setUsers(prevUsers => 
-              prevUsers.map((user) => {
-                if (user.id === userId) {
-                  return { ...user, active: value };
-                }
-                return user;
-              })
-            );
+          if (toggleUserStatusOptimized) {
+            toggleUserStatusOptimized(userId, value);
           }
-          
           resolve([response.data.message || 'User status updated successfully']);
         }
       } catch (error) {
@@ -170,7 +140,6 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
         setLoading(userId, 'status', false);
       }
     });
-
     toast.promise(promise, {
       pending: 'Updating user status...',
       success: {
@@ -188,7 +157,6 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
 
   const handleDelete = async (userId) => {
     setLoading(userId, 'delete', true);
-    
     const promise = new Promise(async (resolve, reject) => {
       try {
         const response = await fetch(route('profile.delete'), {
@@ -199,18 +167,11 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
           },
           body: JSON.stringify({ user_id: userId }),
         });
-
         const data = await response.json();
-
         if (response.ok) {
-          const updatedUsers = users.filter(user => user.id !== userId);
-          setLocalUsers(updatedUsers);
-          
-          // Update parent only when necessary
-          if (setUsers) {
-            setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+          if (deleteUserOptimized) {
+            deleteUserOptimized(userId);
           }
-          
           resolve([data.message]);
         } else {
           reject([data.message]);
@@ -221,7 +182,6 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
         setLoading(userId, 'delete', false);
       }
     });
-
     toast.promise(promise, {
       pending: 'Deleting user...',
       success: {
@@ -237,307 +197,312 @@ const UsersTable = ({ allUsers, roles, isMobile, isTablet, setUsers }) => {
     });
   };
 
-  const renderCell = (user, columnKey, index) => {
-    const cellValue = user[columnKey];
+  const columns = useMemo(() => {
+    const baseColumns = [
+      { name: "#", uid: "sl" },
+      { name: "USER", uid: "user" },
+      { name: "EMAIL", uid: "email" },
+      { name: "DEPARTMENT", uid: "department" },
+      { name: "STATUS", uid: "status" },
+      { name: "ROLES", uid: "roles" },
+      { name: "ACTIONS", uid: "actions" }
+    ];
 
+    // Add or remove columns based on screen size
+    if (!isMobile && !isTablet) {
+      baseColumns.splice(3, 0, { name: "PHONE", uid: "phone" });
+    } else if (isMobile) {
+      // On mobile, remove phone and ensure roles column stays
+      baseColumns.splice(baseColumns.findIndex(col => col.uid === "department"), 1);
+    }
+    
+    return baseColumns;
+  }, [isMobile, isTablet]);
+
+  // Function to toggle user status - optimized to avoid full reloads
+  const toggleUserStatus = async (userId, currentStatus) => {
+    if (isLoading(userId, 'status')) return; // Prevent multiple calls
+    
+    setLoading(userId, 'status', true);
+    try {
+      // In this implementation, we use the handler passed from the parent
+      if (toggleUserStatusOptimized) {
+        toggleUserStatusOptimized(userId, !currentStatus);
+        toast.success(`User status ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      } else if (setUsers) {
+        // Fallback to the older method if the optimized handler is not available
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId ? { ...user, active: !currentStatus } : user
+          )
+        );
+        toast.success(`User status ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      }
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast.error('Failed to update user status');
+    } finally {
+      setLoading(userId, 'status', false);
+    }
+  };
+
+  // Render cell content based on column type
+  const renderCell = (user, columnKey, rowIndex) => {
+    const cellValue = user[columnKey];
+    
     switch (columnKey) {
       case "sl":
-        return (
-          <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center w-8 h-8 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-              <span className="text-sm font-semibold text-foreground">
-                {index + 1}
-              </span>
-            </div>
-          </div>
-        );
-
-      case "user":
-        return (
-          <div>
-            <User
-              avatarProps={{ 
-                radius: "lg", 
-                src: user?.profile_image,
-                size: isMobile ? "sm" : "md",
-                fallback: <UserIcon className="w-4 h-4" />
-              }}
-              name={user?.name}
-              description={isMobile ? null : user?.email}
-              classNames={{
-                name: "font-semibold text-foreground text-left",
-                description: "text-default-500 text-left",
-                wrapper: "justify-start"
-              }}
-            />
-            {isMobile && (
-              <div className="flex flex-col gap-1 text-xs text-default-500 ml-10">
-                <div className="flex items-center gap-1">
-                  <EnvelopeIcon className="w-3 h-3" />
-                  {user?.email}
+        // Calculate serial number based on pagination
+        const startIndex = pagination?.currentPage && pagination?.perPage 
+          ? Number((pagination.currentPage - 1) * pagination.perPage) 
+          : 0;
+        // Since rowIndex might be undefined, ensure it has a numeric value
+        const safeIndex = typeof rowIndex === 'number' ? rowIndex : 0;
+        const serialNumber = startIndex + safeIndex + 1;
+        return <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center w-8 h-8 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
+                  <span className="text-sm font-semibold text-foreground">
+                    {serialNumber}
+                  </span>
                 </div>
-                {user?.phone && (
-                  <div className="flex items-center gap-1">
-                    <PhoneIcon className="w-3 h-3" />
-                    {user?.phone}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      
-      case "contact":
+              </div>;
+        
+      case "user":
+        
         return (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-sm">
-              <EnvelopeIcon className="w-4 h-4 text-default-400" />
-              <span className="text-foreground">{user?.email}</span>
-            </div>
-            {user?.phone && (
-              <div className="flex items-center gap-2 text-sm">
-                <PhoneIcon className="w-4 h-4 text-default-400" />
-                <span className="text-foreground">{user?.phone}</span>
-              </div>
-            )}
+          <User
+            avatarProps={{ 
+              radius: "lg", 
+              src: user?.profile_image,
+              size: "sm",
+              fallback: <UserIcon className="w-4 h-4" />
+            }}
+            name={user?.name || ""}
+            classNames={{
+              name: "font-semibold text-foreground",
+              description: "text-default-500",
+            }}
+          />
+        );
+        
+      case "email":
+        return (
+          <div className="flex items-center">
+            <EnvelopeIcon className="w-4 h-4 text-default-400 mr-2" />
+            <span className="text-sm">{user.email}</span>
           </div>
         );
-
+        
+      case "phone":
+        return (
+          <div className="flex items-center">
+            <PhoneIcon className="w-4 h-4 text-default-400 mr-2" />
+            <span className="text-sm">{user.phone || "N/A"}</span>
+          </div>
+        );
+        
+      case "department":
+        
+        return (
+          <div className="flex items-center">
+            <BuildingOfficeIcon className="w-4 h-4 text-default-400 mr-2" />
+            <span className="text-sm">{user?.department || "N/A"}</span>
+          </div>
+        );
+        
       case "status":
         return (
-          <div className="flex flex-col gap-2">
-            <Chip
-              className="capitalize"
-              color={statusColorMap[user.active ? "active" : "inactive"]}
+          <div className="flex items-center justify-center">
+            <Switch
               size="sm"
-              variant="flat"
-            >
+              color={user.active ? "success" : "danger"}
+              isSelected={user.active}
+              isDisabled={isLoading(user.id, 'status')}
+              startContent={isLoading(user.id, 'status') ? <Spinner size="sm" /> : null}
+              onChange={() => toggleUserStatus(user.id, user.active)}
+              classNames={{
+                wrapper: "group-data-[selected=true]:bg-success-500 group-data-[selected=false]:bg-danger-500",
+              }}
+            />
+            <span className="ml-2 text-xs">
               {user.active ? "Active" : "Inactive"}
-            </Chip>
-            {!isMobile && (
-              <div className="flex items-center gap-2 text-xs text-default-500">
-                <CalendarIcon className="w-3 h-3" />
-                {user?.created_at || "N/A"}
-              </div>
-            )}
+            </span>
           </div>
         );
-
-      case "role":
+        
+      case "roles":
+        // Get simple role names for display
+        const roleNames = user.roles?.map(role => 
+          typeof role === 'object' && role !== null ? role.name : role
+        ) || [];
+        
+        // Convert the role names to a Set for selection
+        const roleSet = new Set(roleNames);
+        
+        // Create a simple string representation of roles
+        const selectedValue = Array.from(roleSet).join(", ") || "No Roles";
+        
         return (
-          <div className="flex flex-col gap-2 min-w-[150px]">
-            <Select
-              size="sm"
-              label="User Roles"
-              aria-label={`Select roles for ${user?.name}`}
-              placeholder="Select roles"
-              selectionMode="multiple"
-              selectedKeys={new Set(user.roles)}
-              onSelectionChange={(keys) => handleRoleChange(user.id, Array.from(keys))}
-              isDisabled={!user.active || isLoading(user.id, 'role')}
-              classNames={{
-                trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                value: "text-foreground",
-                popoverContent: "bg-white/10 backdrop-blur-md border-white/20",
-                label: "text-xs text-default-500"
-              }}
-              startContent={
-                isLoading(user.id, 'role') ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <ShieldCheckIcon className="w-4 h-4" />
-                )
-              }
-            >
-              {roles.map((role) => (
-                <SelectItem key={role.name} value={role.name}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </Select>
-          </div>
-        );
-
-      case "actions":
-        if (isMobile) {
-          return (
-            <Dropdown
-              classNames={{
-                content: "bg-white/10 backdrop-blur-md border-white/20"
-              }}
+          <div className="flex items-center">
+            <Dropdown 
+              isDisabled={isLoading(user.id, 'role')}
+              className="max-w-[220px]"
             >
               <DropdownTrigger>
                 <Button 
-                  isIconOnly 
-                  size="sm" 
+                  className="capitalize"
+                  variant="bordered"
+                  size="sm"
+                  startContent={isLoading(user.id, 'role') ? <Spinner size="sm" /> : null}
+                >
+                  {selectedValue}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection={false}
+                aria-label="Multiple selection example"
+                closeOnSelect={false}
+                selectedKeys={roleSet}
+                selectionMode="multiple"
+                variant="flat"
+                onSelectionChange={(keys) => {
+                  const newRoles = Array.from(keys);
+                  handleRoleChange(user.id, newRoles);
+                }}
+              >
+                {(roles || []).map((role) => (
+                  <DropdownItem 
+                    key={typeof role === 'object' && role !== null ? role.name : role}
+                  >
+                    {typeof role === 'object' && role !== null ? role.name : role}
+                  </DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+        );
+        
+      case "actions":
+        return (
+          <div className="flex justify-center items-center">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button 
+                  isIconOnly
+                  size="sm"
                   variant="light"
-                  className="text-default-400"
-                  aria-label={`Actions for ${user?.name}`}
+                  className="text-default-400 hover:text-foreground"
                 >
                   <EllipsisVerticalIcon className="w-4 h-4" />
                 </Button>
               </DropdownTrigger>
-              <DropdownMenu aria-label="User actions">
-                <DropdownItem
-                  key="edit"
+              <DropdownMenu aria-label="User Actions">
+                <DropdownItem 
+                  textValue="View Profile"
+                  href={route('profile', { user: user.id })}
+                  as={Link}
+                  className="text-blue-500"
+                  startContent={<UserIcon className="w-4 h-4" />}
+                >
+                  View Profile
+                </DropdownItem>
+                <DropdownItem 
+                  textValue="Edit User"
+                  onPress={(e) => {
+                    e.preventDefault();
+                    if (onEdit) onEdit(user);
+                  }}
+                  className="text-amber-500"
                   startContent={<PencilIcon className="w-4 h-4" />}
-                  onPress={() => window.location.href = route('profile', { user: user.id })}
                 >
-                  Edit User
-                </DropdownItem>
-                <DropdownItem
-                  key="toggle"
-                  startContent={<Switch size="sm" isSelected={user.active} />}
-                  onPress={() => handleStatusToggle(user.id, !user.active)}
-                  isDisabled={isLoading(user.id, 'status')}
-                >
-                  {user.active ? 'Deactivate' : 'Activate'}
-                </DropdownItem>
-                <DropdownItem
-                  key="delete"
-                  className="text-danger"
-                  color="danger"
-                  startContent={<TrashIcon className="w-4 h-4" />}
-                  onPress={() => handleDelete(user.id)}
-                  isDisabled={isLoading(user.id, 'delete')}
-                >
-                  Delete User
+                  Edit
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
-          );
-        }
-
-        return (
-          <div className="relative flex items-center gap-2">
-            <Tooltip content="Edit User" placement="top">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="text-default-400 hover:text-foreground"
-                as={Link}
-                href={route('profile', { user: user.id })}
-                aria-label={`Edit ${user?.name}`}
-              >
-                <PencilIcon className="w-4 h-4" />
-              </Button>
-            </Tooltip>
-            
-            <Tooltip 
-              content={user.active ? "Deactivate User" : "Activate User"} 
-              placement="top"
-            >
-              <Switch
-                size="sm"
-                isSelected={user.active}
-                onValueChange={() => handleStatusToggle(user.id, !user.active)}
-                isDisabled={isLoading(user.id, 'status')}
-                aria-label={`${user.active ? 'Deactivate' : 'Activate'} ${user?.name}`}
-                classNames={{
-                  wrapper: "bg-white/20 backdrop-blur-md"
-                }}
-              />
-            </Tooltip>
-            
-            <Tooltip content="Delete User" color="danger" placement="top">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="text-danger-400 hover:text-danger"
-                onPress={() => handleDelete(user.id)}
-                isDisabled={isLoading(user.id, 'delete')}
-                aria-label={`Delete ${user?.name}`}
-              >
-                {isLoading(user.id, 'delete') ? (
-                  <Spinner size="sm" color="danger" />
-                ) : (
-                  <TrashIcon className="w-4 h-4" />
-                )}
-              </Button>
-            </Tooltip>
           </div>
         );
-
+        
       default:
-        return cellValue || "N/A";
+        return cellValue;
     }
   };
 
-  // Responsive columns based on screen size
-  const columns = useMemo(() => {
-    if (isMobile) {
-      return [
-        { name: "Sl", uid: "sl" },
-        { name: "User", uid: "user" },
-        { name: "Status", uid: "status" },
-        { name: "Actions", uid: "actions" }
-      ];
-    }
+  const renderPagination = () => {
+    if (!allUsers || !totalUsers || loading) return null;
     
-    if (isTablet) {
-      return [
-        { name: "Sl", uid: "sl" },
-        { name: "User", uid: "user" },
-        { name: "Role", uid: "role" },
-        { name: "Status", uid: "status" },
-        { name: "Actions", uid: "actions" }
-      ];
-    }
-
-    return [
-      { name: "Sl", uid: "sl" },
-      { name: "User", uid: "user" },
-      { name: "Contact", uid: "contact" },
-      { name: "Role", uid: "role" },
-      { name: "Status", uid: "status" },
-      { name: "Actions", uid: "actions" }
-    ];
-  }, [isMobile, isTablet]);
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-2 border-t border-white/10 bg-white/5 backdrop-blur-md">
+        <span className="text-xs text-default-400 mb-3 sm:mb-0">
+          Showing {((pagination.currentPage - 1) * pagination.perPage) + 1} to {
+            Math.min(pagination.currentPage * pagination.perPage, totalUsers)
+          } of {totalUsers} users
+        </span>
+        
+        <Pagination
+          total={Math.ceil(totalUsers / pagination.perPage)}
+          initialPage={pagination.currentPage}
+          page={pagination.currentPage}
+          onChange={onPageChange}
+          size={isMobile ? "sm" : "md"}
+          variant="bordered"
+          showControls
+          classNames={{
+            item: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+            cursor: "bg-white/20 backdrop-blur-md border-white/20",
+          }}
+        />
+      </div>
+    );
+  };
 
   return (
-    <div className="w-full">
-      <Table
-        aria-label="Users table with custom cells"
-        classNames={{
-          wrapper: "bg-transparent",
-          th: "bg-white/10 backdrop-blur-md text-foreground font-semibold",
-          td: "border-b border-white/10",
-          tbody: "divide-y divide-white/10"
-        }}
-        removeWrapper={true}
-        isHeaderSticky
-        isCompact={isMobile}
-        className="min-h-[400px]"
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn 
-              key={column.uid} 
-              align={column.uid === "actions" ? "center" : column.uid === "sl" ? "center" : "start"}
-              className="bg-white/10 backdrop-blur-md"
-              width={column.uid === "sl" ? 60 : undefined}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody items={users} emptyContent="No users found">
-          {users.map((user, index) => (
-            <TableRow 
-              key={user.id}
-              className="hover:bg-white/5 transition-colors duration-200"
-            >
-              {columns.map((column) => (
-                <TableCell key={column.uid} className="py-3">
-                  {renderCell(user, column.uid, index)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="w-full overflow-hidden flex flex-col border border-white/10 rounded-lg" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div className="overflow-auto flex-grow">
+        <Table
+          aria-label="Users table"
+          removeWrapper
+          classNames={{
+            base: "bg-transparent min-w-[800px]", // Set minimum width to prevent squishing on small screens
+            th: "bg-white/5 backdrop-blur-md text-default-500 border-b border-white/10 font-medium text-xs sticky top-0 z-10",
+            td: "border-b border-white/5 py-3",
+            table: "border-collapse",
+            thead: "bg-white/5",
+            tr: "hover:bg-white/5"
+          }}
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn 
+                key={column.uid} 
+                align={column.uid === "actions" ? "center" : column.uid === "sl" ? "center" : "start"}
+                width={column.uid === "sl" ? 60 : undefined}
+              >
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody 
+            items={allUsers || []} 
+            emptyContent="No users found"
+            loadingContent={<Spinner />}
+            isLoading={loading}
+          >
+            {(item, index) => {
+              // Find the index of this item in the allUsers array to ensure accurate serial numbers
+              const itemIndex = allUsers ? allUsers.findIndex(user => user.id === item.id) : index;
+              return (
+                <TableRow key={item.id}>
+                  {(columnKey) => (
+                    <TableCell>{renderCell(item, columnKey, itemIndex)}</TableCell>
+                  )}
+                </TableRow>
+              );
+            }}
+          </TableBody>
+        </Table>
+      </div>
+      {/* Pagination is moved outside the scrollable area to make it sticky */}
+      {renderPagination()}
     </div>
   );
 };

@@ -32,6 +32,9 @@ import {
   ScaleIcon,
   BuildingStorefrontIcon,
   ArrowPathIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon as DocumentTextIconLegacy, // Legacy document text icon
+  ShoppingBagIcon as ShoppingBagIconLegacy, // Legacy shopping bag icon
 
 } from '@heroicons/react/24/outline';
 
@@ -189,6 +192,19 @@ export const getPages = (permissions, auth = null) => [
           { name: 'Turnover', icon: <ArrowRightOnRectangleIcon  />, route: 'hr.analytics.turnover' },
         ]
       }] : []),
+      
+      // Payroll Management
+      ...(permissions.includes('hr.payroll.view') ? [{
+        name: 'Payroll',
+        icon: <CurrencyDollarIcon  />,
+        category: 'payroll',
+        subMenu: [
+          { name: 'Dashboard', icon: <HomeIcon  />, route: 'hr.payroll.index' },
+          { name: 'Generate', icon: <DocumentTextIcon  />, route: 'hr.payroll.create' },
+          { name: 'Payslips', icon: <DocumentDuplicateIcon  />, route: 'hr.selfservice.payslips' },
+          { name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'hr.payroll.reports' },
+        ]
+      }] : []),
     ]
   }] : []),
   // 4. Projects (Project Management)
@@ -288,13 +304,10 @@ export const getPages = (permissions, auth = null) => [
     priority: 10,
     module: 'lms',
     subMenu: [
-      ...(permissions.includes('lms.view') ? [{ name: 'Dashboard', icon: <HomeIcon  />, route: 'lms.index' }] : []),
-      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon  />, route: 'lms.courses' }] : []),
-      ...(permissions.includes('lms.students.view') ? [{ name: 'Students', icon: <UserGroupIcon  />, route: 'lms.students' }] : []),
-      ...(permissions.includes('lms.instructors.view') ? [{ name: 'Instructors', icon: <UserIcon  />, route: 'lms.instructors' }] : []),
-      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon  />, route: 'lms.assessments' }] : []),
-      ...(permissions.includes('lms.certificates.view') ? [{ name: 'Certificates', icon: <DocumentTextIcon  />, route: 'lms.certificates' }] : []),
-      ...(permissions.includes('lms.reports.view') ? [{ name: 'Reports', icon: <ChartBarSquareIcon  />, route: 'lms.reports' }] : []),
+      ...(permissions.includes('lms.view') ? [{ name: 'Dashboard', icon: <HomeIcon  />, route: 'lms.dashboard' }] : []),
+      ...(permissions.includes('lms.courses.view') ? [{ name: 'Courses', icon: <AcademicCapIcon  />, route: 'lms.courses.index' }] : []),
+      ...(permissions.includes('lms.enrollments.view') ? [{ name: 'Enrollments', icon: <UserGroupIcon  />, route: 'lms.enrollments.index' }] : []),
+      ...(permissions.includes('lms.assessments.view') ? [{ name: 'Assessments', icon: <ClipboardDocumentCheckIcon  />, route: 'lms.assessments.index' }] : []),
     ]
   }] : []),
   // 11. SCM (Supply Chain Management)

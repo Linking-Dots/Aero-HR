@@ -180,6 +180,28 @@ export const getSettingsPages = (permissions = []) => {
             description: 'Configure document categories, templates, and retention policies'
         });
     }
+    // Add Payroll Configuration
+    if (permissions.includes('hr.payroll.view')) {
+        settings.push({
+            name: 'Payroll & Compensation Configuration', 
+            icon: <CurrencyDollarIcon className="w-5 h-5" />, 
+            route: 'settings.hr.payroll',
+            category: 'organization',
+            priority: 9.6,
+            description: 'Configure payroll structures, tax settings, and benefits deductions'
+        });
+    }
+    // Add HR Analytics Configuration
+    if (permissions.includes('hr.analytics.view')) {
+        settings.push({
+            name: 'HR Analytics Configuration', 
+            icon: <ChartBarIcon className="w-5 h-5" />, 
+            route: 'settings.hr.analytics',
+            category: 'organization',
+            priority: 9.7,
+            description: 'Configure HR metrics, dashboards, and reporting parameters'
+        });
+    }
     // 4. CRM Settings
     if (permissions.includes('crm.settings')) {
         settings.push({

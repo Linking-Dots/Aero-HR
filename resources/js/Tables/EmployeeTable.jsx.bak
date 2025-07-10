@@ -209,7 +209,34 @@ const EmployeeTable = ({
         const data = await response.json();
 
         if (response.ok) {
-          // Update the UI optimistically
+          if (setUsers) {
+            setUsers(prevUsers => 
+              prevUsers.map((user) => {
+                if (String(user.id) === String(userId)) {
+                  const updatedUser = { ...user };
+
+              if (key === 'department' && user.department !== valueId) {
+                // Clear designation when department changes
+                updatedUser.designation = null;
+              }
+
+              if (key === 'attendance_type') {
+                updatedUser.attendance_type_id = valueId;
+                // Also update the attendance_type object if it exists
+                const attendanceType = attendanceTypes?.find(type => type.id === valueId);
+                if (attendanceType) {
+                  updatedUser.attendance_type = attendanceType;
+                }
+              } else {
+                updatedUser[key] = valueId;
+              }
+
+              return updatedUser;
+            }
+            return user;
+          });
+          
+          // Update locally, if setUsers prop is provided
           if (setUsers) {
             setUsers(prevUsers => 
               prevUsers.map((user) => {
@@ -288,19 +315,10 @@ const EmployeeTable = ({
       toast.error('Failed to delete employee');
     } finally {
       setLoading(userId, 'delete', false);
-    }  };
-
-  // Handle opening attendance config modal
-  const openConfigModal = (user) => {
-    setSelectedUser(user);
-    setAttendanceConfig({
-      checkin_time: user.checkin_time || '',
-      checkout_time: user.checkout_time || '',
-      working_days: user.working_days || '',
-      grace_time: user.grace_time || ''
-    });
-    setConfigModalOpen(true);
+    }
   };
+
+
 
   const handleConfigChange = (field, value) => {
     setAttendanceConfig(prev => ({

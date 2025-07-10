@@ -33,6 +33,9 @@ class CombinedSeeder extends Seeder
         // Create attendance types and rules
         $this->createAttendanceTypes();
 
+        // Seed departments
+        $this->call(DepartmentSeeder::class);
+
         // Seed HRM module data
         $this->createDocumentCategories();
         $this->seedSkillsAndCompetencies();

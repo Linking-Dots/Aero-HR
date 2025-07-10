@@ -30,7 +30,7 @@ class AttendanceType extends Model
     // Relationship with users
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'attendance_type_id');
     }
 
     // Scope for active attendance types

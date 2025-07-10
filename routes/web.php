@@ -157,8 +157,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // HR Management routes
-    Route::middleware(['permission:employees.view'])->get('/employees', [UserController::class, 'index1'])->name('employees');
+    Route::middleware(['permission:employees.view'])->group(function () {
+        Route::get('/employees', [UserController::class, 'index1'])->name('employees');
+        Route::get('/employees/paginate', [UserController::class, 'paginateEmployees'])->name('employees.paginate');
+        Route::get('/employees/stats', [UserController::class, 'employeeStats'])->name('employees.stats');
+    });
+    
+    // Department management routes
     Route::middleware(['permission:departments.view'])->get('/departments', [DepartmentController::class, 'index'])->name('departments');
+    Route::middleware(['permission:departments.view'])->get('/api/departments', [DepartmentController::class, 'getDepartments'])->name('api.departments');
+    Route::middleware(['permission:departments.view'])->get('/departments/stats', [DepartmentController::class, 'getStats'])->name('departments.stats');
+    Route::middleware(['permission:departments.create'])->post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+    Route::middleware(['permission:departments.view'])->get('/departments/{id}', [DepartmentController::class, 'show'])->name('departments.show');
+    Route::middleware(['permission:departments.update'])->put('/departments/{id}', [DepartmentController::class, 'update'])->name('departments.update');
+    Route::middleware(['permission:departments.delete'])->delete('/departments/{id}', [DepartmentController::class, 'destroy'])->name('departments.delete');
+    Route::middleware(['permission:departments.update'])->put('/users/{id}/department', [DepartmentController::class, 'updateUserDepartment'])->name('users.update-department');
+    
     Route::middleware(['permission:designations.view'])->get('/designations', [DesignationController::class, 'index'])->name('designations');
     Route::middleware(['permission:jurisdiction.view'])->get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
 
@@ -173,6 +187,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // User management routes
     Route::middleware(['permission:users.view'])->group(function () {
         Route::get('/users', [UserController::class, 'index2'])->name('users');
+        Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
+        Route::get('/users/stats', [UserController::class, 'stats'])->name('users.stats');
     });
 
     Route::middleware(['permission:users.create'])->post('/users', [ProfileController::class, 'store'])->name('addUser');

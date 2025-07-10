@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Head, usePage } from "@inertiajs/react";
 import { 
   Box, 
@@ -6,7 +6,8 @@ import {
   useTheme, 
   useMediaQuery, 
   Grow, 
-  Fade 
+  Fade,
+  CircularProgress
 } from '@mui/material';
 import { 
   Button, 
@@ -18,7 +19,8 @@ import {
   User,
   Divider,
   Select,
-  SelectItem
+  SelectItem,
+  Pagination
 } from "@heroui/react";
 
 import { 
@@ -35,7 +37,10 @@ import {
   AdjustmentsHorizontalIcon,
   EnvelopeIcon,
   PhoneIcon,
-  PencilIcon
+  PencilIcon,
+  CheckCircleIcon,
+  TrophyIcon,
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
 
 import App from "@/Layouts/App.jsx";
@@ -43,214 +48,369 @@ import GlassCard from "@/Components/GlassCard.jsx";
 import PageHeader from "@/Components/PageHeader.jsx";
 import StatsCards from "@/Components/StatsCards.jsx";
 import EmployeeTable from "@/Tables/EmployeeTable.jsx";
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-
-
-const EmployeesList = ({ title, allUsers, departments, designations, attendanceTypes }) => {
+const EmployeesList = ({ title, departments, designations, attendanceTypes }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   
-  const [users, setUsers] = useState(allUsers || []);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [designationFilter, setDesignationFilter] = useState('all');
-  const [attendanceTypeFilter, setAttendanceTypeFilter] = useState('all');
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  // State for employee data with server-side pagination
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalRows, setTotalRows] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
+
+  // Filters
+  const [filters, setFilters] = useState({
+    search: '',
+    department: 'all',
+    designation: 'all',
+    attendanceType: 'all'
+  });
+  
+  // View mode (table or grid)
+  const [viewMode, setViewMode] = useState('table');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Pagination
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    perPage: 10,
+    total: 0
+  });
 
-  // Memoized filtered users for performance
-  const filteredUsers = useMemo(() => {
-    return users.filter(user => {
-      const matchesSearch = searchQuery === '' || 
-        user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.employee_id?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Stats - Updated to match comprehensive backend stats structure
+  const [stats, setStats] = useState({
+    overview: {
+      total_employees: 0,
+      active_employees: 0,
+      inactive_employees: 0,
+      total_departments: 0,
+      total_designations: 0,
+      total_attendance_types: 0
+    },
+    distribution: {
+      by_department: [],
+      by_designation: [],
+      by_attendance_type: []
+    },
+    hiring_trends: {
+      recent_hires: {
+        last_30_days: 0,
+        last_90_days: 0,
+        last_year: 0
+      },
+      monthly_growth_rate: 0,
+      current_month_hires: 0
+    },
+    workforce_health: {
+      status_ratio: {
+        active_percentage: 0,
+        inactive_percentage: 0,
+        retention_rate: 0
+      },
+      retention_rate: 0,
+      turnover_rate: 0
+    },
+    quick_metrics: {
+      headcount: 0,
+      active_ratio: 0,
+      department_diversity: 0,
+      role_diversity: 0,
+      recent_activity: 0
+    }
+  });
+
+  // Fetch employees with pagination and filters
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(route('employees.paginate'), {
+        params: {
+          page: pagination.currentPage,
+          perPage: pagination.perPage,
+          search: filters.search,
+          department: filters.department,
+          designation: filters.designation,
+          attendanceType: filters.attendanceType
+        }
+      });
       
-      const matchesDepartment = departmentFilter === 'all' || 
-        user.department === parseInt(departmentFilter);
+      setEmployees(data.employees.data);
+      setTotalRows(data.employees.total);
+      setLastPage(data.employees.last_page);
+      setPagination(prev => ({
+        ...prev,
+        total: data.employees.total
+      }));
       
-      const matchesDesignation = designationFilter === 'all' || 
-        user.designation === parseInt(designationFilter);
+      // Update stats if included in response
+      if (data.stats) {
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast.error('Failed to load employees data');
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.currentPage, pagination.perPage, filters]);
 
-      const matchesAttendanceType = attendanceTypeFilter === 'all' || 
-        user.attendance_type_id === parseInt(attendanceTypeFilter);
-
-      return matchesSearch && matchesDepartment && matchesDesignation && matchesAttendanceType;
-    });
-  }, [users, searchQuery, departmentFilter, designationFilter, attendanceTypeFilter]);
-
-  // Filter handlers
-  const handleSearchChange = useCallback((value) => {
-    setSearchQuery(value);
-  }, []);
-
-  const handleDepartmentFilterChange = useCallback((value) => {
-    setDepartmentFilter(value);
-    if (value !== 'all') {
-      setDesignationFilter('all'); // Reset designation when department changes
+  // Fetch employee stats separately
+  const fetchStats = useCallback(async () => {
+    try {
+      const { data } = await axios.get(route('employees.stats'));
+      if (data.stats) {
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching employee stats:', error);
     }
   }, []);
 
+  // Initial data fetch
+  useEffect(() => {
+    fetchEmployees();
+    fetchStats();
+  }, [fetchEmployees, fetchStats]);
+
+  // Handle filter changes
+  const handleSearchChange = useCallback((value) => {
+    setFilters(prev => ({ ...prev, search: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page on search
+  }, []);
+
+  const handleDepartmentFilterChange = useCallback((value) => {
+    setFilters(prev => ({ 
+      ...prev, 
+      department: value,
+      designation: value !== 'all' ? 'all' : prev.designation // Reset designation when department changes
+    }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, []);
+
   const handleDesignationFilterChange = useCallback((value) => {
-    setDesignationFilter(value);
+    setFilters(prev => ({ ...prev, designation: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   }, []);
 
   const handleAttendanceTypeFilterChange = useCallback((value) => {
-    setAttendanceTypeFilter(value);
+    setFilters(prev => ({ ...prev, attendanceType: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   }, []);
 
-  // Stable setUsers callback
-  const handleUsersUpdate = useCallback((updatedUsers) => {
-    setUsers(updatedUsers);
+  // Handle pagination changes
+  const handlePageChange = useCallback((page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
   }, []);
 
-  // Statistics
-  const stats = useMemo(() => ({
-    total: users.length,
-    withDepartment: users.filter(u => u.department).length,
-    withDesignation: users.filter(u => u.designation).length,
-    filtered: filteredUsers.length
-  }), [users, filteredUsers]);
+  const handleRowsPerPageChange = useCallback((perPage) => {
+    setPagination(prev => ({ ...prev, perPage: perPage, currentPage: 1 }));
+  }, []);
+
+  // Optimistic updates
+  const updateEmployeeOptimized = useCallback((id, updatedFields) => {
+    setEmployees(prev => 
+      prev.map(employee => 
+        employee.id === id ? { ...employee, ...updatedFields } : employee
+      )
+    );
+  }, []);
+
+  const deleteEmployeeOptimized = useCallback((id) => {
+    setEmployees(prev => prev.filter(employee => employee.id !== id));
+    setTotalRows(prev => prev - 1);
+    setPagination(prev => ({
+      ...prev,
+      total: prev.total - 1
+    }));
+    fetchStats(); // Refresh stats after deletion
+  }, [fetchStats]);
+
+  const toggleEmployeeStatusOptimized = useCallback((id, active) => {
+    updateEmployeeOptimized(id, { active });
+    fetchStats(); // Refresh stats when status changes
+  }, [updateEmployeeOptimized, fetchStats]);
 
   // Get filtered designations based on selected department
   const filteredDesignations = useMemo(() => {
-    if (departmentFilter === 'all') return designations;
-    return designations.filter(d => d.department_id === parseInt(departmentFilter));
-  }, [designations, departmentFilter]);
+    if (filters.department === 'all') return designations;
+    return designations.filter(d => d.department_id === parseInt(filters.department));
+  }, [designations, filters.department]);
 
-  // Prepare stats data for StatsCards component
+  // Prepare comprehensive stats data for StatsCards component
   const statsData = useMemo(() => [
     {
       title: "Total Employees",
-      value: stats.total,
+      value: stats.overview?.total_employees || 0,
       icon: <UsersIcon />,
       color: "text-blue-400",
       iconBg: "bg-blue-500/20",
-      description: "Total Employees"
+      description: "Total Headcount"
     },
     {
-      title: "With Department", 
-      value: stats.withDepartment,
-      icon: <BuildingOfficeIcon />,
+      title: "Active Employees", 
+      value: stats.overview?.active_employees || 0,
+      icon: <CheckCircleIcon />,
       color: "text-green-400",
       iconBg: "bg-green-500/20", 
-      description: "With Department"
+      description: `${stats.workforce_health?.status_ratio?.active_percentage || 0}% Active`
     },
     {
-      title: "With Designation",
-      value: stats.withDesignation,
+      title: "Departments",
+      value: stats.overview?.total_departments || 0,
+      icon: <BuildingOfficeIcon />,
+      color: "text-purple-400", 
+      iconBg: "bg-purple-500/20",
+      description: "Department Diversity"
+    },
+    {
+      title: "Designations",
+      value: stats.overview?.total_designations || 0,
       icon: <BriefcaseIcon />,
       color: "text-orange-400",
       iconBg: "bg-orange-500/20",
-      description: "With Designation"
+      description: "Role Diversity"
     },
     {
-      title: "Filtered",
-      value: stats.filtered,
-      icon: <FunnelIcon />,
-      color: "text-purple-400", 
-      iconBg: "bg-purple-500/20",
-      description: "Filtered"
+      title: "Retention Rate",
+      value: `${stats.workforce_health?.retention_rate || 0}%`,
+      icon: <TrophyIcon />,
+      color: "text-emerald-400",
+      iconBg: "bg-emerald-500/20",
+      description: "Employee Retention"
+    },
+    {
+      title: "Recent Hires",
+      value: stats.hiring_trends?.recent_hires?.last_30_days || 0,
+      icon: <UserPlusIcon />,
+      color: "text-cyan-400",
+      iconBg: "bg-cyan-500/20",
+      description: "Last 30 Days"
+    },
+    {
+      title: "Growth Rate",
+      value: `${stats.hiring_trends?.monthly_growth_rate || 0}%`,
+      icon: <ChartBarIcon />,
+      color: "text-pink-400",
+      iconBg: "bg-pink-500/20",
+      description: "Monthly Growth"
+    },
+    {
+      title: "Attendance Types",
+      value: stats.overview?.total_attendance_types || 0,
+      icon: <ClockIcon />,
+      color: "text-indigo-400",
+      iconBg: "bg-indigo-500/20",
+      description: "Available Types"
     }
   ], [stats]);
 
   // Grid card component for employee display
   const EmployeeCard = ({ user, index }) => {
-    const department = departments?.find(d => d.id === user.department);
-    const designation = designations?.find(d => d.id === user.designation);
+    const department = departments?.find(d => d.id === user.department_id);
+    const designation = designations?.find(d => d.id === user.designation_id);
     const attendanceType = attendanceTypes?.find(a => a.id === user.attendance_type_id);
 
     return (
-      <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer"
-            onPress={() => window.location.href = route('profile', { user: user.id })}>
-        <CardBody className="p-4">
-          <div className="flex items-start gap-3">
-            <User
-              avatarProps={{ 
-                radius: "lg", 
-                src: user?.profile_image,
-                size: "md",
-                fallback: <UserIcon className="w-4 h-4" />
-              }}
-              name={user?.name}
-              description={`ID: ${user?.employee_id || 'N/A'}`}
-              classNames={{
-                name: "font-semibold text-foreground text-left text-sm",
-                description: "text-default-500 text-left text-xs",
-                wrapper: "justify-start"
-              }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-end mb-2">
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  className="text-default-400 hover:text-foreground"
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    window.location.href = route('profile', { user: user.id });
-                  }}
-                >
-                  <PencilIcon className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                {/* Contact Info */}
-                <div className="flex flex-col gap-1 text-xs">
-                  <div className="flex items-center gap-1 text-default-500">
-                    <EnvelopeIcon className="w-3 h-3" />
-                    <span className="truncate">{user?.email}</span>
-                  </div>
-                  {user?.phone && (
-                    <div className="flex items-center gap-1 text-default-500">
-                      <PhoneIcon className="w-3 h-3" />
-                      <span>{user?.phone}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Department & Designation */}
-                <div className="flex flex-wrap gap-1">
-                  {department && (
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color="primary"
-                      className="text-xs"
-                      startContent={<BuildingOfficeIcon className="w-3 h-3" />}
-                    >
-                      {department.name}
-                    </Chip>
-                  )}
-                  {designation && (
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color="secondary"
-                      className="text-xs"
-                      startContent={<BriefcaseIcon className="w-3 h-3" />}
-                    >
-                      {designation.title}
-                    </Chip>
-                  )}
-                </div>
-                
-                {/* Attendance Type */}
-                {attendanceType && (
-                  <Chip
-                    size="sm"
-                    variant="bordered"
-                    className="text-xs"
-                    startContent={<ClockIcon className="w-3 h-3" />}
-                  >
-                    {attendanceType.name}
-                  </Chip>
-                )}
-              </div>
+      <Card 
+        className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer h-full"
+        onPress={() => window.location.href = route('profile', { user: user.id })}
+      >
+        <CardBody className="p-4 flex flex-col h-full">
+          {/* Card Header with Employee Info */}
+          <div className="flex items-start gap-3 mb-3 pb-3 border-b border-white/10">
+            <div className="flex-shrink-0">
+              <User
+                avatarProps={{ 
+                  radius: "lg", 
+                  src: user?.profile_image,
+                  size: "md",
+                  fallback: <UserIcon className="w-4 h-4" />
+                }}
+                name={user?.name}
+                description={`ID: ${user?.employee_id || 'N/A'}`}
+                classNames={{
+                  name: "font-semibold text-foreground text-left text-sm",
+                  description: "text-default-500 text-left text-xs",
+                  wrapper: "justify-start"
+                }}
+              />
             </div>
+            <div className="flex-1 min-w-0 flex justify-end">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                className="text-default-400 hover:text-foreground"
+                onPress={(e) => {
+                  e.stopPropagation();
+                  window.location.href = route('profile', { user: user.id });
+                }}
+              >
+                <PencilIcon className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Card Content */}
+          <div className="flex-1 flex flex-col gap-3">
+            {/* Contact Info */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <EnvelopeIcon className="w-4 h-4 text-default-400 flex-shrink-0" />
+                <span className="text-default-600 text-xs truncate">{user?.email}</span>
+              </div>
+              {user?.phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <PhoneIcon className="w-4 h-4 text-default-400 flex-shrink-0" />
+                  <span className="text-default-600 text-xs">{user?.phone}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Card Footer with Tags */}
+          <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
+            {/* Department */}
+            {department && (
+              <Chip
+                size="sm"
+                variant="flat"
+                color="primary"
+                className="text-xs"
+                startContent={<BuildingOfficeIcon className="w-3 h-3" />}
+              >
+                {department.name}
+              </Chip>
+            )}
+            
+            {/* Designation */}
+            {designation && (
+              <Chip
+                size="sm"
+                variant="flat"
+                color="secondary"
+                className="text-xs"
+                startContent={<BriefcaseIcon className="w-3 h-3" />}
+              >
+                {designation.title}
+              </Chip>
+            )}
+            
+            {/* Attendance Type */}
+            {attendanceType && (
+              <Chip
+                size="sm"
+                variant="bordered"
+                className="text-xs"
+                startContent={<ClockIcon className="w-3 h-3" />}
+              >
+                {attendanceType.name}
+              </Chip>
+            )}
           </div>
         </CardBody>
       </Card>
@@ -281,6 +441,117 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                 {/* Statistics Cards */}
                 <StatsCards stats={statsData} className="mb-6" />
 
+                {/* Analytics Dashboard */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Department Distribution */}
+                  <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-4">
+                    <Typography variant="h6" className="font-semibold text-foreground mb-4">
+                      Department Distribution
+                    </Typography>
+                    <div className="space-y-3">
+                      {stats.distribution?.by_department?.slice(0, 5).map((dept, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm text-default-600">{dept.name}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                                style={{ width: `${dept.percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-default-500 w-8">{dept.count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hiring Trends */}
+                  <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-4">
+                    <Typography variant="h6" className="font-semibold text-foreground mb-4">
+                      Hiring Trends
+                    </Typography>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">Last 30 Days</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {stats.hiring_trends?.recent_hires?.last_30_days || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">Last 90 Days</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {stats.hiring_trends?.recent_hires?.last_90_days || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">This Year</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {stats.hiring_trends?.recent_hires?.last_year || 0}
+                        </span>
+                      </div>
+                      <div className="pt-2 border-t border-white/10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-default-600">Monthly Growth</span>
+                          <span className={`text-sm font-medium ${(stats.hiring_trends?.monthly_growth_rate || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {stats.hiring_trends?.monthly_growth_rate || 0}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Workforce Health */}
+                  <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-4">
+                    <Typography variant="h6" className="font-semibold text-foreground mb-4">
+                      Workforce Health
+                    </Typography>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">Retention Rate</span>
+                        <span className="text-sm font-medium text-green-400">
+                          {stats.workforce_health?.retention_rate || 0}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">Turnover Rate</span>
+                        <span className="text-sm font-medium text-orange-400">
+                          {stats.workforce_health?.turnover_rate || 0}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-default-600">Active Employees</span>
+                        <span className="text-sm font-medium text-blue-400">
+                          {stats.workforce_health?.status_ratio?.active_percentage || 0}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Attendance Type Distribution */}
+                  <div className="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-4">
+                    <Typography variant="h6" className="font-semibold text-foreground mb-4">
+                      Attendance Types
+                    </Typography>
+                    <div className="space-y-3">
+                      {stats.distribution?.by_attendance_type?.map((type, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm text-default-600">{type.name}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                                style={{ width: `${type.percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-default-500 w-8">{type.count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* View Controls */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                   <div className="flex-1">
@@ -288,7 +559,7 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                       label="Search Employees"
                       variant="bordered"
                       placeholder="Search by name, email, or employee ID..."
-                      value={searchQuery}
+                      value={filters.search}
                       onValueChange={handleSearchChange}
                       startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
                       classNames={{
@@ -343,7 +614,7 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                         <Select
                           label="Department"
                           variant="bordered"
-                          selectedKeys={departmentFilter !== 'all' ? [departmentFilter] : []}
+                          selectedKeys={filters.department !== 'all' ? [filters.department] : []}
                           onSelectionChange={(keys) => {
                             const value = Array.from(keys)[0] || 'all';
                             handleDepartmentFilterChange(value);
@@ -363,7 +634,7 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                         <Select
                           label="Designation"
                           variant="bordered"
-                          selectedKeys={designationFilter !== 'all' ? [designationFilter] : []}
+                          selectedKeys={filters.designation !== 'all' ? [filters.designation] : []}
                           onSelectionChange={(keys) => {
                             const value = Array.from(keys)[0] || 'all';
                             handleDesignationFilterChange(value);
@@ -384,7 +655,7 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                           <Select
                             label="Attendance Type"
                             variant="bordered"
-                            selectedKeys={attendanceTypeFilter !== 'all' ? [attendanceTypeFilter] : []}
+                            selectedKeys={filters.attendanceType !== 'all' ? [filters.attendanceType] : []}
                             onSelectionChange={(keys) => {
                               const value = Array.from(keys)[0] || 'all';
                               handleAttendanceTypeFilterChange(value);
@@ -404,46 +675,46 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                       </div>
 
                       {/* Active Filters */}
-                      {(searchQuery || departmentFilter !== 'all' || designationFilter !== 'all' || attendanceTypeFilter !== 'all') && (
+                      {(filters.search || filters.department !== 'all' || filters.designation !== 'all' || filters.attendanceType !== 'all') && (
                         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
-                          {searchQuery && (
+                          {filters.search && (
                             <Chip
                               variant="flat"
                               color="primary"
                               size="sm"
-                              onClose={() => setSearchQuery('')}
+                              onClose={() => setFilters(prev => ({ ...prev, search: '' }))}
                             >
-                              Search: {searchQuery}
+                              Search: {filters.search}
                             </Chip>
                           )}
-                          {departmentFilter !== 'all' && (
+                          {filters.department !== 'all' && (
                             <Chip
                               variant="flat"
                               color="secondary"
                               size="sm"
-                              onClose={() => setDepartmentFilter('all')}
+                              onClose={() => setFilters(prev => ({ ...prev, department: 'all' }))}
                             >
-                              Department: {departments?.find(d => d.id === parseInt(departmentFilter))?.name}
+                              Department: {departments?.find(d => d.id === parseInt(filters.department))?.name}
                             </Chip>
                           )}
-                          {designationFilter !== 'all' && (
+                          {filters.designation !== 'all' && (
                             <Chip
                               variant="flat"
                               color="warning"
                               size="sm"
-                              onClose={() => setDesignationFilter('all')}
+                              onClose={() => setFilters(prev => ({ ...prev, designation: 'all' }))}
                             >
-                              Designation: {designations?.find(d => d.id === parseInt(designationFilter))?.title}
+                              Designation: {designations?.find(d => d.id === parseInt(filters.designation))?.title}
                             </Chip>
                           )}
-                          {attendanceTypeFilter !== 'all' && (
+                          {filters.attendanceType !== 'all' && (
                             <Chip
                               variant="flat"
                               color="success"
                               size="sm"
-                              onClose={() => setAttendanceTypeFilter('all')}
+                              onClose={() => setFilters(prev => ({ ...prev, attendanceType: 'all' }))}
                             >
-                              Attendance: {attendanceTypes?.find(t => t.id === parseInt(attendanceTypeFilter))?.name}
+                              Attendance: {attendanceTypes?.find(t => t.id === parseInt(filters.attendanceType))?.name}
                             </Chip>
                           )}
                         </div>
@@ -458,24 +729,38 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                     <Typography variant="h6" className="font-semibold text-foreground">
                       {viewMode === 'table' ? 'Employee Table' : 'Employee Grid'} 
                       <span className="text-sm text-default-500 ml-2">
-                        ({filteredUsers.length} {filteredUsers.length === 1 ? 'employee' : 'employees'})
+                        ({totalRows} {totalRows === 1 ? 'employee' : 'employees'})
                       </span>
                     </Typography>
                   </div>
                   
-                  <div className="max-h-[60vh] overflow-y-auto p-4">
-                    {viewMode === 'table' ? (
-                      <EmployeeTable 
-                        allUsers={filteredUsers} 
-                        departments={departments}
-                        designations={designations}
-                        attendanceTypes={attendanceTypes}
-                        setUsers={handleUsersUpdate}
-                        isMobile={isMobile}
-                        isTablet={isTablet}
-                      />
-                    ) : (
-                      <div>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <CircularProgress size={40} />
+                      <Typography className="mt-4" color="textSecondary">
+                        Loading employees data...
+                      </Typography>
+                    </div>
+                  ) : viewMode === 'table' ? (
+                    <EmployeeTable 
+                      allUsers={employees} 
+                      departments={departments}
+                      designations={designations}
+                      attendanceTypes={attendanceTypes}
+                      setUsers={setEmployees}
+                      isMobile={isMobile}
+                      isTablet={isTablet}
+                      pagination={pagination}
+                      onPageChange={handlePageChange}
+                      onRowsPerPageChange={handleRowsPerPageChange}
+                      totalUsers={totalRows}
+                      loading={loading}
+                      updateEmployeeOptimized={updateEmployeeOptimized}
+                      deleteEmployeeOptimized={deleteEmployeeOptimized}
+                    />
+                  ) : (
+                    <div className="p-4">
+                      {employees.length > 0 ? (
                         <div className={`grid gap-4 ${
                           isMobile 
                             ? 'grid-cols-1' 
@@ -483,24 +768,42 @@ const EmployeesList = ({ title, allUsers, departments, designations, attendanceT
                               ? 'grid-cols-2' 
                               : 'grid-cols-3 xl:grid-cols-4'
                         }`}>
-                          {filteredUsers.map((user, index) => (
+                          {employees.map((user, index) => (
                             <EmployeeCard key={user.id} user={user} index={index} />
                           ))}
                         </div>
-                        {filteredUsers.length === 0 && (
-                          <div className="text-center py-8">
-                            <UsersIcon className="w-12 h-12 mx-auto text-default-300 mb-2" />
-                            <Typography variant="body1" color="textSecondary">
-                              No employees found
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              Try adjusting your search or filters
-                            </Typography>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <UsersIcon className="w-12 h-12 mx-auto text-default-300 mb-2" />
+                          <Typography variant="body1" color="textSecondary">
+                            No employees found
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            Try adjusting your search or filters
+                          </Typography>
+                        </div>
+                      )}
+                      
+                      {/* Pagination for Grid View */}
+                      {employees.length > 0 && (
+                        <div className="flex justify-center mt-6 border-t border-white/10 pt-4">
+                          <Pagination
+                            total={Math.ceil(totalRows / pagination.perPage)}
+                            initialPage={pagination.currentPage}
+                            page={pagination.currentPage}
+                            onChange={handlePageChange}
+                            size={isMobile ? "sm" : "md"}
+                            variant="bordered"
+                            showControls
+                            classNames={{
+                              item: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                              cursor: "bg-white/20 backdrop-blur-md border-white/20",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </PageHeader>

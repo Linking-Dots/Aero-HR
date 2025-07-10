@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\HRM\Attendance;
 use App\Models\HRM\AttendanceType;
+use App\Models\HRM\Department;
 use App\Models\HRM\Designation;
 use App\Models\HRM\Leave;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -127,7 +128,7 @@ class User extends Authenticatable implements HasMedia
 
     public function attendanceType()
     {
-        return $this->belongsTo(AttendanceType::class);
+        return $this->belongsTo(AttendanceType::class, 'attendance_type_id');
     }
 
     public function designation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -135,5 +136,9 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsTo(Designation::class, 'designation');
     }
 
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 
 }
