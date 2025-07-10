@@ -91,6 +91,26 @@ class Project extends Model implements HasMedia
         return $this->hasMany(DailyWork::class);
     }
 
+    public function timeEntries()
+    {
+        return $this->hasMany(ProjectTimeEntry::class);
+    }
+
+    public function budgets()
+    {
+        return $this->hasMany(ProjectBudget::class);
+    }
+
+    public function budgetExpenses()
+    {
+        return $this->hasMany(ProjectBudgetExpense::class);
+    }
+
+    public function projectResources()
+    {
+        return $this->hasMany(ProjectResource::class);
+    }
+
     /**
      * Calculate project progress based on completed tasks.
      */

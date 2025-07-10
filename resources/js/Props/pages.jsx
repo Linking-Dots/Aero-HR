@@ -33,6 +33,7 @@ import {
   BuildingStorefrontIcon,
   ArrowPathIcon,
   CurrencyDollarIcon,
+  ClockIcon,
   DocumentTextIcon as DocumentTextIconLegacy, // Legacy document text icon
   ShoppingBagIcon as ShoppingBagIconLegacy, // Legacy shopping bag icon
 
@@ -207,19 +208,79 @@ export const getPages = (permissions, auth = null) => [
       }] : []),
     ]
   }] : []),
-  // 4. Projects (Project Management)
-  ...(permissions.includes('daily-works.view') ? [{
+  // 4. Project Management (Complete ERP Module)
+  // Note: Tasks, Milestones, Issues, and Resources are project-specific and accessible from individual project pages
+  // Only globally accessible features are shown in the main navigation
+  ...((permissions.includes('project-management.dashboard.view') || 
+       permissions.includes('project-management.projects.view') || 
+       permissions.includes('project-management.time-tracking.view') || 
+       permissions.includes('project-management.budget.view') || 
+       permissions.includes('daily-works.view')) ? [{
     name: 'Projects',
     icon: <BriefcaseIcon className="" />,
     priority: 4,
-    module: 'ppm',
+    module: 'project-management',
     subMenu: [
-      ...(permissions.includes('daily-works.view') ? [
-        { name: 'Worklog', icon: <DocumentTextIcon  />, route: 'daily-works' }
+      // Dashboard
+      ...(permissions.includes('project-management.dashboard.view') ? [
+        { name: 'Dashboard', icon: <HomeIcon  />, route: 'project-management.dashboard' }
       ] : []),
-      ...(permissions.includes('daily-works.view') ? [
-        { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'daily-works-summary' }
+      
+      // Core Project Management
+      ...(permissions.includes('project-management.projects.view') ? [
+        { name: 'Projects', icon: <FolderIcon  />, route: 'project-management.projects.index' }
       ] : []),
+      
+      // Task Management (Global)
+      ...(permissions.includes('project-management.tasks.view') ? [
+        { name: 'Tasks', icon: <ClipboardDocumentCheckIcon  />, route: 'project-management.tasks.global' }
+      ] : []),
+      
+      // Milestone Management (Global)
+      ...(permissions.includes('project-management.milestones.view') ? [
+        { name: 'Milestones', icon: <CalendarIcon  />, route: 'project-management.milestones.global' }
+      ] : []),
+      
+      // Issue Management (Global)
+      ...(permissions.includes('project-management.issues.view') ? [
+        { name: 'Issues', icon: <TicketIcon  />, route: 'project-management.issues.global' }
+      ] : []),
+      
+      // Resource Management (Global)
+      ...(permissions.includes('project-management.resources.view') ? [
+        { name: 'Resources', icon: <UserGroupIcon  />, route: 'project-management.resources.global' }
+      ] : []),
+      
+      // Global Project Management Tools
+      ...((permissions.includes('project-management.time-tracking.view') || permissions.includes('project-management.budget.view') || permissions.includes('project-management.gantt.view')) ? [{
+        name: 'Management',
+        icon: <ChartBarSquareIcon  />,
+        category: 'management',
+        subMenu: [
+          ...(permissions.includes('project-management.time-tracking.view') ? [
+            { name: 'Time Tracking', icon: <ClockIcon  />, route: 'project-management.time-tracking.index' },
+            { name: 'Time Reports', icon: <ChartBarSquareIcon  />, route: 'project-management.time-tracking.reports' },
+          ] : []),
+          ...(permissions.includes('project-management.budget.view') ? [
+            { name: 'Budgets', icon: <CurrencyDollarIcon  />, route: 'project-management.project-budgets.index' },
+            { name: 'Budget Reports', icon: <DocumentTextIcon  />, route: 'project-management.project-budgets.reports' },
+          ] : []),
+          ...(permissions.includes('project-management.gantt.view') ? [
+            { name: 'Gantt Overview', icon: <ChartBarSquareIcon  />, route: 'project-management.gantt.index' },
+          ] : []),
+        ]
+      }] : []),
+      
+      // Legacy Daily Works (for backward compatibility)
+      ...(permissions.includes('daily-works.view') ? [{
+        name: 'Legacy',
+        icon: <DocumentTextIcon  />,
+        category: 'legacy',
+        subMenu: [
+          { name: 'Worklog', icon: <DocumentTextIcon  />, route: 'daily-works' },
+          { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'daily-works-summary' },
+        ]
+      }] : []),
     ]
   }] : []),
   // 5. DMS (Document Management System)

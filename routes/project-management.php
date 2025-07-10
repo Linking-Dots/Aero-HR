@@ -5,6 +5,9 @@ use App\Http\Controllers\ProjectManagement\MilestoneController;
 use App\Http\Controllers\ProjectManagement\TaskController;
 use App\Http\Controllers\ProjectManagement\IssueController;
 use App\Http\Controllers\ProjectManagement\ResourceController;
+use App\Http\Controllers\ProjectManagement\TimeTrackingController;
+use App\Http\Controllers\ProjectManagement\BudgetController;
+use App\Http\Controllers\ProjectManagement\GanttController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified'])->prefix('project-management')->name('project-management.')->group(function () {
     // Dashboard
     Route::middleware(['permission:project-management.dashboard.view'])->get('/dashboard', [ProjectController::class, 'dashboard'])->name('dashboard');
+
+    // Global Views (All items across all projects)
+    Route::middleware(['permission:project-management.tasks.view'])->get('/tasks', [TaskController::class, 'globalIndex'])->name('tasks.global');
+    Route::middleware(['permission:project-management.milestones.view'])->get('/milestones', [MilestoneController::class, 'globalIndex'])->name('milestones.global');
+    Route::middleware(['permission:project-management.issues.view'])->get('/issues', [IssueController::class, 'globalIndex'])->name('issues.global');
+    Route::middleware(['permission:project-management.resources.view'])->get('/resources', [ResourceController::class, 'globalIndex'])->name('resources.global');
 
     // Projects
     Route::middleware(['permission:project-management.projects.view'])->group(function () {
@@ -73,4 +82,67 @@ Route::middleware(['auth', 'verified'])->prefix('project-management')->name('pro
     Route::middleware(['permission:project-management.resources.assign'])->post('/projects/{project}/resources', [ResourceController::class, 'store'])->name('resources.store');
     Route::middleware(['permission:project-management.resources.assign'])->put('/projects/{project}/resources/{resource}', [ResourceController::class, 'update'])->name('resources.update');
     Route::middleware(['permission:project-management.resources.assign'])->delete('/projects/{project}/resources/{resource}', [ResourceController::class, 'destroy'])->name('resources.destroy');
+
+    // Time Tracking
+    Route::middleware(['permission:project-management.time-tracking.view'])->group(function () {
+        Route::get('/time-tracking', [TimeTrackingController::class, 'index'])->name('time-tracking.index');
+        Route::get('/time-tracking/create', [TimeTrackingController::class, 'create'])->name('time-tracking.create');
+        Route::get('/time-tracking/{timeEntry}/edit', [TimeTrackingController::class, 'edit'])->name('time-tracking.edit');
+        Route::get('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'show'])->name('time-tracking.show');
+        Route::get('/time-tracking/reports', [TimeTrackingController::class, 'reports'])->name('time-tracking.reports');
+    });
+
+    Route::middleware(['permission:project-management.time-tracking.create'])->post('/time-tracking', [TimeTrackingController::class, 'store'])->name('time-tracking.store');
+    Route::middleware(['permission:project-management.time-tracking.update'])->put('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'update'])->name('time-tracking.update');
+    Route::middleware(['permission:project-management.time-tracking.delete'])->delete('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'destroy'])->name('time-tracking.destroy');
+    Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/{timeEntry}/approve', [TimeTrackingController::class, 'approve'])->name('time-tracking.approve');
+    Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/{timeEntry}/unapprove', [TimeTrackingController::class, 'unapprove'])->name('time-tracking.unapprove');
+    Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/bulk-approve', [TimeTrackingController::class, 'bulkApprove'])->name('time-tracking.bulk-approve');
+
+    // Project Budget
+    Route::middleware(['permission:project-management.budget.view'])->group(function () {
+        Route::get('/budgets', [BudgetController::class, 'index'])->name('project-budgets.index');
+        Route::get('/budgets/create', [BudgetController::class, 'create'])->name('project-budgets.create');
+        Route::get('/budgets/{projectBudget}/edit', [BudgetController::class, 'edit'])->name('project-budgets.edit');
+        Route::get('/budgets/{projectBudget}', [BudgetController::class, 'show'])->name('project-budgets.show');
+        Route::get('/budgets/{projectBudget}/expenses', [BudgetController::class, 'expenses'])->name('project-budgets.expenses');
+        Route::get('/budgets/reports', [BudgetController::class, 'reports'])->name('project-budgets.reports');
+    });
+
+    Route::middleware(['permission:project-management.budget.create'])->post('/budgets', [BudgetController::class, 'store'])->name('project-budgets.store');
+    Route::middleware(['permission:project-management.budget.update'])->put('/budgets/{projectBudget}', [BudgetController::class, 'update'])->name('project-budgets.update');
+    Route::middleware(['permission:project-management.budget.delete'])->delete('/budgets/{projectBudget}', [BudgetController::class, 'destroy'])->name('project-budgets.destroy');
+    Route::middleware(['permission:project-management.budget.create'])->post('/budgets/{projectBudget}/expenses', [BudgetController::class, 'addExpense'])->name('project-budgets.add-expense');
+    Route::middleware(['permission:project-management.budget.approve'])->post('/budgets/expenses/{expense}/approve', [BudgetController::class, 'approveExpense'])->name('project-budgets.approve-expense');
+
+    // Gantt Charts
+    Route::middleware(['permission:project-management.gantt.view'])->group(function () {
+        Route::get('/gantt', [GanttController::class, 'index'])->name('gantt.index');
+        Route::get('/projects/{project}/timeline', [GanttController::class, 'getProjectTimeline'])->name('gantt.timeline');
+        Route::get('/projects/{project}/critical-path', [GanttController::class, 'getCriticalPath'])->name('gantt.critical-path');
+    });
+
+    Route::middleware(['permission:project-management.gantt.update'])->group(function () {
+        Route::put('/gantt/tasks/{task}/dates', [GanttController::class, 'updateTaskDates'])->name('gantt.update-task-dates');
+        Route::put('/gantt/milestones/{milestone}/dates', [GanttController::class, 'updateMilestoneDates'])->name('gantt.update-milestone-dates');
+        Route::post('/gantt/dependencies', [GanttController::class, 'createDependency'])->name('gantt.create-dependency');
+        Route::delete('/gantt/dependencies', [GanttController::class, 'deleteDependency'])->name('gantt.delete-dependency');
+    });
+
+    // Enhanced Project Management API Endpoints
+    Route::middleware(['permission:project-management.projects.view'])->group(function () {
+        Route::get('/projects/analytics', [ProjectController::class, 'portfolioAnalytics'])->name('projects.analytics');
+        Route::get('/projects/timeline', [ProjectController::class, 'timeline'])->name('projects.timeline');
+        Route::get('/projects/matrix', [ProjectController::class, 'portfolioMatrix'])->name('projects.matrix');
+        Route::get('/projects/preferences', [ProjectController::class, 'getPreferences'])->name('projects.preferences');
+    });
+
+    Route::middleware(['permission:project-management.projects.update'])->group(function () {
+        Route::post('/projects/bulk-update', [ProjectController::class, 'bulkUpdate'])->name('projects.bulk-update');
+        Route::post('/projects/preferences', [ProjectController::class, 'savePreferences'])->name('projects.save-preferences');
+    });
+
+    Route::middleware(['permission:project-management.projects.export'])->group(function () {
+        Route::post('/projects/export', [ProjectController::class, 'export'])->name('projects.export');
+    });
 });

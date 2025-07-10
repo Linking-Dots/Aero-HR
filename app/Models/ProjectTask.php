@@ -115,6 +115,30 @@ class ProjectTask extends Model
     }
 
     /**
+     * Get the time entries for this task.
+     */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(ProjectTimeEntry::class, 'task_id');
+    }
+
+    /**
+     * Get the dependencies where this task is the successor.
+     */
+    public function dependencies(): HasMany
+    {
+        return $this->hasMany(ProjectTaskDependency::class, 'successor_id');
+    }
+
+    /**
+     * Get the dependencies where this task is the predecessor.
+     */
+    public function dependents(): HasMany
+    {
+        return $this->hasMany(ProjectTaskDependency::class, 'predecessor_id');
+    }
+
+    /**
      * Get task status text.
      */
     public function getStatusTextAttribute(): string
