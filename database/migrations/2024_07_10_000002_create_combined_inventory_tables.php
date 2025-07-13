@@ -71,14 +71,13 @@ return new class extends Migration
             Schema::create('stock_movements', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('inventory_item_id')->constrained()->cascadeOnDelete();
-                $table->morphs('reference'); // polymorphic relationship to any source of movement (sale, purchase, etc.)
+                $table->morphs('reference', 191); // polymorphic relationship to any source of movement (sale, purchase, etc.)
                 $table->decimal('quantity', 15, 2);
                 $table->foreignId('from_location_id')->nullable()->constrained('inventory_locations')->nullOnDelete();
                 $table->foreignId('to_location_id')->nullable()->constrained('inventory_locations')->nullOnDelete();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
                 $table->string('movement_type'); // purchase, sale, transfer, adjustment, return, etc.
                 $table->text('notes')->nullable();
-                $table->index([DB::raw('reference_type(100)'), DB::raw('reference_id(100)')], 'stock_movements_reference_type_reference_id_index');
                 $table->timestamps();
             });
         }
