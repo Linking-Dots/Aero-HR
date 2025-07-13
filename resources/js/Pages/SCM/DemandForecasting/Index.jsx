@@ -273,9 +273,9 @@ const DemandForecastIndex = () => {
                                 className="w-full lg:w-48"
                             >
                                 <SelectItem key="all">All Accuracy</SelectItem>
-                                <SelectItem key="high">High (>90%)</SelectItem>
+                                <SelectItem key="high">High (&gt90%)</SelectItem>
                                 <SelectItem key="medium">Medium (60-90%)</SelectItem>
-                                <SelectItem key="low">Low (<60%)</SelectItem>
+                                <SelectItem key="low">Low (&lt60%)</SelectItem>
                             </Select>
 
                             <Select
