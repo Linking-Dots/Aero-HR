@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::table('projects', function (Blueprint $table) {
             // ISO/PMBOK/Agile/PRINCE2/ERP-aligned fields
     
-            $table->string('project_code')->nullable()->after('project_name');
+           
             $table->string('health_status')->nullable()->after('status');
             $table->string('risk_level')->nullable()->after('health_status');
             $table->string('methodology')->nullable()->after('risk_level');
