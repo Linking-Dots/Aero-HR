@@ -1,0 +1,1 @@
+import{i as e}from"./app-ICdw8XZW.js";var i=({strokeWidth:o=1.5,...r})=>e.jsx("svg",{"aria-hidden":"true",fill:"none",focusable:"false",height:"1em",role:"presentation",stroke:"currentColor",strokeLinecap:"round",strokeLinejoin:"round",strokeWidth:o,viewBox:"0 0 24 24",width:"1em",...r,children:e.jsx("path",{d:"m6 9 6 6 6-6"})});export{i as C};
