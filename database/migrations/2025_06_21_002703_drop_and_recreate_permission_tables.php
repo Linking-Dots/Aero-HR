@@ -66,7 +66,8 @@ return new class extends Migration
             } else {
                 $table->unique(['name', 'guard_name']);
             }
-            $table->index(['hierarchy_level', 'guard_name']);
+            $table->index(['hierarchy_level', 'guard_name'], 'roles_hierarchy_level_guard_name_index');
+
         });
 
         // Create model_has_permissions table
