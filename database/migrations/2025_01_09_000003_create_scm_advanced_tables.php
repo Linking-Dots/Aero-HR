@@ -139,7 +139,10 @@ return new class extends Migration
                 $table->id();
                 $table->string('document_number')->unique();
                 $table->enum('document_type', ['invoice', 'bill_of_lading', 'packing_list', 'certificate_of_origin', 'customs_declaration', 'other']);
-                $table->morphs('trade_transaction', 'trade_docs_transaction_index'); // Can link to imports or exports
+                $table->string('trade_transaction_type', 100);
+                $table->unsignedBigInteger('trade_transaction_id');
+                $table->index(['trade_transaction_type', 'trade_transaction_id'], 'trade_docs_transaction_index');
+
                 $table->string('document_name');
                 $table->string('file_path')->nullable();
                 $table->string('file_name')->nullable();
