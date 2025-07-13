@@ -163,7 +163,10 @@ return new class extends Migration
                 $table->id();
                 $table->string('declaration_number')->unique();
                 $table->enum('declaration_type', ['import', 'export']);
-                $table->morphs('declarable', 'customs_declarable_index'); // Links to shipments or orders
+                $table->string('declarable_type', 100);
+                $table->unsignedBigInteger('declarable_id');
+                $table->index(['declarable_type', 'declarable_id'], 'customs_declarable_index');
+
                 $table->string('origin_country', 3); // ISO country code
                 $table->string('destination_country', 3); // ISO country code
                 $table->string('port_of_entry')->nullable();
