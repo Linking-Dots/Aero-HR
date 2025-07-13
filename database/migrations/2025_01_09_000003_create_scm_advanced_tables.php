@@ -111,7 +111,10 @@ return new class extends Migration
             Schema::create('return_requests', function (Blueprint $table) {
                 $table->id();
                 $table->string('rma_number')->unique();
-                $table->morphs('returnable', 'return_requests_returnable_index'); // Can be from purchase_orders, sales, etc.
+                $table->string('returnable_type', 100);
+                $table->unsignedBigInteger('returnable_id');
+                $table->index(['returnable_type', 'returnable_id'], 'return_requests_returnable_index');
+
                 $table->foreignId('requested_by')->constrained('users')->cascadeOnDelete();
                 $table->enum('return_type', ['defective', 'wrong_item', 'overage', 'damaged', 'expired', 'other'])->default('defective');
                 $table->text('reason');
