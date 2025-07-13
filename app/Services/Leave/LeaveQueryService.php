@@ -7,6 +7,7 @@ use App\Models\HRM\LeaveSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use HasPermissions;
 
 class LeaveQueryService
 {    /**
@@ -15,7 +16,7 @@ class LeaveQueryService
     public function getLeaveRecords(Request $request, int $perPage = 30, int $page = 1, ?string $employee = '', ?int $year = null, ?string $month = null): array
     {
         $user = Auth::user();
-        $isAdmin = $user->can('leaves.view'); // Use permission instead of role
+        $isAdmin = $user->can('leaves.view'); // Use Spatie's can() for permission check
 
         $perPage = $request->get('perPage', $perPage);
         $page = $request->get('employee') ? 1 : $request->get('page', $page);
