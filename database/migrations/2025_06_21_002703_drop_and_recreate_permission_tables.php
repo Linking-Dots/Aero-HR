@@ -36,13 +36,15 @@ return new class extends Migration
         Schema::create($tableNames['permissions'], function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
-            $table->string('guard_name');
-            $table->string('module')->nullable()->index(); // Added module grouping
+            $table->string('guard_name', 100);
+            $table->string('module', 100)->nullable(); // Limit length
             $table->string('description')->nullable(); // Added description
             $table->timestamps();
 
             $table->unique(['name', 'guard_name']);
-            $table->index(['module', 'guard_name']);
+            $table->index(['module', 'guard_name'], 'permissions_module_guard_name_index');
+
+
         });
 
         // Create roles table
