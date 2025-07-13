@@ -55,7 +55,8 @@ return new class extends Migration
                 $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
             }
             $table->string('name');
-            $table->string('guard_name');
+            $table->string('guard_name', 100); // or even 64 if your guards are short like 'web', 'api'
+
             $table->string('description')->nullable(); // Added description
             $table->integer('hierarchy_level')->default(50); // Added hierarchy level
             $table->boolean('is_system_role')->default(false); // Added system role flag
