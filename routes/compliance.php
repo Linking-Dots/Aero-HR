@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 // Compliance Routes
 Route::middleware(['auth', 'verified'])->prefix('compliance')->name('compliance.')->group(function () {
     // Compliance Dashboard
-    Route::middleware(['permission:compliance.dashboard.view'])->get('/dashboard', [DocumentController::class, 'dashboard'])->name('dashboard');
+
 
     // Documents
     Route::middleware(['permission:compliance.documents.view'])->group(function () {

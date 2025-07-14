@@ -275,7 +275,7 @@ class UserController extends Controller
             $systemHealth = [
                 'user_activation_rate' => $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0,
                 'role_coverage' => $totalUsers > 0 ? round(($securityMetrics['users_with_roles'] / $totalUsers) * 100, 1) : 0,
-                'department_coverage' => $totalUsers > 0 ? round((User::whereNotNull('department')->count() / $totalUsers) * 100, 1) : 0,
+                'department_coverage' => $totalUsers > 0 ? round((User::whereNotNull('department_id')->count() / $totalUsers) * 100, 1) : 0,
             ];
             
             // Compile comprehensive user management stats

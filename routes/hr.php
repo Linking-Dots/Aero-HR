@@ -293,4 +293,6 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
 
     // Managers for dropdowns
     Route::get('/managers', [\App\Http\Controllers\HR\ManagersController::class, 'index'])->name('managers.list');
+
+    
 });

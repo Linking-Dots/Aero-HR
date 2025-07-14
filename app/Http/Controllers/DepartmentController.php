@@ -200,8 +200,8 @@ class DepartmentController extends Controller
             $user = User::findOrFail($id);
 
             // Update the user's department
-            $departmentChanged = $user->department !== $request->input('department');
-            $user->department = $request->input('department');
+            $departmentChanged = $user->department_id !== $request->input('department');
+            $user->department_id = $request->input('department');
 
             // If department changed, reset designation
             if ($departmentChanged) {

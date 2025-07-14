@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('about')->nullable();
             $table->foreignId('report_to')->nullable()->constrained('users')->nullOnDelete();
             $table->string('password');
-            $table->foreignId('designation')->nullable()->constrained('designations')->nullOnDelete();
+            $table->foreignId('designation_id')->nullable()->constrained('designations')->nullOnDelete();
             $table->string('nid')->nullable();
             $table->string('name');
             $table->string('profile_image')->nullable();

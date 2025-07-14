@@ -13,9 +13,14 @@ return new class extends Migration
     {
         Schema::create('designations', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Designation title
-            $table->foreignId('department_id')->constrained('departments'); // Foreign key to departments table
-            $table->timestamps(); // Created at and updated at columns
+            $table->string('title')->comment('Designation title');
+            $table->foreignId('department_id')->constrained('departments')->comment('Foreign key to departments table');
+            $table->unsignedBigInteger('parent_id')->nullable()->comment('For hierarchical structure, if applicable');
+            $table->boolean('is_active')->default(true)->comment('Designation active status');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['department_id', 'is_active'], 'designation_dept_active_idx');
         });
     }
 

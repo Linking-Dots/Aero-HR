@@ -17,6 +17,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements HasMedia
 {
@@ -39,7 +40,7 @@ class User extends Authenticatable implements HasMedia
         'about',
         'report_to',
         'password',
-        'designation',
+        'designation_id',
         'nid',
         'name',
         'profile_image',
@@ -127,8 +128,8 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'report_to' => 'integer',
-        'designation' => 'integer',
-        'department' => 'integer',
+        'designation_id' => 'integer',
+        'department_id' => 'integer',
         'attendance_type_id' => 'integer',
         'attendance_config' => 'array',
         'preferences' => 'array',
@@ -188,13 +189,13 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsTo(AttendanceType::class, 'attendance_type_id');
     }
 
-    public function designation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function designation(): BelongsTo
     {
-        return $this->belongsTo(Designation::class, 'designation');
+        return $this->belongsTo(Designation::class, 'designation_id');
     }
 
-    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(Department::class, 'department_id');
     }
 }

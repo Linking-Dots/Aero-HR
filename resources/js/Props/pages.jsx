@@ -86,24 +86,24 @@ export const getPages = (permissions, auth = null) => [
         icon: <UserGroupIcon  />,
         category: 'core',
         subMenu: [
-          ...(permissions.includes('employees.view') ? [{ name: 'Staff', icon: <UserGroupIcon  />, route: 'employees' }] : []),
-          ...(permissions.includes('departments.view') ? [{ name: 'Depts', icon: <BuildingOffice2Icon  />, route: 'departments' }] : []),
-          ...(permissions.includes('designations.view') ? [{ name: 'Roles', icon: <BriefcaseIcon  />, route: 'designations' }] : []),
+          ...(permissions.includes('employees.view') ? [{ name: 'Employee', icon: <UserGroupIcon  />, route: 'employees' }] : []),
+          ...(permissions.includes('departments.view') ? [{ name: 'Departments', icon: <BuildingOffice2Icon  />, route: 'departments' }] : []),
+          ...(permissions.includes('designations.view') ? [{ name: 'Designations', icon: <BriefcaseIcon  />, route: 'designations.index' }] : []),
         ]
       }] : []),
       
       // Time & Attendance Management
       ...((permissions.includes('attendance.view') || permissions.includes('holidays.view') || permissions.includes('leaves.view')) ? [{
-        name: 'Time',
+        name: 'Time & Attendance',
         icon: <CalendarDaysIcon  />,
         category: 'time',
         subMenu: [
-          ...(permissions.includes('attendance.view') ? [{ name: 'Punch', icon: <CalendarDaysIcon  />, route: 'attendances' }] : []),
-          ...(permissions.includes('holidays.view') ? [{ name: 'Calendar', icon: <CalendarIcon  />, route: 'holidays' }] : []),
+          ...(permissions.includes('attendance.view') ? [{ name: 'Attendance', icon: <CalendarDaysIcon  />, route: 'attendances' }] : []),
+          ...(permissions.includes('holidays.view') ? [{ name: 'Holidays', icon: <CalendarIcon  />, route: 'holidays' }] : []),
           ...(permissions.includes('leaves.view') ? [
             { name: 'Leaves', icon: <ArrowRightOnRectangleIcon  />, route: 'leaves' },
-            { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'leave-summary' },
-            { name: 'Policy', icon: <Cog6ToothIcon  />, route: 'leave-settings' },
+            { name: 'Leaves Analytics', icon: <ChartBarSquareIcon  />, route: 'leave-summary' },
+            { name: 'Leaves Policies', icon: <Cog6ToothIcon  />, route: 'leave-settings' },
           ] : []),
         ]
       }] : []),

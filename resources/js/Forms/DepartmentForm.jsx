@@ -25,6 +25,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import GlassDialog from '@/Components/GlassDialog';
 
 const DepartmentForm = ({ open, onClose, onSuccess, department = null, managers = [], parentDepartments = [] }) => {
     const theme = useTheme();
@@ -129,7 +130,7 @@ const DepartmentForm = ({ open, onClose, onSuccess, department = null, managers 
     };
     
     return (
-        <Dialog
+        <GlassDialog
             open={open}
             onClose={loading ? undefined : onClose}
             maxWidth="md"
@@ -326,7 +327,7 @@ const DepartmentForm = ({ open, onClose, onSuccess, department = null, managers 
                     {loading ? 'Saving...' : department ? 'Update Department' : 'Create Department'}
                 </Button>
             </DialogActions>
-        </Dialog>
+        </GlassDialog>
     );
 };
 

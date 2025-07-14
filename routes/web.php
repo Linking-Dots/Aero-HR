@@ -173,7 +173,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['permission:departments.delete'])->delete('/departments/{id}', [DepartmentController::class, 'destroy'])->name('departments.delete');
     Route::middleware(['permission:departments.update'])->put('/users/{id}/department', [DepartmentController::class, 'updateUserDepartment'])->name('users.update-department');
     
-    Route::middleware(['permission:designations.view'])->get('/designations', [DesignationController::class, 'index'])->name('designations');
     Route::middleware(['permission:jurisdiction.view'])->get('/jurisdiction', [JurisdictionController::class, 'index'])->name('jurisdiction');
 
     // Daily works management routes
@@ -455,8 +454,7 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
         // Course Management
         Route::get('/courses', [LMSController::class, 'courses'])->name('lms.courses')->middleware('permission:lms.courses.view');
         Route::post('/courses', [LMSController::class, 'storeCourse'])->name('lms.courses.store')->middleware('permission:lms.courses.create');
-        Route::put('/courses/{id}', [LMSController::class, 'updateCourse'])->name('lms.courses.update')->middleware('permission:lms.courses.update');
-        Route::delete('/courses/{id}', [LMSController::class, 'destroyCourse'])->name('lms.courses.destroy')->middleware('permission:lms.courses.delete');
+
 
         // Student Management
         Route::get('/students', [LMSController::class, 'students'])->name('lms.students')->middleware('permission:lms.students.view');
@@ -473,8 +471,7 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
         // Assessment Management
         Route::get('/assessments', [LMSController::class, 'assessments'])->name('lms.assessments')->middleware('permission:lms.assessments.view');
         Route::post('/assessments', [LMSController::class, 'storeAssessment'])->name('lms.assessments.store')->middleware('permission:lms.assessments.create');
-        Route::put('/assessments/{id}', [LMSController::class, 'updateAssessment'])->name('lms.assessments.update')->middleware('permission:lms.assessments.update');
-        Route::delete('/assessments/{id}', [LMSController::class, 'destroyAssessment'])->name('lms.assessments.destroy')->middleware('permission:lms.assessments.delete');
+
 
         // Certificate Management
         Route::get('/certificates', [LMSController::class, 'certificates'])->name('lms.certificates')->middleware('permission:lms.certificates.view');
@@ -484,6 +481,22 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
 
         // Reports
         Route::get('/reports', [LMSController::class, 'reports'])->name('lms.reports')->middleware('permission:lms.reports.view');
+    });
+
+    // Designation Management
+    Route::middleware(['permission:hr.designations.view'])->group(function () {
+        // Initial page render (Inertia)
+        Route::get('/designations', [\App\Http\Controllers\DesignationController::class, 'index'])->name('designations.index');
+        // API data fetch (JSON)
+        Route::get('/designations/json', [\App\Http\Controllers\DesignationController::class, 'getDesignations'])->name('designations.json');
+        // Stats endpoint for frontend analytics
+        Route::get('/designations/stats', [\App\Http\Controllers\DesignationController::class, 'stats'])->name('designations.stats');
+        Route::post('/designations', [\App\Http\Controllers\DesignationController::class, 'store'])->name('designations.store');
+        Route::get('/designations/{id}', [\App\Http\Controllers\DesignationController::class, 'show'])->name('designations.show');
+        Route::put('/designations/{id}', [\App\Http\Controllers\DesignationController::class, 'update'])->name('designations.update');
+        Route::delete('/designations/{id}', [\App\Http\Controllers\DesignationController::class, 'destroy'])->name('designations.destroy');
+        // For dropdowns and API
+        Route::get('/designations/list', [\App\Http\Controllers\DesignationController::class, 'list'])->name('designations.list');
     });
 });
 
