@@ -193,7 +193,7 @@ const LeaveEmployeeTable = React.forwardRef(({
             error: "Failed to update leave status"
         });
     }, [setLeaves, isUpdating]);
-
+    
     const getStatusChip = (status) => {
         const config = statusConfig[status] || statusConfig['New'];
         const StatusIcon = config.icon;
@@ -235,7 +235,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     // Mobile card component for better mobile experience
-    const MobileLeaveCard = ({ leave }) => {
+    const MobileLeaveCard = ({ leave, updatingLeaveId, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus, canEditLeaves, canDeleteLeaves, canApproveLeaves, isAdminView }) => {
         const user = getUserInfo(leave.user_id);
         const duration = getLeaveDuration(leave.from_date, leave.to_date);
         const statusConf = statusConfig[leave.status] || statusConfig['New'];
@@ -268,7 +268,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                         </Box>
                         <Box className="flex items-center gap-2">
                             {getStatusChip(leave.status)}
-                            {hasAdminAccess && (
+                            {(canEditLeaves || canDeleteLeaves) && ( // Check specific permissions for dropdown
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <IconButton size="small">

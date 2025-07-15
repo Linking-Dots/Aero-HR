@@ -174,7 +174,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   }, [pagination, lastPage, fetchLeaves]);
 
   
-
+ // Memoized year options
   // Memoized year options following ISO standard (1900-current year)
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();

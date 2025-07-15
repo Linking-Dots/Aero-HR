@@ -258,7 +258,7 @@ const LeaveForm = ({
                     if (error.response.status === 422) {
                         // Handle validation errors
                         setErrors(error.response.data.errors || {});
-                        reject(error.response.data.error || 'Failed to submit leave application');
+ reject(error.response.data.message || 'Failed to submit leave application');
                     } else {
                         // Handle other HTTP errors
                         reject('An unexpected error occurred. Please try again later.');

@@ -471,10 +471,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // Intelligently fetch additional items if needed without full reload
     const fetchAdditionalItemsIfNeeded = useCallback(async () => {
-        // Only fetch if we're on page 1 and don't have enough items
-        if (pagination.currentPage === 1 && leaves && leaves.length < pagination.perPage) {
+        // Only fetch if the number of displayed items is less than the perPage limit
+        // This could happen after a deletion on any page, not just page 1.
+        if (leaves && leaves.length < pagination.perPage && totalRows > leaves.length) {
             // How many more items we need
-            const itemsNeeded = pagination.perPage - leaves.length;
+            const itemsNeeded = Math.min(pagination.perPage - leaves.length, totalRows - leaves.length); // Don't fetch more than exist in total
             if (itemsNeeded <= 0) return;
             
             console.log(`Fetching ${itemsNeeded} additional items to fill the page`);
@@ -482,8 +483,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
             try {
                 const response = await axios.get(route('leaves.paginate'), {
                     params: {
-                        page: 2, // Get from page 2
-                        perPage: itemsNeeded, // Only get what we need
+                        page: pagination.currentPage + 1, // Fetch the next page
+                        perPage: itemsNeeded,          // Request only the needed items
                         employee: filters.employee,
                         month: filters.selectedMonth,
                         status: filters.status !== 'all' ? filters.status : undefined,
@@ -500,7 +501,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     });
                 }
             } catch (error) {
-                console.error('Error fetching additional items:', error);
+                console.error(`Error fetching additional items from page ${pagination.currentPage + 1}:`, error);
             }
         }
     }, [pagination.currentPage, pagination.perPage, leaves, filters, sortLeavesByFromDate]);

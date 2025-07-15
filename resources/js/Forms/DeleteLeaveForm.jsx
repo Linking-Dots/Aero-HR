@@ -1,6 +1,6 @@
-import {Button, CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import { CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import GlassDialog from "@/Components/GlassDialog.jsx";
-import React from "react";
+import React, { useState } from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
 
@@ -111,11 +111,17 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={closeModal} color="primary">
+                <Button 
+                    onClick={closeModal} 
+                    color="primary"
+                    disabled={deleting} // Disable cancel button while deleting
+                    >
                     Cancel
                 </Button>
-                <Button loading={deleting} disabled={deleting} onClick={handleDelete} color="error" autoFocus>
-                    Delete
+                {/* Use a loading button for the delete action */}
+                <LoadingButton 
+                    loading={deleting} 
+                    disabled={deleting} onClick={handleDelete} color="error" autoFocus>Delete
                 </Button>
             </DialogActions>
         </GlassDialog>
