@@ -199,26 +199,56 @@ class DepartmentController extends Controller
 
             $user = User::findOrFail($id);
 
-            // Update the user's department
-            $departmentChanged = $user->department_id !== $request->input('department');
-            $user->department_id = $request->input('department');
+            // Check if department changed
+            $newDepartmentId = $request->input('department');
+            $departmentChanged = $user->department_id !== $newDepartmentId;
 
-            // If department changed, reset designation
+            // Update department
+            $user->department_id = $newDepartmentId;
+
+            // Optionally reset designation if department changed
             if ($departmentChanged) {
-                $user->designation = null;
+                $user->designation_id = null; // Use `designation_id` if it's a foreign key
             }
 
             $user->save();
 
-            return response()->json(['messages' => ['Department updated successfully']], 200);
+            return response()->json([
+                'messages' => ['Department updated successfully'],
+                'user' => $user, // Optional: return updated user info
+            ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error on updateUserDepartment', [
+                'errors' => $e->errors(),
+                'request' => $request->all(),
+            ]);
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('User not found during updateUserDepartment', [
+                'user_id' => $id,
+            ]);
             return response()->json(['errors' => ['User not found']], 404);
         } catch (\Exception $e) {
-            return response()->json(['errors' => ['An unexpected error occurred. Please try again later.']], 500);
+            \Log::error('Unexpected error during updateUserDepartment', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+                'user_id' => $id,
+            ]);
+
+            return response()->json([
+                'errors' => [
+                    'An unexpected error occurred.',
+                    'Message' => $e->getMessage(),
+                    'File' => $e->getFile(),
+                    'Line' => $e->getLine(),
+                ]
+            ], 500);
         }
     }
+
 
     /**
      * Get department statistics

@@ -401,17 +401,10 @@ class UserController extends Controller
                     'profile_image' => $employee->profile_image,
                     'active' => $employee->active,
                     // Include both ID and full name for department
-                    'department_id' => $employee->department,
-                    'department' => $employee->department ? ($employee->department instanceof Department ? $employee->department->name : 
-                        (is_numeric($employee->department) ? 
-                            (Department::find($employee->department) ? Department::find($employee->department)->name : null) : 
-                            $employee->department)) : null,
+                    'department' => $employee->department,
                     // Include both ID and name for designation
-                    'designation_id' => $employee->designation,
-                    'designation' => $employee->designation ? ($employee->designation instanceof Designation ? $employee->designation->name : 
-                        (is_numeric($employee->designation) ? 
-                            (Designation::find($employee->designation) ? Designation::find($employee->designation)->name : null) : 
-                            $employee->designation)) : null,
+                    'designation' => $employee->designation,
+                    
                     // Include attendance type
                     'attendance_type_id' => $employee->attendance_type_id,
                     'attendance_type' => $employee->attendanceType ? $employee->attendanceType->name : null,

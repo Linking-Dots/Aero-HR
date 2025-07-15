@@ -1,8 +1,9 @@
-import { CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import { Button, CircularProgress, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import GlassDialog from "@/Components/GlassDialog.jsx";
 import React, { useState } from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
+
 
 
 const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized, fetchLeavesStats }) => {
@@ -119,7 +120,7 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
                     Cancel
                 </Button>
                 {/* Use a loading button for the delete action */}
-                <LoadingButton 
+                <Button 
                     loading={deleting} 
                     disabled={deleting} onClick={handleDelete} color="error" autoFocus>Delete
                 </Button>

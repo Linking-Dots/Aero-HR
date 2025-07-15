@@ -36,7 +36,9 @@ import {
     CheckCircleIcon,
     XCircleIcon,
     ExclamationTriangleIcon,
-    PresentationChartLineIcon
+    PresentationChartLineIcon,
+    AdjustmentsHorizontalIcon,
+
 } from "@heroicons/react/24/outline";
 import { 
     MagnifyingGlassIcon 
@@ -51,6 +53,8 @@ import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import Fade from '@mui/material/Fade';
+
 
 const LeavesAdmin = ({ title, allUsers }) => {
     const { auth } = usePage().props;
@@ -66,15 +70,10 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const [lastPage, setLastPage] = useState(0);
     const [currentLeave, setCurrentLeave] = useState();
     const [error, setError] = useState('');
+    const [departments, setDepartments] = useState([]);
 
-    // Enhanced filters for admin view
-    const [filters, setFilters] = useState({
-        employee: '',
-        selectedMonth: dayjs().format('YYYY-MM'),
-        status: 'all',
-        leaveType: 'all',
-        department: 'all'
-    });
+ 
+
 
     // Pagination
     const [pagination, setPagination] = useState({
@@ -82,29 +81,43 @@ const LeavesAdmin = ({ title, allUsers }) => {
         currentPage: 1
     });
 
+    // Table-level loading spinner
+    const [tableLoading, setTableLoading] = useState(false);
 
-    // Filter handlers
+    // Show/Hide advanced filters panel
+    const [showFilters, setShowFilters] = useState(false);
+
+
+    const [filters, setFilters] = useState({
+    employee: '',
+    selectedMonth: dayjs().format('YYYY-MM'),
+    status: [],
+    leaveType: [],
+    department: []
+    });
+
     const handleFilterChange = useCallback((filterKey, filterValue) => {
-        // Validate year input according to ISO 8601
-        if (filterKey === 'year') {
-            const year = Number(filterValue);
-            if (year < 1900 || year > new Date().getFullYear()) {
-                console.warn('Invalid year selected. Must be between 1900 and current year.');
-                return;
-            }
+    console.log(`Filter changed: ${filterKey} =`, filterValue);
+
+    if (filterKey === 'year') {
+        const year = Number(filterValue);
+        if (year < 1900 || year > new Date().getFullYear()) {
+        console.warn('Invalid year selected. Must be between 1900 and current year.');
+        return;
         }
+    }
 
-        setFilters(prev => ({
-            ...prev,
-            [filterKey]: filterValue
-        }));
+    setFilters(prev => ({
+        ...prev,
+        [filterKey]: filterValue
+    }));
 
-        // Reset pagination when filters change
-        setPagination(prev => ({
-            ...prev,
-            currentPage: 1
-        }));
+    setPagination(prev => ({
+        ...prev,
+        currentPage: 1
+    }));
     }, []);
+
 
 
     // Quick stats state
@@ -122,14 +135,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const canEditLeaves = auth.permissions?.includes('leaves.update') || false;
     const canDeleteLeaves = auth.permissions?.includes('leaves.delete') || false;
 
-    // Memoized options for filters
-    const statusOptions = useMemo(() => [
-        { key: 'all', label: 'All Status', value: 'all' },
-        { key: 'pending', label: 'Pending', value: 'pending' },
-        { key: 'approved', label: 'Approved', value: 'approved' },
-        { key: 'rejected', label: 'Rejected', value: 'rejected' },
-        { key: 'new', label: 'New', value: 'new' }
-    ], []);
+  
 
     const leaveTypeOptions = useMemo(() => {
         const defaultOptions = [{ key: 'all', label: 'All Types', value: 'all' }];
@@ -144,6 +150,9 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
         return [...defaultOptions, ...dynamicOptions];
     }, [leavesData.leaveTypes]);
+
+    
+
 
     // Modal handlers
     const openModal = useCallback((modalType) => {
@@ -182,71 +191,58 @@ const LeavesAdmin = ({ title, allUsers }) => {
     }, []);
 
     const fetchLeavesData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(route('leaves.paginate'), {
-                params: {
-                    page: pagination.currentPage,
-                    perPage: pagination.perPage,
-                    employee: filters.employee,
-                    month: filters.selectedMonth,
-                    status: filters.status !== 'all' ? filters.status : undefined,
-                    leave_type: filters.leaveType !== 'all' ? filters.leaveType : undefined,
-                    department: filters.department !== 'all' ? filters.department : undefined
-                },
-            });
+    setLoading(true);
+    try {
+        const response = await axios.get(route('leaves.paginate'), {
+            params: {
+                page: pagination.currentPage,
+                perPage: pagination.perPage,
+                employee: filters.employee,
+                month: filters.selectedMonth,
+                status: filters.status !== 'all' ? filters.status : undefined,
+                leave_type: filters.leaveType !== 'all' ? filters.leaveType : undefined,
+                department: filters.department !== 'all' ? filters.department : undefined
+            },
+        });
 
-            if (response.status === 200) {
-               
-                const { leaves, leavesData } = response.data;
+        if (response.status === 200) {
+            const { leaves, leavesData, departments } = response.data;
 
-                console.log('Fetched leaves data:', response.data);
-                console.log('Leaves structure:', leaves);
-                
-                // Standard Laravel pagination structure
-                if (leaves.data && Array.isArray(leaves.data)) {
-                    console.log('Found paginated data with standard metadata');
-                    setLeaves(leaves.data);
-                    setTotalRows(leaves.total || leaves.data.length);
-                    setLastPage(leaves.last_page || 1);
-                    console.log('Pagination info:', {
-                        totalRows: leaves.total,
-                        lastPage: leaves.last_page,
-                        currentPage: leaves.current_page
-                    });
-                } else if (Array.isArray(leaves)) {
-                    // Handle direct array response
-                    console.log('Found direct array response without pagination');
-                    setLeaves(leaves);
-                    setTotalRows(leaves.length);
-                    setLastPage(1);
-                } else {
-                    console.error('Unexpected leaves data format:', leaves);
-                    setLeaves([]);
-                    setTotalRows(0);
-                    setLastPage(1);
-                }
-                
-                setLeavesData(leavesData);
-                
-
-                setError('');
-                setLoading(false);
-            }
-
-        } catch (error) {
-            console.error('Error fetching leaves data:', error.response);
-            if (error.response?.status === 404) {
-                const { leavesData } = error.response.data;
-                setLeavesData(leavesData);
-                setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
+            if (leaves?.data && Array.isArray(leaves.data)) {
+                setLeaves(leaves.data);
+                setTotalRows(leaves.total || leaves.data.length);
+                setLastPage(leaves.last_page || 1);
+            } else if (Array.isArray(leaves)) {
+                setLeaves(leaves);
+                setTotalRows(leaves.length);
+                setLastPage(1);
             } else {
-                setError('Error retrieving leaves data. Please try again.');
+                console.error('Unexpected leaves data format:', leaves);
+                setLeaves([]);
+                setTotalRows(0);
+                setLastPage(1);
             }
-            setLeaves(false);
-            setLoading(false);
+
+            setLeavesData(leavesData);
+            setDepartments(departments || []);
+            setError('');
         }
-    }, [filters, pagination.currentPage, pagination.perPage]);
+    } catch (error) {
+        console.error('Error fetching leaves data:', error.response);
+        if (error.response?.status === 404) {
+            const { leavesData } = error.response.data || {};
+            setLeavesData(leavesData || []);
+            setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
+        } else {
+            setError(error.response?.data?.message || 'Error retrieving leaves data. Please try again.');
+        }
+        setLeaves([]);
+        setTotalRows(0);
+        setLastPage(1);
+    } finally {
+        setLoading(false);
+    }
+}, [filters, pagination.currentPage, pagination.perPage]);
 
     const fetchLeavesStats = useCallback(async () => {
         try {
@@ -409,63 +405,87 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
   
 
+
+    const leaveMatchesFilters = useCallback((leave) => {
+        // Month filter
+        const leaveMonth = dayjs(leave.from_date).format('YYYY-MM');
+        if (filters.selectedMonth && leaveMonth !== filters.selectedMonth) return false;
+        // Employee filter
+        if (filters.employee) {
+            const user = allUsers?.find(u => String(u.id) === String(leave.user_id));
+            const filterValue = filters.employee.trim().toLowerCase();
+            if (!user) {
+                if (String(filters.employee) !== String(leave.user_id)) return false;
+            } else if (
+                String(user.id) !== filterValue &&
+                !(user.name && user.name.trim().toLowerCase().includes(filterValue))
+            ) {
+                return false;
+            }
+        }
+        // Status filter
+        if (filters.status && filters.status !== 'all' && String(leave.status).toLowerCase() !== String(filters.status).toLowerCase()) return false;
+        // Leave type filter
+        if (filters.leaveType && filters.leaveType !== 'all' && String(leave.leave_type).toLowerCase() !== String(filters.leaveType).toLowerCase()) return false;
+        // Department filter
+        if (filters.department && filters.department !== 'all') {
+            const user = allUsers?.find(u => String(u.id) === String(leave.user_id));
+            if (!user || String(user.department).toLowerCase() !== String(filters.department).toLowerCase()) return false;
+        }
+        return true;
+    }, [filters, allUsers]);
+
+    // Memoize leaves for table rendering
+    const memoizedLeaves = useMemo(() => leaves || [], [leaves]);
+
+    // Optimistic UI for add/edit
     const addLeaveOptimized = useCallback((newLeave) => {
-        const leaveMonth = dayjs(newLeave.from_date).format('YYYY-MM');
-        const isSameMonth = leaveMonth === filters.selectedMonth;
-        const isSameEmployee = !filters.employee || String(filters.employee) === String(newLeave.user_id);
-
-        // If the leave doesn't match current filters, don't update the UI
-        if (!isSameMonth || !isSameEmployee) {
-            return;
+        if (!leaveMatchesFilters(newLeave)) return;
+        setTableLoading(true);
+        setLeaves(prevLeaves => {
+            const updatedLeaves = [...prevLeaves, newLeave];
+            return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
+        });
+        updatePaginationMetadata(totalRows + 1);
+        setTableLoading(false);
+        if (pagination.currentPage !== 1) {
+            fetchLeavesData();
         }
-
-        // Only add to current page if we're on page 1
-        if (pagination.currentPage === 1) {
-            setLeaves(prevLeaves => {
-                const updatedLeaves = [...prevLeaves, newLeave];
-                // Return at most perPage items to maintain page size
-                return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
-            });
-            
-            // Update pagination metadata without triggering a reload
-            updatePaginationMetadata(totalRows + 1);
-        }
-        // We don't need to trigger a full reload - just update the counts
-    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee, pagination.currentPage, pagination.perPage, totalRows, updatePaginationMetadata]);
+    }, [leaveMatchesFilters, sortLeavesByFromDate, pagination.currentPage, pagination.perPage, totalRows, updatePaginationMetadata, fetchLeavesData]);
 
     const updateLeaveOptimized = useCallback((updatedLeave) => {
-        const leaveMonth = dayjs(updatedLeave.from_date).format('YYYY-MM');
-        const isSameMonth = leaveMonth === filters.selectedMonth;
-        const isSameEmployee = !filters.employee || String(filters.employee) === String(updatedLeave.user_id);
-        
-        // Check if the leave exists in the current page's data
         const leaveExistsInCurrentPage = leaves.some(leave => leave.id === updatedLeave.id);
-        
-        // If the updated leave doesn't match current filters but exists on this page,
-        // we should remove it from the current page
-        if ((!isSameMonth || !isSameEmployee) && leaveExistsInCurrentPage) {
+        setTableLoading(true);
+        if (!leaveMatchesFilters(updatedLeave) && leaveExistsInCurrentPage) {
             setLeaves(prevLeaves => {
                 return prevLeaves.filter(leave => leave.id !== updatedLeave.id);
             });
+            toast.info('Leave removed from filtered view.');
+            setTableLoading(false);
             return;
         }
-        
-        // If it's not on this page and doesn't match filters, do nothing
-        if (!leaveExistsInCurrentPage && (!isSameMonth || !isSameEmployee)) {
+        if (!leaveExistsInCurrentPage && !leaveMatchesFilters(updatedLeave)) {
+            setTableLoading(false);
             return;
         }
-        
-        // If it's on this page and still matches filters, update it in-place
-        if (leaveExistsInCurrentPage) {
-            setLeaves(prevLeaves => {
-                const updatedLeaves = prevLeaves.map(leave =>
+        setLeaves(prevLeaves => {
+            const exists = prevLeaves.some(leave => leave.id === updatedLeave.id);
+            let updatedLeaves;
+            if (exists) {
+                updatedLeaves = prevLeaves.map(leave =>
                     leave.id === updatedLeave.id ? updatedLeave : leave
                 );
-                return sortLeavesByFromDate(updatedLeaves);
-            });
+            } else {
+                updatedLeaves = [...prevLeaves, updatedLeave];
+            }
+            return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
+        });
+        toast.success('Leave updated!');
+        setTableLoading(false);
+        if (pagination.currentPage !== 1) {
+            fetchLeavesData();
         }
-        // No need to refresh the entire table
-    }, [sortLeavesByFromDate, filters.selectedMonth, filters.employee, leaves]);
+    }, [leaveMatchesFilters, sortLeavesByFromDate, leaves, pagination.currentPage, pagination.perPage, fetchLeavesData]);
 
 
 
@@ -474,12 +494,9 @@ const LeavesAdmin = ({ title, allUsers }) => {
         // Only fetch if the number of displayed items is less than the perPage limit
         // This could happen after a deletion on any page, not just page 1.
         if (leaves && leaves.length < pagination.perPage && totalRows > leaves.length) {
-            // How many more items we need
             const itemsNeeded = Math.min(pagination.perPage - leaves.length, totalRows - leaves.length); // Don't fetch more than exist in total
             if (itemsNeeded <= 0) return;
-            
-            console.log(`Fetching ${itemsNeeded} additional items to fill the page`);
-            
+            setTableLoading(true); // Show skeleton loader
             try {
                 const response = await axios.get(route('leaves.paginate'), {
                     params: {
@@ -492,19 +509,22 @@ const LeavesAdmin = ({ title, allUsers }) => {
                         department: filters.department !== 'all' ? filters.department : undefined
                     },
                 });
-                
                 if (response.status === 200 && response.data.leaves.data) {
-                    // Add these items to the current page
+                    // Add these items to the current page, filtered
                     setLeaves(prevLeaves => {
-                        const combinedLeaves = [...prevLeaves, ...response.data.leaves.data];
+                        const newItems = response.data.leaves.data.filter(leaveMatchesFilters);
+                        const combinedLeaves = [...prevLeaves, ...newItems];
                         return sortLeavesByFromDate(combinedLeaves);
                     });
                 }
             } catch (error) {
+                toast.error('Error fetching additional items.');
                 console.error(`Error fetching additional items from page ${pagination.currentPage + 1}:`, error);
+            } finally {
+                setTableLoading(false);
             }
         }
-    }, [pagination.currentPage, pagination.perPage, leaves, filters, sortLeavesByFromDate]);
+    }, [pagination.currentPage, pagination.perPage, leaves, filters, sortLeavesByFromDate, leaveMatchesFilters]);
 
 
     const deleteLeaveOptimized = useCallback((leaveId) => {
@@ -541,6 +561,8 @@ const LeavesAdmin = ({ title, allUsers }) => {
             fetchLeavesStats();
         }
     }, [fetchLeavesData, canManageLeaves]);
+
+    
 
 
     return (
@@ -627,92 +649,119 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                 {/* Quick Stats */}
                                 <StatsCards stats={statsData} />
                                 {/* Filters Section - Matching Employee View */}
-                                <div className="mb-6">
-                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                            <Input
-                                                label="Month/Year"
-                                                type="month"
-                                                value={filters.selectedMonth}
-                                                onChange={handleMonthChange}
-                                                startContent={<CalendarIcon className="w-4 h-4" />}
-                                                variant="bordered"
-                                                classNames={{
-                                                    inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                }}
-                                                size={isMobile ? "sm" : "md"}
-                                            />
-                                        </div>
-
-                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                            <Input
-                                                label="Search Employee"
-                                                placeholder="Enter name or ID..."
-                                                value={filters.employee}
-                                                onChange={handleSearch}
-                                                startContent={<MagnifyingGlassIcon className="w-4 h-4 text-default-400" />}
-                                                variant="bordered"
-                                                classNames={{
-                                                    inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                }}
-                                                size={isMobile ? "sm" : "md"}
-                                            />
-                                        </div>
-
-                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                            <Select
-                                                label="Leave Status"
-                                                selectedKeys={[filters.status]}
-                                                onSelectionChange={(keys) => handleFilterChange('status', Array.from(keys)[0])}
-                                                variant="bordered"
-                                                classNames={{
-                                                    trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                    popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
-                                                }}
-                                                size={isMobile ? "sm" : "md"}
-                                            >
-                                                {statusOptions.map((option) => (
-                                                    <SelectItem key={option.key} value={option.value}>
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </Select>
-                                        </div>
-
-                                        <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                            <Select
-                                                label="Leave Type"
-                                                selectedKeys={[filters.leaveType]}
-                                                onSelectionChange={(keys) => handleFilterChange('leaveType', Array.from(keys)[0])}
-                                                variant="bordered"
-                                                classNames={{
-                                                    trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
-                                                    popoverContent: "bg-white/10 backdrop-blur-lg border-white/20",
-                                                }}
-                                                size={isMobile ? "sm" : "md"}
-                                            >
-                                                {leaveTypeOptions.map((option) => (
-                                                    <SelectItem key={option.key} value={option.value}>
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </Select>
-                                        </div>
-
-                                        <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                                    <div className="flex-1">
+                                        <Input
+                                            label="Search Employee"
+                                            variant="bordered"
+                                            placeholder="Search by name or ID..."
+                                            value={filters.employee}
+                                            onValueChange={value => handleFilterChange('employee', value)}
+                                            startContent={<MagnifyingGlassIcon className="w-4 h-4" />}
+                                            classNames={{
+                                                input: "bg-transparent",
+                                                inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15",
+                                            }}
+                                            size={isMobile ? "sm" : "md"}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 items-end">
+                                        <ButtonGroup variant="bordered" className="bg-white/5">
                                             <Button
-                                                variant="flat"
-                                                color="primary"
-                                                size={isMobile ? "sm" : "md"}
-                                                onPress={fetchLeavesData}
-                                                isLoading={loading}
-                                                startContent={!loading && <ChartBarIcon className="w-4 h-4" />}
+                                                isIconOnly={isMobile}
+                                                color={showFilters ? 'primary' : 'default'}
+                                                onPress={() => setShowFilters(!showFilters)}
+                                                className={showFilters ? 'bg-purple-500/20' : 'bg-white/5'}
                                             >
-                                                Refresh
+                                                <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                                                {!isMobile && <span className="ml-1">Filters</span>}
                                             </Button>
-                                        </div>
+                                        </ButtonGroup>
                                     </div>
                                 </div>
+                                {showFilters && (
+                                    <Fade in={true} timeout={300}>
+                                        <div className="mb-6 p-4 bg-white/5 backdrop-blur-md rounded-lg border border-white/10">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                <Select
+                                                label="Leave Status"
+                                                selectionMode="multiple"
+                                                variant="bordered"
+                                                selectedKeys={filters.status}
+                                                onSelectionChange={keys => handleFilterChange('status', Array.from(keys))}
+                                                classNames={{ trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15" }}
+                                                >
+                                                <SelectItem key="pending" value="pending">Pending</SelectItem>
+                                                <SelectItem key="approved" value="approved">Approved</SelectItem>
+                                                <SelectItem key="rejected" value="rejected">Rejected</SelectItem>
+                                                <SelectItem key="new" value="new">New</SelectItem>
+                                                </Select>
+
+                                                <Select
+                                                label="Leave Type"
+                                                variant="bordered"
+                                                selectionMode="multiple"
+                                                selectedKeys={filters.leaveType}
+                                                onSelectionChange={keys => handleFilterChange('leaveType', Array.from(keys))}
+                                                classNames={{ trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15" }}
+                                                >
+                                                {leaveTypeOptions.map(option => (
+                                                    <SelectItem key={option.key} value={option.value}>{option.label}</SelectItem>
+                                                ))}
+                                                </Select>
+
+                                                <Select
+                                                label="Department"
+                                                variant="bordered"
+                                                selectionMode="multiple"
+                                                selectedKeys={filters.department}
+                                                onSelectionChange={keys => handleFilterChange('department', Array.from(keys))}
+                                                classNames={{ trigger: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15" }}
+                                                >
+                                                {departments.map(department => (
+                                                    <SelectItem key={department.id} value={department.id}>{department.name}</SelectItem>
+                                                ))}
+                                                </Select>
+
+                                                <Input
+                                                    label="Month/Year"
+                                                    type="month"
+                                                    value={filters.selectedMonth}
+                                                    onChange={handleMonthChange}
+                                                    startContent={<CalendarIcon className="w-4 h-4" />}
+                                                    variant="bordered"
+                                                    classNames={{ inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15" }}
+                                                    size={isMobile ? "sm" : "md"}
+                                                />
+                                            </div>
+                                            {/* Active Filters as Chips */}
+                                            {(filters.employee || filters.status.length || filters.leaveType.length || filters.department.length) && (
+                                                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+                                                {filters.employee && (
+                                                    <Chip variant="flat" color="primary" size="sm" onClose={() => handleFilterChange('employee', '')}>
+                                                    Employee: {filters.employee}
+                                                    </Chip>
+                                                )}
+                                                {filters.status.map(stat => (
+                                                    <Chip key={stat} variant="flat" color="secondary" size="sm" onClose={() => handleFilterChange('status', filters.status.filter(s => s !== stat))}>
+                                                    Status: {stat}
+                                                    </Chip>
+                                                ))}
+                                                {filters.leaveType.map(type => (
+                                                    <Chip key={type} variant="flat" color="warning" size="sm" onClose={() => handleFilterChange('leaveType', filters.leaveType.filter(t => t !== type))}>
+                                                    Type: {type}
+                                                    </Chip>
+                                                ))}
+                                                {filters.department.map(depId => (
+                                                    <Chip key={depId} variant="flat" color="success" size="sm" onClose={() => handleFilterChange('department', filters.department.filter(d => d !== depId))}>
+                                                    Department: {departments.find(dep => dep.id === Number(depId))?.name || 'Unknown'}
+                                                    </Chip>
+                                                ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Fade>
+                                )}
                                 {/* Table Section */}
                                 <div className="min-h-96">
                                     <Typography variant="h6" className="mb-4 flex items-center gap-2">
@@ -742,7 +791,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 handleClickOpen={handleClickOpen}
                                                 setCurrentLeave={setCurrentLeave}
                                                 openModal={openModal}
-                                                leaves={leaves}
+                                                leaves={memoizedLeaves}
                                                 allUsers={allUsers}
                                                 setLeaves={setLeaves}
                                                 employee={filters.employee}

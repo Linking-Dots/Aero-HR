@@ -55,7 +55,9 @@ const LeavesEmployee = ({ title, allUsers }) => {
     leaveTypes: [], 
     leaveCountsByUser: {} 
   });
-    const [tableLoading, setTableLoading] = useState(false); // New state for table-specific loading
+    // Table-level loading spinner
+  const [tableLoading, setTableLoading] = useState(false);
+
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ 
     page: 1, 
@@ -300,80 +302,108 @@ const LeavesEmployee = ({ title, allUsers }) => {
     return [...leavesArray].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
   }, []);
 
+  const leaveMatchesFilters = useCallback((leave) => {
+    // Year filter
+    const leaveYear = new Date(leave.from_date).getFullYear();
+    if (filters.year && leaveYear !== filters.year) return false;
+    // Employee filter (for future extensibility, currently always own)
+    if (filters.employee) {
+      const user = allUsers?.find(u => String(u.id) === String(leave.user_id));
+      const filterValue = filters.employee.trim().toLowerCase();
+      if (!user) {
+        if (String(filters.employee) !== String(leave.user_id)) return false;
+      } else if (
+        String(user.id) !== filterValue &&
+        !(user.name && user.name.trim().toLowerCase().includes(filterValue))
+      ) {
+        return false;
+      }
+    }
+    // Month filter
+    if (filters.selectedMonth) {
+      const leaveMonth = dayjs(leave.from_date).format('YYYY-MM');
+      if (leaveMonth !== filters.selectedMonth) return false;
+    }
+    // Status filter
+    if (filters.status && filters.status !== 'all' && String(leave.status).toLowerCase() !== String(filters.status).toLowerCase()) return false;
+    // Leave type filter
+    if (filters.leaveType && filters.leaveType !== 'all' && String(leave.leave_type).toLowerCase() !== String(filters.leaveType).toLowerCase()) return false;
+    // Department filter
+    if (filters.department && filters.department !== 'all') {
+      const user = allUsers?.find(u => String(u.id) === String(leave.user_id));
+      if (!user || String(user.department).toLowerCase() !== String(filters.department).toLowerCase()) return false;
+    }
+    return true;
+  }, [filters, allUsers]);
+
+  // Memoize leaves for table rendering
+  const memoizedLeaves = useMemo(() => leaves || [], [leaves]);
+
+  // Optimistic UI for add/edit
   const addLeaveOptimized = useCallback((newLeave) => {
-    const leaveYear = new Date(newLeave.from_date).getFullYear();
-    const isSameYear = leaveYear === filters.year;
-
-    if (!isSameYear) return;
-
+    if (!leaveMatchesFilters(newLeave)) return;
+    setTableLoading(true);
     setLeaves(prevLeaves => {
       const updatedLeaves = [...prevLeaves, newLeave];
-      return sortLeavesByFromDate(updatedLeaves);
+      return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
     });
-    
-    // Update pagination metadata
     updatePaginationMetadata({
       total: totalRows + 1,
       last_page: Math.ceil((totalRows + 1) / pagination.perPage),
       current_page: pagination.page,
       per_page: pagination.perPage
     });
-    
-    // Only fetch leave stats to update the balance cards
+
+    setTableLoading(false);
+    if (pagination.page !== 1) {
+      fetchLeaves();
+    }
     fetchLeavesStats();
-  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats, totalRows, pagination, updatePaginationMetadata]);
+  }, [leaveMatchesFilters, sortLeavesByFromDate, pagination, totalRows, updatePaginationMetadata, fetchLeaves, fetchLeavesStats]);
 
   const updateLeaveOptimized = useCallback((updatedLeave) => {
-    const leaveYear = new Date(updatedLeave.from_date).getFullYear();
-    const isSameYear = leaveYear === filters.year;
-
-    // If the leave year is changing and no longer matches the filter, remove it from the current view
-    if (!isSameYear) {
+    const leaveExistsInCurrentPage = leaves.some(leave => leave.id === updatedLeave.id);
+    setTableLoading(true);
+    if (!leaveMatchesFilters(updatedLeave) && leaveExistsInCurrentPage) {
       setLeaves(prevLeaves => {
-        const filteredLeaves = prevLeaves.filter(leave => leave.id !== updatedLeave.id);
-        
-        // Update pagination metadata to reflect the removed item
-        const newTotal = Math.max(0, totalRows - 1);
-        updatePaginationMetadata({
-          total: newTotal,
-          last_page: Math.max(1, Math.ceil(newTotal / pagination.perPage)),
-          current_page: pagination.page,
-          per_page: pagination.perPage
-        });
-        
-        // Check if we need to fetch more data after removing an item
-        fetchAdditionalItemsIfNeeded(filteredLeaves, newTotal, 'update-remove');
-        
-        return filteredLeaves;
+        return prevLeaves.filter(leave => leave.id !== updatedLeave.id);
       });
-      
-      // Only fetch leave stats to update the balance cards
-      fetchLeavesStats();
+      toast.info('Leave removed from filtered view.');
+      setTableLoading(false);
       return;
     }
-
+    if (!leaveExistsInCurrentPage && !leaveMatchesFilters(updatedLeave)) {
+      setTableLoading(false);
+      return;
+    }
     setLeaves(prevLeaves => {
-      const updatedLeaves = prevLeaves.map(leave =>
-        leave.id === updatedLeave.id ? updatedLeave : leave
-      );
-      return sortLeavesByFromDate(updatedLeaves);
+      const exists = prevLeaves.some(leave => leave.id === updatedLeave.id);
+      let updatedLeaves;
+      if (exists) {
+        updatedLeaves = prevLeaves.map(leave =>
+          leave.id === updatedLeave.id ? updatedLeave : leave
+        );
+      } else {
+        updatedLeaves = [...prevLeaves, updatedLeave];
+      }
+      return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
     });
-    
-    // Only fetch leave stats to update the balance cards
+    toast.success('Leave updated!');
+    setTableLoading(false);
+    if (pagination.page !== 1) {
+      fetchLeaves();
+    }
     fetchLeavesStats();
-  }, [sortLeavesByFromDate, filters.year, fetchLeavesStats, totalRows, pagination, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
+  }, [leaveMatchesFilters, sortLeavesByFromDate, leaves, pagination, fetchLeaves, fetchLeavesStats]);
 
   const deleteLeaveOptimized = useCallback((leaveId) => {
     setLeaves(prevLeaves => {
       const updatedLeaves = prevLeaves.filter(leave => leave.id !== leaveId);
-      
       // After removing a leave, check if we need to fetch more data
       const newTotal = Math.max(0, totalRows - 1);
       fetchAdditionalItemsIfNeeded(updatedLeaves, newTotal, 'delete');
-      
       return updatedLeaves;
     });
-    
     // Update pagination metadata
     const newTotal = Math.max(0, totalRows - 1);
     updatePaginationMetadata({
@@ -382,7 +412,6 @@ const LeavesEmployee = ({ title, allUsers }) => {
       current_page: pagination.page,
       per_page: pagination.perPage
     });
-    
     // Only fetch leave stats to update the balance cards
     fetchLeavesStats();
   }, [fetchLeavesStats, totalRows, pagination, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
@@ -580,9 +609,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                   label: "Refresh",
                   icon: <ArrowPathIcon className="w-4 h-4" />,
                   onPress: fetchLeaves,
- isDisabled: tableLoading, // Disable refresh button when table is loading
-                  variant: "bordered",
-                  className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
+                  className: "bg-gradient-to-r from-[rgba(var(--theme-success-rgb),0.8)] to-[rgba(var(--theme-success-rgb),1)] text-white font-medium hover:opacity-90"
                 }
               ]}
             >

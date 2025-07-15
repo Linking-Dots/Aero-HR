@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Models\HRM\Department;
 
 class LeaveController extends Controller
 {
@@ -42,6 +43,7 @@ class LeaveController extends Controller
         return Inertia::render('LeavesEmployee', [
             'title' => 'Leaves',
             'allUsers' => User::all(),
+            
         ]);
     }
 
@@ -57,22 +59,14 @@ class LeaveController extends Controller
     {
         try {
             $leaveData = $this->queryService->getLeaveRecords($request);
-            $stats = $this->queryService->getLeaveStatistics($request);
-
-            if ($leaveData['leaveRecords']->isEmpty()) {
-                return response()->json([
-                    'message' => 'No leave records found for the selected period.',
-                    'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
-                    'leavesData' => $leaveData['leavesData'],
-                    'stats' => $stats,
-                ], 200); // Changed to 200 instead of 404 to ensure frontend gets pagination structure
-            }
+         
 
             return response()->json([
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                 'leavesData' => $leaveData['leavesData'],
-                'stats' => $stats,
-            ]);
+                'departments' => Department::all('id', 'name'),
+                'message' => $leaveData['leaveRecords']->isEmpty() ? 'No leave records found for the selected period.' : null,
+            ], 200);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([

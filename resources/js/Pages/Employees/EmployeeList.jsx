@@ -229,10 +229,7 @@ const EmployeesList = ({ title, departments, designations, attendanceTypes }) =>
     fetchStats(); // Refresh stats after deletion
   }, [fetchStats]);
 
-  const toggleEmployeeStatusOptimized = useCallback((id, active) => {
-    updateEmployeeOptimized(id, { active });
-    fetchStats(); // Refresh stats when status changes
-  }, [updateEmployeeOptimized, fetchStats]);
+
 
   // Get filtered designations based on selected department
   const filteredDesignations = useMemo(() => {

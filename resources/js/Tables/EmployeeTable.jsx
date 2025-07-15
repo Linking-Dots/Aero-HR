@@ -63,6 +63,7 @@ const EmployeeTable = ({
   updateEmployeeOptimized,
   deleteEmployeeOptimized
 }) => {
+
   const [loadingStates, setLoadingStates] = useState({});
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -81,24 +82,23 @@ const EmployeeTable = ({
     return loadingStates[`${userId}-${operation}`] || false;
   };
 
-  // Handle department change
   const handleDepartmentChange = async (userId, departmentId) => {
     setLoading(userId, 'department', true);
-    
+
     try {
       const response = await axios.post(route('user.updateDepartment', { id: userId }), {
         department: departmentId
       });
-      
+
       if (response.status === 200) {
-        // Get the department name
-        const departmentName = departments.find(d => d.id === parseInt(departmentId))?.name || '';
-        
-        // Update optimistically
+        const departmentObj = departments.find(d => d.id === parseInt(departmentId)) || null;
+
         if (updateEmployeeOptimized) {
           updateEmployeeOptimized(userId, { 
             department_id: departmentId,
-            department: departmentName
+            department: departmentObj,
+            designation_id: null,
+            designation: null
           });
         }
         toast.success('Department updated successfully');
@@ -111,24 +111,21 @@ const EmployeeTable = ({
     }
   };
 
-  // Handle designation change
   const handleDesignationChange = async (userId, designationId) => {
     setLoading(userId, 'designation', true);
-    
+
     try {
       const response = await axios.post(route('user.updateDesignation', { id: userId }), {
-        designation: designationId
+        designation_id: designationId
       });
-      
+
       if (response.status === 200) {
-        // Get the designation name
-        const designationName = designations.find(d => d.id === parseInt(designationId))?.title || '';
-        
-        // Update optimistically
+        const designationObj = designations.find(d => d.id === parseInt(designationId)) || null;
+
         if (updateEmployeeOptimized) {
           updateEmployeeOptimized(userId, { 
             designation_id: designationId,
-            designation: designationName
+            designation: designationObj
           });
         }
         toast.success('Designation updated successfully');
@@ -140,6 +137,8 @@ const EmployeeTable = ({
       setLoading(userId, 'designation', false);
     }
   };
+
+
 
   // Handle attendance type change
   const handleAttendanceTypeChange = async (userId, attendanceTypeId) => {
@@ -171,98 +170,7 @@ const EmployeeTable = ({
     }
   };
 
-  const handleChange = async (key, userId, valueId) => {
-    setLoading(userId, key, true);
-    
-    const promise = new Promise(async (resolve, reject) => {
-      try {
-        let routeName;
-        let requestBody = {};
-        
-        switch (key) {
-          case 'department':
-            routeName = 'user.updateDepartment';
-            requestBody = { department: valueId };
-            break;
-          case 'designation':
-            routeName = 'user.updateDesignation';
-            requestBody = { designation: valueId };
-            break;
-          case 'attendance_type':
-            routeName = 'user.updateAttendanceType';
-            requestBody = { attendance_type_id: valueId };
-            break;
-          default:
-            routeName = 'user.updateDepartment';
-            requestBody = { [key]: valueId };
-        }
-
-        const response = await fetch(route(routeName, { id: userId }), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Update the UI optimistically
-          if (setUsers) {
-            setUsers(prevUsers => 
-              prevUsers.map((user) => {
-                if (String(user.id) === String(userId)) {
-                  const updatedUser = { ...user };
-                  
-                  if (key === 'department' && user.department !== valueId) {
-                    updatedUser.designation = null;
-                  }
-                  
-                  if (key === 'attendance_type') {
-                    updatedUser.attendance_type_id = valueId;
-                    const attendanceType = attendanceTypes?.find(type => type.id === valueId);
-                    if (attendanceType) {
-                      updatedUser.attendance_type = attendanceType;
-                    }
-                  } else {
-                    updatedUser[key] = valueId;
-                  }
-                  
-                  return updatedUser;
-                }
-                return user;
-              })
-            );
-          }
-          
-          resolve([data.messages || data.message || 'Updated successfully']);
-        } else {
-          reject([data.messages || data.message || 'Failed to update information.']);
-        }
-      } catch (error) {
-        console.error(`Error updating ${key}:`, error);
-        reject(['An unexpected error occurred.']);
-      } finally {
-        setLoading(userId, key, false);
-      }
-    });
-
-    toast.promise(promise, {
-      pending: `Updating ${key.replace('_', ' ')}...`,
-      success: {
-        render({ data }) {
-          return Array.isArray(data) ? data.join(', ') : data;
-        },
-      },
-      error: {
-        render({ data }) {
-          return Array.isArray(data) ? data.join(', ') : data;
-        },
-      },
-    });
-  };
+ 
 
   // Delete employee
   const handleDelete = async (userId) => {
@@ -430,84 +338,80 @@ const EmployeeTable = ({
             )}
           </div>
         );
-
-      case "department":
-        return (
-          <div className="flex flex-col gap-2 min-w-[150px]">
-            <Dropdown>
-              <DropdownTrigger>
-                <Button 
-                  variant="bordered"
-                  size="sm"
-                  className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
-                  startContent={
-                    isLoading(user.id, 'department') ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <BuildingOfficeIcon className="w-4 h-4" />
-                    )
-                  }
-                  endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                  isDisabled={isLoading(user.id, 'department')}
-                >
-                  {user.department || "Select Department"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="Department options">
-                {departments?.map((dept) => (
-                  <DropdownItem
-                    key={dept.id.toString()}
-                    onPress={() => handleDepartmentChange(user.id, dept.id)}
+        case "department":
+          return (
+            <div className="flex flex-col gap-2 min-w-[150px]">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button 
+                    variant="bordered"
+                    size="sm"
+                    className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
+                    startContent={
+                      isLoading(user.id, 'department') ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        <BuildingOfficeIcon className="w-4 h-4" />
+                      )
+                    }
+                    endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
+                    isDisabled={isLoading(user.id, 'department')}
                   >
-                    {dept.name}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        );
+                    {user.department?.name || "Select Department"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Department options">
+                  {departments?.map((dept) => (
+                    <DropdownItem
+                      key={dept.id.toString()}
+                      onPress={() => handleDepartmentChange(user.id, dept.id)}
+                    >
+                      {dept.name}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          );
 
-      case "designation":
-        // Filter designations based on selected department
-        const departmentId = user.department_id || user.department;
-        const filteredDesignations = designations?.filter(d => 
-          d.department_id === parseInt(departmentId)
-        ) || [];
-        
-        return (
-          <div className="flex flex-col gap-2 min-w-[150px]">
-            <Dropdown>
-              <DropdownTrigger>
-                <Button 
-                  variant="bordered"
-                  size="sm"
-                  className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
-                  startContent={
-                    isLoading(user.id, 'designation') ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <BriefcaseIcon className="w-4 h-4" />
-                    )
-                  }
-                  endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                  isDisabled={!departmentId || isLoading(user.id, 'designation')}
-                >
-                  {user.designation || "Select Designation"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="Designation options">
-                {filteredDesignations.map((desig) => (
-                  <DropdownItem
-                    key={desig.id.toString()}
-                    onPress={() => handleDesignationChange(user.id, desig.id)}
+        case "designation":
+          const departmentId = user.department?.id;
+          const filteredDesignations = designations?.filter(d => d.department_id === parseInt(departmentId)) || [];
+
+          return (
+            <div className="flex flex-col gap-2 min-w-[150px]">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button 
+                    variant="bordered"
+                    size="sm"
+                    className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
+                    startContent={
+                      isLoading(user.id, 'designation') ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        <BriefcaseIcon className="w-4 h-4" />
+                      )
+                    }
+                    endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
+                    isDisabled={!departmentId || isLoading(user.id, 'designation')}
                   >
-                    {desig.title}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        );
+                    {user.designation?.title || "Select Designation"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Designation options">
+                  {filteredDesignations.map((desig) => (
+                    <DropdownItem
+                      key={desig.id.toString()}
+                      onPress={() => handleDesignationChange(user.id, desig.id)}
+                    >
+                      {desig.title}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          );
 
       case "attendance_type":
         return (

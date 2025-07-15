@@ -24,6 +24,7 @@ class LeaveQueryService
         $year = $request->get('year', $year);
         $month = $request->get('month', $month);
         $status = $request->get('status');
+        $department = $request->get('department'); // Extract department if provided
         $leaveType = $request->get('leave_type');
         $specificUserId = $request->get('user_id'); // Extract user_id if provided
 
@@ -46,6 +47,7 @@ class LeaveQueryService
         $this->applyEmployeeFilter($leavesQuery, $employee);
         $this->applyStatusFilter($leavesQuery, $status);
         $this->applyLeaveTypeFilter($leavesQuery, $leaveType);
+        $this->applyDepartmentFilter($leavesQuery, $department); // Apply department filter if provided
 
         $leaveRecords = $leavesQuery->orderByDesc('leaves.from_date')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -110,36 +112,89 @@ class LeaveQueryService
     /**
      * Apply status filter to the query
      */
-    private function applyStatusFilter($query, ?string $status): void
+    private function applyStatusFilter($query, $status): void
     {
-        if ($status && $status !== 'all') {
-            // Map frontend status to database status values
-            $statusMap = [
-                'pending' => ['New', 'Pending'],
-                'approved' => ['Approved'],
-                'rejected' => ['Declined', 'Rejected'],
-                'new' => ['New']
-            ];
+        if (!empty($status)) {
+            if (is_array($status)) {
+                // Flatten all mapped statuses for all selected keys
+                $statusMap = [
+                    'pending' => ['New', 'Pending'],
+                    'approved' => ['Approved'],
+                    'rejected' => ['Declined', 'Rejected'],
+                    'new' => ['New'],
+                ];
 
-            if (isset($statusMap[$status])) {
-                $query->whereIn('leaves.status', $statusMap[$status]);
+                $mappedStatuses = [];
+
+                foreach ($status as $stat) {
+                    if (isset($statusMap[$stat])) {
+                        $mappedStatuses = array_merge($mappedStatuses, $statusMap[$stat]);
+                    } else {
+                        $mappedStatuses[] = ucfirst($stat);
+                    }
+                }
+
+                $mappedStatuses = array_unique($mappedStatuses);
+
+                $query->whereIn('leaves.status', $mappedStatuses);
             } else {
-                $query->where('leaves.status', ucfirst($status));
+                // Previous single string logic
+                if ($status !== 'all') {
+                    $statusMap = [
+                        'pending' => ['New', 'Pending'],
+                        'approved' => ['Approved'],
+                        'rejected' => ['Declined', 'Rejected'],
+                        'new' => ['New'],
+                    ];
+
+                    if (isset($statusMap[$status])) {
+                        $query->whereIn('leaves.status', $statusMap[$status]);
+                    } else {
+                        $query->where('leaves.status', ucfirst($status));
+                    }
+                }
             }
         }
     }
 
+
     /**
      * Apply leave type filter to the query
      */
-    private function applyLeaveTypeFilter($query, ?string $leaveType): void
+    private function applyLeaveTypeFilter($query, $leaveType): void
     {
-        if ($leaveType && $leaveType !== 'all') {
-            $query->whereHas('leaveSetting', function($q) use ($leaveType) {
-                $q->where('type', 'like', "%$leaveType%");
-            });
+        if (!empty($leaveType)) {
+            if (is_array($leaveType)) {
+                $query->whereHas('leaveSetting', function ($q) use ($leaveType) {
+                    foreach ($leaveType as $type) {
+                        $q->orWhere('type', 'like', "%$type%");
+                    }
+                });
+            } elseif ($leaveType !== 'all') {
+                $query->whereHas('leaveSetting', function ($q) use ($leaveType) {
+                    $q->where('type', 'like', "%$leaveType%");
+                });
+            }
         }
     }
+
+
+
+    private function applyDepartmentFilter($query, $department): void
+    {
+        if (!empty($department)) {
+            if (is_array($department)) {
+                $query->whereHas('employee', function ($q) use ($department) {
+                    $q->whereIn('department_id', $department);
+                });
+            } elseif ($department !== 'all') {
+                $query->whereHas('employee', function ($q) use ($department) {
+                    $q->where('department_id', '=', $department);
+                });
+            }
+        }
+    }
+
 
     /**
      * Calculate leave counts and remaining days for users

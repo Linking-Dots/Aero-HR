@@ -90,6 +90,9 @@ const LeaveEmployeeTable = React.forwardRef(({
     const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
     const isMobile = useMediaQuery('(max-width: 640px)');
 
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updatingLeave, setUpdatingLeave] = useState(null);
+
     const [updatingLeaveId, setUpdatingLeaveId] = useState(null);
     const [selectedLeaves, setSelectedLeaves] = useState(new Set());
 

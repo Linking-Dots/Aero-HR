@@ -217,7 +217,7 @@ class AttendanceController extends Controller
                     $remarks = 'Holiday';
                 }
             } elseif ($leave) {
-                $symbol = $leaveTypes->firstWhere('type', $leave->leave_type)->symbol ?? '/';
+                $symbol = $leaveTypes->firstWhere('id', $leave->leave_type)->symbol ?? '/';
                 $remarks = 'On Leave';
             } elseif ($attendancesForDate->isNotEmpty()) {
                 $first = $attendancesForDate->first();
