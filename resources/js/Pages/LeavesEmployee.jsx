@@ -45,8 +45,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
   const { auth } = usePage().props;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-      const [totalRows, setTotalRows] = useState(0);
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+    const [totalRows, setTotalRows] = useState(0);
       const [lastPage, setLastPage] = useState(0);
   // State management
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     leaveTypes: [], 
     leaveCountsByUser: {} 
   });
+    const [tableLoading, setTableLoading] = useState(false); // New state for table-specific loading
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ 
     page: 1, 
@@ -83,7 +84,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
 
    // Fetch leaves data with error handling
   const fetchLeaves = useCallback(async () => {
-    setLoading(true);
+ setTableLoading(true); // Use tableLoading for table refresh
     try {
       const { page, perPage } = pagination;
       const { year } = filters;
@@ -133,9 +134,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
             }
             
             setLeavesData(leavesData);
-            
             setError('');
-            setLoading(false);
       }
     } catch (error) {
       console.error('Error fetching leaves:', error);
@@ -155,7 +154,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
         per_page: pagination.perPage
       });
     } finally {
-      setLoading(false);
+ setTableLoading(false); // Reset tableLoading
     }
   }, [pagination.page, pagination.perPage, filters, auth.user.id, updatePaginationMetadata]);
 
@@ -581,7 +580,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                   label: "Refresh",
                   icon: <ArrowPathIcon className="w-4 h-4" />,
                   onPress: fetchLeaves,
-                  isDisabled: loading,
+ isDisabled: tableLoading, // Disable refresh button when table is loading
                   variant: "bordered",
                   className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
                 }
@@ -625,7 +624,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         size={isMobile ? "sm" : "md"}
                         onPress={fetchLeaves}
                         isLoading={loading}
-                        startContent={!loading && <ChartBarIcon className="w-4 h-4" />}
+                        startContent={!loading && !tableLoading && <ArrowPathIcon className="w-4 h-4" />}
                       >
                         Refresh
                       </Button>
@@ -649,7 +648,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
                     Leave History
                   </Typography>
 
-                  {loading ? (
+                  {tableLoading ? ( // Use tableLoading for the table spinner
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
                       <CardBody className="text-center py-12">
                         <CircularProgress size={40} />

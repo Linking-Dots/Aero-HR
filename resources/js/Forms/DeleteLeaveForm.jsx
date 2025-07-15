@@ -7,8 +7,10 @@ import {useTheme} from "@mui/material/styles";
 
 const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, setTotalRows, setLastPage, setError, deleteLeaveOptimized, fetchLeavesStats }) => {
     const theme = useTheme();
+    const [deleting, setDeleting] = useState(false);
 
     const handleDelete = () => {
+        setDeleting(true);
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.delete(route('leave-delete', { id: leaveId, route: route().current() }));
@@ -41,6 +43,7 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
                 }
                 reject(error.response.data.error || 'Failed to delete leave application');
             } finally {
+                setDeleting(false);
                 closeModal();
             }
         });
@@ -111,7 +114,7 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
                 <Button onClick={closeModal} color="primary">
                     Cancel
                 </Button>
-                <Button onClick={handleDelete} color="error" autoFocus>
+                <Button loading={deleting} disabled={deleting} onClick={handleDelete} color="error" autoFocus>
                     Delete
                 </Button>
             </DialogActions>
