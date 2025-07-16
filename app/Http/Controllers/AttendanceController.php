@@ -428,39 +428,48 @@ class AttendanceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function getUserLocationsForDate(Request $request): \Illuminate\Http\JsonResponse
+   public function getUserLocationsForDate(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             $selectedDate = Carbon::parse($request->query('date'))->format('Y-m-d');
 
-            $userLocations = Attendance::whereNotNull('punchin')
+            $attendances = Attendance::with(['user.designation'])
+                ->whereNotNull('punchin')
                 ->whereDate('date', $selectedDate)
-                ->get()
-                ->map(function ($location) {
-                    $user = User::find($location->user_id);
-                    return [
-                        'user_id' => $user->id,
-                        'name' => $user->name,
-                        'profile_image' => $user->profile_image,
-                        'designation' => Designation::find($user->designation)->title,
-                        'punchin_location' => $location->punchin_location_array,
-                        'punchout_location' => $location->punchout_location_array,
-                        'punchin_time' => $location->punchin,
-                        'punchout_time' => $location->punchout,
-                    ];
-                });
+                ->get();
+
+            $locations = $attendances->map(function ($attendance) {
+                $user = $attendance->user;
+                return [
+                    'user_id' => $user->id ?? null,
+                    'name' => $user->name ?? 'Unknown',
+                    'profile_image' => $user->profile_image ?? null,
+                    'designation' => optional($user->designation)->title ?? 'N/A',
+                    'punchin_location' => $attendance->punchin_location_array ?? null,
+                    'punchout_location' => $attendance->punchout_location_array ?? null,
+                    'punchin_time' => $attendance->punchin,
+                    'punchout_time' => $attendance->punchout,
+                ];
+            });
 
             return response()->json([
-                'locations' => $userLocations,
-                'date' => $selectedDate
+                'success' => true,
+                'date' => $selectedDate,
+                'locations' => $locations,
             ]);
-        } catch (\Exception $e) {
-            // Return a standardized error response
+        } catch (\Throwable $e) {
+            \Log::error('Error fetching user locations: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
-                'error' => 'Unable to fetch user locations. Please try again later.'
+                'success' => false,
+                'message' => 'Unable to fetch user locations.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
+
     public function getCurrentUserPunch(): \Illuminate\Http\JsonResponse
     {
         $today = Carbon::today();
@@ -1489,7 +1498,6 @@ class AttendanceController extends Controller
     public function exportPdf(Request $request)
     {
         $date = $request->input('date');
-        $users = User::with('designation')->get();
         $rows = (new AttendanceExport($date))->collection();
         $pdf = PDF::loadView('attendance_pdf', [
             'title' => 'Daily Timesheet - ' . date('F d, Y', strtotime($date)),

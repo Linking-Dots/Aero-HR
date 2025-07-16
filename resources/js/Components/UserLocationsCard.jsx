@@ -115,7 +115,6 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate, 
 
     const fetchUserLocations = useCallback(async () => {
         if (!selectedDate) {
-            // Important: Always notify parent component when there's no date
             setLoading(false);
             setUsers([]);
             onUsersLoad?.([]);
@@ -126,38 +125,53 @@ const UserMarkers = React.memo(({ selectedDate, onUsersLoad, theme, lastUpdate, 
         setError(null);
 
         try {
-            const endpoint = route('getUserLocationsForDate', { 
+            const endpoint = route('getUserLocationsForDate', {
                 date: selectedDate,
-                _t: Date.now() // Add cache busting parameter
+                _t: Date.now()
             });
-            const response = await fetch(endpoint);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: Failed to fetch user locations`);
+
+            const response = await axios.get(endpoint);
+
+            const data = response.data;
+            if (!data.success || !Array.isArray(data.locations)) {
+                throw new Error('Unexpected response format from server.');
             }
 
-            const data = await response.json();
-            const locations = Array.isArray(data.locations) ? data.locations : [];
-            
-            // Only update if locations have actually changed
-            const hasChanges = JSON.stringify(locations) !== JSON.stringify(prevLocationsRef.current);
-            
+            const locations = data.locations;
+
+            const hasChanges =
+                JSON.stringify(locations) !== JSON.stringify(prevLocationsRef.current);
+
             if (hasChanges) {
                 setUsers(locations);
                 prevLocationsRef.current = locations;
             }
-            
-            // Always notify parent regardless of changes
+
             onUsersLoad?.(locations);
         } catch (error) {
-            console.error('Error fetching user locations:', error);
-            setError(error.message);
+            let errorMsg = 'Error fetching user locations.';
+
+            if (error.response) {
+                errorMsg += ` Server error (${error.response.status}): ${error.response.statusText}`;
+                if (typeof error.response.data === 'object') {
+                    errorMsg += `\nDetails: ${JSON.stringify(error.response.data)}`;
+                }
+            } else if (error.request) {
+                errorMsg += ' No response received from server.';
+            } else if (error.message) {
+                errorMsg += ` ${error.message}`;
+            }
+
+            console.error(errorMsg, error);
+            setError(errorMsg);
             setUsers([]);
             onUsersLoad?.([]);
         } finally {
             setLoading(false);
         }
-    }, [selectedDate, onUsersLoad, lastUpdate]); // Add lastUpdate to dependencies
+    }, [selectedDate, onUsersLoad, lastUpdate]);
+
+ // Add lastUpdate to dependencies
 
     useEffect(() => {
         fetchUserLocations();
