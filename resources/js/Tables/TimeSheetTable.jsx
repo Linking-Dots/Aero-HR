@@ -187,7 +187,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
                     _t: forceRefresh ? Date.now() : undefined
                 }
             });
-            console.log(response.data)
+        
          
             if (response.status === 200) {
                 // Add null check for response data properties
@@ -679,7 +679,7 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
 
       // Employee view - render only table and pagination without wrapper
     if (url === '/attendance-employee') {
-        console.log("Employee view")
+    
         return (
             <Box 
                 role="region"

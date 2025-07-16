@@ -149,7 +149,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     const handlePageChange = useCallback((page) => {
-        console.log('Pagination page change requested:', page);
+     
         if (setCurrentPage) {
             // When page changes, this will trigger fetchLeavesData in the parent component
             // which will load the correct data for the requested page

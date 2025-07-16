@@ -97,7 +97,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
     });
 
     const handleFilterChange = useCallback((filterKey, filterValue) => {
-    console.log(`Filter changed: ${filterKey} =`, filterValue);
 
     if (filterKey === 'year') {
         const year = Number(filterValue);
@@ -175,7 +174,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     // Pagination handlers
     const handlePageChange = useCallback((page) => {
-        console.log('Page change requested:', page);
+   
         setPagination(prev => ({
             ...prev,
             currentPage: page
@@ -399,8 +398,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 currentPage: newLastPage
             }));
         }
-        
-        console.log(`Pagination metadata updated: ${totalCount} total rows, ${newLastPage} pages`);
     }, [pagination.perPage, pagination.currentPage]);
 
   

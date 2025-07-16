@@ -145,7 +145,7 @@ const EmployeeTable = ({
           });
         }
         toast.success('Attendance type updated successfully');
-        console.log('Attendance type updated successfully:', response.data);
+     
       }
     } catch (error) {
       console.error('Error updating attendance type:', error);

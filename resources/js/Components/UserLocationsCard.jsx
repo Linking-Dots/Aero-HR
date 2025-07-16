@@ -586,7 +586,6 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
     // Automatically set loading to false when no users are available
     useEffect(() => {
         if (users.length === 0 && loading && loadingInitialized) {
-            console.log('No users available, automatically setting loading to false');
             setLoading(false);
         }
     }, [users, loading, loadingInitialized]);
@@ -631,8 +630,6 @@ const UserLocationsCard = React.memo(({ updateMap, selectedDate }) => {
         // Mark that loading has been initialized and set loading to false
         setLoadingInitialized(true);
         setLoading(false);
-        
-        console.log('Users loaded, setting loading to false', { usersCount: usersArray.length });
     }, []);
 
    

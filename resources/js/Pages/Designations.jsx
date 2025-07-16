@@ -64,7 +64,7 @@ const Designations = ({ title, initialDesignations, departments, managers, paren
                     parent_designation: filters.parentDesignation
                 }
             });
-            console.log('Fetched designations:', response.data);
+     
             setDesignationsData(response.data.designations || response.data);
         } catch (error) {
             console.error('Error fetching designations:', error);
@@ -183,10 +183,6 @@ const Designations = ({ title, initialDesignations, departments, managers, paren
         }
         return buttons;
     }, [canCreateDesignation, isMobile]);
-
-
-    console.log('Designations:', designationsData);
-    console.log('Departments:', departments);
 
     return (
         <App>

@@ -145,7 +145,7 @@ const JobPostingsTable = React.forwardRef(({
     };
 
     const handlePageChange = useCallback((page) => {
-        console.log('Pagination page change requested:', page);
+
         if (onPageChange) {
             onPageChange(page);
         }

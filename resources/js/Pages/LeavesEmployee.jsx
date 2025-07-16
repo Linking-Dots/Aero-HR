@@ -91,7 +91,6 @@ const LeavesEmployee = ({ title, allUsers }) => {
       const { page, perPage } = pagination;
       const { year } = filters;
       
-      console.log('Fetching leaves for user:', auth.user.id, 'with year:', year);
       
       const response = await axios.get(route('leaves.paginate'), {
         params: { 

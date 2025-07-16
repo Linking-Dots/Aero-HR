@@ -27,8 +27,7 @@ import { toast } from 'react-toastify';
 import GlassDialog from '@/Components/GlassDialog';
 
 const DesignationForm = ({ open, onClose, onSuccess, designation = null, departments = [], }) => {
-    console.log('DesignationForm rendered with departments:', departments);
-    console.log('DesignationForm rendered with designation:', designation);
+
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [loading, setLoading] = useState(false);
