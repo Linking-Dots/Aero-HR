@@ -350,10 +350,7 @@ const EmployeeTable = ({
                   {filteredDesignations.map((desig) => (
                     <DropdownItem
                       key={desig.id.toString()}
-                      onPress={() => {
-                        setUpdating(`${user.id}-designation`);
-                        handleDesignationChange(user.id, desig.id);
-                      }}
+                      onPress={() => handleDesignationChange(user.id, desig.id)}
                     >
                       {desig.title}
                     </DropdownItem>
