@@ -1,1 +1,0 @@
-import{i as r}from"./app-CFP6hyYs.js";import{q as o}from"./App-D6An07Kr.js";const s=o(r.jsx("path",{d:"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"}),"Clear");export{s as C};

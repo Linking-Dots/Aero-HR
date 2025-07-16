@@ -1,1 +1,0 @@
-import{L as s,M as e}from"./App-D6An07Kr.js";function a(t){return e("MuiListItemIcon",t)}const n=s("MuiListItemIcon",["root","alignItemsFlexStart"]);function l(t){return e("MuiListItemText",t)}const o=s("MuiListItemText",["root","multiline","dense","inset","primary","secondary"]);export{o as a,a as b,l as g,n as l};
