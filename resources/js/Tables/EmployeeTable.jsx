@@ -123,17 +123,7 @@ const EmployeeTable = ({
 
   // Handle attendance type change
   const handleAttendanceTypeChange = async (userId, attendanceTypeId) => {
-    // Get the attendance type name
-    const attendanceTypeName = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId))?.name || '';
     
-    // Update optimistically
-    if (updateEmployeeOptimized) {
-      updateEmployeeOptimized(userId, { 
-        attendance_type_id: attendanceTypeId,
-        attendance_type: attendanceTypeName
-      });
-    }
-    toast.success('Attendance type updated successfully');
     
  
     setUpdating(`${userId}-attendance_type`);
@@ -144,6 +134,17 @@ const EmployeeTable = ({
       });
       
       if (response.status === 200) {
+        // Get the attendance type name
+        const attendanceTypeName = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId))?.name || '';
+        
+        // Update optimistically
+        if (updateEmployeeOptimized) {
+          updateEmployeeOptimized(userId, { 
+            attendance_type_id: attendanceTypeId,
+            attendance_type: attendanceTypeName
+          });
+        }
+        toast.success('Attendance type updated successfully');
         console.log('Attendance type updated successfully:', response.data);
       }
     } catch (error) {
