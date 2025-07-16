@@ -1,1 +1,0 @@
-import{M as s,N as e}from"./App-xKIEJnfh.js";function a(t){return e("MuiListItemIcon",t)}const n=s("MuiListItemIcon",["root","alignItemsFlexStart"]);function l(t){return e("MuiListItemText",t)}const o=s("MuiListItemText",["root","multiline","dense","inset","primary","secondary"]);export{o as a,a as b,l as g,n as l};
