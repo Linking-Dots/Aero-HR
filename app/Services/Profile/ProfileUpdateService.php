@@ -93,7 +93,7 @@ class ProfileUpdateService
     {
         switch ($key) {
             case 'department':
-                $user->department = $value;
+                $user->department_id = $value;
                 return 'Department updated to ' . Department::find($value)->name;
 
             case 'designation':

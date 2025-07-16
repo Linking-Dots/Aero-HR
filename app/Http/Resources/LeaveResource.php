@@ -79,8 +79,8 @@ class LeaveResource extends JsonResource
                 'id' => $this->employee->id,
                 'name' => $this->employee->name,
                 'profile_image' => $this->employee->profile_image,
-                'department' => $this->employee->department,
-                'designation' => $this->employee->designation,
+                'department' => $this->employee->department_id,
+                'designation' => $this->employee->designation_id,
             ]),
         ];
     }

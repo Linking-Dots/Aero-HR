@@ -44,7 +44,7 @@ class User extends Authenticatable implements HasMedia
         'nid',
         'name',
         'profile_image',
-        'department',
+        'department_id',
         'date_of_joining',
         'birthday',
         'gender',
