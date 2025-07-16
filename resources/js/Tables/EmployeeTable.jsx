@@ -64,26 +64,15 @@ const EmployeeTable = ({
   deleteEmployeeOptimized
 }) => {
 
-  const [loadingStates, setLoadingStates] = useState({});
+  const [updating, setUpdating] = useState();
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [attendanceConfig, setAttendanceConfig] = useState({});
-  const theme = useTheme();
+ 
 
-  // Set loading state for specific operations
-  const setLoading = (userId, operation, loading) => {
-    setLoadingStates(prev => ({
-      ...prev,
-      [`${userId}-${operation}`]: loading
-    }));
-  };
-
-  const isLoading = (userId, operation) => {
-    return loadingStates[`${userId}-${operation}`] || false;
-  };
 
   const handleDepartmentChange = async (userId, departmentId) => {
-    setLoading(userId, 'department', true);
+    setUpdating(`${userId}-department`); // ✅ Immediately at the top
 
     try {
       const response = await axios.post(route('user.updateDepartment', { id: userId }), {
@@ -92,28 +81,25 @@ const EmployeeTable = ({
 
       if (response.status === 200) {
         const departmentObj = departments.find(d => d.id === parseInt(departmentId)) || null;
-
-        if (updateEmployeeOptimized) {
-          updateEmployeeOptimized(userId, { 
-            department_id: departmentId,
-            department: departmentObj,
-            designation_id: null,
-            designation: null
-          });
-        }
+        updateEmployeeOptimized?.(userId, {
+          department_id: departmentId,
+          department: departmentObj,
+          designation_id: null,
+          designation: null
+        });
         toast.success('Department updated successfully');
       }
     } catch (error) {
       console.error('Error updating department:', error);
       toast.error('Failed to update department');
     } finally {
-      setLoading(userId, 'department', false);
+      setUpdating('');
     }
   };
 
-  const handleDesignationChange = async (userId, designationId) => {
-    setLoading(userId, 'designation', true);
 
+  const handleDesignationChange = async (userId, designationId) => {
+    setUpdating(`${userId}-designation`);
     try {
       const response = await axios.post(route('user.updateDesignation', { id: userId }), {
         designation_id: designationId
@@ -121,28 +107,36 @@ const EmployeeTable = ({
 
       if (response.status === 200) {
         const designationObj = designations.find(d => d.id === parseInt(designationId)) || null;
-
-        if (updateEmployeeOptimized) {
-          updateEmployeeOptimized(userId, { 
-            designation_id: designationId,
-            designation: designationObj
-          });
-        }
-        toast.success('Designation updated successfully');
+        updateEmployeeOptimized?.(userId, {
+          designation_id: designationId,
+          designation: designationObj
+        });
+        toast.success("Designation updated successfully");
       }
-    } catch (error) {
-      console.error('Error updating designation:', error);
-      toast.error('Failed to update designation');
+    } catch (err) {
+      toast.error("Failed to update designation");
     } finally {
-      setLoading(userId, 'designation', false);
+      setUpdating(""); // ✅ Always reset to string
     }
   };
 
 
-
   // Handle attendance type change
   const handleAttendanceTypeChange = async (userId, attendanceTypeId) => {
-    setLoading(userId, 'attendance_type', true);
+    // Get the attendance type name
+    const attendanceTypeName = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId))?.name || '';
+    
+    // Update optimistically
+    if (updateEmployeeOptimized) {
+      updateEmployeeOptimized(userId, { 
+        attendance_type_id: attendanceTypeId,
+        attendance_type: attendanceTypeName
+      });
+    }
+    toast.success('Attendance type updated successfully');
+    
+ 
+    setUpdating(`${userId}-attendance_type`);
     
     try {
       const response = await axios.post(route('user.updateAttendanceType', { id: userId }), {
@@ -150,23 +144,15 @@ const EmployeeTable = ({
       });
       
       if (response.status === 200) {
-        // Get the attendance type name
-        const attendanceTypeName = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId))?.name || '';
-        
-        // Update optimistically
-        if (updateEmployeeOptimized) {
-          updateEmployeeOptimized(userId, { 
-            attendance_type_id: attendanceTypeId,
-            attendance_type: attendanceTypeName
-          });
-        }
-        toast.success('Attendance type updated successfully');
+        console.log('Attendance type updated successfully:', response.data);
       }
     } catch (error) {
       console.error('Error updating attendance type:', error);
       toast.error('Failed to update attendance type');
     } finally {
-      setLoading(userId, 'attendance_type', false);
+     
+  
+      setUpdating(false);
     }
   };
 
@@ -174,11 +160,13 @@ const EmployeeTable = ({
 
   // Delete employee
   const handleDelete = async (userId) => {
-    setLoading(userId, 'delete', true);
+ 
+
+    setUpdating(`${userId}-delete`);
     try {
       const confirmed = confirm('Are you sure you want to delete this employee?');
       if (!confirmed) {
-        setLoading(userId, 'delete', false);
+        setUpdating('');
         return;
       }
       
@@ -195,48 +183,8 @@ const EmployeeTable = ({
       console.error('Error deleting employee:', error);
       toast.error('Failed to delete employee');
     } finally {
-      setLoading(userId, 'delete', false);
-    }  };
-
-  // Handle opening attendance config modal
-  const openConfigModal = (user) => {
-    setSelectedUser(user);
-    setAttendanceConfig({
-      checkin_time: user.checkin_time || '',
-      checkout_time: user.checkout_time || '',
-      working_days: user.working_days || '',
-      grace_time: user.grace_time || ''
-    });
-    setConfigModalOpen(true);
-  };
-
-  const handleConfigChange = (field, value) => {
-    setAttendanceConfig(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const saveAttendanceConfig = async () => {
-    setLoading(selectedUser.id, 'config', true);
-    
-    try {
-      const response = await axios.post(route('user.updateAttendanceConfig', { id: selectedUser.id }), attendanceConfig);
-      
-      if (response.status === 200) {
-        // Update optimistically
-        if (updateEmployeeOptimized) {
-          updateEmployeeOptimized(selectedUser.id, attendanceConfig);
-        }
-        setConfigModalOpen(false);
-        toast.success('Attendance configuration updated successfully');
-      }
-    } catch (error) {
-      console.error('Error updating attendance config:', error);
-      toast.error('Failed to update attendance configuration');
-    } finally {
-      setLoading(selectedUser.id, 'config', false);
-    }
+      setUpdating(false);
+    }  
   };
 
   const columns = useMemo(() => {
@@ -347,15 +295,13 @@ const EmployeeTable = ({
                     variant="bordered"
                     size="sm"
                     className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
+                    isLoading={updating === `${user.id}-department`}
+                    spinner={<Spinner size="sm" />}
                     startContent={
-                      isLoading(user.id, 'department') ? (
-                        <Spinner size="sm" />
-                      ) : (
                         <BuildingOfficeIcon className="w-4 h-4" />
-                      )
                     }
                     endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                    isDisabled={isLoading(user.id, 'department')}
+                    isDisabled={updating === `${user.id}-department`}
                   >
                     {user.department?.name || "Select Department"}
                   </Button>
@@ -386,15 +332,15 @@ const EmployeeTable = ({
                     variant="bordered"
                     size="sm"
                     className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
+                    isLoading={updating === `${user.id}-designation`}
+                    spinner={<Spinner size="sm" />}
                     startContent={
-                      isLoading(user.id, 'designation') ? (
-                        <Spinner size="sm" />
-                      ) : (
+                   
                         <BriefcaseIcon className="w-4 h-4" />
-                      )
+                  
                     }
                     endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                    isDisabled={!departmentId || isLoading(user.id, 'designation')}
+                    isDisabled={!departmentId || updating === `${user.id}-designation`}
                   >
                     {user.designation?.title || "Select Designation"}
                   </Button>
@@ -403,7 +349,10 @@ const EmployeeTable = ({
                   {filteredDesignations.map((desig) => (
                     <DropdownItem
                       key={desig.id.toString()}
-                      onPress={() => handleDesignationChange(user.id, desig.id)}
+                      onPress={() => {
+                        setUpdating(`${user.id}-designation`);
+                        handleDesignationChange(user.id, desig.id);
+                      }}
                     >
                       {desig.title}
                     </DropdownItem>
@@ -422,15 +371,15 @@ const EmployeeTable = ({
                   variant="bordered"
                   size="sm"
                   className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
+                  isLoading={updating === `${user.id}-attendance_type`}
+                  spinner={<Spinner size="sm" />}
                   startContent={
-                    isLoading(user.id, 'attendance_type') ? (
-                      <Spinner size="sm" />
-                    ) : (
+             
                       <ClockIcon className="w-4 h-4" />
-                    )
+                 
                   }
                   endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                  isDisabled={isLoading(user.id, 'attendance_type')}
+                  isDisabled={updating === `${user.id}-attendance_type`}
                 >
                   {user.attendance_type || "Select Type"}
                 </Button>
@@ -475,13 +424,14 @@ const EmployeeTable = ({
                   key="delete" 
                   className="text-danger" 
                   color="danger" 
+                  loading={updating === `${user.id}-delete`}
                   startContent={
-                    isLoading(user.id, 'delete') ? 
+                    updating === `${user.id}-delete` ? 
                     <Spinner size="sm" /> : 
                     <TrashIcon className="w-4 h-4" />
                   }
                   onPress={() => handleDelete(user.id)}
-                  isDisabled={isLoading(user.id, 'delete')}
+                  disabled={updating === `${user.id}-delete`}
                 >
                   Delete
                 </DropdownItem>
@@ -573,105 +523,6 @@ const EmployeeTable = ({
       </div>
       {/* Pagination is moved outside the scrollable area to make it sticky */}
       {renderPagination()}
-
-      {/* Attendance Configuration Modal */}
-      <Modal 
-        isOpen={configModalOpen} 
-        onClose={() => setConfigModalOpen(false)}
-        size="2xl"
-        classNames={{
-          backdrop: "bg-black/50 backdrop-blur-sm",
-          base: "bg-white/10 backdrop-blur-md border border-white/20",
-          header: "border-b border-white/20",
-          body: "py-6",
-          footer: "border-t border-white/20"
-        }}
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CogIcon className="w-5 h-5" />
-                  Configure Attendance Settings
-                </div>
-                <p className="text-sm text-default-500">
-                  Employee: {selectedUser?.name}
-                  {selectedUser?.attendance_type && (
-                    <Chip 
-                      size="sm"
-                      variant="flat"
-                      className="ml-2"
-                    >
-                      {selectedUser?.attendance_type}
-                    </Chip>
-                  )}
-                </p>
-              </ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  <Input
-                    label="Check-in Time (24h format)"
-                    placeholder="09:00"
-                    value={attendanceConfig.checkin_time || ''}
-                    onValueChange={(value) => handleConfigChange('checkin_time', value)}
-                    classNames={{
-                      input: "bg-transparent",
-                      inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15"
-                    }}
-                  />
-                  <Input
-                    label="Check-out Time (24h format)"
-                    placeholder="17:00"
-                    value={attendanceConfig.checkout_time || ''}
-                    onValueChange={(value) => handleConfigChange('checkout_time', value)}
-                    classNames={{
-                      input: "bg-transparent",
-                      inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15"
-                    }}
-                  />
-                  <Input
-                    label="Working Days"
-                    placeholder="1,2,3,4,5 (Mon-Fri)"
-                    value={attendanceConfig.working_days || ''}
-                    onValueChange={(value) => handleConfigChange('working_days', value)}
-                    description="Enter comma-separated day numbers (1=Monday, 7=Sunday)"
-                    classNames={{
-                      input: "bg-transparent",
-                      inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15"
-                    }}
-                  />
-                  <Input
-                    label="Grace Time (minutes)"
-                    placeholder="15"
-                    value={attendanceConfig.grace_time || ''}
-                    onValueChange={(value) => handleConfigChange('grace_time', value)}
-                    classNames={{
-                      input: "bg-transparent",
-                      inputWrapper: "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15"
-                    }}
-                  />
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button 
-                  variant="light" 
-                  onPress={onClose}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  color="primary" 
-                  onPress={saveAttendanceConfig}
-                  isLoading={isLoading(selectedUser?.id, 'config')}
-                >
-                  Save Changes
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
     </div>
   );
 };
