@@ -64,7 +64,7 @@ const EmployeeTable = ({
   deleteEmployeeOptimized
 }) => {
 
-  const [updating, setUpdating] = useState();
+  const [updating, setUpdating] = useState('');
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [attendanceConfig, setAttendanceConfig] = useState({});
@@ -116,7 +116,7 @@ const EmployeeTable = ({
     } catch (err) {
       toast.error("Failed to update designation");
     } finally {
-      setUpdating(""); // ✅ Always reset to string
+      setUpdating(''); // ✅ Always reset to string
     }
   };
 
@@ -153,7 +153,7 @@ const EmployeeTable = ({
     } finally {
      
   
-      setUpdating(false);
+      setUpdating('');
     }
   };
 
@@ -184,7 +184,7 @@ const EmployeeTable = ({
       console.error('Error deleting employee:', error);
       toast.error('Failed to delete employee');
     } finally {
-      setUpdating(false);
+      setUpdating('');
     }  
   };
 
