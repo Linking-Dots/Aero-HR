@@ -1,4 +1,10 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {}
+  "features": {
+    "ghcr.io/devcontainers/features/php:1": {},
+    "ghcr.io/devcontainers-extra/features/composer:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "latest"
+    }
+  }
 }
