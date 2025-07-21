@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('nid')->nullable();
             $table->string('name');
             $table->string('profile_image')->nullable();
-            $table->foreignId('department')->nullable()->constrained('departments')->nullOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->date('date_of_joining')->nullable();
             $table->date('birthday')->nullable();
             $table->string('gender')->nullable();
