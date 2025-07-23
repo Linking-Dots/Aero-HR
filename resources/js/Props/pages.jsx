@@ -46,7 +46,18 @@ export const getPages = (permissions, auth = null) => [
     icon: <HomeIcon className="" />, 
     route: 'dashboard',
     priority: 1,
-    module: 'core'
+    module: 'core',
+    subMenu: [
+      { name: 'HRM Dashboard', icon: <UserGroupIcon />, route: 'dashboard', description: 'Human Resource Management' },
+      ...(permissions.includes('crm.dashboard.view') ? [{ name: 'CRM Dashboard', icon: <UsersIcon />, route: 'crm.dashboard', description: 'Customer Relationship Management' }] : []),
+      ...(permissions.includes('pos.dashboard.view') ? [{ name: 'POS Dashboard', icon: <BuildingStorefrontIcon />, route: 'pos.dashboard', description: 'Point of Sale' }] : []),
+      ...(permissions.includes('ims.dashboard.view') ? [{ name: 'IMS Dashboard', icon: <ArchiveBoxIcon />, route: 'ims.dashboard', description: 'Inventory Management' }] : []),
+      ...(permissions.includes('project-management.dashboard.view') ? [{ name: 'Project Dashboard', icon: <BriefcaseIcon />, route: 'project-management.dashboard', description: 'Project Management' }] : []),
+      ...(permissions.includes('dms.dashboard.view') ? [{ name: 'DMS Dashboard', icon: <FolderIcon />, route: 'dms.dashboard', description: 'Document Management' }] : []),
+      ...(permissions.includes('fms.dashboard.view') ? [{ name: 'FMS Dashboard', icon: <CurrencyDollarIcon />, route: 'fms.dashboard', description: 'Financial Management' }] : []),
+      ...(permissions.includes('scm.dashboard.view') ? [{ name: 'SCM Dashboard', icon: <TruckIcon />, route: 'scm.dashboard', description: 'Supply Chain Management' }] : []),
+      ...(permissions.includes('analytics.dashboard.view') ? [{ name: 'Analytics Dashboard', icon: <ChartBarSquareIcon />, route: 'analytics.dashboard', description: 'Business Intelligence' }] : []),
+    ]
   }] : []),
   // 2. Workspace (Self-Service)
   ...((permissions.includes('attendance.own.view') || permissions.includes('leave.own.view') || permissions.includes('communications.own.view')) ? [{
