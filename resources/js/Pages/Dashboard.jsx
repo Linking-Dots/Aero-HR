@@ -282,10 +282,10 @@ export default function Dashboard({ auth, dashboardData = {} }) {
         <>
             <Head title="Dashboard" />
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <Grow in>
-                    <Box className="p-2 sm:p-2">
+               
+                    <Box>
                     
-                        
+                            <div>
                                 {/* Statistics Cards */}
                                 <StatsCards stats={statsData} className="mb-6" />
 
@@ -486,10 +486,10 @@ export default function Dashboard({ auth, dashboardData = {} }) {
                                             </GlassCard>
                                         </div>                                    )}
                                 </div>
-                            
+                            </div>
                      
                     </Box>
-                </Grow>
+              
             </Box>
         </>
     );
