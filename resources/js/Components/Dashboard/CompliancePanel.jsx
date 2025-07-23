@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, Grid, LinearProgress, Chip } from '@mui/material';
-import { Card, CardBody } from '@heroui/react';
+import { Box, Typography, Grid, LinearProgress } from '@mui/material';
+import { Card, CardBody, Chip } from '@heroui/react';
 import { 
     ShieldCheckIcon, 
     ExclamationTriangleIcon,
@@ -96,11 +96,12 @@ const CompliancePanel = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     {getStatusIcon(complianceData.gdprStatus)}
                                     <Chip 
-                                        label="Compliant" 
                                         color={getStatusColor(complianceData.gdprStatus)}
-                                        size="small"
+                                        size="sm"
                                         variant="flat"
-                                    />
+                                    >
+                                        Compliant
+                                    </Chip>
                                 </Box>
                             </Box>
 
@@ -109,11 +110,12 @@ const CompliancePanel = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     {getStatusIcon(complianceData.soxStatus)}
                                     <Chip 
-                                        label={`Current (Next Review: ${complianceData.nextReviewDate})`}
                                         color={getStatusColor(complianceData.soxStatus)}
-                                        size="small"
+                                        size="sm"
                                         variant="flat"
-                                    />
+                                    >
+                                        Current (Next Review: {complianceData.nextReviewDate})
+                                    </Chip>
                                 </Box>
                             </Box>
 
@@ -122,11 +124,12 @@ const CompliancePanel = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     {getStatusIcon(complianceData.laborLawCompliance)}
                                     <Chip 
-                                        label="3 items require attention"
                                         color={getStatusColor(complianceData.laborLawCompliance)}
-                                        size="small"
+                                        size="sm"
                                         variant="flat"
-                                    />
+                                    >
+                                        3 items require attention
+                                    </Chip>
                                 </Box>
                             </Box>
                         </Box>
@@ -159,11 +162,12 @@ const CompliancePanel = () => {
                                             Due: {action.dueDate}
                                         </Typography>
                                         <Chip
-                                            label={action.priority}
                                             color={action.priority === 'high' ? 'danger' : 'warning'}
-                                            size="small"
+                                            size="sm"
                                             variant="flat"
-                                        />
+                                        >
+                                            {action.priority}
+                                        </Chip>
                                     </Box>
                                 </Box>
                             ))}
