@@ -15,8 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TrainingController extends BaseController
-
-class TrainingController extends Controller
 {
     /**
      * Display a listing of the trainings.
@@ -221,19 +219,12 @@ class TrainingController extends Controller
      */
     public function storeCategory(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'parent_id' => 'nullable|exists:training_categories,id',
-        ]);
-
+        $validated = $request->validate(HRValidationRules::trainingCategoryRules());
         $validated['created_by'] = Auth::id();
 
         $category = TrainingCategory::create($validated);
 
-        return redirect()->back()
-            ->with('success', 'Training category created successfully.');
+        return $this->successResponse('Training category created successfully.');
     }
 
     /**
@@ -242,18 +233,11 @@ class TrainingController extends Controller
     public function updateCategory(Request $request, $id)
     {
         $category = TrainingCategory::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'parent_id' => 'nullable|exists:training_categories,id',
-        ]);
+        $validated = $request->validate(HRValidationRules::trainingCategoryRules());
 
         $category->update($validated);
 
-        return redirect()->back()
-            ->with('success', 'Training category updated successfully.');
+        return $this->successResponse('Training category updated successfully.');
     }
 
     /**
@@ -265,14 +249,12 @@ class TrainingController extends Controller
 
         // Check if there are trainings in this category
         if ($category->trainings()->exists()) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete category with associated trainings.');
+            return $this->errorResponse('Cannot delete category with associated trainings.');
         }
 
         $category->delete();
 
-        return redirect()->back()
-            ->with('success', 'Training category deleted successfully.');
+        return $this->successResponse('Training category deleted successfully.');
     }
 
     /**
@@ -282,7 +264,7 @@ class TrainingController extends Controller
     {
         $training = Training::with('materials')->findOrFail($id);
 
-        return Inertia::render('HR/Training/Materials/Index', [
+        return $this->renderInertia('HR/Training/Materials/Index', [
             'training' => $training,
             'materials' => $training->materials()->orderBy('order')->paginate(10),
         ]);
@@ -294,16 +276,7 @@ class TrainingController extends Controller
     public function storeMaterial(Request $request, $id)
     {
         $training = Training::findOrFail($id);
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'required|string',
-            'url' => 'nullable|url',
-            'is_required' => 'boolean',
-            'order' => 'nullable|integer',
-            'visibility' => 'required|in:public,staff,completion_based',
-        ]);
+        $validated = $request->validate(HRValidationRules::trainingMaterialRules());
 
         $validated['training_id'] = $training->id;
         $validated['created_by'] = Auth::id();
@@ -314,8 +287,7 @@ class TrainingController extends Controller
             $material->addMedia($request->file('file'))->toMediaCollection('material_files');
         }
 
-        return redirect()->back()
-            ->with('success', 'Training material added successfully.');
+        return $this->successResponse('Training material added successfully.');
     }
 
     /**
