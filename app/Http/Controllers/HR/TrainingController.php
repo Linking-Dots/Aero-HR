@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\HR;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
+use App\Http\Config\HRConfig;
+use App\Http\Validators\HRValidationRules;
 use App\Models\HRM\Department;
 use App\Models\HRM\Training;
 use App\Models\HRM\TrainingCategory;
@@ -11,7 +13,8 @@ use App\Models\HRM\TrainingMaterial;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
+
+class TrainingController extends BaseController
 
 class TrainingController extends Controller
 {
@@ -20,36 +23,26 @@ class TrainingController extends Controller
      */
     public function index(Request $request)
     {
-        $trainings = Training::with(['category', 'instructor', 'department'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->category_id, function ($query, $categoryId) {
-                $query->where('category_id', $categoryId);
-            })
-            ->when($request->department_id, function ($query, $departmentId) {
-                $query->where('department_id', $departmentId);
-            })
-            ->orderBy($request->input('sort_by', 'start_date'), $request->input('sort_order', 'desc'))
-            ->paginate(10)
-            ->withQueryString();
+        $query = Training::with(['category', 'instructor', 'department']);
+        
+        // Apply common filters
+        $this->applyCommonFilters($query, $request, ['title', 'description']);
+        
+        // Apply specific filters
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+        
+        // Apply sorting and pagination
+        $this->applyCommonSorting($query, $request, 'start_date', 'desc');
+        $trainings = $this->getPaginatedResults($query, $request);
 
-        return Inertia::render('HR/Training/Index', [
+        return $this->renderInertia('HR/Training/Index', [
             'trainings' => $trainings,
-            'filters' => $request->only(['search', 'status', 'category_id', 'department_id', 'sort_by', 'sort_order']),
+            'filters' => $this->getCommonFilters($request),
             'categories' => TrainingCategory::select('id', 'name')->get(),
             'departments' => Department::select('id', 'name')->get(),
-            'statuses' => [
-                ['id' => 'draft', 'name' => 'Draft'],
-                ['id' => 'scheduled', 'name' => 'Scheduled'],
-                ['id' => 'active', 'name' => 'Active'],
-                ['id' => 'completed', 'name' => 'Completed'],
-                ['id' => 'cancelled', 'name' => 'Cancelled'],
-            ],
+            'statuses' => HRConfig::getTrainingStatuses(),
         ]);
     }
 
@@ -58,19 +51,11 @@ class TrainingController extends Controller
      */
     public function create()
     {
-        return Inertia::render('HR/Training/Create', [
+        return $this->renderInertia('HR/Training/Create', [
             'categories' => TrainingCategory::where('is_active', true)->get(['id', 'name']),
             'instructors' => User::role(['HR Manager', 'Department Manager', 'Team Lead', 'Senior Employee'])->get(['id', 'name']),
             'departments' => Department::all(['id', 'name']),
-            'types' => [
-                ['id' => 'course', 'name' => 'Course'],
-                ['id' => 'workshop', 'name' => 'Workshop'],
-                ['id' => 'seminar', 'name' => 'Seminar'],
-                ['id' => 'certification', 'name' => 'Certification'],
-                ['id' => 'on_the_job', 'name' => 'On-the-job Training'],
-                ['id' => 'webinar', 'name' => 'Webinar'],
-                ['id' => 'conference', 'name' => 'Conference'],
-            ],
+            'types' => HRConfig::getTrainingTypes(),
         ]);
     }
 
@@ -79,29 +64,7 @@ class TrainingController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category_id' => 'required|exists:training_categories,id',
-            'type' => 'required|string',
-            'status' => 'required|in:draft,scheduled,active,completed,cancelled',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'duration' => 'nullable|numeric',
-            'duration_unit' => 'nullable|in:hours,days,weeks,months',
-            'location' => 'nullable|string|max:255',
-            'is_online' => 'boolean',
-            'instructor_id' => 'nullable|exists:users,id',
-            'max_participants' => 'nullable|integer|min:1',
-            'cost' => 'nullable|numeric|min:0',
-            'currency' => 'nullable|string|max:10',
-            'prerequisites' => 'nullable|array',
-            'learning_outcomes' => 'nullable|array',
-            'certification' => 'nullable|string|max:255',
-            'approval_required' => 'boolean',
-            'department_id' => 'nullable|exists:departments,id',
-        ]);
-
+        $validated = $request->validate(HRValidationRules::trainingRules());
         $validated['created_by'] = Auth::id();
 
         $training = Training::create($validated);
