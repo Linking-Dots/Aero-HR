@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { Box, Typography, useMediaQuery, useTheme, Grow } from '@mui/material';
 import { 
@@ -16,10 +16,18 @@ import HolidayTable from '@/Tables/HolidayTable.jsx';
 import HolidayForm from "@/Forms/HolidayForm.jsx";
 import DeleteHolidayForm from "@/Forms/DeleteHolidayForm.jsx";
 
-const Holidays = ({ title }) => {
+const Holidays = ({ title, stats }) => {
     const { auth, holidays: initialHolidays } = usePage().props;
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
+    // Filter initial data to current year (matching HolidayTable default)
+    const currentYearHolidays = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return initialHolidays.filter(holiday => 
+            new Date(holiday.from_date).getFullYear() === currentYear
+        );
+    }, [initialHolidays]);
     
     const [modalState, setModalState] = useState({
         type: null,
@@ -27,6 +35,7 @@ const Holidays = ({ title }) => {
         currentHoliday: null
     });
     const [holidaysData, setHolidaysData] = useState(initialHolidays);
+    const [filteredHolidaysData, setFilteredHolidaysData] = useState(currentYearHolidays); // Start with current year filtered data
 
     const handleModalOpen = useCallback((type, holidayId = null, holiday = null) => {
         setModalState({
@@ -48,27 +57,55 @@ const Holidays = ({ title }) => {
         setHolidaysData(newData);
     }, []);
 
-    // Statistics
-    const stats = useMemo(() => {
+    const handleFilteredDataChange = useCallback((filteredData) => {
+        setFilteredHolidaysData(filteredData);
+    }, []);
+
+    // Update filtered data when main data changes (CRUD operations)
+    useEffect(() => {
+        // When main data changes, apply default current year filter
         const currentYear = new Date().getFullYear();
-        const thisYearHolidays = holidaysData.filter(holiday => 
-            new Date(holiday.date).getFullYear() === currentYear
+        const currentYearFiltered = holidaysData.filter(holiday => 
+            new Date(holiday.from_date).getFullYear() === currentYear
         );
-        const upcomingHolidays = holidaysData.filter(holiday => 
-            new Date(holiday.date) > new Date()
+        setFilteredHolidaysData(currentYearFiltered);
+    }, [holidaysData]);
+
+    // Statistics - Dynamically calculated from filtered data
+    const statsData = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        
+        // Use filtered data for calculations
+        const filteredCurrentYearHolidays = filteredHolidaysData.filter(holiday => 
+            new Date(holiday.from_date).getFullYear() === currentYear
         );
-          return [
+        const upcomingHolidays = filteredHolidaysData.filter(holiday => 
+            new Date(holiday.from_date) > new Date()
+        );
+        const ongoingHolidays = filteredHolidaysData.filter(holiday => {
+            const now = new Date();
+            const fromDate = new Date(holiday.from_date);
+            const toDate = new Date(holiday.to_date);
+            return fromDate <= now && toDate >= now;
+        });
+
+        // Calculate total days from filtered holidays
+        const totalDays = filteredHolidaysData.reduce((sum, h) => {
+            return sum + (h.duration || 1);
+        }, 0);
+        
+        return [
             {
-                title: 'Total',
-                value: holidaysData.length,
+                title: 'Total Holidays',
+                value: filteredHolidaysData.length,
                 icon: <ChartBarIcon className="w-5 h-5" />,
                 color: 'text-blue-400',
                 iconBg: 'bg-blue-500/20',
-                description: 'All holidays'
+                description: 'All filtered holidays'
             },
             {
                 title: 'This Year',
-                value: thisYearHolidays.length,
+                value: filteredCurrentYearHolidays.length,
                 icon: <CalendarIcon className="w-5 h-5" />,
                 color: 'text-green-400',
                 iconBg: 'bg-green-500/20',
@@ -81,9 +118,17 @@ const Holidays = ({ title }) => {
                 color: 'text-purple-400',
                 iconBg: 'bg-purple-500/20',
                 description: 'Future holidays'
+            },
+            {
+                title: 'Holiday Days',
+                value: totalDays,
+                icon: <CheckCircleIcon className="w-5 h-5" />,
+                color: 'text-orange-400',
+                iconBg: 'bg-orange-500/20',
+                description: 'Total days off in filtered data'
             }
         ];
-    }, [holidaysData]);    // Action buttons configuration
+    }, [filteredHolidaysData]);    // Action buttons configuration
     const actionButtons = [
         {
             label: "Add Holiday",
@@ -111,10 +156,9 @@ const Holidays = ({ title }) => {
             {modalState.type === 'delete_holiday' && (
                 <DeleteHolidayForm
                     open={true}
-                    holidayId={modalState.holidayId}
+                    holidayIdToDelete={modalState.holidayId}
                     setHolidaysData={updateHolidaysData}
                     closeModal={handleModalClose}
-                    holidaysData={holidaysData}
                 />
             )}
 
@@ -122,20 +166,22 @@ const Holidays = ({ title }) => {
                 <Grow in>
                     <GlassCard>
                         <PageHeader
-                            title="Holiday Management"
-                            subtitle="Manage company holidays and special occasions"
+                            title="Company Holidays"
+                            subtitle="Manage company holidays and observances throughout the year"
                             icon={<CalendarIcon className="w-8 h-8" />}
+                            variant="gradient"
                             actionButtons={actionButtons}
                         >
                             <div className="p-6">
-                                {/* Quick Stats */}
-                                <StatsCards stats={stats} gridCols="grid-cols-3" />
+                                {/* Enhanced Stats with 4 cards */}
+                                <StatsCards stats={statsData} className="mb-6" />
                                 
                                 {/* Holiday Table */}
                                 <HolidayTable
                                     holidaysData={holidaysData}
                                     onEdit={(holiday) => handleModalOpen('edit_holiday', null, holiday)}
                                     onDelete={(holidayId) => handleModalOpen('delete_holiday', holidayId)}
+                                    onFilteredDataChange={handleFilteredDataChange}
                                 />
                             </div>
                         </PageHeader>

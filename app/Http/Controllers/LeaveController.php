@@ -236,15 +236,19 @@ class LeaveController extends Controller
 
     public function leaveSummary(Request $request)
     {
-        $year = $request->input('year', now()->year);
-        $summaryData = $this->summaryService->generateLeaveSummary($year);
+        $filters = [
+            'year' => $request->input('year', now()->year),
+            'department_id' => $request->input('department_id'),
+            'employee_id' => $request->input('employee_id'),
+            'status' => $request->input('status'),
+            'leave_type' => $request->input('leave_type'),
+        ];
+
+        $summaryData = $this->summaryService->generateLeaveSummary($filters);
 
         return Inertia::render('LeaveSummary', [
             'title' => 'Leave Summary',
-            'allUsers' => $summaryData['users'],
-            'columns' => $summaryData['columns'],
-            'data' => $summaryData['data'],
-            'year' => $summaryData['year'],
+            'summaryData' => $summaryData,
         ]);
     }
 

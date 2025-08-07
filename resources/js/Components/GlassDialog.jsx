@@ -23,6 +23,13 @@ const GlassDialog = forwardRef(({
       variant="glass"                      // ✅ Enables glass theme variant
       TransitionComponent={Transition}     // ✅ Smooth Fade animation
       aria-labelledby="glass-dialog"
+      scroll="paper"                       // ✅ Enable proper scrolling
+      PaperProps={{
+        sx: {
+          maxHeight: '90vh',              // ✅ Limit dialog height
+          ...props.PaperProps?.sx
+        }
+      }}
     >
       {children}
     </Dialog>

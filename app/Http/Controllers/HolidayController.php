@@ -5,16 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\HRM\Holiday;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class HolidayController extends Controller
 {
     public function index(): \Inertia\Response
     {
-        $holidays = Holiday::all();
+        $holidays = Holiday::active()
+                          ->orderBy('from_date', 'asc')
+                          ->get();
+        
+        // Get statistics for the dashboard (for reference, but frontend will calculate dynamically)
+        $currentYearHolidays = Holiday::active()->currentYear()->get();
+        $stats = [
+            'total_holidays' => Holiday::active()->count(),
+            'upcoming_holidays' => Holiday::active()->upcoming()->count(),
+            'current_year_holidays' => $currentYearHolidays->count(),
+            'total_holiday_days' => $currentYearHolidays->sum(function ($holiday) {
+                return $holiday->duration;
+            })
+        ];
+        
         return Inertia::render('Holidays', [
-            'title' => 'Holidays',
+            'title' => 'Company Holidays',
             'holidays' => $holidays,
+            'stats' => $stats,
         ]);
     }
 
@@ -23,9 +39,13 @@ class HolidayController extends Controller
         // Validate incoming request
         $validator = Validator::make($request->all(), [
             'id' => 'nullable|exists:holidays,id',
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
             'fromDate' => 'required|date',
             'toDate' => 'required|date|after_or_equal:fromDate',
+            'type' => 'required|string|in:public,religious,national,company,optional',
+            'is_recurring' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean'
         ]);
 
         if ($validator->fails()) {
@@ -37,8 +57,14 @@ class HolidayController extends Controller
         try {
             $data = [
                 'title' => $request->input('title'),
+                'description' => $request->input('description'),
                 'from_date' => $request->input('fromDate'),
                 'to_date' => $request->input('toDate'),
+                'type' => $request->input('type', 'company'),
+                'is_recurring' => $request->boolean('is_recurring', false),
+                'is_active' => $request->boolean('is_active', true),
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id()
             ];
 
             if ($request->has('id')) {
@@ -54,8 +80,10 @@ class HolidayController extends Controller
                 $message = 'Holiday added successfully';
             }
 
-
-            $holidays = Holiday::all();
+            // Get updated holidays for return
+            $holidays = Holiday::active()
+                              ->orderBy('from_date', 'asc')
+                              ->get();
 
 
             return response()->json([
@@ -86,10 +114,13 @@ class HolidayController extends Controller
                 return response()->json(['error' => 'Holiday not found'], 404);
             }
 
-            // Delete the daily work
+            // Delete the holiday
             $holiday->delete();
 
-            $holidays = Holiday::all();
+            // Get updated holidays for return
+            $holidays = Holiday::active()
+                              ->orderBy('from_date', 'asc')
+                              ->get();
 
             // Return a success response
             return response()->json([

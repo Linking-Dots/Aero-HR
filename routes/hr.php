@@ -7,6 +7,7 @@ use App\Http\Controllers\HR\OnboardingController;
 use App\Http\Controllers\HR\SkillsController;
 use App\Http\Controllers\HR\BenefitsController;
 use App\Http\Controllers\HR\TimeOffController;
+use App\Http\Controllers\HR\TimeOffManagementController;
 use App\Http\Controllers\HR\WorkplaceSafetyController;
 use App\Http\Controllers\HR\HrAnalyticsController;
 use App\Http\Controllers\HR\HrDocumentController;
@@ -157,6 +158,43 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::post('/employee-skills/{employeeId}', [SkillsController::class, 'storeEmployeeSkill'])->name('employee.skills.store');
         Route::put('/employee-skills/{employeeId}/{skillId}', [SkillsController::class, 'updateEmployeeSkill'])->name('employee.skills.update');
         Route::delete('/employee-skills/{employeeId}/{skillId}', [SkillsController::class, 'destroyEmployeeSkill'])->name('employee.skills.destroy');
+    });
+
+    // Time Off Management (Industry Standard)
+    Route::middleware(['permission:hr.timeoff.view'])->group(function () {
+        // Time Off Dashboard
+        Route::get('/time-off', [TimeOffManagementController::class, 'index'])->name('hr.timeoff.index');
+        Route::get('/time-off/dashboard', [TimeOffManagementController::class, 'index'])->name('hr.timeoff.dashboard');
+        
+        // Company Holidays Management
+        Route::get('/time-off/holidays', [TimeOffManagementController::class, 'holidays'])->name('hr.timeoff.holidays');
+        
+        // Leave Requests Management
+        Route::get('/time-off/leave-requests', [TimeOffManagementController::class, 'leaveRequests'])->name('hr.timeoff.leave-requests');
+        
+        // Time Off Calendar
+        Route::get('/time-off/calendar', [TimeOffManagementController::class, 'calendar'])->name('hr.timeoff.calendar');
+        
+        // Leave Balances
+        Route::get('/time-off/balances', [TimeOffManagementController::class, 'balances'])->name('hr.timeoff.balances');
+        
+        // Time Off Reports
+        Route::get('/time-off/reports', [TimeOffManagementController::class, 'reports'])->name('timeoff.reports');
+        
+        // Employee Self-Service Time Off
+        Route::get('/time-off/employee-requests', [TimeOffManagementController::class, 'employeeRequests'])->name('timeoff.employee-requests');
+    });
+
+    // Legacy Time Off routes (for backward compatibility)
+    Route::middleware(['permission:hr.timeoff.view'])->group(function () {
+        Route::get('/time-off-legacy', [TimeOffController::class, 'index'])->name('timeoff-legacy.index');
+        Route::get('/time-off-legacy/calendar', [TimeOffController::class, 'calendar'])->name('timeoff-legacy.calendar');
+        Route::get('/time-off-legacy/approvals', [TimeOffController::class, 'approvals'])->name('timeoff-legacy.approvals');
+        Route::post('/time-off-legacy/{id}/approve', [TimeOffController::class, 'approve'])->name('timeoff-legacy.approve');
+        Route::post('/time-off-legacy/{id}/reject', [TimeOffController::class, 'reject'])->name('timeoff-legacy.reject');
+        Route::get('/time-off-legacy/reports', [TimeOffController::class, 'reports'])->name('timeoff-legacy.reports');
+        Route::get('/time-off-legacy/settings', [TimeOffController::class, 'settings'])->name('timeoff-legacy.settings');
+        Route::put('/time-off-legacy/settings', [TimeOffController::class, 'updateSettings'])->name('timeoff-legacy.settings.update');
     });
 
     // Employee Benefits Administration

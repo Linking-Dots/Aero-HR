@@ -100,8 +100,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/update-rfi-file', [DailyWorkController::class, 'uploadRFIFile'])->name('dailyWorks.uploadRFI');
     });
 
-    // Holiday routes
-    Route::middleware(['permission:holidays.view'])->get('/holidays', [HolidayController::class, 'index'])->name('holidays');
+    // Holiday routes (Legacy - redirects to Time Off Management)
+    Route::middleware(['permission:holidays.view'])->group(function () {
+        Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays');
+        Route::post('/holidays-add', [HolidayController::class, 'create'])->name('holidays-add');
+        Route::delete('/holidays-delete', [HolidayController::class, 'delete'])->name('holidays-delete');
+        
+        // Legacy redirect for old holiday routes
+        Route::get('/holidays-legacy', [HolidayController::class, 'index'])->name('holidays-legacy');
+    });
 
     //Profile Routes - own profile access
     Route::middleware(['permission:profile.own.view'])->group(function () {

@@ -3,25 +3,31 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import React from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
+import axios from 'axios';
 
 
-const DeleteHolidayForm = ({ open, handleClose, holidayIdToDelete, setHolidaysData }) => {
+const DeleteHolidayForm = ({ open, closeModal, holidayIdToDelete, setHolidaysData }) => {
     const theme = useTheme();
     const handleDelete = () => {
         const promise = new Promise(async (resolve, reject) => {
             try {
-                const response = await axios.delete(route('holiday-delete', { id: holidayIdToDelete, route: route().current() }));
+                const response = await axios.delete(route('holiday-delete'), {
+                    params: {
+                        id: holidayIdToDelete,
+                        route: route().current()
+                    }
+                });
 
                 if (response.status === 200) {
-                    // Assuming dailyWorkData contains the updated list of daily works after deletion
+                    // Assuming holidaysData contains the updated list of holidays after deletion
                     setHolidaysData(response.data.holidays);
                     resolve('Holiday deleted successfully');
                 }
             } catch (error) {
-                console.error('Error deleting task:', error);
-                reject(error.response.data.error || 'Failed to delete holiday');
+                console.error('Error deleting holiday:', error);
+                reject(error.response?.data?.error || 'Failed to delete holiday');
             } finally {
-                handleClose();
+                closeModal();
             }
         });
 
@@ -75,7 +81,7 @@ const DeleteHolidayForm = ({ open, handleClose, holidayIdToDelete, setHolidaysDa
     return(
         <GlassDialog
             open={open}
-            onClose={handleClose}
+            onClose={closeModal}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
@@ -88,9 +94,20 @@ const DeleteHolidayForm = ({ open, handleClose, holidayIdToDelete, setHolidaysDa
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} color="primary">
-                    Cancel
-                </Button>
+                                        <Button
+                            variant="outlined"
+                            onClick={closeModal}
+                            sx={{ 
+                                color: theme.palette.text.secondary,
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                '&:hover': { 
+                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }}
+                        >
+                            Cancel
+                        </Button>
                 <Button onClick={handleDelete} color="error" autoFocus>
                     Delete
                 </Button>
