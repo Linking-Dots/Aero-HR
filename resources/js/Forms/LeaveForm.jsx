@@ -206,10 +206,15 @@ const LeaveForm = ({
                     data.id = currentLeave.id;
                 }
 
+                console.log('Submitting data:', data);
+                console.log('API route:', apiRoute);
+
                 const response = await axios.post(apiRoute, data);
+                console.log('Response status:', response.status);
+                console.log('Response data:', response.data);
     
 
-                if (response.status === 200) {
+                if (response.status === 200 || response.status === 201) {
                     // Update leave data
                     setLeavesData(response.data.leavesData);
                     
@@ -223,55 +228,59 @@ const LeaveForm = ({
                         addLeaveOptimized(response.data.leave);
                         fetchLeavesStats();
                         
-                        // Only update total counts, don't reload the entire table
-                        if (response.data.leaves && response.data.leaves.total) {
-                            setTotalRows(response.data.leaves.total);
-                            setLastPage(response.data.leaves.last_page || 1);
+                        // Update pagination data if provided by backend
+                        if (response.data.pagination) {
+                            setTotalRows(response.data.pagination.total);
+                            setLastPage(response.data.pagination.lastPage);
                         }
                     } else {
-                        // Only as a last resort, use the server response data
-                        // This should rarely happen since we have optimized functions
+                        // Fallback: use the server response data if optimized functions aren't available
                         console.log("Using fallback data update mode");
                         if (response.data.leaves) {
-                            if (response.data.leaves.data) {
-                                setLeaves(response.data.leaves.data);
-                                setTotalRows(response.data.leaves.total || response.data.leaves.data.length);
-                                setLastPage(response.data.leaves.last_page || 1);
-                            } else if (Array.isArray(response.data.leaves)) {
-                                setLeaves(response.data.leaves);
-                                setTotalRows(response.data.leaves.length);
-                                setLastPage(1);
-                            }
+                            // Handle consistent LeaveResourceCollection structure
+                            setLeaves(response.data.leaves.data);
+                            setTotalRows(response.data.leaves.total);
+                            setLastPage(response.data.leaves.last_page);
+                        }
+                        
+                        // Update leavesData if provided
+                        if (response.data.leavesData && typeof updateLeavesData === 'function') {
+                            updateLeavesData(response.data.leavesData);
                         }
                     }
                     
                     closeModal();
                     resolve([response.data.message || 'Leave application submitted successfully']);
+                } else {
+                    // Handle unexpected status codes
+                    console.error('Unexpected response status:', response.status);
+                    reject(`Unexpected response status: ${response.status}`);
                 }
             } catch (error) {
-                console.error(error)
-                setProcessing(false);
+                console.error('Full error object:', error);
 
                 if (error.response) {
                     // The request was made and the server responded with a status code
                     // that falls out of the range of 2xx
+                    console.error('Error response status:', error.response.status);
+                    console.error('Error response data:', error.response.data);
+                    
                     if (error.response.status === 422) {
                         // Handle validation errors
                         setErrors(error.response.data.errors || {});
- reject(error.response.data.message || 'Failed to submit leave application');
+                        reject(error.response.data.error || 'Failed to submit leave application');
                     } else {
                         // Handle other HTTP errors
-                        reject('An unexpected error occurred. Please try again later.');
+                        reject(`HTTP Error ${error.response.status}: ${error.response.data.message || 'An unexpected error occurred. Please try again later.'}`);
                     }
-                    console.error(error.response.data.error);
                 } else if (error.request) {
                     // The request was made but no response was received
+                    console.error('No response received:', error.request);
                     reject('No response received from the server. Please check your internet connection.');
-                    console.error(error.request);
                 } else {
                     // Something happened in setting up the request that triggered an Error
+                    console.error('Request setup error:', error.message);
                     reject('An error occurred while setting up the request.');
-                    console.error('Error', error.message);
                 }
             } finally {
                 setProcessing(false);

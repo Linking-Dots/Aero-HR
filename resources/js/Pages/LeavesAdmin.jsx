@@ -198,9 +198,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 perPage: pagination.perPage,
                 employee: filters.employee,
                 month: filters.selectedMonth,
-                status: filters.status !== 'all' ? filters.status : undefined,
-                leave_type: filters.leaveType !== 'all' ? filters.leaveType : undefined,
-                department: filters.department !== 'all' ? filters.department : undefined
+                status: Array.isArray(filters.status) && filters.status.length > 0 ? filters.status : undefined,
+                leave_type: Array.isArray(filters.leaveType) && filters.leaveType.length > 0 ? filters.leaveType : undefined,
+                department: Array.isArray(filters.department) && filters.department.length > 0 ? filters.department : undefined,
+                admin_view: true, // Indicate this is an admin view
+                view_all: true    // Request all users' leaves
             },
         });
 
@@ -247,9 +249,9 @@ const LeavesAdmin = ({ title, allUsers }) => {
         try {
             const response = await axios.get(route('leaves.stats'), {
                 params: {
-                    
                     month: filters.selectedMonth,
-                    
+                    admin_view: true, // Indicate this is an admin view
+                    view_all: true    // Request stats for all users
                 },
             });
 
@@ -421,13 +423,21 @@ const LeavesAdmin = ({ title, allUsers }) => {
             }
         }
         // Status filter
-        if (filters.status && filters.status !== 'all' && String(leave.status).toLowerCase() !== String(filters.status).toLowerCase()) return false;
+        if (Array.isArray(filters.status) && filters.status.length > 0) {
+            const matchesStatus = filters.status.some(status => String(leave.status).toLowerCase() === String(status).toLowerCase());
+            if (!matchesStatus) return false;
+        }
         // Leave type filter
-        if (filters.leaveType && filters.leaveType !== 'all' && String(leave.leave_type).toLowerCase() !== String(filters.leaveType).toLowerCase()) return false;
+        if (Array.isArray(filters.leaveType) && filters.leaveType.length > 0) {
+            const matchesType = filters.leaveType.some(type => String(leave.leave_type).toLowerCase() === String(type).toLowerCase());
+            if (!matchesType) return false;
+        }
         // Department filter
-        if (filters.department && filters.department !== 'all') {
+        if (Array.isArray(filters.department) && filters.department.length > 0) {
             const user = allUsers?.find(u => String(u.id) === String(leave.user_id));
-            if (!user || String(user.department).toLowerCase() !== String(filters.department).toLowerCase()) return false;
+            if (!user) return false;
+            const matchesDepartment = filters.department.some(depId => String(user.department_id) === String(depId));
+            if (!matchesDepartment) return false;
         }
         return true;
     }, [filters, allUsers]);
@@ -501,9 +511,11 @@ const LeavesAdmin = ({ title, allUsers }) => {
                         perPage: itemsNeeded,          // Request only the needed items
                         employee: filters.employee,
                         month: filters.selectedMonth,
-                        status: filters.status !== 'all' ? filters.status : undefined,
-                        leave_type: filters.leaveType !== 'all' ? filters.leaveType : undefined,
-                        department: filters.department !== 'all' ? filters.department : undefined
+                        status: Array.isArray(filters.status) && filters.status.length > 0 ? filters.status : undefined,
+                        leave_type: Array.isArray(filters.leaveType) && filters.leaveType.length > 0 ? filters.leaveType : undefined,
+                        department: Array.isArray(filters.department) && filters.department.length > 0 ? filters.department : undefined,
+                        admin_view: true, // Indicate this is an admin view
+                        view_all: true    // Request all users' leaves
                     },
                 });
                 if (response.status === 200 && response.data.leaves.data) {
@@ -732,28 +744,34 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 />
                                             </div>
                                             {/* Active Filters as Chips */}
-                                            {(filters.employee || filters.status.length || filters.leaveType.length || filters.department.length) && (
+                                            {(filters.employee || 
+                                              (Array.isArray(filters.status) && filters.status.length > 0) || 
+                                              (Array.isArray(filters.leaveType) && filters.leaveType.length > 0) || 
+                                              (Array.isArray(filters.department) && filters.department.length > 0)) && (
                                                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
                                                 {filters.employee && (
                                                     <Chip variant="flat" color="primary" size="sm" onClose={() => handleFilterChange('employee', '')}>
                                                     Employee: {filters.employee}
                                                     </Chip>
                                                 )}
-                                                {filters.status.map(stat => (
+                                                {Array.isArray(filters.status) && filters.status.map(stat => (
                                                     <Chip key={stat} variant="flat" color="secondary" size="sm" onClose={() => handleFilterChange('status', filters.status.filter(s => s !== stat))}>
                                                     Status: {stat}
                                                     </Chip>
                                                 ))}
-                                                {filters.leaveType.map(type => (
+                                                {Array.isArray(filters.leaveType) && filters.leaveType.map(type => (
                                                     <Chip key={type} variant="flat" color="warning" size="sm" onClose={() => handleFilterChange('leaveType', filters.leaveType.filter(t => t !== type))}>
                                                     Type: {type}
                                                     </Chip>
                                                 ))}
-                                                {filters.department.map(depId => (
-                                                    <Chip key={depId} variant="flat" color="success" size="sm" onClose={() => handleFilterChange('department', filters.department.filter(d => d !== depId))}>
-                                                    Department: {departments.find(dep => dep.id === Number(depId))?.name || 'Unknown'}
-                                                    </Chip>
-                                                ))}
+                                                {Array.isArray(filters.department) && filters.department.map(depId => {
+                                                    const department = departments.find(dep => String(dep.id) === String(depId));
+                                                    return (
+                                                        <Chip key={depId} variant="flat" color="success" size="sm" onClose={() => handleFilterChange('department', filters.department.filter(d => d !== depId))}>
+                                                            Department: {department?.name || `ID: ${depId}`}
+                                                        </Chip>
+                                                    );
+                                                })}
                                                 </div>
                                             )}
                                         </div>

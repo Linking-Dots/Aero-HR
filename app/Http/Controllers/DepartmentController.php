@@ -6,6 +6,7 @@ use App\Models\HRM\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -199,16 +200,25 @@ class DepartmentController extends Controller
 
             $user = User::findOrFail($id);
 
-            // Check if department changed
+            // Get the new department ID and verify it exists
             $newDepartmentId = $request->input('department');
-            $departmentChanged = $user->department_id !== $newDepartmentId;
+            $department = Department::find($newDepartmentId);
+            
+            if (!$department) {
+                return response()->json([
+                    'errors' => ['department' => 'The selected department does not exist.']
+                ], 422);
+            }
+
+            // Check if department changed
+            $departmentChanged = $user->department !== $newDepartmentId;
 
             // Update department
-            $user->department_id = $newDepartmentId;
+            $user->department = $newDepartmentId;
 
             // Optionally reset designation if department changed
             if ($departmentChanged) {
-                $user->designation_id = null; // Use `designation_id` if it's a foreign key
+                $user->designation = null; // Reset designation when department changes
             }
 
             $user->save();
@@ -218,18 +228,18 @@ class DepartmentController extends Controller
                 'user' => $user, // Optional: return updated user info
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error on updateUserDepartment', [
+            Log::error('Validation error on updateUserDepartment', [
                 'errors' => $e->errors(),
                 'request' => $request->all(),
             ]);
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \Log::error('User not found during updateUserDepartment', [
+            Log::error('User not found during updateUserDepartment', [
                 'user_id' => $id,
             ]);
             return response()->json(['errors' => ['User not found']], 404);
         } catch (\Exception $e) {
-            \Log::error('Unexpected error during updateUserDepartment', [
+            Log::error('Unexpected error during updateUserDepartment', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),

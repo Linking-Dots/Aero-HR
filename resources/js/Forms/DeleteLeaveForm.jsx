@@ -3,6 +3,7 @@ import GlassDialog from "@/Components/GlassDialog.jsx";
 import React, { useState } from "react";
 import {toast} from "react-toastify";
 import {useTheme} from "@mui/material/styles";
+import axios from 'axios'; // Add missing axios import
 
 
 
@@ -11,38 +12,52 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
     const [deleting, setDeleting] = useState(false);
 
     const handleDelete = () => {
+        if (!leaveId) {
+            toast.error('Invalid leave ID provided');
+            return;
+        }
+
         setDeleting(true);
         const promise = new Promise(async (resolve, reject) => {
             try {
                 const response = await axios.delete(route('leave-delete', { id: leaveId, route: route().current() }));
 
-
                 if (response.status === 200) {
-                    // Assuming dailyWorkData contains the updated list of daily works after deletion
+                    // Optimistic update approach
                     if (deleteLeaveOptimized) {
                         deleteLeaveOptimized(leaveId);
-                        setTotalRows(prev => prev - 1);
-                        fetchLeavesStats();
+                        setTotalRows(prev => Math.max(0, prev - 1)); // Ensure total doesn't go negative
+                        if (fetchLeavesStats) {
+                            fetchLeavesStats();
+                        }
                     } else {
-                        setLeavesData(response.data.leavesData);
-                        setTotalRows(response.data.leaves.total);
-                        setLastPage(response.data.leaves.last_page);
-                        setLeaves(response.data.leaves.data);
-                        setError(false);
-                        fetchLeavesStats();
+                        // Fallback approach
+                        if (setLeavesData) setLeavesData(response.data.leavesData);
+                        if (setTotalRows) setTotalRows(response.data.leaves.total);
+                        if (setLastPage) setLastPage(response.data.leaves.last_page);
+                        if (setLeaves) setLeaves(response.data.leaves.data);
+                        if (setError) setError(false);
+                        if (fetchLeavesStats) fetchLeavesStats();
                     }
 
                     resolve('Leave application deleted successfully');
                 }
             } catch (error) {
-                console.error('Error deleting task:', error);
-                if (error.response.status === 404) {
-                    const { leavesData } = error.response.data;
-                    setLeavesData(leavesData)
-                    setError(error.response?.data?.message || 'Error retrieving data.');
-
+                console.error('Error deleting leave:', error);
+                
+                // Enhanced error handling
+                if (error.response?.status === 404) {
+                    const { leavesData } = error.response.data || {};
+                    if (setLeavesData && leavesData) setLeavesData(leavesData);
+                    if (setError) setError(error.response?.data?.message || 'Leave not found.');
+                    reject('Leave not found or already deleted');
+                } else if (error.response?.status === 403) {
+                    reject('You do not have permission to delete this leave');
+                } else if (error.response?.status === 422) {
+                    reject('Cannot delete leave with current status');
+                } else {
+                    reject(error.response?.data?.error || 'Failed to delete leave application');
                 }
-                reject(error.response.data.error || 'Failed to delete leave application');
             } finally {
                 setDeleting(false);
                 closeModal();

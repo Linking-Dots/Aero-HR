@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography, useMediaQuery, useTheme } from '@mui/material';
-import GlassCard from "@/Components/GlassCard.jsx";
+import { Card, CardHeader, CardBody } from "@heroui/react";
 
 /**
  * Shared statistics cards component with enhanced responsive design for any number of cards
@@ -62,7 +62,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
     // Dynamic card sizing based on count and screen size
     const getCardClasses = () => {
         const count = stats.length;
-        let baseClasses = "hover:shadow-md transition-all duration-200";
+        let baseClasses = "bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200";
         
         if (isMobile) {
             // Mobile: More compact cards for better fit
@@ -103,9 +103,8 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                     } = stat;
 
                     return (
-                        <GlassCard 
+                        <Card 
                             key={index}
-                            variant="glass"
                             className={getCardClasses()}
                             style={animate ? {
                                 animationDelay: `${index * 100}ms`,
@@ -117,7 +116,7 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                         >
                             {isMobile && stats.length > 6 ? (
                                 // Ultra-compact mobile layout for many cards
-                                <div className="p-3">
+                                <CardBody className="p-3">
                                     <div className="flex items-center gap-2">
                                         {icon && (
                                             <div className={`p-1.5 ${iconBg} rounded-md flex-shrink-0`}>
@@ -148,12 +147,11 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                                             </Typography>
                                         </div>
                                     </div>
-                                </div>
+                                </CardBody>
                             ) : (
                                 // Standard layout for desktop/tablet or few cards
-                                <div className="p-4">
-                                    {/* Header */}
-                                    <div className={`pb-2 ${isMobile ? 'p-3' : 'p-4'}`}>
+                                <>
+                                    <CardHeader className={`pb-2 ${isMobile ? 'p-3' : 'p-4'}`}>
                                         <div className="flex items-center gap-2">
                                             {icon && (
                                                 <div className={`${isMobile ? 'p-1.5' : 'p-2'} ${iconBg} rounded-lg flex-shrink-0`}>
@@ -176,10 +174,9 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                                                 {title}
                                             </Typography>
                                         </div>
-                                    </div>
+                                    </CardHeader>
                                     
-                                    {/* Body */}
-                                    <div className={`pt-0 ${isMobile ? 'p-3' : 'p-4'}`}>
+                                    <CardBody className={`pt-0 ${isMobile ? 'p-3' : 'p-4'}`}>
                                         <Typography 
                                             variant={isMobile ? "h5" : "h4"} 
                                             className={`font-bold ${valueColor || color}`}
@@ -199,10 +196,10 @@ const StatsCards = ({ stats = [], gridCols, className = "mb-6", animate = true, 
                                                 {description}
                                             </Typography>
                                         )}
-                                    </div>
-                                </div>
+                                    </CardBody>
+                                </>
                             )}
-                        </GlassCard>
+                        </Card>
                     );
                 })}
             </div>

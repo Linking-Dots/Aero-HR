@@ -162,7 +162,7 @@ class UserController extends Controller
             }
 
             if ($department && $department !== 'all') {
-                $query->where('department_id', $department);
+                $query->where('department', $department);
             }
 
             // Sort active users first
@@ -180,11 +180,11 @@ class UserController extends Controller
                     'phone'          => $user->phone,
                     'profile_image'  => $user->profile_image,
                     'active'         => $user->active,
-                    'department_id' => $user->department_id,
-                    'department' => $user->department_id ? ($user->department_id instanceof Department ? $user->department_id->name : 
-                        (is_numeric($user->department_id) ? 
-                            (Department::find($user->department_id) ? Department::find($user->department_id)->name : null) : 
-                            $user->department_id)) : null,
+                    'department_id' => $user->department,
+                    'department' => $user->department ? ($user->department instanceof Department ? $user->department->name : 
+                        (is_numeric($user->department) ? 
+                            (Department::find($user->department) ? Department::find($user->department)->name : null) : 
+                            $user->department)) : null,
                     'roles'          => $user->roles->pluck('name')->toArray(),
                     'created_at'     => $user->created_at,
                     'updated_at'     => $user->updated_at,
@@ -275,7 +275,7 @@ class UserController extends Controller
             $systemHealth = [
                 'user_activation_rate' => $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0,
                 'role_coverage' => $totalUsers > 0 ? round(($securityMetrics['users_with_roles'] / $totalUsers) * 100, 1) : 0,
-                'department_coverage' => $totalUsers > 0 ? round((User::whereNotNull('department_id')->count() / $totalUsers) * 100, 1) : 0,
+                'department_coverage' => $totalUsers > 0 ? round((User::whereNotNull('department')->count() / $totalUsers) * 100, 1) : 0,
             ];
             
             // Compile comprehensive user management stats
@@ -401,7 +401,7 @@ class UserController extends Controller
                     'profile_image' => $employee->profile_image,
                     'active' => $employee->active,
                     // Include both ID and full name for department
-                    'department' => $employee->department_id,
+                    'department' => $employee->department,
                     // Include both ID and name for designation
                     'designation' => $employee->designation,
                     

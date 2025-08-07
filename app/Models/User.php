@@ -40,12 +40,13 @@ class User extends Authenticatable implements HasMedia
         'about',
         'report_to',
         'password',
-        'designation_id',
+        'designation',
         'nid',
         'name',
         'profile_image',
-        'department_id',
+        'department',
         'date_of_joining',
+        'active',
         'birthday',
         'gender',
         'passport_no',
@@ -128,8 +129,8 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'report_to' => 'integer',
-        'designation_id' => 'integer',
-        'department_id' => 'integer',
+        'designation' => 'integer',
+        'department' => 'integer',
         'attendance_type_id' => 'integer',
         'attendance_config' => 'array',
         'preferences' => 'array',
@@ -191,11 +192,11 @@ class User extends Authenticatable implements HasMedia
 
     public function designation(): BelongsTo
     {
-        return $this->belongsTo(Designation::class, 'designation_id');
+        return $this->belongsTo(Designation::class, 'designation');
     }
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department');
     }
 }

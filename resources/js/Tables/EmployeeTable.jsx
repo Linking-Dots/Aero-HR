@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from '@inertiajs/react';
 import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
+import { CircularProgress } from "@mui/material";
 import axios from 'axios';
 import { 
   Table, 
@@ -45,7 +46,6 @@ import {
   XCircleIcon,
   HashtagIcon
 } from "@heroicons/react/24/outline";
-import { CircularProgress } from "@mui/material";
 
 const EmployeeTable = ({ 
   allUsers, 
@@ -63,129 +63,287 @@ const EmployeeTable = ({
   updateEmployeeOptimized,
   deleteEmployeeOptimized
 }) => {
-
-  const [updating, setUpdating] = useState('');
+  const theme = useTheme();
+  
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [attendanceConfig, setAttendanceConfig] = useState({});
- 
-
 
   const handleDepartmentChange = async (userId, departmentId) => {
-    setUpdating(`${userId}-department`); // ✅ Immediately at the top
-
-    try {
-      const response = await axios.post(route('user.updateDepartment', { id: userId }), {
-        department: departmentId
-      });
-
-      if (response.status === 200) {
-        const departmentObj = departments.find(d => d.id === parseInt(departmentId)) || null;
-        updateEmployeeOptimized?.(userId, {
-          department_id: departmentId,
-          department: departmentObj,
-          designation_id: null,
-          designation: null
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(route('user.updateDepartment', { id: userId }), {
+          department: departmentId
         });
-        toast.success('Department updated successfully');
-      }
-    } catch (error) {
-      console.error('Error updating department:', error);
-      toast.error('Failed to update department');
-    } finally {
-      setUpdating('');
-    }
-  };
 
+        if (response.status === 200) {
+          const departmentObj = departments.find(d => d.id === parseInt(departmentId)) || null;
+          updateEmployeeOptimized?.(userId, {
+            department_id: departmentId,
+            department_name: departmentObj?.name || null,
+            designation_id: null,
+            designation_name: null
+          });
+          
+          resolve('Department updated successfully');
+        }
+      } catch (error) {
+        console.error('Error updating department:', error);
+        reject('Failed to update department');
+      }
+    });
+
+    toast.promise(promise, {
+      pending: {
+        render() {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <CircularProgress size={16} />
+              <span style={{ marginLeft: '8px' }}>Updating department...</span>
+            </div>
+          );
+        },
+        icon: false,
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      success: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🟢',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      error: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🔴',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+    });
+  };
 
   const handleDesignationChange = async (userId, designationId) => {
-    setUpdating(`${userId}-designation`);
-    try {
-      const response = await axios.post(route('user.updateDesignation', { id: userId }), {
-        designation_id: designationId
-      });
-
-      if (response.status === 200) {
-        const designationObj = designations.find(d => d.id === parseInt(designationId)) || null;
-        updateEmployeeOptimized?.(userId, {
-          designation_id: designationId,
-          designation: designationObj
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(route('user.updateDesignation', { id: userId }), {
+          designation_id: designationId
         });
-        toast.success("Designation updated successfully");
-      }
-    } catch (err) {
-      toast.error("Failed to update designation");
-    } finally {
-      setUpdating(''); // ✅ Always reset to string
-    }
-  };
 
+        if (response.status === 200) {
+          const designationObj = designations.find(d => d.id === parseInt(designationId)) || null;
+          updateEmployeeOptimized?.(userId, {
+            designation_id: designationId,
+            designation_name: designationObj?.title || null
+          });
+          
+          resolve("Designation updated successfully");
+        }
+      } catch (err) {
+        console.error('Error updating designation:', err);
+        reject("Failed to update designation");
+      }
+    });
+
+    toast.promise(promise, {
+      pending: {
+        render() {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <CircularProgress size={16} />
+              <span style={{ marginLeft: '8px' }}>Updating designation...</span>
+            </div>
+          );
+        },
+        icon: false,
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      success: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🟢',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      error: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🔴',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+    });
+  };
 
   // Handle attendance type change
   const handleAttendanceTypeChange = async (userId, attendanceTypeId) => {
-    
-    
- 
-    setUpdating(`${userId}-attendance_type`);
-    
-    try {
-      const response = await axios.post(route('user.updateAttendanceType', { id: userId }), {
-        attendance_type_id: attendanceTypeId
-      });
-      
-      if (response.status === 200) {
-        // Get the attendance type name
-        const attendanceTypeName = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId))?.name || '';
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(route('user.updateAttendanceType', { id: userId }), {
+          attendance_type_id: attendanceTypeId
+        });
         
-        // Update optimistically
-        if (updateEmployeeOptimized) {
-          updateEmployeeOptimized(userId, { 
-            attendance_type_id: attendanceTypeId,
-            attendance_type: attendanceTypeName
-          });
+        if (response.status === 200) {
+          // Get the attendance type object
+          const attendanceTypeObj = attendanceTypes.find(t => t.id === parseInt(attendanceTypeId)) || null;
+          
+          // Update optimistically
+          if (updateEmployeeOptimized) {
+            updateEmployeeOptimized(userId, { 
+              attendance_type_id: attendanceTypeId,
+              attendance_type_name: attendanceTypeObj?.name || null
+            });
+          }
+          
+          resolve('Attendance type updated successfully');
         }
-        toast.success('Attendance type updated successfully');
-     
+      } catch (error) {
+        console.error('Error updating attendance type:', error);
+        reject('Failed to update attendance type');
       }
-    } catch (error) {
-      console.error('Error updating attendance type:', error);
-      toast.error('Failed to update attendance type');
-    } finally {
-     
-  
-      setUpdating('');
-    }
-  };
+    });
 
- 
+    toast.promise(promise, {
+      pending: {
+        render() {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <CircularProgress size={16} />
+              <span style={{ marginLeft: '8px' }}>Updating attendance type...</span>
+            </div>
+          );
+        },
+        icon: false,
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      success: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🟢',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      error: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🔴',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+    });
+  };
 
   // Delete employee
   const handleDelete = async (userId) => {
- 
+    const confirmed = confirm('Are you sure you want to delete this employee?');
+    if (!confirmed) return;
 
-    setUpdating(`${userId}-delete`);
-    try {
-      const confirmed = confirm('Are you sure you want to delete this employee?');
-      if (!confirmed) {
-        setUpdating('');
-        return;
-      }
-      
-      const response = await axios.delete(route('user.delete', { id: userId }));
-      
-      if (response.status === 200) {
-        // Update optimistically
-        if (deleteEmployeeOptimized) {
-          deleteEmployeeOptimized(userId);
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.delete(route('user.delete', { id: userId }));
+        
+        if (response.status === 200) {
+          // Update optimistically
+          if (deleteEmployeeOptimized) {
+            deleteEmployeeOptimized(userId);
+          }
+          
+          resolve('Employee deleted successfully');
         }
-        toast.success('Employee deleted successfully');
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        reject('Failed to delete employee');
       }
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-      toast.error('Failed to delete employee');
-    } finally {
-      setUpdating('');
-    }  
+    });
+
+    toast.promise(promise, {
+      pending: {
+        render() {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <CircularProgress size={16} />
+              <span style={{ marginLeft: '8px' }}>Deleting employee...</span>
+            </div>
+          );
+        },
+        icon: false,
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      success: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🟢',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+      error: {
+        render({ data }) {
+          return <div>{data}</div>;
+        },
+        icon: '🔴',
+        style: {
+          backdropFilter: 'blur(16px) saturate(200%)',
+          background: theme.glassCard?.background || 'rgba(15, 20, 25, 0.15)',
+          border: theme.glassCard?.border || '1px solid rgba(255, 255, 255, 0.2)',
+          color: theme.palette?.text?.primary || '#ffffff',
+        },
+      },
+    });
   };
 
   const columns = useMemo(() => {
@@ -295,16 +453,13 @@ const EmployeeTable = ({
                   <Button 
                     variant="bordered"
                     size="sm"
-                    className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
-                    isLoading={updating === `${user.id}-department`}
-                    spinner={<Spinner size="sm" />}
-                    startContent={
-                        <BuildingOfficeIcon className="w-4 h-4" />
-                    }
+                    className="justify-between backdrop-blur-md border-white/20 min-w-[150px] bg-white/10 hover:bg-white/15 transition-all duration-300"
+                    startContent={<BuildingOfficeIcon className="w-4 h-4" />}
                     endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                    isDisabled={updating === `${user.id}-department`}
                   >
-                    {user.department?.name || "Select Department"}
+                    <span>
+                      {user.department_name || "Select Department"}
+                    </span>
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Department options">
@@ -322,28 +477,29 @@ const EmployeeTable = ({
           );
 
         case "designation":
-          const departmentId = user.department?.id;
+          const departmentId = user.department_id;
           const filteredDesignations = designations?.filter(d => d.department_id === parseInt(departmentId)) || [];
 
           return (
             <div className="flex flex-col gap-2 min-w-[150px]">
-              <Dropdown>
+              <Dropdown isDisabled={!departmentId}>
                 <DropdownTrigger>
                   <Button 
                     variant="bordered"
                     size="sm"
-                    className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
-                    isLoading={updating === `${user.id}-designation`}
-                    spinner={<Spinner size="sm" />}
-                    startContent={
-                   
-                        <BriefcaseIcon className="w-4 h-4" />
-                  
-                    }
-                    endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                    isDisabled={!departmentId || updating === `${user.id}-designation`}
+                    className={`justify-between backdrop-blur-md border-white/20 min-w-[150px] transition-all duration-300 ${
+                      !departmentId
+                        ? 'bg-gray-500/20 border-gray-400/40 opacity-50'
+                        : 'bg-white/10 hover:bg-white/15'
+                    }`}
+                    isDisabled={!departmentId}
+                    startContent={<BriefcaseIcon className="w-4 h-4" />}
+                    endContent={departmentId && <EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
                   >
-                    {user.designation?.title || "Select Designation"}
+                    <span>
+                      {!departmentId ? 'Select Department First' :
+                       (user.designation_name || "Select Designation")}
+                    </span>
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Designation options">
@@ -368,18 +524,13 @@ const EmployeeTable = ({
                 <Button 
                   variant="bordered"
                   size="sm"
-                  className="justify-between bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 min-w-[150px]"
-                  isLoading={updating === `${user.id}-attendance_type`}
-                  spinner={<Spinner size="sm" />}
-                  startContent={
-             
-                      <ClockIcon className="w-4 h-4" />
-                 
-                  }
+                  className="justify-between backdrop-blur-md border-white/20 min-w-[150px] bg-white/10 hover:bg-white/15 transition-all duration-300"
+                  startContent={<ClockIcon className="w-4 h-4" />}
                   endContent={<EllipsisVerticalIcon className="w-4 h-4 rotate-90" />}
-                  isDisabled={updating === `${user.id}-attendance_type`}
                 >
-                  {user.attendance_type || "Select Type"}
+                  <span>
+                    {user.attendance_type_name || "Select Type"}
+                  </span>
                 </Button>
               </DropdownTrigger>
               <DropdownMenu aria-label="Attendance Type options">
@@ -404,7 +555,7 @@ const EmployeeTable = ({
                 <Button 
                   isIconOnly 
                   variant="light" 
-                  className="text-default-400 hover:text-foreground"
+                  className="text-default-400 hover:text-foreground transition-all duration-300"
                 >
                   <EllipsisVerticalIcon className="w-5 h-5" />
                 </Button>
@@ -420,16 +571,10 @@ const EmployeeTable = ({
                 
                 <DropdownItem 
                   key="delete" 
-                  className="text-danger" 
-                  color="danger" 
-                  loading={updating === `${user.id}-delete`}
-                  startContent={
-                    updating === `${user.id}-delete` ? 
-                    <Spinner size="sm" /> : 
-                    <TrashIcon className="w-4 h-4" />
-                  }
+                  className="text-danger"
+                  color="danger"
+                  startContent={<TrashIcon className="w-4 h-4" />}
                   onPress={() => handleDelete(user.id)}
-                  disabled={updating === `${user.id}-delete`}
                 >
                   Delete
                 </DropdownItem>
@@ -472,7 +617,17 @@ const EmployeeTable = ({
   };
 
   return (
-    <div className="w-full overflow-hidden flex flex-col border border-white/10 rounded-lg" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+    <div className="w-full overflow-hidden flex flex-col border border-white/10 rounded-lg relative" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      {/* Global loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+          <div className="flex flex-col items-center gap-4 p-6 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
+            <Spinner size="lg" color="primary" />
+            <span className="text-sm text-foreground">Loading employees...</span>
+          </div>
+        </div>
+      )}
+      
       <div className="overflow-auto flex-grow">
         <Table
           aria-label="Employees table"
@@ -508,10 +663,18 @@ const EmployeeTable = ({
             {(item, index) => {
               // Find the index of this item in the allUsers array to ensure accurate serial numbers
               const itemIndex = allUsers ? allUsers.findIndex(user => user.id === item.id) : index;
+              
               return (
-                <TableRow key={item.id}>
+                <TableRow 
+                  key={item.id}
+                  className="transition-all duration-300 hover:bg-white/5"
+                >
                   {(columnKey) => (
-                    <TableCell>{renderCell(item, columnKey, itemIndex)}</TableCell>
+                    <TableCell className="transition-all duration-300">
+                      <div className="transition-all duration-200">
+                        {renderCell(item, columnKey, itemIndex)}
+                      </div>
+                    </TableCell>
                   )}
                 </TableRow>
               );

@@ -158,9 +158,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // HR Management routes
     Route::middleware(['permission:employees.view'])->group(function () {
-        Route::get('/employees', [UserController::class, 'index1'])->name('employees');
-        Route::get('/employees/paginate', [UserController::class, 'paginateEmployees'])->name('employees.paginate');
-        Route::get('/employees/stats', [UserController::class, 'employeeStats'])->name('employees.stats');
+        Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index'])->name('employees');
+        Route::get('/employees/paginate', [\App\Http\Controllers\EmployeeController::class, 'paginate'])->name('employees.paginate');
+        Route::get('/employees/stats', [\App\Http\Controllers\EmployeeController::class, 'stats'])->name('employees.stats');
     });
     
     // Department management routes

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\LeaveResource;
 use App\Http\Resources\LeaveResourceCollection;
+use App\Models\HRM\Leave;
 use App\Models\HRM\LeaveSetting;
 use App\Models\User;
 use App\Services\Leave\LeaveCrudService;
@@ -59,19 +60,26 @@ class LeaveController extends Controller
     {
         try {
             $leaveData = $this->queryService->getLeaveRecords($request);
-         
-
-            return response()->json([
+            
+            $response = [
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                 'leavesData' => $leaveData['leavesData'],
                 'departments' => Department::all('id', 'name'),
-                'message' => $leaveData['leaveRecords']->isEmpty() ? 'No leave records found for the selected period.' : null,
-            ], 200);
+                'success' => true,
+            ];
+
+            // Add message if provided by the service
+            if (isset($leaveData['message'])) {
+                $response['message'] = $leaveData['message'];
+            }
+
+            return response()->json($response, 200);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([
+                'success' => false,
                 'error' => 'An error occurred while retrieving leave data.',
-                'details' => $e->getMessage(),
+                'details' => config('app.debug') ? $e->getMessage() : 'Internal server error',
             ], 500);
         }
     }
@@ -98,7 +106,11 @@ class LeaveController extends Controller
         $validator = $this->validationService->validateLeaveRequest($request);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
         }
 
         try {
@@ -109,22 +121,21 @@ class LeaveController extends Controller
             // Check for overlapping leaves
             $overlapError = $this->overlapService->getOverlapErrorMessage($userId, $fromDate, $toDate);
             if ($overlapError) {
-                return response()->json(['error' => $overlapError], 422);
+                return response()->json([
+                    'success' => false,
+                    'error' => $overlapError,
+                    'message' => 'Leave dates overlap with existing leave or holiday'
+                ], 422);
             }
 
             // Create new leave
             $newLeave = $this->crudService->createLeave($request->all());
 
-            $leaveData = $this->queryService->getLeaveRecords(
-                $request,
-                $request->get('perPage', 30),
-                $request->get('page', 1),
-                $request->get('employee', ''),
-                null,
-                $request->get('month', null)
-            );
+            // Get updated leave records using the same service as paginate method
+            $leaveData = $this->queryService->getLeaveRecords($request);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Leave application submitted successfully',
                 'leave' => array_merge(
                     (new LeaveResource($newLeave->load('employee')))->toArray($request),
@@ -138,15 +149,16 @@ class LeaveController extends Controller
                         'leave_type' => LeaveSetting::find($newLeave->leave_type)?->type,
                     ]
                 ),
-
-                'leavesData' => $leaveData['leavesData'],
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
-            ]);
+                'leavesData' => $leaveData['leavesData'],
+                'departments' => Department::all('id', 'name'),
+            ], 201);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([
+                'success' => false,
                 'error' => 'An error occurred while submitting the leave data.',
-                'details' => $e->getMessage(),
+                'details' => config('app.debug') ? $e->getMessage() : 'Internal server error',
             ], 500);
         }
     }
@@ -156,16 +168,11 @@ class LeaveController extends Controller
         try {
             $updatedLeave = $this->crudService->updateLeave($request->input('id'), $request->all());
 
-            $leaveData = $this->queryService->getLeaveRecords(
-                $request,
-                $request->get('perPage', 30),
-                $request->get('page', 1),
-                $request->get('employee', ''),
-                $request->get('year', null),
-                $request->get('month', null),
-            );
+            // Get updated leave records using the same service as paginate method
+            $leaveData = $this->queryService->getLeaveRecords($request);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Leave application updated successfully',
                 'leave' => array_merge(
                     (new LeaveResource($updatedLeave->load('employee')))->toArray($request),
@@ -181,7 +188,8 @@ class LeaveController extends Controller
                 ),
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
                 'leavesData' => $leaveData['leavesData'],
-            ]);
+                'departments' => Department::all('id', 'name'),
+            ], 200);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([
@@ -211,9 +219,11 @@ class LeaveController extends Controller
             $leaveData = $this->queryService->getLeaveRecords($request);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Leave application deleted successfully',
-                'leavesData' => $leaveData['leavesData'],
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),
+                'leavesData' => $leaveData['leavesData'],
+                'departments' => Department::all('id', 'name'),
             ]);
         } catch (\Throwable $e) {
             report($e);

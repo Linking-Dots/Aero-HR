@@ -7,7 +7,7 @@ use App\Models\HRM\LeaveSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use HasPermissions;
+use Spatie\Permission\Traits\HasPermissions;
 
 class LeaveQueryService
 {    /**
@@ -16,7 +16,16 @@ class LeaveQueryService
     public function getLeaveRecords(Request $request, int $perPage = 30, int $page = 1, ?string $employee = '', ?int $year = null, ?string $month = null): array
     {
         $user = Auth::user();
-        $isAdmin = $user->can('leaves.view'); // Use Spatie's can() for permission check
+        
+        // Determine if this is an admin view based on request parameters or route context
+        // If user_id is NOT specified and we're not filtering by a specific employee, treat as admin view
+        $specificUserId = $request->get('user_id');
+        $isAdminView = $request->get('admin_view', false) || 
+                       (!$specificUserId && $request->get('view_all', false)) ||
+                       $request->header('X-Admin-View') === 'true';
+        
+        // If no explicit admin indicators, default to employee view (safer default)
+        $isAdmin = $isAdminView && $user;
 
         $perPage = $request->get('perPage', $perPage);
         $page = $request->get('employee') ? 1 : $request->get('page', $page);
@@ -71,12 +80,25 @@ class LeaveQueryService
 
         $leaveRecords->setCollection($processedLeaveRecords);
 
+        // Handle empty datasets appropriately
+        $message = null;
+        if ($leaveRecords->isEmpty()) {
+            if ($specificUserId) {
+                $message = 'No leave records found for the selected user.';
+            } elseif (!$isAdmin) {
+                $message = 'You have no leave records for the selected period.';
+            } else {
+                $message = 'No leave records found for the selected criteria.';
+            }
+        }
+
         return [
             'leaveRecords' => $leaveRecords, // Return paginated result directly
             'leavesData' => [
                 'leaveTypes' => $leaveTypes,
                 'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
             ],
+            'message' => $message, // Include appropriate message for empty data
         ];
     }/**
      * Apply date filters to the query
@@ -163,19 +185,34 @@ class LeaveQueryService
      */
     private function applyLeaveTypeFilter($query, $leaveType): void
     {
-        if (!empty($leaveType)) {
+        // Only apply filter if leaveType has actual values
+        if (!empty($leaveType) && $leaveType !== 'all') {
             if (is_array($leaveType)) {
-                $query->whereHas('leaveSetting', function ($q) use ($leaveType) {
-                    foreach ($leaveType as $type) {
-                        $q->orWhere('type', 'like', "%$type%");
-                    }
+                // If 'all' is in the array, don't apply any filtering (show all leave types)
+                // "All" takes precedence over specific selections
+                if (in_array('all', $leaveType)) {
+                    return; // Don't apply any leave type filtering
+                }
+                
+                // Filter array to remove empty values and 'all'
+                $validTypes = array_filter($leaveType, function($type) {
+                    return !empty($type) && $type !== 'all';
                 });
-            } elseif ($leaveType !== 'all') {
-                $query->whereHas('leaveSetting', function ($q) use ($leaveType) {
-                    $q->where('type', 'like', "%$leaveType%");
-                });
+                
+                if (count($validTypes) > 0) {
+                    // Use the already joined leave_settings table
+                    $query->where(function ($q) use ($validTypes) {
+                        foreach ($validTypes as $type) {
+                            $q->orWhere('leave_settings.type', 'like', "%$type%");
+                        }
+                    });
+                }
+            } elseif (!is_array($leaveType) && $leaveType !== 'all') {
+                // Use the already joined leave_settings table
+                $query->where('leave_settings.type', 'like', "%$leaveType%");
             }
         }
+        // If leaveType is empty, null, or contains 'all', don't apply any filtering (show all leave types)
     }
 
 
@@ -237,44 +274,71 @@ class LeaveQueryService
     public function getLeaveStatistics(Request $request): array
     {
         $user = Auth::user();
-        $isAdmin = $user->can('leaves.view');
+        
+        // Determine if this is an admin view based on request parameters
+        $isAdminView = $request->get('admin_view', false) || 
+                       $request->get('view_all', false) ||
+                       $request->header('X-Admin-View') === 'true';
+        
+        $isAdmin = $isAdminView && $user;
 
         $month = $request->get('month');
         $year = $request->get('year', now()->year);
         $employee = $request->get('employee');
         $leaveType = $request->get('leave_type');
 
-        $query = Leave::query();
+        // Use join like in the main query for consistency
+        $query = Leave::join('leave_settings', 'leaves.leave_type', '=', 'leave_settings.id')
+            ->select('leaves.*', 'leave_settings.type as leave_type_name');
 
         // Base filtering
         if (!$isAdmin) {
-            $query->where('user_id', $user->id);
+            $query->where('leaves.user_id', $user->id);
         }
 
         // Apply filters
         if ($month) {
             $monthStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
             $monthEnd = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
-            $query->whereBetween('from_date', [$monthStart, $monthEnd]);
+            $query->whereBetween('leaves.from_date', [$monthStart, $monthEnd]);
         } elseif ($year) {
-            $query->whereYear('from_date', $year);
+            $query->whereYear('leaves.from_date', $year);
         }
 
         if ($employee) {
             $query->whereHas('employee', fn($q) => $q->where('name', 'like', "%$employee%"));
         }
 
-        if ($leaveType && $leaveType !== 'all') {
-            $query->whereHas('leaveSetting', function($q) use ($leaveType) {
-                $q->where('type', 'like', "%$leaveType%");
-            });
+        if (!empty($leaveType) && $leaveType !== 'all') {
+            // Use the joined table for filtering
+            if (is_array($leaveType)) {
+                // If 'all' is in the array, don't apply any filtering (show all leave types)
+                // "All" takes precedence over specific selections
+                if (!in_array('all', $leaveType)) {
+                    // Filter array to remove empty values and 'all'
+                    $validTypes = array_filter($leaveType, function($type) {
+                        return !empty($type) && $type !== 'all';
+                    });
+                    
+                    if (count($validTypes) > 0) {
+                        $query->where(function ($q) use ($validTypes) {
+                            foreach ($validTypes as $type) {
+                                $q->orWhere('leave_settings.type', 'like', "%$type%");
+                            }
+                        });
+                    }
+                }
+                // If 'all' is in array, don't apply any leave type filtering
+            } elseif (!is_array($leaveType) && $leaveType !== 'all') {
+                $query->where('leave_settings.type', 'like', "%$leaveType%");
+            }
         }
 
         // Get status counts
         $stats = [
-            'pending' => (clone $query)->whereIn('status', ['New', 'Pending'])->count(),
-            'approved' => (clone $query)->where('status', 'Approved')->count(),
-            'rejected' => (clone $query)->whereIn('status', ['Declined', 'Rejected'])->count(),
+            'pending' => (clone $query)->whereIn('leaves.status', ['New', 'Pending'])->count(),
+            'approved' => (clone $query)->where('leaves.status', 'Approved')->count(),
+            'rejected' => (clone $query)->whereIn('leaves.status', ['Declined', 'Rejected'])->count(),
             'total' => (clone $query)->count(),
         ];
 

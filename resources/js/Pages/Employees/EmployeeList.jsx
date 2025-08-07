@@ -137,6 +137,8 @@ const EmployeesList = ({ title, departments, designations, attendanceTypes }) =>
           attendanceType: filters.attendanceType
         }
       });
+
+      console.log(data)
       
       setEmployees(data.employees.data);
       setTotalRows(data.employees.total);

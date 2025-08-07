@@ -291,6 +291,18 @@ Route::middleware(['auth', 'verified'])->prefix('hr')->name('hr.')->group(functi
         Route::post('/payroll/reports/statutory', [PayrollController::class, 'statutoryReport'])->name('payroll.reports.statutory');
     });
 
+    // Employee Management - Core CRUD operations
+    Route::middleware(['permission:hr.employees.view'])->group(function () {
+        Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('/employees/paginate', [\App\Http\Controllers\EmployeeController::class, 'paginate'])->name('employees.paginate');
+        Route::get('/employees/stats', [\App\Http\Controllers\EmployeeController::class, 'stats'])->name('employees.stats');
+        Route::post('/employees', [\App\Http\Controllers\EmployeeController::class, 'store'])->name('employees.store');
+        Route::get('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'show'])->name('employees.show');
+        Route::put('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'update'])->name('employees.update');
+        Route::delete('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'destroy'])->name('employees.destroy');
+        Route::post('/employees/{id}/restore', [\App\Http\Controllers\EmployeeController::class, 'restore'])->name('employees.restore');
+    });
+
     // Managers for dropdowns
     Route::get('/managers', [\App\Http\Controllers\HR\ManagersController::class, 'index'])->name('managers.list');
 
