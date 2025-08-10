@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('expected_completion_date');
             $table->date('actual_completion_date')->nullable();
-            $table->string('status')->default('pending'); // pending, in-progress, completed, cancelled
+            $table->string('status')->default('pending'); // pending, in_progress, completed, cancelled
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('due_date')->nullable();
             $table->date('completed_date')->nullable();
-            $table->string('status')->default('pending'); // pending, in-progress, completed, not-applicable
+            $table->string('status')->default('pending'); // pending, in_progress, completed, not-applicable
             $table->foreignId('assigned_to')->nullable()->constrained('users');
             $table->text('notes')->nullable();
             $table->timestamps();
@@ -46,7 +46,7 @@ return new class extends Migration
             $table->date('last_working_date');
             $table->date('exit_interview_date')->nullable();
             $table->string('reason'); // resignation, termination, retirement, end-of-contract, other
-            $table->string('status')->default('pending'); // pending, in-progress, completed, cancelled
+            $table->string('status')->default('pending'); // pending, in_progress, completed, cancelled
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -60,7 +60,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('due_date')->nullable();
             $table->date('completed_date')->nullable();
-            $table->string('status')->default('pending'); // pending, in-progress, completed, not-applicable
+            $table->string('status')->default('pending'); // pending, in_progress, completed, not-applicable
             $table->foreignId('assigned_to')->nullable()->constrained('users');
             $table->text('notes')->nullable();
             $table->timestamps();

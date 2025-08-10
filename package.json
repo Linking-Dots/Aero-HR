@@ -80,6 +80,7 @@
           "react-datepicker": "^7.3.0",
           "react-draggable": "^4.4.6",
           "react-dropzone": "^14.2.3",
+          "react-hot-toast": "^2.5.2",
           "react-leaflet": "^4.2.1",
           "react-preloaders": "^3.0.3",
           "react-toastify": "^10.0.5",

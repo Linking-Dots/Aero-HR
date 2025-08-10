@@ -22,11 +22,13 @@ import {
 import dayjs from 'dayjs';
 
 const TaskList = ({ tasks, onTaskStatusChange }) => {
+  const normalize = (status) => status === 'in-progress' ? 'in_progress' : status;
+  const labelize = (status) => status.replace('_','-');
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (normalize(status)) {
       case 'completed':
         return 'success';
-      case 'in-progress':
+      case 'in_progress':
         return 'info';
       case 'pending':
         return 'warning';
@@ -54,7 +56,7 @@ const TaskList = ({ tasks, onTaskStatusChange }) => {
               key={task.id}
               divider
               sx={{
-                backgroundColor: task.status === 'completed' ? 'rgba(0, 200, 83, 0.1)' : 'inherit',
+                backgroundColor: normalize(task.status) === 'completed' ? 'rgba(0, 200, 83, 0.1)' : 'inherit',
               }}
             >
               <ListItemIcon>
@@ -72,13 +74,13 @@ const TaskList = ({ tasks, onTaskStatusChange }) => {
                     <Typography
                       variant="body1"
                       sx={{
-                        textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                        textDecoration: normalize(task.status) === 'completed' ? 'line-through' : 'none',
                       }}
                     >
                       {task.task}
                     </Typography>
                     <Chip
-                      label={task.status}
+                      label={labelize(task.status)}
                       size="small"
                       color={getStatusColor(task.status)}
                       sx={{ ml: 2 }}

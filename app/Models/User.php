@@ -19,6 +19,14 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class User
+ *
+ * @method bool hasRole(string|array $roles)
+ * @method bool hasAnyRole(string|array $roles)
+ * @method bool hasAllRoles(array $roles)
+ * @method bool hasPermissionTo(string $permission, string $guardName = null)
+ */
 class User extends Authenticatable implements HasMedia
 {
     use HasFactory, Notifiable, HasRoles, HasPushSubscriptions, InteractsWithMedia, SoftDeletes, TwoFactorAuthenticatable;

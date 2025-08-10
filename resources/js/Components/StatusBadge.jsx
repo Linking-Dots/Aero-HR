@@ -16,6 +16,7 @@ const StatusBadge = ({ status, size = 'small', variant = 'filled' }) => {
     // General statuses
     'pending': { color: 'warning', icon: <PendingIcon fontSize="small" />, label: 'Pending' },
     'in-progress': { color: 'info', icon: <InProgressIcon fontSize="small" />, label: 'In Progress' },
+    'in_progress': { color: 'info', icon: <InProgressIcon fontSize="small" />, label: 'In Progress' },
     'completed': { color: 'success', icon: <CheckCircleIcon fontSize="small" />, label: 'Completed' },
     'cancelled': { color: 'error', icon: <CancelIcon fontSize="small" />, label: 'Cancelled' },
     

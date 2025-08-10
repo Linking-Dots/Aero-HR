@@ -306,12 +306,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Enhanced Role Management Routes (with proper permission-based access control)
-Route::middleware(['auth', 'verified', 'permission:roles.view'])->group(function () {
+Route::middleware(['auth', 'verified', 'permission:roles.view', 'role_permission_sync'])->group(function () {
     // Role Management Interface
     Route::get('/admin/roles-management', [RoleController::class, 'index'])->name('admin.roles-management');
     Route::get('/admin/roles/audit', [RoleController::class, 'getEnhancedRoleAudit'])->name('admin.roles.audit');
     Route::get('/admin/roles/export', [RoleController::class, 'exportRoles'])->name('admin.roles.export');
     Route::get('/admin/roles/metrics', [RoleController::class, 'getRoleMetrics'])->name('admin.roles.metrics');
+    Route::get('/admin/roles/snapshot', [RoleController::class, 'snapshot'])->name('admin.roles.snapshot');
 });
 
 Route::middleware(['auth', 'verified', 'permission:roles.create'])->group(function () {
@@ -322,8 +323,10 @@ Route::middleware(['auth', 'verified', 'permission:roles.create'])->group(functi
 Route::middleware(['auth', 'verified', 'permission:roles.update'])->group(function () {
     Route::put('/admin/roles/{id}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
     Route::post('/admin/roles/update-permission', [RoleController::class, 'updateRolePermission'])->name('admin.roles.update-permission');
+    Route::post('/admin/roles/toggle-permission', [RoleController::class, 'togglePermission'])->name('admin.roles.toggle-permission');
     Route::post('/admin/roles/update-module', [RoleController::class, 'updateRoleModule'])->name('admin.roles.update-module');
     Route::post('/admin/roles/bulk-operation', [RoleController::class, 'bulkOperation'])->name('admin.roles.bulk-operation');
+    Route::patch('/admin/roles/{role}/permissions', [RoleController::class, 'batchUpdatePermissions'])->name('admin.roles.batch-permissions');
 });
 
 Route::middleware(['auth', 'verified', 'permission:roles.delete'])->group(function () {
@@ -337,6 +340,14 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
 
 // Test route for role controller
 Route::middleware(['auth', 'verified'])->get('/admin/roles-test', [RoleController::class, 'test'])->name('admin.roles.test');
+
+// Role Debug Routes (for troubleshooting live server issues)
+Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(function () {
+    Route::get('/admin/roles/debug', [App\Http\Controllers\RoleDebugController::class, 'debug'])->name('admin.roles.debug');
+    Route::post('/admin/roles/debug/refresh-cache', [App\Http\Controllers\RoleDebugController::class, 'refreshCache'])->name('admin.roles.debug.refresh-cache');
+    Route::get('/admin/roles/debug/test-role', [App\Http\Controllers\RoleDebugController::class, 'testRole'])->name('admin.roles.debug.test-role');
+    Route::post('/admin/roles/debug/test-permission', [App\Http\Controllers\RoleDebugController::class, 'testPermissionAssignment'])->name('admin.roles.debug.test-permission');
+});
 
 // System Monitoring Routes (Super Administrator only)
 Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(function () {

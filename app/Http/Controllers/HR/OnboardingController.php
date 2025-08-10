@@ -3,11 +3,18 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HR\StoreOnboardingRequest;
+use App\Http\Requests\HR\UpdateOnboardingRequest;
+use App\Http\Requests\HR\StoreOffboardingRequest;
+use App\Http\Requests\HR\UpdateOffboardingRequest;
 use App\Models\HRM\Offboarding;
+use App\Models\HRM\OffboardingTask;
 use App\Models\HRM\Onboarding;
 use App\Models\HRM\OnboardingTask;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Models\OnboardingStep;
+use App\Models\OffboardingStep;
+use App\Models\Checklist;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +47,7 @@ class OnboardingController extends Controller
         $this->authorize('create', Onboarding::class);
 
         $employees = User::select('id', 'name')
-            ->where('status', 'active')
+            ->where('active', true) // replaced status check
             ->orderBy('name')
             ->get();
 
@@ -53,21 +60,11 @@ class OnboardingController extends Controller
     /**
      * Store a newly created onboarding process.
      */
-    public function store(Request $request)
+    public function store(StoreOnboardingRequest $request)
     {
         $this->authorize('create', Onboarding::class);
 
-        $validated = $request->validate([
-            'employee_id' => 'required|exists:users,id',
-            'start_date' => 'required|date',
-            'expected_completion_date' => 'required|date|after_or_equal:start_date',
-            'notes' => 'nullable|string',
-            'tasks' => 'array',
-            'tasks.*.task' => 'required|string',
-            'tasks.*.description' => 'nullable|string',
-            'tasks.*.due_date' => 'nullable|date',
-            'tasks.*.assigned_to' => 'nullable|exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -76,22 +73,19 @@ class OnboardingController extends Controller
                 'employee_id' => $validated['employee_id'],
                 'start_date' => $validated['start_date'],
                 'expected_completion_date' => $validated['expected_completion_date'],
-                'status' => 'pending',
+                'status' => Onboarding::STATUS_PENDING,
                 'notes' => $validated['notes'] ?? null,
-                'created_by' => Auth::id(),
             ]);
 
-            if (isset($validated['tasks']) && count($validated['tasks']) > 0) {
-                foreach ($validated['tasks'] as $taskData) {
-                    OnboardingTask::create([
-                        'onboarding_id' => $onboarding->id,
-                        'task' => $taskData['task'],
-                        'description' => $taskData['description'] ?? null,
-                        'due_date' => $taskData['due_date'] ?? null,
-                        'assigned_to' => $taskData['assigned_to'] ?? null,
-                        'status' => 'pending',
-                    ]);
-                }
+            foreach ($validated['tasks'] as $taskData) {
+                OnboardingTask::create([
+                    'onboarding_id' => $onboarding->id,
+                    'task' => $taskData['task'],
+                    'description' => $taskData['description'] ?? null,
+                    'due_date' => $taskData['due_date'] ?? null,
+                    'assigned_to' => $taskData['assigned_to'] ?? null,
+                    'status' => OnboardingTask::STATUS_PENDING,
+                ]);
             }
 
             DB::commit();
@@ -100,7 +94,7 @@ class OnboardingController extends Controller
                 ->with('success', 'Onboarding process created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to create onboarding process: ' . $e->getMessage());
+            Log::error('Failed to create onboarding process', ['error' => $e->getMessage()]);
 
             return redirect()->back()
                 ->with('error', 'Failed to create onboarding process. Please try again.')
@@ -139,7 +133,7 @@ class OnboardingController extends Controller
             ->get();
 
         $assignees = User::select('id', 'name')
-            ->where('status', 'active')
+            ->where('active', true) // replaced status check
             ->orderBy('name')
             ->get();
 
@@ -154,28 +148,13 @@ class OnboardingController extends Controller
     /**
      * Update the specified onboarding process.
      */
-    public function update(Request $request, $id)
+    public function update(UpdateOnboardingRequest $request, $id)
     {
-        $onboarding = Onboarding::findOrFail($id);
+        $onboarding = Onboarding::with('tasks')->findOrFail($id);
 
         $this->authorize('update', $onboarding);
 
-        $validated = $request->validate([
-            'start_date' => 'required|date',
-            'expected_completion_date' => 'required|date|after_or_equal:start_date',
-            'actual_completion_date' => 'nullable|date',
-            'status' => 'required|in:pending,in-progress,completed,cancelled',
-            'notes' => 'nullable|string',
-            'tasks' => 'array',
-            'tasks.*.id' => 'nullable|exists:onboarding_tasks,id',
-            'tasks.*.task' => 'required|string',
-            'tasks.*.description' => 'nullable|string',
-            'tasks.*.due_date' => 'nullable|date',
-            'tasks.*.completed_date' => 'nullable|date',
-            'tasks.*.status' => 'required|in:pending,in-progress,completed,not-applicable',
-            'tasks.*.assigned_to' => 'nullable|exists:users,id',
-            'tasks.*.notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -186,48 +165,41 @@ class OnboardingController extends Controller
                 'actual_completion_date' => $validated['actual_completion_date'] ?? null,
                 'status' => $validated['status'],
                 'notes' => $validated['notes'] ?? null,
-                'updated_by' => Auth::id(),
             ]);
 
-            // Track existing task IDs to determine which ones to delete
             $existingTaskIds = $onboarding->tasks->pluck('id')->toArray();
             $updatedTaskIds = [];
 
-            if (isset($validated['tasks']) && count($validated['tasks']) > 0) {
-                foreach ($validated['tasks'] as $taskData) {
-                    if (isset($taskData['id'])) {
-                        // Update existing task
-                        $task = OnboardingTask::findOrFail($taskData['id']);
-                        $task->update([
-                            'task' => $taskData['task'],
-                            'description' => $taskData['description'] ?? null,
-                            'due_date' => $taskData['due_date'] ?? null,
-                            'completed_date' => $taskData['completed_date'] ?? null,
-                            'status' => $taskData['status'],
-                            'assigned_to' => $taskData['assigned_to'] ?? null,
-                            'notes' => $taskData['notes'] ?? null,
-                        ]);
-                        $updatedTaskIds[] = $task->id;
-                    } else {
-                        // Create new task
-                        $task = OnboardingTask::create([
-                            'onboarding_id' => $onboarding->id,
-                            'task' => $taskData['task'],
-                            'description' => $taskData['description'] ?? null,
-                            'due_date' => $taskData['due_date'] ?? null,
-                            'completed_date' => $taskData['completed_date'] ?? null,
-                            'status' => $taskData['status'],
-                            'assigned_to' => $taskData['assigned_to'] ?? null,
-                            'notes' => $taskData['notes'] ?? null,
-                        ]);
-                        $updatedTaskIds[] = $task->id;
-                    }
+            foreach ($validated['tasks'] as $taskData) {
+                if (!empty($taskData['id'])) {
+                    $task = OnboardingTask::findOrFail($taskData['id']);
+                    $task->update([
+                        'task' => $taskData['task'],
+                        'description' => $taskData['description'] ?? null,
+                        'due_date' => $taskData['due_date'] ?? null,
+                        'completed_date' => $taskData['completed_date'] ?? null,
+                        'status' => $taskData['status'],
+                        'assigned_to' => $taskData['assigned_to'] ?? null,
+                        'notes' => $taskData['notes'] ?? null,
+                    ]);
+                    $updatedTaskIds[] = $task->id;
+                } else {
+                    $task = OnboardingTask::create([
+                        'onboarding_id' => $onboarding->id,
+                        'task' => $taskData['task'],
+                        'description' => $taskData['description'] ?? null,
+                        'due_date' => $taskData['due_date'] ?? null,
+                        'completed_date' => $taskData['completed_date'] ?? null,
+                        'status' => $taskData['status'],
+                        'assigned_to' => $taskData['assigned_to'] ?? null,
+                        'notes' => $taskData['notes'] ?? null,
+                    ]);
+                    $updatedTaskIds[] = $task->id;
                 }
             }
 
-            // Delete tasks that weren't updated
             $tasksToDelete = array_diff($existingTaskIds, $updatedTaskIds);
-            if (!empty($tasksToDelete)) {
+            if ($tasksToDelete) {
                 OnboardingTask::whereIn('id', $tasksToDelete)->delete();
             }
 
@@ -237,7 +209,7 @@ class OnboardingController extends Controller
                 ->with('success', 'Onboarding process updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to update onboarding process: ' . $e->getMessage());
+            Log::error('Failed to update onboarding process', ['error' => $e->getMessage(), 'onboarding_id' => $onboarding->id]);
 
             return redirect()->back()
                 ->with('error', 'Failed to update onboarding process. Please try again.')
@@ -284,16 +256,237 @@ class OnboardingController extends Controller
         ]);
     }
 
-    // Additional methods for offboarding would follow the same pattern as the onboarding methods above
+    /**
+     * Show the form for creating a new offboarding process.
+     */
+    public function createOffboarding()
+    {
+        $this->authorize('create', Offboarding::class);
+
+        $employees = User::select('id', 'name')
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('HR/Offboarding/Create', [
+            'title' => 'Create Offboarding Process',
+            'employees' => $employees
+        ]);
+    }
+
+    /**
+     * Store a newly created offboarding process.
+     */
+    public function storeOffboarding(StoreOffboardingRequest $request)
+    {
+        $this->authorize('create', Offboarding::class);
+
+        $validated = $request->validated();
+
+        DB::beginTransaction();
+        try {
+            $offboarding = Offboarding::create([
+                'employee_id' => $validated['employee_id'],
+                'initiation_date' => $validated['initiation_date'],
+                'last_working_date' => $validated['last_working_date'],
+                'exit_interview_date' => $validated['exit_interview_date'] ?? null,
+                'reason' => $validated['reason'],
+                'status' => $validated['status'] ?? Offboarding::STATUS_PENDING,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            foreach ($validated['tasks'] as $taskData) {
+                OffboardingTask::create([
+                    'offboarding_id' => $offboarding->id,
+                    'task' => $taskData['task'],
+                    'description' => $taskData['description'] ?? null,
+                    'due_date' => $taskData['due_date'] ?? null,
+                    'assigned_to' => $taskData['assigned_to'] ?? null,
+                    'status' => OffboardingTask::STATUS_PENDING,
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('hr.offboarding.show', $offboarding->id)
+                ->with('success', 'Offboarding process created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to create offboarding process', ['error' => $e->getMessage()]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to create offboarding process. Please try again.')
+                ->withInput();
+        }
+    }
+
+    /**
+     * Display the specified offboarding process.
+     */
+    public function showOffboarding($id)
+    {
+        $offboarding = Offboarding::with(['employee', 'tasks.assignee'])->findOrFail($id);
+        $this->authorize('view', $offboarding);
+
+        return Inertia::render('HR/Offboarding/Show', [
+            'title' => 'Offboarding Details',
+            'offboarding' => $offboarding
+        ]);
+    }
+
+    /**
+     * Update the specified offboarding process.
+     */
+    public function updateOffboarding(UpdateOffboardingRequest $request, $id)
+    {
+        $offboarding = Offboarding::with('tasks')->findOrFail($id);
+        $this->authorize('update', $offboarding);
+
+        $validated = $request->validated();
+
+        DB::beginTransaction();
+        try {
+            $offboarding->update([
+                'initiation_date' => $validated['initiation_date'],
+                'last_working_date' => $validated['last_working_date'],
+                'exit_interview_date' => $validated['exit_interview_date'] ?? null,
+                'reason' => $validated['reason'],
+                'status' => $validated['status'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $existingTaskIds = $offboarding->tasks->pluck('id')->toArray();
+            $updatedTaskIds = [];
+            foreach ($validated['tasks'] as $taskData) {
+                if (!empty($taskData['id'])) {
+                    $task = OffboardingTask::findOrFail($taskData['id']);
+                    $task->update([
+                        'task' => $taskData['task'],
+                        'description' => $taskData['description'] ?? null,
+                        'due_date' => $taskData['due_date'] ?? null,
+                        'completed_date' => $taskData['completed_date'] ?? null,
+                        'status' => $taskData['status'],
+                        'assigned_to' => $taskData['assigned_to'] ?? null,
+                        'notes' => $taskData['notes'] ?? null,
+                    ]);
+                    $updatedTaskIds[] = $task->id;
+                } else {
+                    $task = OffboardingTask::create([
+                        'offboarding_id' => $offboarding->id,
+                        'task' => $taskData['task'],
+                        'description' => $taskData['description'] ?? null,
+                        'due_date' => $taskData['due_date'] ?? null,
+                        'completed_date' => $taskData['completed_date'] ?? null,
+                        'status' => $taskData['status'],
+                        'assigned_to' => $taskData['assigned_to'] ?? null,
+                        'notes' => $taskData['notes'] ?? null,
+                    ]);
+                    $updatedTaskIds[] = $task->id;
+                }
+            }
+            $tasksToDelete = array_diff($existingTaskIds, $updatedTaskIds);
+            if ($tasksToDelete) {
+                OffboardingTask::whereIn('id', $tasksToDelete)->delete();
+            }
+            DB::commit();
+            return redirect()->route('hr.offboarding.show', $offboarding->id)
+                ->with('success', 'Offboarding process updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update offboarding process', ['error' => $e->getMessage(), 'offboarding_id' => $offboarding->id]);
+            return redirect()->back()
+                ->with('error', 'Failed to update offboarding process. Please try again.')
+                ->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified offboarding process.
+     */
+    public function destroyOffboarding($id)
+    {
+        $offboarding = Offboarding::findOrFail($id);
+        $this->authorize('delete', $offboarding);
+
+        try {
+            $offboarding->delete();
+            return redirect()->route('hr.offboarding.index')
+                ->with('success', 'Offboarding process deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to delete offboarding process', [
+                'error' => $e->getMessage(),
+                'offboarding_id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Failed to delete offboarding process.');
+        }
+    }
 
     /**
      * Show checklist templates.
      */
     public function checklists()
     {
-        // This would be implemented based on your checklist model structure
+        $this->authorize('viewAny', Checklist::class);
+        $onboardingSteps = OnboardingStep::orderBy('order')->get();
+        $offboardingSteps = OffboardingStep::orderBy('order')->get();
+        $checklists = Checklist::orderBy('name')->get();
         return Inertia::render('HR/Checklists/Index', [
-            'title' => 'Onboarding & Offboarding Checklists'
+            'title' => 'Onboarding & Offboarding Checklists',
+            'onboardingSteps' => $onboardingSteps,
+            'offboardingSteps' => $offboardingSteps,
+            'checklists' => $checklists,
         ]);
+    }
+
+    /**
+     * Store a checklist template.
+     */
+    public function storeChecklist(\Illuminate\Http\Request $request)
+    {
+        $this->authorize('create', Checklist::class);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:onboarding,offboarding',
+            'description' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.label' => 'required_with:items|string|max:255',
+        ]);
+        $checklist = Checklist::create([
+            'name' => $data['name'],
+            'type' => $data['type'],
+            'description' => $data['description'] ?? null,
+            'items' => $data['items'] ?? [],
+            'active' => true,
+        ]);
+        return redirect()->back()->with('success', 'Checklist created.');
+    }
+
+    /**
+     * Update a checklist template.
+     */
+    public function updateChecklist(\Illuminate\Http\Request $request, $id)
+    {
+        $checklist = Checklist::findOrFail($id);
+        $this->authorize('update', $checklist);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.label' => 'required_with:items|string|max:255',
+            'active' => 'sometimes|boolean'
+        ]);
+        $checklist->update($data);
+        return redirect()->back()->with('success', 'Checklist updated.');
+    }
+
+    /**
+     * Delete a checklist template.
+     */
+    public function destroyChecklist($id)
+    {
+        $checklist = Checklist::findOrFail($id);
+        $this->authorize('delete', $checklist);
+        $checklist->delete();
+        return redirect()->back()->with('success', 'Checklist deleted.');
     }
 }

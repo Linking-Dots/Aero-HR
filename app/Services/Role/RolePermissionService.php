@@ -8,6 +8,7 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 
 /**
  * Enterprise Role Permission Service
@@ -456,5 +457,270 @@ class RolePermissionService
         }
         
         return $audit;
+    }
+    
+    /**
+     * Forget Spatie permission cache safely.
+     */
+    public function resetCache(): void
+    {
+        try {
+            // Clear Spatie permission cache
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            
+            // Clear all permission-related cache keys
+            $cacheKeys = [
+                config('permission.cache.key', 'spatie.permission.cache'),
+                'roles_with_permissions',
+                'permissions_grouped_by_module',
+                'enterprise_modules_cache',
+            ];
+            
+            foreach ($cacheKeys as $key) {
+                Cache::forget($key);
+            }
+            
+            // Clear Laravel cache in production environment
+            if (app()->environment('production')) {
+                Artisan::call('cache:clear');
+                Artisan::call('config:clear');
+                Artisan::call('view:clear');
+            }
+            
+        } catch (\Throwable $e) {
+            Log::warning('Permission cache reset failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get roles with permissions with enhanced error handling and caching.
+     */
+    public function getRolesWithPermissionsForFrontend(): array
+    {
+        try {
+            // Try to get from cache first
+            $cacheKey = 'roles_with_permissions_frontend';
+            $cachedData = Cache::get($cacheKey);
+            
+            if ($cachedData && is_array($cachedData) && !empty($cachedData)) {
+                return $cachedData;
+            }
+            
+            // Get fresh data with multiple fallback strategies
+            $roles = $this->getRolesWithFallback();
+            $permissions = $this->getPermissionsWithFallback();
+            $rolePermissions = $this->getRolePermissionRelationshipsWithFallback();
+            
+            $data = [
+                'roles' => $roles,
+                'permissions' => $permissions,
+                'role_has_permissions' => $rolePermissions,
+                'permissionsGrouped' => $this->getPermissionsGroupedByModule(),
+                'timestamp' => now()->toISOString(),
+                'server_environment' => app()->environment(),
+            ];
+            
+            // Cache for 5 minutes in production, 1 minute in development
+            $cacheMinutes = app()->environment('production') ? 5 : 1;
+            Cache::put($cacheKey, $data, now()->addMinutes($cacheMinutes));
+            
+            return $data;
+            
+        } catch (\Throwable $e) {
+            Log::error('Failed to get roles with permissions for frontend', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            // Return minimal safe structure to prevent frontend crashes
+            return [
+                'roles' => [],
+                'permissions' => [],
+                'role_has_permissions' => [],
+                'permissionsGrouped' => [],
+                'error' => 'Failed to load role data',
+                'timestamp' => now()->toISOString(),
+            ];
+        }
+    }
+
+    /**
+     * Get roles with multiple fallback strategies.
+     */
+    private function getRolesWithFallback(): array
+    {
+        try {
+            // Primary method: Eloquent with relationships
+            $roles = Role::with(['permissions'])->orderBy('name')->get();
+            
+            if ($roles->isNotEmpty()) {
+                return $roles->toArray();
+            }
+            
+            // Fallback 1: Raw query
+            $rolesRaw = DB::table('roles')->orderBy('name')->get();
+            
+            if ($rolesRaw->isNotEmpty()) {
+                Log::warning('Using fallback method for roles - Eloquent relationship failed');
+                return $rolesRaw->toArray();
+            }
+            
+            // Fallback 2: Basic role creation if none exist
+            Log::error('No roles found in database - this should not happen in production');
+            return [];
+            
+        } catch (\Throwable $e) {
+            Log::error('All role retrieval methods failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Get permissions with multiple fallback strategies.
+     */
+    private function getPermissionsWithFallback(): array
+    {
+        try {
+            // Primary method: Eloquent
+            $permissions = Permission::orderBy('name')->get();
+            
+            if ($permissions->isNotEmpty()) {
+                return $permissions->toArray();
+            }
+            
+            // Fallback: Raw query
+            $permissionsRaw = DB::table('permissions')->orderBy('name')->get();
+            
+            if ($permissionsRaw->isNotEmpty()) {
+                Log::warning('Using fallback method for permissions - Eloquent failed');
+                return $permissionsRaw->toArray();
+            }
+            
+            Log::error('No permissions found in database');
+            return [];
+            
+        } catch (\Throwable $e) {
+            Log::error('All permission retrieval methods failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Get role-permission relationships with multiple fallback strategies.
+     */
+    private function getRolePermissionRelationshipsWithFallback(): array
+    {
+        try {
+            // Primary method: Direct database query
+            $relationships = DB::table('role_has_permissions')
+                ->select('role_id', 'permission_id')
+                ->get();
+            
+            if ($relationships->isNotEmpty()) {
+                return $relationships->toArray();
+            }
+            
+            // Fallback: Build relationships from role->permissions
+            $fallbackRelationships = [];
+            $roles = Role::with('permissions')->get();
+            
+            foreach ($roles as $role) {
+                foreach ($role->permissions as $permission) {
+                    $fallbackRelationships[] = [
+                        'role_id' => $role->id,
+                        'permission_id' => $permission->id,
+                    ];
+                }
+            }
+            
+            if (!empty($fallbackRelationships)) {
+                Log::warning('Using fallback method for role-permission relationships');
+                return $fallbackRelationships;
+            }
+            
+            Log::error('No role-permission relationships found');
+            return [];
+            
+        } catch (\Throwable $e) {
+            Log::error('All role-permission relationship retrieval methods failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Validate and repair role-permission data integrity.
+     */
+    public function validateAndRepairDataIntegrity(): array
+    {
+        $report = [
+            'timestamp' => now()->toISOString(),
+            'issues_found' => [],
+            'repairs_made' => [],
+            'validation_passed' => true,
+        ];
+        
+        try {
+            // Check if role_has_permissions table has data
+            $rolePermissionCount = DB::table('role_has_permissions')->count();
+            $roleCount = Role::count();
+            $permissionCount = Permission::count();
+            
+            if ($rolePermissionCount === 0 && $roleCount > 0 && $permissionCount > 0) {
+                $report['issues_found'][] = 'role_has_permissions table is empty but roles and permissions exist';
+                $report['validation_passed'] = false;
+                
+                // Attempt to repair by re-seeding permissions
+                try {
+                    Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\ComprehensiveRolePermissionSeeder']);
+                    $report['repairs_made'][] = 'Re-seeded role-permission relationships';
+                } catch (\Throwable $e) {
+                    $report['issues_found'][] = 'Failed to repair via seeder: ' . $e->getMessage();
+                }
+            }
+            
+            // Check for orphaned relationships
+            $orphanedRoleRelations = DB::table('role_has_permissions')
+                ->leftJoin('roles', 'role_has_permissions.role_id', '=', 'roles.id')
+                ->whereNull('roles.id')
+                ->count();
+                
+            if ($orphanedRoleRelations > 0) {
+                $report['issues_found'][] = "Found {$orphanedRoleRelations} orphaned role relationships";
+                $report['validation_passed'] = false;
+            }
+            
+            $orphanedPermissionRelations = DB::table('role_has_permissions')
+                ->leftJoin('permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+                ->whereNull('permissions.id')
+                ->count();
+                
+            if ($orphanedPermissionRelations > 0) {
+                $report['issues_found'][] = "Found {$orphanedPermissionRelations} orphaned permission relationships";
+                $report['validation_passed'] = false;
+            }
+            
+        } catch (\Throwable $e) {
+            $report['issues_found'][] = 'Validation failed: ' . $e->getMessage();
+            $report['validation_passed'] = false;
+        }
+        
+        return $report;
+    }
+
+    /**
+     * Generate a lightweight snapshot hash to detect changes client side.
+     */
+    public function snapshotHash(): string
+    {
+        $maxRoleUpdated = \Spatie\Permission\Models\Role::max('updated_at');
+        $maxPermUpdated = \Spatie\Permission\Models\Permission::max('updated_at');
+        $counts = [
+            'r' => \Spatie\Permission\Models\Role::count(),
+            'p' => \Spatie\Permission\Models\Permission::count(),
+            'rp' => DB::table('role_has_permissions')->count(),
+            'ru' => $maxRoleUpdated?->timestamp ?? 0,
+            'pu' => $maxPermUpdated?->timestamp ?? 0,
+        ];
+        return substr(hash('sha256', json_encode($counts)), 0, 16);
     }
 }

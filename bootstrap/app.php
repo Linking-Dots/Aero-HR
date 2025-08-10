@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api_security' => \App\Http\Middleware\ApiSecurityMiddleware::class,
             'security_headers' => \App\Http\Middleware\SecurityHeaders::class,
             'enhanced_rate_limit' => \App\Http\Middleware\EnhancedRateLimit::class,
+            'role_permission_sync' => \App\Http\Middleware\EnsureRolePermissionSync::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
