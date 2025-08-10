@@ -1,0 +1,1 @@
+import{i as f,u as h,k as p,l as v,m as x}from"./app-CEzniZE0.js";var r=f((o,d)=>{var a;const{as:l,className:t,children:c,...n}=o,m=l||"div",i=h(d),{slots:e,classNames:s}=p(),u=v(s==null?void 0:s.header,t);return x.jsx(m,{ref:i,className:(a=e.header)==null?void 0:a.call(e,{class:u}),...n,children:c})});r.displayName="HeroUI.CardHeader";var N=r;export{N as c};

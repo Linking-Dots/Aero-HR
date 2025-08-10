@@ -1,0 +1,1 @@
+import{r as e}from"./app-CEzniZE0.js";function l(f={}){const{rerender:t=!1,delay:n=0}=f,r=e.useRef(!1),[o,s]=e.useState(!1);return e.useEffect(()=>{r.current=!0;let u=null;return t&&(n>0?u=setTimeout(()=>{s(!0)},n):s(!0)),()=>{r.current=!1,t&&s(!1),u&&clearTimeout(u)}},[t]),[e.useCallback(()=>r.current,[]),o]}export{l as u};
