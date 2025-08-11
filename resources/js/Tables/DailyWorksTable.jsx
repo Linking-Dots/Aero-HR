@@ -1,600 +1,272 @@
-import DataTable from 'react-data-table-component';
+import React, { useState, useCallback } from "react";
 import {
-    Avatar,
-    Box, Button, CardContent, CardHeader, Chip,
-    CircularProgress, Collapse,
-    GlobalStyles,
-    Grid,
+    Box,
+    Typography,
     IconButton,
-    MenuItem,
-    TextField, Typography,
-} from '@mui/material';
-import {styled, useTheme} from '@mui/material/styles';
-import { usePage} from "@inertiajs/react";
-import React, { useEffect, useState } from 'react';
+    Stack,
+    useMediaQuery,
+    Tooltip as MuiTooltip,
+    CardContent,
+    CardHeader,
+    TextField,
+    CircularProgress
+} from "@mui/material";
+import {
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+} from "@mui/icons-material";
+import { useTheme, alpha } from "@mui/material/styles";
+import { usePage } from "@inertiajs/react";
+import { toast } from "react-toastify";
+import {
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
+    User,
+    Tooltip,
+    Pagination,
+    Chip,
+    Button,
+    Dropdown,
+    DropdownTrigger,
+    DropdownMenu,
+    DropdownItem,
+    Card,
+    CardBody,
+    Divider,
+    ScrollShadow,
+    Select,
+    SelectItem,
+    Input,
+    Link
+} from "@heroui/react";
+import {
+    CalendarDaysIcon,
+    UserIcon,
+    ClockIcon,
+    DocumentTextIcon,
+    EllipsisVerticalIcon,
+    PencilIcon,
+    TrashIcon,
+    ClockIcon as ClockIconOutline,
+    MapPinIcon,
+    BuildingOfficeIcon,
+    DocumentIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
+    PlayIcon,
+    ArrowPathIcon,
+    NoSymbolIcon,
+    DocumentArrowUpIcon,
+    DocumentCheckIcon,
+    XCircleIcon
+} from '@heroicons/react/24/outline';
+import {
+    CheckCircleIcon as CheckCircleSolid,
+    XCircleIcon as XCircleSolid,
+    ClockIcon as ClockSolid,
+    ExclamationTriangleIcon as ExclamationTriangleSolid,
+    PlayCircleIcon as PlayCircleSolid,
+    ArrowPathIcon as ArrowPathSolid
+} from '@heroicons/react/24/solid';
 import axios from 'axios';
-import NewIcon from '@mui/icons-material/FiberNew'; // Example icon for "New"
-import ResubmissionIcon from '@mui/icons-material/Replay'; // Example icon for "Resubmission"
-import CompletedIcon from '@mui/icons-material/CheckCircle'; // Example icon for "Completed"
-import EmergencyIcon from '@mui/icons-material/Error';
-import {toast} from "react-toastify";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import {Pagination, SelectItem, Select, User, Input, Link} from "@heroui/react";
-import Loader from "@/Components/Loader.jsx";
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import CloseIcon from "@mui/icons-material/Close";
+import GlassCard from "@/Components/GlassCard";
 import { jsPDF } from "jspdf";
 
-const CustomDataTable = styled(DataTable)(({ theme }) => ({
-
-    '& .rdt_Table': {
-        backgroundColor: 'transparent',
-        '& .rdt_TableHead': {
-            '& .rdt_TableHeadRow': {
-                backgroundColor: 'transparent',
-                color: theme.palette.text.primary,
-            },
-            top: 0,
-            zIndex: 1, // Ensure header is above the scrollable body
-        },
-        '& .rdt_TableBody': {
-            overflowY: 'auto',
-            maxHeight: '52vh',
-            '& .rdt_TableRow': {
-                minHeight: 'auto',
-                backgroundColor: 'transparent',
-                color: theme.palette.text.primary,
-                '& .rdt_TableCol': {
-                    backgroundColor: 'transparent',
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                    width: 'auto', // Ensure columns can grow to fit content
-                    whiteSpace: 'nowrap', // Prevent wrapping, adjust based on your needs
-                },
-            },
-            '& .rdt_TableRow:hover': {
-                backgroundColor: theme.palette.action.hover,
-            },
-        },
-    },
-
-
-}));
-
-const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInCharges, reports, juniors, reports_with_daily_works, openModal, setCurrentRow, filteredData, setFilteredData }) => {
-    const { auth } = usePage().props;
+const DailyWorksTable = ({ 
+    allData, 
+    setData, 
+    loading, 
+    handleClickOpen, 
+    allInCharges, 
+    reports, 
+    juniors, 
+    reports_with_daily_works, 
+    openModal, 
+    setCurrentRow, 
+    filteredData, 
+    setFilteredData,
+    currentPage,
+    totalRows,
+    lastPage,
+    onPageChange
+}) => {
+    const { auth, users, jurisdictions } = usePage().props;
     const theme = useTheme();
+    const isLargeScreen = useMediaQuery('(min-width: 1025px)');
+    const isMediumScreen = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
+    const isMobile = useMediaQuery('(max-width: 640px)');
 
-    const userIsAdmin = auth.roles.includes('Administrator');
-    const userIsSe = auth.roles.includes('Supervision Engineer');
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updatingWorkId, setUpdatingWorkId] = useState(null);
 
-    const allStatuses = [
-        { value: 'new', label: 'New', icon: <NewIcon /> },
-        { value: 'resubmission', label: 'Resubmission', icon: <ResubmissionIcon /> },
-        { value: 'completed', label: 'Completed', icon: <CompletedIcon /> },
-        { value: 'emergency', label: 'Emergency', icon: <EmergencyIcon /> },
-    ];
+    // Permission-based access control
+    const userIsAdmin = auth.roles?.includes('Administrator') || auth.roles?.includes('Super Administrator') || false;
+    const userIsSE = auth.roles?.includes('Supervision Engineer') || false;
+    const userIsQCI = auth.roles?.includes('Quality Control Inspector') || auth.roles?.includes('Asst. Quality Control Inspector') || false;
 
-    const columns = [
-        {
-            name: 'Date',
-            selector: row => row.date,
-            sortable: 'true',
-            center: "true",
-            width: '110px'
+    // Use available data with fallbacks
+    const availableInCharges = allInCharges || users || [];
+    const availableJuniors = juniors || users || [];
+    const availableJurisdictions = jurisdictions || [];
+
+    // Status configuration - standardized across the application
+    const statusConfig = {
+        'new': {
+            color: 'primary',
+            icon: ExclamationTriangleSolid,
+            bgColor: alpha(theme.palette.primary.main, 0.1),
+            textColor: theme.palette.primary.main,
+            label: 'New Work',
+            description: 'Newly created work item'
         },
-        {
-            name: 'RFI NO',
-            selector: row => row.number,
-            sortable: 'true',
-            center: 'true',
-            width: '160px',
-            cell: row => (
-
-                <>
-                    {row.status === 'completed' && row.file ? (
-                        <Link
-                            isExternal
-                            isBlock
-                            showAnchorIcon
-                            anchorIcon={<AssignmentTurnedInIcon />}
-                            href={row.file}
-                            color="success"
-                            size={'sm'}
-                        >
-                            {row.number}
-                        </Link>
-                    ) : row.status === 'completed' && !row.file ? (
-                        <Link
-                            isBlock
-                            showAnchorIcon
-                            anchorIcon={<CloseIcon />}
-                            href="#"
-                            color="danger"
-                            size={'sm'}
-                            onClick={async (e) => {
-                                e.preventDefault(); // Prevent default link behavior
-                                const pdfFile = await captureDocument(row.number);
-                                if (pdfFile) {
-                                    // Send image to the backend
-                                    await uploadImage(row.id, pdfFile);
-                                }
-                            }}
-                        >
-                            {row.number}
-                        </Link>
-                    ) : (row.number)}
-
-                    {row.reports && row.reports.map(report => (
-                        <div key={report.ref_no}>
-                        <span>
-                            <i className="mdi mdi-circle-medium"></i> {report.ref_no}
-                        </span>
-                        </div>
-                    ))}
-                </>
-            ),
+        'resubmission': {
+            color: 'warning',
+            icon: ArrowPathSolid,
+            bgColor: alpha(theme.palette.warning.main, 0.1),
+            textColor: theme.palette.warning.main,
+            label: 'Resubmission Required',
+            description: 'Work needs to be resubmitted'
         },
-        {
-            name: 'Status',
-            selector: row => row.status,
-            sortable: 'true',
-            center: 'true',
-            width: '220px',
-            style: { padding: '0px 10px 0px 10px' },
-            cell: row => (
-                <Select
-                    items={allStatuses}
-                    aria-label="Status"
-                    fullWidth
-                    value={row.status || 'na'} // Set the value to 'na' if no status is assigned
-                    onChange={(e) => handleChange(row.id,row.number, 'status', e.target.value, row.type)}
-                    selectedKeys={[String(row.status)]}
-                    style={{
-                        minWidth: '220px',  // Optionally set a minimum width
-                    }}
-                    color={getStatusColor(row.status)}
-                    popoverProps={{
-                        classNames: {
-                            content: 'bg-transparent backdrop-blur-lg border-inherit',
-                        },
-                        style: {
-                            whiteSpace: 'nowrap', // Ensure content wraps
-                            minWidth: 'fit-content',  // Optionally set a minimum width
-                        },
-                    }}
-                    placeholder="Select Status"
-                    renderValue={(selectedStatuses) => {
-                        return selectedStatuses.map((selectedStatus) => (
-                            <div key={selectedStatus.key} className="flex items-center gap-2 m-1">
-                                {allStatuses.find(status => status.value === selectedStatus.data.value)?.icon} {/* Get the icon */}
-                                <span>
-                                    {selectedStatus.data.label}
-                                </span>
-                            </div>
-                        ));
-                    }}
-                >
-                    {(status) => (
-                        <SelectItem key={status.value} textValue={status.value}>
-                            <div className="flex items-center gap-2">
-                                {status.icon} {/* Directly display the icon */}
-                                <span style={{ color: getStatusColor(status.value) }}>
-                                {status.label} {/* Display status label */}
-                            </span>
-                            </div>
-                        </SelectItem>
-                    )}
-                </Select>
-            ),
+        'completed': {
+            color: 'success',
+            icon: CheckCircleSolid,
+            bgColor: alpha(theme.palette.success.main, 0.1),
+            textColor: theme.palette.success.main,
+            label: 'Completed',
+            description: 'Work has been completed successfully'
         },
-        ...(userIsSe ? [{
-            name: 'Assigned',
-            selector: row => row.assigned,
-            sortable: 'true',
-            center: 'true',
-            cell: row => (
-                <Select
-                    items={juniors}
-                    variant="underlined"
-                    aria-label="Assigned"
-                    fullWidth
-                    size="small"
-                    value={row.assigned || 'na'}
-                    style={{
-                        minWidth: '260px',  // Optionally set a minimum width
-                    }}
-                    onChange={(e) => handleChange(row.id,row.number, 'assigned', e.target.value)}
-                    popoverProps={{
-                        classNames: {
-                            content: 'bg-transparent backdrop-blur-lg border-inherit',
-                        },
-                        style: {
-                            whiteSpace: 'nowrap', // Ensure content wraps
-                            minWidth: 'fit-content',  // Optionally set a minimum width
-                        },
-                    }}
-                    placeholder="Select a junior"
-                    selectedKeys={[String(row.assigned || '')]}
-                    renderValue={(selectedJuniors) => {
-                        // Handle display of selected value(s)
-                        return selectedJuniors.map((selectedJunior) => (
-                            <div key={selectedJunior.key} className="flex items-center gap-2 m-1">
-                                <User
-                                    style={{
-                                        whiteSpace: 'nowrap',  // Ensure content wraps
-                                    }}
-                                    size="sm"
-                                    name={selectedJunior.data.name}
-                                    avatarProps={{
-                                        radius: "sm",
-                                        size: "sm",
-                                        src: selectedJunior.data.profile_image,
-                                    }}
-                                />
-                            </div>
-                        ));
-                    }}
-                >
-                    {(junior) => (
-                        <SelectItem key={junior.id} textValue={junior.id}>
-                            <Box sx={{ display: 'flex' }}>
-                                <Avatar
-                                    src={junior.profile_image}
-                                    alt={junior.name || 'Not assigned'}
-                                    sx={{
-                                        borderRadius: '50%',
-                                        width: 23,
-                                        height: 23,
-                                        display: 'flex',
-                                        marginRight: 1,
-                                    }}
-                                />
-                                {junior.name}
-                            </Box>
-                        </SelectItem>
-                    )}
-                </Select>
-
-            ),
-        }] : []),
-        {
-            name: 'Type',
-            selector: row => row.type,
-            sortable: 'true',
-            center: 'true',
-            width: '140px',
-        },
-        {
-            name: 'Description',
-            selector: row => row.description,
-            sortable: 'true',
-            left: 'true',
-            width: '260px',
-
-            cell: row => (
-                <Box sx={{
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                }}>
-                    {row.description}
-                </Box>
-            ),
-        },
-        {
-            name: 'Location',
-            selector: row => row.location,
-            sortable: 'true',
-            center: 'true',
-            width: '200px',
-            cell: row => (
-                <Box sx={{
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                }}>
-                    {row.location}
-                </Box>
-            ),
-        },
-        {
-            name: 'Results',
-            selector: row => row.inspection_details,
-            sortable: 'true',
-            width: '200px',
-            center: 'true',
-            cell: row => {
-                const [isEditing, setIsEditing] = React.useState(false);
-                const [inputValue, setInputValue] = React.useState(row.inspection_details || '');
-
-                const handleClick = () => {
-                    setIsEditing(true);
-                };
-
-                const handleInputChange = (event) => {
-                    setInputValue(event.target.value);
-                };
-
-                const handleBlur = () => {
-                    setIsEditing(false);
-                    handleChange(row.id,row.number,'inspection_details', inputValue);
-                };
-
-                return (
-                    <Box
-                        sx={{
-                            whiteSpace: 'normal',
-                            wordWrap: 'break-word',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '100%',
-                            cursor: 'pointer',
-                        }}
-                        onClick={!isEditing ? handleClick : undefined}
-                    >
-                        {!isEditing ? (
-                            <>
-                                {row.inspection_details || 'N/A'}
-                            </>
-                        ) : (
-                            <TextField
-                                fullWidth
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                onBlur={handleBlur}
-                                autoFocus
-                                variant="standard"
-                                InputProps={{
-                                    style: {
-                                        marginBottom: 0,
-                                        border: 'none',
-                                        outline: 'none',
-                                        backgroundColor: 'transparent',
-                                        textAlign: 'center',
-                                    },
-                                }}
-                            />
-                        )}
-                    </Box>
-                );
-            },
-        },
-        {
-            name: 'Road Type',
-            selector: row => row.side,
-            sortable: 'true',
-            center: 'true',
-            width: '120px',
-        },
-        {
-            name: 'Quantity/Layer No.',
-            selector: row => row.qty_layer,
-            sortable: 'true',
-            center: 'true',
-            width: '150px',
-        },
-        ...(userIsAdmin ? [{
-            name: 'In charge',
-            selector: row => row.incharge,
-            sortable: 'true',
-            center: 'true',
-            cell: row => (
-                <Select
-                    items={allInCharges}
-                    variant="underlined"
-                    aria-label="Incharge"
-                    fullWidth
-                    value={row.incharge || 'na'}  // Set the value to 'na' if no incharge is assigned
-                    onChange={(e) => handleChange(row.id,row.number, 'incharge', e.target.value)}
-                    selectedKeys={[String(row.incharge)]}
-                    style={{
-                        minWidth: '260px',  // Optionally set a minimum width
-                    }}
-                    popoverProps={{
-                        classNames: {
-                            content: 'bg-transparent backdrop-blur-lg border-inherit',
-                        },
-                        style: {
-                            whiteSpace: 'nowrap', // Ensure content wraps
-                            minWidth: 'fit-content',  // Optionally set a minimum width
-                        },
-                    }}
-                    placeholder="Select Incharge"
-                    renderValue={(selectedIncharges) => {
-                        // Handle display of selected value(s)
-                        return selectedIncharges.map((selectedIncharge) => (
-                            <div key={selectedIncharge.key} className="flex items-center gap-2 m-1">
-                                <User
-                                    style={{
-                                        whiteSpace: 'nowrap',  // Ensure content wraps
-                                    }}
-                                    size="sm"
-                                    name={selectedIncharge.data.name}
-                                    avatarProps={{
-                                        radius: "sm",
-                                        size: "sm",
-                                        src: selectedIncharge.data.profile_image,
-                                    }}
-                                />
-                            </div>
-                        ));
-                    }}
-                >
-                    {(incharge) => (
-                        <SelectItem key={incharge.id} textValue={incharge.id}>
-                            <User
-                                style={{
-                                    whiteSpace: 'nowrap',  // Ensure content wraps
-                                }}
-                                size="sm"
-                                name={incharge.name}
-                                description={incharge.designation?.title || 'Incharge'}
-                                avatarProps={{
-                                    radius: "sm",
-                                    size: "sm",
-                                    src: incharge.profile_image,
-                                }}
-                            />
-                        </SelectItem>
-                    )}
-                </Select>
-
-            ),
-        }] : []),
-        {
-            name: 'Planned Time',
-            selector: row => row.planned_time,
-            sortable: 'true',
-            center: 'true',
-            width: '130px',
-        },
-        {
-            name: 'Completion Time',
-            selector: row => row.completion_time,
-            sortable: 'true',
-            center: 'true',
-            width: '250px',
-            cell: row => (
-                <Input
-                    fullWidth
-                    size="sm"
-                    variant={'underlined'}
-                    type={'datetime-local'}
-                    value={row.completion_time
-                        ? new Date(row.completion_time).toLocaleString('sv-SE').replace(' ', 'T')
-                        : ''
-                    }
-                    onChange={(e) => handleChange(row.id,row.number, 'completion_time', e.target.value)}
-                    inputProps={{
-                        placeholder: 'YYYY-MM-DDTHH:MM',
-                    }}
-                />
-            ),
-        },
-        {
-            name: 'Resubmission Count',
-            selector: row => row.resubmission_count,
-            sortable: 'true',
-            center: 'true',
-            width: '160px',
-            cell: row => (
-                <>
-                    {
-                        row.resubmission_count
-                            ? `${row.resubmission_count} ${row.resubmission_count > 1 ? 'times' : 'time'}`
-                            : ''
-                    }
-                </>
-            ),
-        },
-        ...(userIsAdmin ? [{
-            name: 'RFI Submission Date',
-            selector: row => row.rfi_submission_date,
-            sortable: 'true',
-            center: 'true',
-            width: '180px',
-            cell: row => (
-                <Input
-                    fullWidth
-                    size="sm"
-                    type="date"
-                    variant={'underlined'}
-                    onChange={(e) => handleChange(row.id,row.number, 'rfi_submission_date', e.target.value)}
-                    value={row.rfi_submission_date ? new Date(row.rfi_submission_date).toISOString().slice(0, 10) : ''}
-                    style={{ border: 'none', outline: 'none', backgroundColor: 'transparent' }}
-                    inputProps={{
-                        placeholder: 'yyyy-MM-dd'
-                    }}
-                />
-            ),
-        }] : []),
-        ...(userIsAdmin ? [{
-            name: 'Actions',
-            center: 'true',
-            width: '150px',
-            cell: row => (
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <IconButton
-                        sx={{m:1}}
-                        variant="outlined"
-                        color="success"
-                        size="small"
-                        onClick={() => {
-                            setCurrentRow(row);
-                            openModal('editDailyWork');
-                        }}
-                    >
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton
-                        sx={{ m: 1 }}
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleClickOpen(row.id, 'deleteDailyWork')}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
-                </Box>
-            ),
-        }] : []),
-    ];
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'new':
-                return 'primary';
-            case 'resubmission':
-                return 'warning';
-            case 'completed':
-                return 'success';
-            case 'emergency':
-                return 'danger';
-            default:
-                return '';
+        'emergency': {
+            color: 'danger',
+            icon: ExclamationTriangleSolid,
+            bgColor: alpha(theme.palette.error.main, 0.1),
+            textColor: theme.palette.error.main,
+            label: 'Emergency Work',
+            description: 'Urgent work requiring immediate attention'
         }
     };
 
+    const getWorkTypeIcon = (type, className = "w-4 h-4") => {
+        const iconClass = `${className} flex-shrink-0`;
+        
+        switch (type?.toLowerCase()) {
+            case "embankment":
+                return <BuildingOfficeIcon className={`${iconClass} text-amber-600 dark:text-amber-400`} />;
+            case "structure":
+                return <DocumentIcon className={`${iconClass} text-blue-600 dark:text-blue-400`} />;
+            case "pavement":
+                return <MapPinIcon className={`${iconClass} text-gray-600 dark:text-gray-400`} />;
+            case "earthwork":
+                return <BuildingOfficeIcon className={`${iconClass} text-green-600 dark:text-green-400`} />;
+            case "drainage":
+                return <DocumentIcon className={`${iconClass} text-cyan-600 dark:text-cyan-400`} />;
+            case "roadwork":
+                return <MapPinIcon className={`${iconClass} text-orange-600 dark:text-orange-400`} />;
+            case "bridge":
+                return <BuildingOfficeIcon className={`${iconClass} text-purple-600 dark:text-purple-400`} />;
+            case "culvert":
+                return <DocumentIcon className={`${iconClass} text-indigo-600 dark:text-indigo-400`} />;
+            case "standard":
+            default:
+                return <DocumentTextIcon className={`${iconClass} text-default-500`} />;
+        }
+    };
+
+    const getStatusChip = (status) => {
+        const config = statusConfig[status] || statusConfig['new'];
+        const StatusIcon = config.icon;
+
+        return (
+            <Chip
+                size="sm"
+                variant="flat"
+                color={config.color}
+                startContent={<StatusIcon className="w-3 h-3" />}
+                classNames={{
+                    base: "h-6",
+                    content: "text-xs font-medium"
+                }}
+            >
+                {config.label}
+            </Chip>
+        );
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'No date';
+        
+        try {
+            return new Date(dateString).toLocaleDateString("en-US", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
+        } catch (error) {
+            return 'Invalid date';
+        }
+    };
+
+    const formatDateTime = (dateTimeString) => {
+        if (!dateTimeString) return 'Not set';
+        
+        try {
+            return new Date(dateTimeString).toLocaleString("en-US", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        } catch (error) {
+            return 'Invalid datetime';
+        }
+    };
+
+    const getUserInfo = (userId) => {
+        if (!userId) return { name: 'Unassigned', profile_image: null };
+        
+        const user = availableInCharges?.find((u) => String(u.id) === String(userId)) || 
+                    availableJuniors?.find((u) => String(u.id) === String(userId)) ||
+                    users?.find((u) => String(u.id) === String(userId));
+        return user || { name: 'Unassigned', profile_image: null };
+    };
+
+    const getJurisdictionInfo = (jurisdictionId) => {
+        if (!jurisdictionId) return { name: 'No jurisdiction assigned', location: 'Unknown' };
+        
+        const jurisdiction = availableJurisdictions?.find((j) => String(j.id) === String(jurisdictionId));
+        return jurisdiction || { name: 'Unknown jurisdiction', location: 'Unknown' };
+    };
+
+    // Image capture functions
     const captureDocument = (taskNumber) => {
         return new Promise((resolve, reject) => {
-            // Create a file input element
             const fileInput = document.createElement("input");
             fileInput.type = "file";
             fileInput.accept = "image/*";
-            // fileInput.capture = "camera"; // Open the camera directly
-            fileInput.multiple = true; // Allow multiple image selection
+            fileInput.multiple = true;
 
-            // Append the file input to the body (it won't be visible)
             document.body.appendChild(fileInput);
 
-            // Handle the file selection
             fileInput.onchange = async () => {
                 const files = Array.from(fileInput.files);
                 if (files.length > 0) {
                     try {
                         const images = [];
 
-                        // Load each selected file into an Image object and resize it
                         for (let file of files) {
                             const img = await loadImage(file);
-                            const resizedCanvas = resizeImage(img, 1024); // Resize to a consistent height
+                            const resizedCanvas = resizeImage(img, 1024);
                             images.push(resizedCanvas);
                         }
 
-                        // Combine images into a single PDF document
                         const pdfBlob = await combineImagesToPDF(images);
-
-                        // Resolve the final PDF file
                         const pdfFile = new File([pdfBlob], `${taskNumber}_scanned_document.pdf`, { type: "application/pdf" });
                         resolve(pdfFile);
 
-                        // Clean up
                         document.body.removeChild(fileInput);
                     } catch (error) {
                         reject(error);
@@ -606,12 +278,10 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                 }
             };
 
-            // Trigger the file input click to open the camera
             fileInput.click();
         });
     };
 
-// Helper function to load image from file
     const loadImage = (file) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -624,7 +294,6 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         });
     };
 
-// Helper function to resize an image and return a canvas
     const resizeImage = (img, targetHeight) => {
         const aspectRatio = img.width / img.height;
         const targetWidth = targetHeight * aspectRatio;
@@ -636,10 +305,8 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
         return canvas;
     };
 
-// Helper function to combine images into a PDF using jsPDF
     const combineImagesToPDF = (images) => {
         return new Promise((resolve, reject) => {
-
             const pdf = new jsPDF({
                 orientation: "portrait",
                 unit: "px",
@@ -647,7 +314,7 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
             });
 
             images.forEach((canvas, index) => {
-                if (index > 0) pdf.addPage(); // Add a new page for each image
+                if (index > 0) pdf.addPage();
                 const imgData = canvas.toDataURL("image/jpeg", 1.0);
                 pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
             });
@@ -681,159 +348,1023 @@ const DailyWorksTable = ({ allData, setData, loading, handleClickOpen, allInChar
                     resolve([response.data.message || 'RFI file uploaded successfully']);
                 }
             } catch (error) {
-
-                console.error(error)
+                console.error(error);
                 reject(error.response.statusText || 'Failed to upload RFI file');
             }
         });
-        toast.promise(
-            promise,
-            {
-                pending: {
-                    render() {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <CircularProgress />
-                                <span style={{ marginLeft: '8px' }}>Uploading RFI file...</span>
-                            </div>
-                        );
-                    },
-                    icon: false,
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
+
+        toast.promise(promise, {
+            pending: {
+                render() {
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <CircularProgress />
+                            <span style={{ marginLeft: '8px' }}>Uploading RFI file...</span>
+                        </div>
+                    );
                 },
-                success: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data.map((message, index) => (
-                                    <div key={index}>{message}</div>
-                                ))}
-                            </>
-                        );
-                    },
-                    icon: '🟢',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
+                icon: false,
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    background: theme.glassCard?.background || 'rgba(255,255,255,0.1)',
+                    border: theme.glassCard?.border || '1px solid rgba(255,255,255,0.2)',
+                    color: theme.palette.text.primary,
                 },
-                error: {
-                    render({ data }) {
-                        return (
-                            <>
-                                {data}
-                            </>
-                        );
-                    },
-                    icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    },
+            },
+            success: {
+                render({ data }) {
+                    return (
+                        <>
+                            {data.map((message, index) => (
+                                <div key={index}>{message}</div>
+                            ))}
+                        </>
+                    );
                 },
-            }
-        );
+                icon: '🟢',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    background: theme.glassCard?.background || 'rgba(255,255,255,0.1)',
+                    border: theme.glassCard?.border || '1px solid rgba(255,255,255,0.2)',
+                    color: theme.palette.text.primary,
+                },
+            },
+            error: {
+                render({ data }) {
+                    return <>{data}</>;
+                },
+                icon: '🔴',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    background: theme.glassCard?.background || 'rgba(255,255,255,0.1)',
+                    border: theme.glassCard?.border || '1px solid rgba(255,255,255,0.2)',
+                    color: theme.palette.text.primary,
+                },
+            },
+        });
     };
 
-    const handleChange = async (taskId,taskNumber, key, value, type) => {
+    // Handle status updates
+    const updateWorkStatus = useCallback(async (work, newStatus) => {
+        if (updatingWorkId === work.id) return;
+
+        setUpdatingWorkId(work.id);
+        const promise = new Promise(async (resolve, reject) => {
+            try {
+                // Prepare update data with logical field assignments
+                const updateData = {
+                    id: work.id,
+                    status: newStatus,
+                    // Include required fields with standardized fallbacks
+                    date: work.date || new Date().toISOString().split('T')[0],
+                    number: work.number || `RFI-${Date.now()}`,
+                    planned_time: work.planned_time || '09:00',
+                    type: work.type || 'Standard',
+                    description: work.description || 'Work description pending',
+                    location: work.location || 'Location to be determined',
+                    side: work.side || 'Both'
+                };
+
+                // Logical field assignments based on status
+                if (newStatus === 'completed') {
+                    // Auto-set completion time to current time if not already set
+                    updateData.completion_time = work.completion_time || new Date().toISOString();
+                    
+                    // Auto-set submission time to current time if not already set
+                    updateData.submission_time = work.submission_time || new Date().toISOString();
+                    
+                    // If not structure type, capture document
+                    if (!(work.type?.toLowerCase() === 'structure')) {
+                        const pdfFile = await captureDocument(work.number);
+                        if (pdfFile) {
+                            await uploadImage(work.id, pdfFile);
+                        }
+                    }
+                } else if (newStatus === 'resubmission') {
+                    // Increment resubmission count
+                    updateData.resubmission_count = (work.resubmission_count || 0) + 1;
+                } else if (newStatus === 'new') {
+                    // Reset completion and submission times for new status
+                    updateData.completion_time = null;
+                    updateData.submission_time = null;
+                }
+
+                const response = await axios.post(route('dailyWorks.update'), updateData);
+
+                if (response.status === 200) {
+                    setData(prevWorks =>
+                        prevWorks.map(w =>
+                            w.id === work.id ? { 
+                                ...w, 
+                                status: newStatus,
+                                ...(newStatus === 'completed' && {
+                                    completion_time: updateData.completion_time,
+                                    submission_time: updateData.submission_time
+                                }),
+                                ...(newStatus === 'resubmission' && {
+                                    resubmission_count: updateData.resubmission_count
+                                }),
+                                ...(newStatus === 'new' && {
+                                    completion_time: null,
+                                    submission_time: null
+                                })
+                            } : w
+                        )
+                    );
+                    resolve(response.data.message || "Work status updated successfully");
+                }
+            } catch (error) {
+                let errorMsg = "Failed to update work status";
+                
+                if (error.response?.status === 422 && error.response.data?.errors) {
+                    // Handle validation errors
+                    const errors = error.response.data.errors;
+                    const errorMessages = Object.values(errors).flat();
+                    errorMsg = errorMessages.join(', ');
+                } else if (error.response?.data?.message) {
+                    errorMsg = error.response.data.message;
+                } else if (error.response?.statusText) {
+                    errorMsg = error.response.statusText;
+                }
+                
+                reject(errorMsg);
+            } finally {
+                setUpdatingWorkId(null);
+            }
+        });
+
+        toast.promise(promise, {
+            pending: "Updating work status...",
+            success: "Work status updated successfully!",
+            error: "Failed to update work status"
+        });
+    }, [setData, updatingWorkId]);
+
+    // Handle general field updates
+    const handleChange = async (taskId, taskNumber, key, value, type) => {
         try {
-            if (key === 'status' && value === 'completed' && !(type === 'Structure')) {
-                // Open camera and capture image
-                const pdfFile = await captureDocument(taskNumber);
-                if (pdfFile) {
-                    // Send image to the backend
-                    await uploadImage(taskId, pdfFile);
+            // Find the current work to get all its data
+            const currentWork = allData?.find(work => work.id === taskId);
+            if (!currentWork) {
+                toast.error('Work not found');
+                return;
+            }
+
+            // Prepare update data with logical field assignments
+            const updateData = {
+                id: taskId,
+                [key]: value,
+                // Include required fields with standardized fallbacks
+                date: currentWork.date || new Date().toISOString().split('T')[0],
+                number: currentWork.number || `RFI-${Date.now()}`,
+                planned_time: currentWork.planned_time || '09:00',
+                status: key === 'status' ? value : (currentWork.status || 'new'),
+                type: currentWork.type || 'Standard',
+                description: currentWork.description || 'Work description pending',
+                location: currentWork.location || 'Location to be determined',
+                side: currentWork.side || 'Both'
+            };
+
+            // Logical field assignments
+            if (key === 'status') {
+                if (value === 'completed') {
+                    // Auto-set completion time and submission time if not already set
+                    updateData.completion_time = currentWork.completion_time || new Date().toISOString();
+                    updateData.submission_time = currentWork.submission_time || new Date().toISOString();
+                    
+                    // Capture document if not structure type
+                    if (!(type === 'Structure')) {
+                        const pdfFile = await captureDocument(taskNumber);
+                        if (pdfFile) {
+                            await uploadImage(taskId, pdfFile);
+                        }
+                    }
+                } else if (value === 'resubmission') {
+                    // Increment resubmission count
+                    updateData.resubmission_count = (currentWork.resubmission_count || 0) + 1;
+                } else if (value === 'new') {
+                    // Reset completion and submission times for new status
+                    updateData.completion_time = null;
+                    updateData.submission_time = null;
                 }
             }
 
-
-            const response = await axios.post(route('dailyWorks.update'), {
-                id: taskId,
-                [key]: value,
-            });
-
+            const response = await axios.post(route('dailyWorks.update'), updateData);
 
             if (response.status === 200) {
                 setData(prevTasks =>
                     prevTasks.map(task =>
-                        task.id === taskId ? { ...task, [key]: value } : task
+                        task.id === taskId ? { 
+                            ...task, 
+                            [key]: value,
+                            // Update logical fields based on status change
+                            ...(key === 'status' && value === 'completed' && {
+                                completion_time: updateData.completion_time,
+                                submission_time: updateData.submission_time
+                            }),
+                            ...(key === 'status' && value === 'resubmission' && {
+                                resubmission_count: updateData.resubmission_count
+                            }),
+                            ...(key === 'status' && value === 'new' && {
+                                completion_time: null,
+                                submission_time: null
+                            })
+                        } : task
                     )
                 );
 
-                toast.success(...(response.data.messages || `Task updated successfully`), {
+                toast.success(response.data.message || `Task updated successfully`, {
                     icon: '🟢',
                     style: {
                         backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
-                        color: theme.palette.text.primary,
-                    }
-                });
-            } else {
-                toast.error(response.data.error || `Failed to update task ${[key]}.`, {
-                    icon: '🔴',
-                    style: {
-                        backdropFilter: 'blur(16px) saturate(200%)',
-                        background: theme.glassCard.background,
-                        border: theme.glassCard.border,
+                        background: theme.glassCard?.background || 'rgba(255,255,255,0.1)',
+                        border: theme.glassCard?.border || '1px solid rgba(255,255,255,0.2)',
                         color: theme.palette.text.primary,
                     }
                 });
             }
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || 'An unexpected error occurred.', {
+            let errorMessage = 'An unexpected error occurred.';
+            
+            if (error.response?.status === 422 && error.response.data?.errors) {
+                // Handle validation errors
+                const errors = error.response.data.errors;
+                const errorMessages = Object.values(errors).flat();
+                errorMessage = errorMessages.join(', ');
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.statusText) {
+                errorMessage = error.response.statusText;
+            }
+
+            toast.error(errorMessage, {
                 icon: '🔴',
                 style: {
                     backdropFilter: 'blur(16px) saturate(200%)',
-                    background: theme.glassCard.background,
-                    border: theme.glassCard.border,
+                    background: theme.glassCard?.background || 'rgba(255,255,255,0.1)',
+                    border: theme.glassCard?.border || '1px solid rgba(255,255,255,0.2)',
                     color: theme.palette.text.primary,
                 }
             });
         }
     };
 
+    // Mobile card component - matching Leave page pattern
+    const MobileDailyWorkCard = ({ work }) => {
+        const inchargeUser = getUserInfo(work.incharge);
+        const assignedUser = getUserInfo(work.assigned);
+        const statusConf = statusConfig[work.status] || statusConfig['new'];
 
+        return (
+            <GlassCard className="mb-2" shadow="sm">
+                <CardContent className="p-3">
+                    <Box className="flex items-start justify-between mb-3">
+                        <Box className="flex items-center gap-3 flex-1">
+                            <Box className="flex flex-col">
+                                <Typography variant="body2" fontWeight="bold" className="text-primary">
+                                    {work.number}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary">
+                                    {formatDate(work.date)}
+                                </Typography>
+                            </Box>
+                        </Box>
+                        <Box className="flex items-center gap-2">
+                            {getStatusChip(work.status)}
+                            {userIsAdmin && (
+                                <Dropdown>
+                                    <DropdownTrigger>
+                                        <IconButton size="small">
+                                            <EllipsisVerticalIcon className="w-4 h-4" />
+                                        </IconButton>
+                                    </DropdownTrigger>
+                                    <DropdownMenu aria-label="Work actions">
+                                        <DropdownItem
+                                            key="edit"
+                                            startContent={<PencilIcon className="w-4 h-4" />}
+                                            onPress={() => {
+                                                setCurrentRow(work);
+                                                openModal("editDailyWork");
+                                            }}
+                                        >
+                                            Edit Work
+                                        </DropdownItem>
+                                        <DropdownItem
+                                            key="delete"
+                                            className="text-danger"
+                                            color="danger"
+                                            startContent={<TrashIcon className="w-4 h-4" />}
+                                            onPress={() => handleClickOpen(work.id, "deleteDailyWork")}
+                                        >
+                                            Delete Work
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                </Dropdown>
+                            )}
+                        </Box>
+                    </Box>
 
+                    <Divider className="my-3" />
 
+                    <Stack spacing={2}>
+                        <Box className="flex items-center gap-2">
+                            {getWorkTypeIcon(work.type, "w-4 h-4")}
+                            <Typography variant="body2" fontWeight="medium" className="capitalize">
+                                {work.type || 'Standard Work'}
+                            </Typography>
+                        </Box>
+
+                        <Box className="flex items-center gap-2">
+                            <MapPinIcon className="w-4 h-4 text-default-500" />
+                            <Typography variant="body2" color="textSecondary">
+                                {work.location || 'Location not specified'}
+                            </Typography>
+                        </Box>
+
+                        {work.description && (
+                            <Box className="flex items-start gap-2">
+                                <DocumentTextIcon className="w-4 h-4 text-default-500 mt-0.5 flex-shrink-0" />
+                                <Typography variant="body2" color="textSecondary" className="flex-1 break-words">
+                                    {work.description}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        <Box className="flex items-center gap-2">
+                            <BuildingOfficeIcon className="w-4 h-4 text-default-500" />
+                            <Typography variant="body2" color="textSecondary">
+                                Jurisdiction: {getJurisdictionInfo(work.jurisdiction_id)?.name || 'Not assigned'}
+                            </Typography>
+                        </Box>
+
+                        {work.side && (
+                            <Box className="flex items-center gap-2">
+                                <MapPinIcon className="w-4 h-4 text-default-500" />
+                                <Typography variant="body2" color="textSecondary">
+                                    Road Side: {work.side}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {work.qty_layer && (
+                            <Box className="flex items-center gap-2">
+                                <DocumentTextIcon className="w-4 h-4 text-default-500" />
+                                <Typography variant="body2" color="textSecondary">
+                                    Layers: {work.qty_layer}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {userIsAdmin && inchargeUser.name !== 'Unassigned' && (
+                            <Box className="flex items-center gap-2">
+                                <UserIcon className="w-4 h-4 text-default-500" />
+                                <Typography variant="body2" color="textSecondary">
+                                    In-charge: {inchargeUser.name}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {userIsAdmin && inchargeUser.name === 'Unassigned' && (
+                            <Box className="flex items-center gap-2">
+                                <UserIcon className="w-4 h-4 text-default-500" />
+                                <Chip size="sm" variant="flat" color="default">
+                                    No In-charge
+                                </Chip>
+                            </Box>
+                        )}
+
+                        {userIsSE && assignedUser.name !== 'Unassigned' && (
+                            <Box className="flex items-center gap-2">
+                                <UserIcon className="w-4 h-4 text-default-500" />
+                                <Typography variant="body2" color="textSecondary">
+                                    Assigned: {assignedUser.name}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {userIsSE && assignedUser.name === 'Unassigned' && (
+                            <Box className="flex items-center gap-2">
+                                <UserIcon className="w-4 h-4 text-default-500" />
+                                <Chip size="sm" variant="flat" color="default">
+                                    Unassigned
+                                </Chip>
+                            </Box>
+                        )}
+                    </Stack>
+
+                    {(userIsAdmin || userIsSE) && (
+                        <>
+                            <Divider className="my-3" />
+                            <Box className="flex gap-2 flex-wrap">
+                                {Object.keys(statusConfig).map((status) => (
+                                    <Button
+                                        key={status}
+                                        size="sm"
+                                        variant={work.status === status ? "solid" : "bordered"}
+                                        color={statusConfig[status].color}
+                                        isLoading={updatingWorkId === work.id}
+                                        onPress={() => updateWorkStatus(work, status)}
+                                        startContent={
+                                            updatingWorkId !== work.id ? 
+                                            React.createElement(statusConfig[status].icon, {
+                                                className: "w-3 h-3"
+                                            }) : null
+                                        }
+                                        classNames={{
+                                            base: "flex-1 min-w-[80px]"
+                                        }}
+                                    >
+                                        {statusConfig[status].label}
+                                    </Button>
+                                ))}
+                            </Box>
+                        </>
+                    )}
+                </CardContent>
+            </GlassCard>
+        );
+    };
+
+    const handlePageChange = useCallback((page) => {
+        if (onPageChange) {
+            onPageChange(page);
+        }
+    }, [onPageChange]);
+
+    const renderCell = useCallback((work, columnKey) => {
+        const inchargeUser = getUserInfo(work.incharge);
+        const assignedUser = getUserInfo(work.assigned);
+
+        switch (columnKey) {
+            case "date":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-1">
+                            <CalendarDaysIcon className="w-3 h-3 text-default-500" />
+                            <Typography variant="body2" className="text-sm font-medium">
+                                {formatDate(work.date)}
+                            </Typography>
+                        </Box>
+                    </TableCell>
+                );
+
+            case "number":
+                return (
+                    <TableCell>
+                        <Box className="flex flex-col">
+                            {work.status === 'completed' && work.file ? (
+                                <Link
+                                    isExternal
+                                    href={work.file}
+                                    color="success"
+                                    size="sm"
+                                    className="font-medium"
+                                >
+                                    {work.number}
+                                </Link>
+                            ) : work.status === 'completed' && !work.file ? (
+                                <Link
+                                    href="#"
+                                    color="danger"
+                                    size="sm"
+                                    className="font-medium"
+                                    onPress={async () => {
+                                        const pdfFile = await captureDocument(work.number);
+                                        if (pdfFile) {
+                                            await uploadImage(work.id, pdfFile);
+                                        }
+                                    }}
+                                >
+                                    {work.number}
+                                </Link>
+                            ) : (
+                                <Typography variant="body2" className="text-sm font-medium text-primary">
+                                    {work.number}
+                                </Typography>
+                            )}
+                            {work.reports?.map(report => (
+                                <Typography key={report.ref_no} variant="caption" color="textSecondary" className="text-xs">
+                                    • {report.ref_no}
+                                </Typography>
+                            ))}
+                        </Box>
+                    </TableCell>
+                );
+
+            case "status":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-2">
+                            {(userIsAdmin || userIsSE) ? (
+                                <Select
+                                    size="sm"
+                                    variant="bordered"
+                                    placeholder="Select status"
+                                    aria-label="Select work status"
+                                    selectedKeys={work.status ? [work.status] : []}
+                                    onSelectionChange={(keys) => {
+                                        const selectedKey = Array.from(keys)[0];
+                                        if (selectedKey) {
+                                            updateWorkStatus(work, selectedKey);
+                                        }
+                                    }}
+                                    isDisabled={updatingWorkId === work.id}
+                                    classNames={{
+                                        trigger: "min-h-10 w-full bg-white/50 hover:bg-white/80 focus:bg-white/90 transition-colors",
+                                        value: "text-xs",
+                                        popoverContent: "min-w-[240px]"
+                                    }}
+                                    renderValue={(items) => {
+                                        if (items.length === 0) {
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <ExclamationTriangleSolid className="w-4 h-4 text-default-400" />
+                                                    <span className="text-xs">Select status</span>
+                                                </div>
+                                            );
+                                        }
+                                        const currentStatus = statusConfig[work.status] || statusConfig['new'];
+                                        const StatusIcon = currentStatus.icon;
+                                        return (
+                                            <div className="flex items-center gap-2">
+                                                <StatusIcon className="w-4 h-4" style={{ color: currentStatus.textColor }} />
+                                                <span className="text-xs font-medium">{currentStatus.label}</span>
+                                            </div>
+                                        );
+                                    }}
+                                >
+                                    {Object.keys(statusConfig).map((status) => {
+                                        const config = statusConfig[status];
+                                        const StatusIcon = config.icon;
+                                        return (
+                                            <SelectItem 
+                                                key={status} 
+                                                textValue={config.label}
+                                                startContent={<StatusIcon className="w-4 h-4" style={{ color: config.textColor }} />}
+                                                description={config.description}
+                                                classNames={{
+                                                    title: "text-sm font-medium",
+                                                    description: "text-xs"
+                                                }}
+                                            >
+                                                {config.label}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </Select>
+                            ) : (
+                                getStatusChip(work.status)
+                            )}
+                        </Box>
+                    </TableCell>
+                );
+
+            case "type":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-2">
+                            {getWorkTypeIcon(work.type, "w-4 h-4")}
+                            <Typography variant="body2" className="text-sm font-medium capitalize">
+                                {work.type || 'Standard Work'}
+                            </Typography>
+                        </Box>
+                    </TableCell>
+                );
+
+            case "description":
+                return (
+                    <TableCell>
+                        <MuiTooltip title={work.description || "No description provided"} arrow>
+                            <Typography 
+                                variant="body2" 
+                                className="max-w-xs truncate cursor-help text-sm"
+                                color="textSecondary"
+                            >
+                                {work.description || "No description provided"}
+                            </Typography>
+                        </MuiTooltip>
+                    </TableCell>
+                );
+
+            case "location":
+                return (
+                    <TableCell>
+                        <Box className="flex flex-col gap-1">
+                            <Box className="flex items-center gap-2">
+                                <MapPinIcon className="w-3 h-3 text-default-500" />
+                                <Typography variant="body2" className="text-sm font-medium">
+                                    {work.location || 'Location not specified'}
+                                </Typography>
+                            </Box>
+                            
+                        </Box>
+                    </TableCell>
+                );
+
+            case "inspection_details":
+                return (
+                    <TableCell>
+                        <Input
+                            size="sm"
+                            variant="bordered"
+                            placeholder="Enter inspection details..."
+                            value={work.inspection_details || ''}
+                            onChange={(e) => handleChange(work.id, work.number, 'inspection_details', e.target.value)}
+                            classNames={{
+                                input: "text-xs",
+                                inputWrapper: "min-h-10 bg-white/50 hover:bg-white/80 focus-within:bg-white/90 transition-colors",
+                                innerWrapper: "text-xs"
+                            }}
+                            startContent={<DocumentCheckIcon className="w-4 h-4 text-default-400" />}
+                        />
+                    </TableCell>
+                );
+
+            case "side":
+                return (
+                    <TableCell>
+                        <Chip 
+                            size="sm" 
+                            variant="flat" 
+                            color="default"
+                            className="capitalize"
+                        >
+                            {work.side || 'Both Sides'}
+                        </Chip>
+                    </TableCell>
+                );
+
+            case "qty_layer":
+                return (
+                    <TableCell>
+                        <Typography variant="body2" className="text-sm">
+                            {work.qty_layer ? `${work.qty_layer} layers` : 'N/A'}
+                        </Typography>
+                    </TableCell>
+                );
+
+            case "planned_time":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-1">
+                            <ClockIcon className="w-3 h-3 text-default-500" />
+                            <Typography variant="body2" className="text-sm">
+                                {work.planned_time || 'Not set'}
+                            </Typography>
+                        </Box>
+                    </TableCell>
+                );
+
+            case "resubmission_count":
+                return (
+                    <TableCell>
+                        <Chip 
+                            size="sm" 
+                            variant="flat" 
+                            color={work.resubmission_count > 0 ? "warning" : "default"}
+                        >
+                            {work.resubmission_count || 0}
+                        </Chip>
+                    </TableCell>
+                );
+
+            case "incharge":
+                return (
+                    <TableCell>
+                        {userIsAdmin ? (
+                            <Select
+                                size="sm"
+                                variant="bordered"
+                                placeholder="Select in-charge"
+                                aria-label="Select in-charge person"
+                                selectedKeys={work.incharge ? [String(work.incharge)] : []}
+                                onSelectionChange={(keys) => {
+                                    const selectedKey = Array.from(keys)[0];
+                                    if (selectedKey) {
+                                        handleChange(work.id, work.number, 'incharge', selectedKey);
+                                    }
+                                }}
+                                classNames={{
+                                    trigger: "min-h-10 w-full bg-white/50 hover:bg-white/80 focus:bg-white/90 transition-colors",
+                                    value: "text-xs",
+                                    popoverContent: "min-w-[280px]"
+                                }}
+                                renderValue={(items) => {
+                                    if (items.length === 0) {
+                                        return (
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon className="w-4 h-4 text-default-400" />
+                                                <span className="text-xs">Select in-charge</span>
+                                            </div>
+                                        );
+                                    }
+                                    return items.map((item) => (
+                                        <div key={item.key} className="flex items-center gap-2">
+                                            <img
+                                                src={inchargeUser.profile_image || '/default-avatar.png'}
+                                                alt={inchargeUser.name}
+                                                className="w-6 h-6 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.src = '/default-avatar.png';
+                                                }}
+                                            />
+                                            <span className="text-xs font-medium">{inchargeUser.name}</span>
+                                        </div>
+                                    ));
+                                }}
+                            >
+                                {availableInCharges?.map((incharge) => (
+                                    <SelectItem key={incharge.id} textValue={incharge.name}>
+                                        <User
+                                            size="sm"
+                                            name={incharge.name}
+                                            description={`Employee ID: ${incharge.employee_id || 'N/A'}`}
+                                            avatarProps={{
+                                                size: "sm",
+                                                src: incharge.profile_image,
+                                            }}
+                                        />
+                                    </SelectItem>
+                                ))}
+                            </Select>
+                        ) : (
+                            <Box className="flex items-center gap-2">
+                                {inchargeUser.name !== 'Unassigned' ? (
+                                    <User
+                                        size="sm"
+                                        name={inchargeUser.name}
+                                        description="In-charge"
+                                        avatarProps={{
+                                            size: "sm",
+                                            src: inchargeUser.profile_image,
+                                        }}
+                                        classNames={{
+                                            name: "text-xs font-medium",
+                                            description: "text-xs text-default-400"
+                                        }}
+                                    />
+                                ) : (
+                                    <Chip size="sm" variant="flat" color="default">
+                                        Unassigned
+                                    </Chip>
+                                )}
+                            </Box>
+                        )}
+                    </TableCell>
+                );
+
+            case "assigned":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-2">
+                            {assignedUser.name !== 'Unassigned' ? (
+                                <User
+                                    size="sm"
+                                    name={assignedUser.name}
+                                    description="Assigned"
+                                    avatarProps={{
+                                        size: "sm",
+                                        src: assignedUser.profile_image,
+                                    }}
+                                    classNames={{
+                                        name: "text-xs font-medium",
+                                        description: "text-xs text-default-400"
+                                    }}
+                                />
+                            ) : (
+                                <Chip size="sm" variant="flat" color="default">
+                                    Unassigned
+                                </Chip>
+                            )}
+                        </Box>
+                    </TableCell>
+                );
+
+            case "completion_time":
+                return (
+                    <TableCell>
+                        <Input
+                            size="sm"
+                            type="datetime-local"
+                            variant="bordered"
+                            value={work.completion_time
+                                ? new Date(work.completion_time).toLocaleString('sv-SE').replace(' ', 'T').slice(0, 16)
+                                : ''
+                            }
+                            onChange={(e) => handleChange(work.id, work.number, 'completion_time', e.target.value)}
+                            classNames={{
+                                input: "text-xs",
+                                inputWrapper: "min-h-10 bg-white/50 hover:bg-white/80 focus-within:bg-white/90 transition-colors"
+                            }}
+                            startContent={<CheckCircleIcon className="w-4 h-4 text-default-400" />}
+                        />
+                    </TableCell>
+                );
+
+           
+
+            case "rfi_submission_date":
+                return (
+                    <TableCell>
+                        {userIsAdmin ? (
+                            <Input
+                                size="sm"
+                                type="date"
+                                variant="bordered"
+                                value={work.rfi_submission_date ? 
+                                    new Date(work.rfi_submission_date).toISOString().slice(0, 10) : ''
+                                }
+                                onChange={(e) => handleChange(work.id, work.number, 'rfi_submission_date', e.target.value)}
+                                classNames={{
+                                    input: "text-xs",
+                                    inputWrapper: "min-h-10 bg-white/50 hover:bg-white/80 focus-within:bg-white/90 transition-colors"
+                                }}
+                                startContent={<CalendarDaysIcon className="w-4 h-4 text-default-400" />}
+                            />
+                        ) : (
+                            <Box className="flex items-center gap-1">
+                                <CalendarDaysIcon className="w-3 h-3 text-default-500" />
+                                <Typography variant="body2" className="text-sm">
+                                    {work.rfi_submission_date ? formatDate(work.rfi_submission_date) : 'Not set'}
+                                </Typography>
+                            </Box>
+                        )}
+                    </TableCell>
+                );
+
+            case "actions":
+                return (
+                    <TableCell>
+                        <Box className="flex items-center gap-1">
+                            <Tooltip content="Edit Work">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                        if (updatingWorkId === work.id) return;
+                                        setCurrentRow(work);
+                                        openModal("editDailyWork");
+                                    }}
+                                    sx={{
+                                        background: alpha(theme.palette.primary.main, 0.1),
+                                        '&:hover': {
+                                            background: alpha(theme.palette.primary.main, 0.2)
+                                        }
+                                    }}
+                                >
+                                    <PencilIcon className="w-4 h-4" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip content="Delete Work" color="danger">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                        if (updatingWorkId === work.id) return;
+                                        setCurrentRow(work);
+                                        handleClickOpen(work.id, "deleteDailyWork");
+                                    }}
+                                    sx={{
+                                        background: alpha(theme.palette.error.main, 0.1),
+                                        '&:hover': {
+                                            background: alpha(theme.palette.error.main, 0.2)
+                                        }
+                                    }}
+                                >
+                                    <TrashIcon className="w-4 h-4" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    </TableCell>
+                );
+
+            default:
+                return <TableCell>{work[columnKey]}</TableCell>;
+        }
+    }, [userIsAdmin, userIsSE, updatingWorkId, theme, setCurrentRow, openModal, handleClickOpen, handleChange]);
+
+    const columns = [
+        { name: "Date", uid: "date", icon: CalendarDaysIcon, sortable: true },
+        { name: "RFI Number", uid: "number", icon: DocumentIcon, sortable: true },
+        { name: "Status", uid: "status", icon: ClockIconOutline, sortable: true },
+        { name: "Work Type", uid: "type", icon: DocumentTextIcon, sortable: true },
+        { name: "Description", uid: "description", icon: DocumentTextIcon, sortable: false },
+        { name: "Location", uid: "location", icon: MapPinIcon, sortable: true },
+        { name: "Inspection Results", uid: "inspection_details", icon: DocumentCheckIcon, sortable: false },
+        { name: "Road Side", uid: "side", sortable: true },
+        { name: "Layer Quantity", uid: "qty_layer", sortable: true },
+        ...(userIsAdmin ? [{ name: "In-Charge", uid: "incharge", icon: UserIcon, sortable: true }] : []),
+        { name: "Assigned To", uid: "assigned", icon: UserIcon, sortable: true },
+        { name: "Planned Time", uid: "planned_time", icon: ClockIcon, sortable: true },
+        { name: "Completion Time", uid: "completion_time", icon: CheckCircleIcon, sortable: true },
+        { name: "Resubmissions", uid: "resubmission_count", icon: ArrowPathIcon, sortable: true },
+        ...(userIsAdmin ? [{ name: "RFI Submission Date", uid: "rfi_submission_date", icon: CalendarDaysIcon, sortable: true }] : []),
+        ...(userIsAdmin ? [{ name: "Actions", uid: "actions", sortable: false }] : [])
+    ];
+
+    if (isMobile) {
+        return (
+            <Box className="space-y-4">
+                <ScrollShadow className="max-h-[70vh]">
+                    {allData?.map((work) => (
+                        <MobileDailyWorkCard key={work.id} work={work} />
+                    ))}
+                </ScrollShadow>
+                {totalRows > 30 && (
+                    <Box className="flex justify-center pt-4">
+                        <Pagination
+                            showControls
+                            showShadow
+                            color="primary"
+                            variant="bordered"
+                            page={currentPage}
+                            total={lastPage}
+                            onChange={handlePageChange}
+                            size="sm"
+                        />
+                    </Box>
+                )}
+            </Box>
+        );
+    }
 
     return (
-        <div>
-            <GlobalStyles
-                styles={{
-                    '& .cgTKyH': {
-                        backgroundColor: 'transparent !important',
-                        color: theme.palette.text.primary
-                    },
-                }}
-            />
-            <CustomDataTable
-                classNames={{
-                    base: "max-h-[84vh] overflow-scroll",
-                    table: "min-h-[84vh]",
-                }}
-                columns={columns}
-                data={allData}
-                loading={loading}
-                loadingComponent={<CircularProgress />}
-                defaultSortField="date"
-                highlightOnHover
-                responsive
-                dense
-            />
-
-        </div>
-
+        <Box sx={{ maxHeight: "84vh", overflowY: "auto" }}>
+            <ScrollShadow className="max-h-[70vh]">
+                <Table
+                    isStriped
+                    selectionMode="none"
+                    isCompact
+                    isHeaderSticky
+                    removeWrapper
+                    aria-label="Daily Works Management Table"
+                    classNames={{
+                        wrapper: "min-h-[200px]",
+                        table: "min-h-[300px]",
+                        thead: "[&>tr]:first:shadow-small bg-default-100/80",
+                        tbody: "divide-y divide-default-200/50",
+                        tr: "group hover:bg-default-50/50 transition-colors h-12",
+                        td: "py-2 px-3 text-sm",
+                        th: "py-2 px-3 text-xs font-semibold"
+                    }}
+                >
+                    <TableHeader columns={columns}>
+                        {(column) => (
+                            <TableColumn 
+                                key={column.uid} 
+                                align={column.uid === "actions" ? "center" : "start"}
+                                className="bg-default-100/80 backdrop-blur-md"
+                            >
+                                <Box className="flex items-center gap-1">
+                                    {column.icon && <column.icon className="w-3 h-3" />}
+                                    <span className="text-xs font-semibold">{column.name}</span>
+                                </Box>
+                            </TableColumn>
+                        )}
+                    </TableHeader>
+                    <TableBody 
+                        items={allData || []}
+                        emptyContent={
+                            <Box className="flex flex-col items-center justify-center py-8 text-center">
+                                <DocumentTextIcon className="w-12 h-12 text-default-300 mb-4" />
+                                <Typography variant="h6" color="textSecondary">
+                                    No daily works found
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                    No work logs available for the selected period
+                                </Typography>
+                            </Box>
+                        }
+                        isLoading={loading}
+                        loadingContent={<CircularProgress size={40} />}
+                    >
+                        {(work) => (
+                            <TableRow 
+                                key={work.id} 
+                            >
+                                {(columnKey) => renderCell(work, columnKey)}
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </ScrollShadow>
+            {totalRows > 30 && (
+                <Box className="py-4 flex justify-center">
+                    <Pagination
+                        showControls
+                        showShadow
+                        color="primary"
+                        variant="bordered"
+                        page={currentPage}
+                        total={lastPage}
+                        onChange={handlePageChange}
+                        size={isMediumScreen ? "sm" : "md"}
+                    />
+                    <div className="ml-4 text-xs text-gray-500">
+                        Page {currentPage} of {lastPage} (Total: {totalRows} records)
+                    </div>
+                </Box>
+            )}
+        </Box>
     );
 };
 

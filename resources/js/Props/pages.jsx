@@ -55,6 +55,10 @@ export const getPages = (permissions, auth = null) => [
     priority: 2,
     module: 'self-service',
     subMenu: [
+      ...(permissions.includes('daily-works.view') ? [
+        { name: 'Daily Works', icon: <DocumentTextIcon  />, route: 'daily-works' },
+        { name: 'Daily Work Summary', icon: <ChartBarSquareIcon  />, route: 'daily-works-summary' },
+      ] : []),
       ...(permissions.includes('attendance.own.view') ? [
         { name: 'Attendance', icon: <CalendarDaysIcon  />, route: 'attendance-employee' }
       ] : []),
@@ -271,16 +275,7 @@ export const getPages = (permissions, auth = null) => [
         ]
       }] : []),
       
-      // Legacy Daily Works (for backward compatibility)
-      ...(permissions.includes('daily-works.view') ? [{
-        name: 'Legacy',
-        icon: <DocumentTextIcon  />,
-        category: 'legacy',
-        subMenu: [
-          { name: 'Worklog', icon: <DocumentTextIcon  />, route: 'daily-works' },
-          { name: 'Analytics', icon: <ChartBarSquareIcon  />, route: 'daily-works-summary' },
-        ]
-      }] : []),
+      
     ]
   }] : []),
   // 5. DMS (Document Management System)

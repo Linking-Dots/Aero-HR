@@ -8,7 +8,6 @@ import axios from 'axios';
 import ErrorBoundary from './Components/ErrorBoundary/ErrorBoundary';
 import { AppStateProvider } from './Contexts/AppStateContext';
 
-
 // Enhanced axios configuration with interceptors
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
@@ -59,7 +58,6 @@ if (ENABLE_MONITORING) {
                 });
             }
             if (error.response && error.response.status === 419) {
-              
                 window.location.reload();
             }
             return Promise.reject(error);
@@ -69,15 +67,16 @@ if (ENABLE_MONITORING) {
 
 const appName = 'DBEDC ERP';
 
-
 createInertiaApp({
     progress: {
         color: '#29d',
+        delay: 250, // Delay progress bar to avoid flicker
+        includeCSS: true,
+        showSpinner: false,
     },
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
         resolvePageComponent(
-            // This supports subfolders, e.g. "Admin/Dashboard"
             `./Pages/${name}.jsx`,
             import.meta.glob('./Pages/**/*.jsx')
         ),
@@ -95,25 +94,28 @@ createInertiaApp({
             </ErrorBoundary>
         );
         
-        // Log render performance
-        const renderEnd = performance.now();
-        const renderTime = renderEnd - renderStart;
-        
-        if (renderTime > 100) { // Log slow renders
-            console.warn(`Slow initial render: ${renderTime.toFixed(2)}ms`);
+        // Log render performance only in development
+        if (ENABLE_MONITORING) {
+            const renderEnd = performance.now();
+            const renderTime = renderEnd - renderStart;
+            
+            if (renderTime > 100) { // Log slow renders
+                console.warn(`Slow initial render: ${renderTime.toFixed(2)}ms`);
+            }
         }
         
-        // Track page load performance
-        if (typeof window !== 'undefined' && 'performance' in window) {
+        // Track page load performance (optimized)
+        if (ENABLE_MONITORING && typeof window !== 'undefined' && 'performance' in window) {
             window.addEventListener('load', () => {
-                setTimeout(() => {
+                // Use requestIdleCallback to defer performance logging
+                const logPerformance = () => {
                     const perfData = performance.getEntriesByType('navigation')[0];
                     if (perfData) {
                         const loadTime = perfData.loadEventEnd - perfData.fetchStart;
                         console.log(`Page load time: ${loadTime.toFixed(2)}ms`);
                         
-                        // Log to backend if load time is significant
-                        if (loadTime > 3000) {
+                        // Log to backend only if load time is significant and user opted in
+                        if (loadTime > 5000 && localStorage.getItem('performance-logging') === 'true') {
                             fetch('/api/log-performance', {
                                 method: 'POST',
                                 headers: {
@@ -126,22 +128,33 @@ createInertiaApp({
                                     execution_time_ms: loadTime,
                                     metadata: {
                                         url: window.location.href,
-                                        user_agent: navigator.userAgent
+                                        user_agent: navigator.userAgent.slice(0, 200) // Truncate
                                     }
                                 })
                             }).catch(err => console.warn('Failed to log performance:', err));
                         }
                     }
-                }, 100);
+                };
+                
+                if (window.requestIdleCallback) {
+                    window.requestIdleCallback(logPerformance);
+                } else {
+                    setTimeout(logPerformance, 100);
+                }
             });
         }
     },
-}).then(r => {
-    // Initialize application monitoring
-    if (typeof window !== 'undefined') {
-        // Monitor memory usage
+}).then(() => {
+    // Initialize application monitoring only in development
+    if (ENABLE_MONITORING && typeof window !== 'undefined') {
+        // Monitor memory usage (throttled)
         if ('memory' in performance) {
+            let lastMemoryCheck = 0;
             const checkMemory = () => {
+                const now = Date.now();
+                if (now - lastMemoryCheck < 30000) return; // Throttle to every 30 seconds
+                lastMemoryCheck = now;
+                
                 const memory = performance.memory;
                 const memoryUsage = {
                     used: Math.round(memory.usedJSHeapSize / 1048576), // MB
@@ -155,78 +168,74 @@ createInertiaApp({
                 }
             };
             
-            // Check memory every 30 seconds
-            setInterval(checkMemory, 30000);
-        }
-        
-        // Monitor for unhandled promise rejections
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
-            
-            // Log to backend
-            fetch('/api/log-error', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token?.content || ''
-                },
-                body: JSON.stringify({
-                    error_id: `unhandled_${Date.now()}`,
-                    message: `Unhandled Promise Rejection: ${event.reason}`,
-                    stack: event.reason?.stack || 'No stack trace available',
-                    component_stack: 'Promise rejection handler',
-                    url: window.location.href,
-                    user_agent: navigator.userAgent,
-                    timestamp: new Date().toISOString()
-                })
-            }).catch(err => console.warn('Failed to log unhandled rejection:', err));
-        });
-        
-        // Monitor for JavaScript errors
-        window.addEventListener('error', (event) => {
-            console.error('JavaScript error:', event.error);
-            
-            // Log to backend
-            fetch('/api/log-error', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token?.content || ''
-                },
-                body: JSON.stringify({
-                    error_id: `js_error_${Date.now()}`,
-                    message: event.message,
-                    stack: event.error?.stack || 'No stack trace available',
-                    component_stack: `${event.filename}:${event.lineno}:${event.colno}`,
-                    url: window.location.href,
-                    user_agent: navigator.userAgent,
-                    timestamp: new Date().toISOString()
-                })
-            }).catch(err => console.warn('Failed to log JavaScript error:', err));
-        });
-        
-        // Service Worker registration for offline capability and monitoring
-        if ('serviceWorker' in navigator && 'register' in navigator.serviceWorker) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/monitoring-sw.js')
-                    .then(registration => {
-                        console.log('Monitoring Service Worker registered:', registration);
-                        
-                        // Listen for updates
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('New version of the app is available');
-                                    // Could show a notification to the user here
-                                }
-                            });
-                        });
-                    })
-                    .catch(registrationError => {
-                        console.warn('Monitoring Service Worker registration failed:', registrationError);
-                    });
+            // Check memory on user interaction
+            ['click', 'scroll', 'keydown'].forEach(event => {
+                document.addEventListener(event, checkMemory, { passive: true, once: false });
             });
         }
+        
+        // Monitor for unhandled promise rejections (throttled)
+        let lastRejectionLog = 0;
+        window.addEventListener('unhandledrejection', (event) => {
+            const now = Date.now();
+            if (now - lastRejectionLog < 5000) return; // Throttle to prevent spam
+            lastRejectionLog = now;
+            
+            console.error('Unhandled promise rejection:', event.reason);
+            
+            // Log to backend only for critical errors
+            if (event.reason && event.reason.toString().includes('ChunkLoadError')) {
+                fetch('/api/log-error', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token?.content || ''
+                    },
+                    body: JSON.stringify({
+                        error_id: `unhandled_${Date.now()}`,
+                        message: `Unhandled Promise Rejection: ${event.reason}`.slice(0, 500),
+                        stack: (event.reason?.stack || 'No stack trace available').slice(0, 1000),
+                        component_stack: 'Promise rejection handler',
+                        url: window.location.href,
+                        user_agent: navigator.userAgent.slice(0, 200),
+                        timestamp: new Date().toISOString()
+                    })
+                }).catch(() => {}); // Silent fail for error logging
+            }
+        });
+        
+        // Monitor for JavaScript errors (throttled)
+        let lastErrorLog = 0;
+        window.addEventListener('error', (event) => {
+            const now = Date.now();
+            if (now - lastErrorLog < 5000) return; // Throttle to prevent spam
+            lastErrorLog = now;
+            
+            console.error('JavaScript error:', event.error);
+            
+            // Log critical errors only
+            if (event.error && (
+                event.error.toString().includes('ChunkLoadError') ||
+                event.error.toString().includes('Loading chunk') ||
+                event.error.toString().includes('Loading CSS chunk')
+            )) {
+                fetch('/api/log-error', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token?.content || ''
+                    },
+                    body: JSON.stringify({
+                        error_id: `js_error_${Date.now()}`,
+                        message: (event.message || 'Unknown error').slice(0, 500),
+                        stack: (event.error?.stack || 'No stack trace available').slice(0, 1000),
+                        component_stack: `${event.filename}:${event.lineno}:${event.colno}`,
+                        url: window.location.href,
+                        user_agent: navigator.userAgent.slice(0, 200),
+                        timestamp: new Date().toISOString()
+                    })
+                }).catch(() => {}); // Silent fail for error logging
+            }
+        });
     }
 });

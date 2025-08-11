@@ -1,148 +1,119 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Box, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
-import Header from "@/Layouts/Header.jsx";
-import Breadcrumb from "@/Components/Breadcrumb.jsx";
-import BottomNav from "@/Layouts/BottomNav.jsx";
 import { usePage } from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../../css/theme-transitions.css';
-import Sidebar from "@/Layouts/Sidebar.jsx";
-import SessionExpiredModal from '@/Components/SessionExpiredModal.jsx';
 import { Inertia } from '@inertiajs/inertia';
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
 import { HeroUIProvider } from "@heroui/react";
-import { onMessageListener, requestNotificationPermission } from "@/firebase-config.js";
-import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
 
+// Lazy load heavy components
+const Header = lazy(() => import("@/Layouts/Header.jsx"));
+const Breadcrumb = lazy(() => import("@/Components/Breadcrumb.jsx"));
+const BottomNav = lazy(() => import("@/Layouts/BottomNav.jsx"));
+const Sidebar = lazy(() => import("@/Layouts/Sidebar.jsx"));
+const SessionExpiredModal = lazy(() => import('@/Components/SessionExpiredModal.jsx'));
+const ThemeSettingDrawer = lazy(() => import("@/Components/ThemeSettingDrawer.jsx"));
 
+// Lazy load Firebase functions only when needed
+const initializeFirebase = lazy(() => import("@/utils/firebaseInit.js"));
 
 import axios from 'axios';
 
-
+// Memoized loading component
+const LoadingFallback = React.memo(() => (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div>Loading...</div>
+    </Box>
+));
 
 function App({ children }) {
     const [sessionExpired, setSessionExpired] = useState(false);
-    let appRenderCount = 0;
     let { auth, url, csrfToken } = usePage().props;
-    auth = useMemo(() => auth, [JSON.stringify(auth)]);
-    const appLoader = useCallback(() => {
-        let unsubscribeOnMessage = null;
-
-        const initializeFirebase = async () => {
-            try {
-                // Request notification permission and get token
-                const token = await requestNotificationPermission();
-                if (token) {
-                    try {
-                        const response = await axios.post(route('updateFcmToken'), { fcm_token: token });
-                        if (response.status === 200) {
-                            console.log('FCM Token Updated:', response.data.fcm_token);
-                        }
-                    } catch (error) {
-                        console.error('Failed to update FCM token:', error);
-                    }
-                } else {
-                    console.warn('Notification permission denied or no token retrieved.');
-                }
-
-                // Listen for foreground messages
-                unsubscribeOnMessage = onMessageListener()
-                    .then(payload => {
-                        console.log('Message received:', payload);
-                        const { title, body, icon } = payload.notification;
-
-                        // Display desktop notification
-                        if (Notification.permission === 'granted') {
-                            new Notification(title, { body, icon });
-                        }
-
-                        // Also show in-app alert (optional)
-                        alert(`${title}: ${body}`);
-                    })
-                    .catch(err => console.error('onMessageListener error:', err));
-            } catch (err) {
-                console.error('Firebase initialization error:', err);
-            }
-        };
-
-        initializeFirebase();
-
-        // Signal that React app is ready
-        if (window.AppLoader) {
-            const timer = setTimeout(() => {
-                window.AppLoader.hideLoading();
-            }, 200);
-            return () => clearTimeout(timer);
-        }
-
-        // Cleanup on unmount
-        return () => {
-            if (unsubscribeOnMessage && typeof unsubscribeOnMessage === 'function') {
-                unsubscribeOnMessage(); // Firebase unsubscribe (if using Firebase v9+ with listeners)
-            }
-        };  
-    }, [auth]);
-
-
-    const permissions = auth?.permissions || [];
     
-    // Initialize sidebar state with localStorage
+    // Memoize auth to prevent unnecessary re-renders
+    const memoizedAuth = useMemo(() => auth, [auth?.user?.id, auth?.permissions?.length]);
+    
+    // Initialize sidebar state with localStorage (only once)
     const [sideBarOpen, setSideBarOpen] = useState(() => {
-        const saved = localStorage.getItem('sidebar-open');
-        return saved !== null ? JSON.parse(saved) : false;
+        try {
+            const saved = localStorage.getItem('sidebar-open');
+            return saved !== null ? JSON.parse(saved) : false;
+        } catch {
+            return false;
+        }
     });
     
-    // Initialize theme state with localStorage
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+    // Initialize theme state with localStorage (only once)
+    const [darkMode, setDarkMode] = useState(() => {
+        try {
+            return localStorage.getItem('darkMode') === 'true';
+        } catch {
+            return false;
+        }
+    });
+    
     const [themeColor, setThemeColor] = useState(() => {
-        const stored = localStorage.getItem('themeColor');
-        return stored ? JSON.parse(stored) : {
-            name: "OCEAN", 
-            primary: "#0ea5e9", 
-            secondary: "#0284c7",
-            gradient: "from-sky-500 to-blue-600",
-            description: "Ocean Blue - Professional & Trustworthy"
-        };
+        try {
+            const stored = localStorage.getItem('themeColor');
+            return stored ? JSON.parse(stored) : {
+                name: "OCEAN", 
+                primary: "#0ea5e9", 
+                secondary: "#0284c7",
+                gradient: "from-sky-500 to-blue-600",
+                description: "Ocean Blue - Professional & Trustworthy"
+            };
+        } catch {
+            return {
+                name: "OCEAN", 
+                primary: "#0ea5e9", 
+                secondary: "#0284c7",
+                gradient: "from-sky-500 to-blue-600",
+                description: "Ocean Blue - Professional & Trustworthy"
+            };
+        }
     });
     
     const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
-
-    const contentRef = useRef(null);
     const [bottomNavHeight, setBottomNavHeight] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // Memoize pages to avoid unnecessary recalculations
+    const contentRef = useRef(null);
+    const sessionCheckRef = useRef(null);
+
+    // Memoize permissions and pages
+    const permissions = useMemo(() => memoizedAuth?.permissions || [], [memoizedAuth?.permissions]);
+    
     const pages = useMemo(() => {
-        // Check if the current URL is specifically a settings page
-        // You can adjust this condition based on your actual settings routes
-        const isSettingsPage = url.startsWith('/settings') || 
-                              url.includes('settings') || 
-                              url === '/settings';
-        
-        return isSettingsPage ? getSettingsPages(permissions, auth) : getPages(permissions, auth);
-    }, [url, permissions]);
+        const isSettingsPage = url.startsWith('/settings') || url.includes('settings');
+        return isSettingsPage ? getSettingsPages(permissions, memoizedAuth) : getPages(permissions, memoizedAuth);
+    }, [url, permissions, memoizedAuth]);
 
     // Theme and media query
     const theme = useTheme(darkMode, themeColor);
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));    // Persist darkMode, themeColor, and sidebar state
-    
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    // Memoize toggle handlers to prevent unnecessary re-renders
+    // Optimized toggle handlers with batched state updates
     const toggleDarkMode = useCallback(() => {
         setDarkMode(prev => {
             const newValue = !prev;
-            localStorage.setItem('darkMode', newValue);
+            // Batch localStorage update
+            requestIdleCallback(() => {
+                localStorage.setItem('darkMode', newValue);
+            });
             return newValue;
         });
     }, []);
     
     const toggleThemeColor = useCallback((color) => {
         setThemeColor(color);
-        localStorage.setItem('themeColor', JSON.stringify(color));
+        requestIdleCallback(() => {
+            localStorage.setItem('themeColor', JSON.stringify(color));
+        });
     }, []);
     
     const toggleThemeDrawer = useCallback(() => {
@@ -150,55 +121,86 @@ function App({ children }) {
     }, []);
     
     const toggleSideBar = useCallback(() => {
-        // Use requestAnimationFrame for smoother animation start
-        requestAnimationFrame(() => {
-            setSideBarOpen(prev => !prev);
+        setSideBarOpen(prev => {
+            const newValue = !prev;
+            // Batch localStorage update
+            requestIdleCallback(() => {
+                localStorage.setItem('sidebar-open', JSON.stringify(newValue));
+            });
+            return newValue;
         });
     }, []);
 
-    // Memoize sidebar content to prevent re-renders
-    const sidebarContent = useMemo(() => (
-        <Sidebar 
-            url={url} 
-            pages={pages} 
-            toggleSideBar={toggleSideBar}
-            sideBarOpen={sideBarOpen}
-        />
-    ), [url, pages, toggleSideBar, sideBarOpen]);
-
+    // Initialize Firebase only when user is authenticated
     useEffect(() => {
-        localStorage.setItem('darkMode', darkMode);
-        localStorage.setItem('themeColor', JSON.stringify(themeColor));
-        localStorage.setItem('sidebar-open', JSON.stringify(sideBarOpen));
+        if (!memoizedAuth?.user) return;
+
+        let mounted = true;
         
-        // Apply theme to document root
-        applyThemeToRoot(themeColor, darkMode);
-    }, [darkMode, themeColor, sideBarOpen]);
-    
-    useEffect(() => {
-        if (!auth.user) {
-            return;
-        }
+        const loadFirebase = async () => {
+            try {
+                const { initFirebase } = await import("@/utils/firebaseInit.js");
+                if (mounted) {
+                    await initFirebase();
+                }
+            } catch (error) {
+                console.warn('Firebase initialization failed:', error);
+            }
+        };
 
-        const interval = setInterval(async () => {
-          
+        loadFirebase();
+        
+        return () => {
+            mounted = false;
+        };
+    }, [memoizedAuth?.user?.id]);
+
+    // Optimized theme application
+    useEffect(() => {
+        requestIdleCallback(() => {
+            applyThemeToRoot(themeColor, darkMode);
+        });
+    }, [darkMode, themeColor]);
+    
+    // Session check with optimized interval
+    useEffect(() => {
+        if (!memoizedAuth?.user) return;
+
+        const checkSession = async () => {
             try {
                 const response = await axios.get('/session-check');
                 if (!response.data.authenticated) {
                     setSessionExpired(true);
-                    clearInterval(interval);
+                    if (sessionCheckRef.current) {
+                        clearInterval(sessionCheckRef.current);
+                        sessionCheckRef.current = null;
+                    }
                 }
             } catch (error) {
                 console.error('Session check failed:', error);
                 setSessionExpired(true);
-                clearInterval(interval);
+                if (sessionCheckRef.current) {
+                    clearInterval(sessionCheckRef.current);
+                    sessionCheckRef.current = null;
+                }
             }
-        }, 5000); // Check every 30 seconds
+        };
 
-        return () => clearInterval(interval);
-    }, [auth.user]);
+        // Initial check after 10 seconds, then every 30 seconds
+        const initialTimeout = setTimeout(() => {
+            checkSession();
+            sessionCheckRef.current = setInterval(checkSession, 30000);
+        }, 10000);
+
+        return () => {
+            clearTimeout(initialTimeout);
+            if (sessionCheckRef.current) {
+                clearInterval(sessionCheckRef.current);
+            }
+        };
+    }, [memoizedAuth?.user?.id]);
         
-      
+    // CSRF token setup
     useEffect(() => {
         if (csrfToken) {
             document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', csrfToken);
@@ -206,40 +208,70 @@ function App({ children }) {
         }
     }, [csrfToken]);
 
+    // Inertia loading state with throttling
     useEffect(() => {
-        auth?.user && appLoader();
-    }, [appLoader]);
-
-    // Inertia loading state
-    useEffect(() => {
-        const start = () => setLoading(true);
-        const finish = () => setLoading(false);
+        let loadingTimeout;
+        
+        const start = () => {
+            loadingTimeout = setTimeout(() => setLoading(true), 150); // Delay to avoid flicker
+        };
+        
+        const finish = () => {
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+        };
+        
         const unStart = Inertia.on('start', start);
         const unFinish = Inertia.on('finish', finish);
+        
         return () => {
+            clearTimeout(loadingTimeout);
             unStart();
             unFinish();
         };
     }, []);
 
+    // Hide app loading screen
+    useEffect(() => {
+        if (memoizedAuth?.user && window.AppLoader) {
+            const timer = setTimeout(() => {
+                window.AppLoader.hideLoading();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [memoizedAuth?.user]);
 
-    appRenderCount++;
-    console.log('App render count:', appRenderCount);
+    // Memoized sidebar content
+    const sidebarContent = useMemo(() => (
+        <Suspense fallback={<LoadingFallback />}>
+            <Sidebar 
+                url={url} 
+                pages={pages} 
+                toggleSideBar={toggleSideBar}
+                sideBarOpen={sideBarOpen}
+            />
+        </Suspense>
+    ), [url, pages, toggleSideBar, sideBarOpen]);
 
-        
     return (
-        
         <ThemeProvider theme={theme}>
             <HeroUIProvider>
-                {sessionExpired && <SessionExpiredModal setSessionExpired={setSessionExpired}/>}
-                <ThemeSettingDrawer
-                    toggleThemeColor={toggleThemeColor}
-                    themeColor={themeColor}
-                    darkMode={darkMode}
-                    toggleDarkMode={toggleDarkMode}
-                    toggleThemeDrawer={toggleThemeDrawer}
-                    themeDrawerOpen={themeDrawerOpen}
-                />  
+                {sessionExpired && (
+                    <Suspense fallback={null}>
+                        <SessionExpiredModal setSessionExpired={setSessionExpired}/>
+                    </Suspense>
+                )}
+                
+                <Suspense fallback={null}>
+                    <ThemeSettingDrawer
+                        toggleThemeColor={toggleThemeColor}
+                        themeColor={themeColor}
+                        darkMode={darkMode}
+                        toggleDarkMode={toggleDarkMode}
+                        toggleThemeDrawer={toggleThemeDrawer}
+                        themeDrawerOpen={themeDrawerOpen}
+                    />
+                </Suspense>
                 
                 <ToastContainer
                     position="top-center"
@@ -253,11 +285,13 @@ function App({ children }) {
                     pauseOnHover
                     theme="colored"
                 />
+                
                 <CssBaseline />
+                
                 <main id="app-main" className={darkMode ? "dark" : "light"}>
                     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-                        {/* Overlay for mobile sidebar */}
-                        {isMobile && (
+                        {/* Mobile overlay */}
+                        {isMobile && sideBarOpen && (
                             <Box
                                 onClick={toggleSideBar}
                                 sx={{
@@ -268,15 +302,13 @@ function App({ children }) {
                                     bottom: 0,
                                     bgcolor: 'rgba(0,0,0,0.5)',
                                     zIndex: 1199,
-                                    opacity: sideBarOpen ? 1 : 0,
-                                    visibility: sideBarOpen ? 'visible' : 'hidden',
                                     transition: 'opacity 0.2s ease',
-                                    pointerEvents: sideBarOpen ? 'auto' : 'none',
                                 }}
                             />
                         )}
-                        {/* Desktop Sidebar Area */}
-                        {auth.user && (
+                        
+                        {/* Sidebar */}
+                        {memoizedAuth?.user && (
                             <Box
                                 sx={{
                                     position: 'fixed',
@@ -297,7 +329,7 @@ function App({ children }) {
                             </Box>
                         )}
 
-                        {/* Main Content Area */}
+                        {/* Main content */}
                         <Box
                             ref={contentRef}
                             sx={{
@@ -313,37 +345,48 @@ function App({ children }) {
                                     xs: '100%', 
                                     md: sideBarOpen ? 'calc(100% - 280px)' : '100%' 
                                 },
-                                minWidth: 0, // Prevent flex-shrink issues
-                                maxWidth: '100vw', // Prevent overflow issues
+                                minWidth: 0,
+                                maxWidth: '100vw',
                                 willChange: 'margin',
                                 flexDirection: 'column',
                                 height: '100vh',
                                 overflow: 'auto',
-                                position: 'relative', // Ensure proper stacking context
+                                position: 'relative',
                             }}
                         >
-                            {auth.user && (
-                                <Header
-                                    url={url}
-                                    pages={pages}
-                                    darkMode={darkMode}
-                                    toggleDarkMode={toggleDarkMode}
-                                    toggleThemeDrawer={toggleThemeDrawer}
-                                    sideBarOpen={sideBarOpen}
-                                    toggleSideBar={toggleSideBar}
-                                    themeDrawerOpen={themeDrawerOpen}
-                                />
+                            {memoizedAuth?.user && (
+                                <Suspense fallback={<LoadingFallback />}>
+                                    <Header
+                                        url={url}
+                                        pages={pages}
+                                        darkMode={darkMode}
+                                        toggleDarkMode={toggleDarkMode}
+                                        toggleThemeDrawer={toggleThemeDrawer}
+                                        sideBarOpen={sideBarOpen}
+                                        toggleSideBar={toggleSideBar}
+                                        themeDrawerOpen={themeDrawerOpen}
+                                    />
+                                </Suspense>
                             )}
-                            {auth.user && <Breadcrumb />}
+                            
+                            {memoizedAuth?.user && (
+                                <Suspense fallback={null}>
+                                    <Breadcrumb />
+                                </Suspense>
+                            )}
+                            
                             {children}
-                            {auth.user && isMobile && (
-                                <BottomNav
-                                    setBottomNavHeight={setBottomNavHeight}
-                                    contentRef={contentRef}
-                                    auth={auth}
-                                    toggleSideBar={toggleSideBar}
-                                    sideBarOpen={sideBarOpen}
-                                />
+                            
+                            {memoizedAuth?.user && isMobile && (
+                                <Suspense fallback={null}>
+                                    <BottomNav
+                                        setBottomNavHeight={setBottomNavHeight}
+                                        contentRef={contentRef}
+                                        auth={memoizedAuth}
+                                        toggleSideBar={toggleSideBar}
+                                        sideBarOpen={sideBarOpen}
+                                    />
+                                </Suspense>
                             )}
                         </Box>
                     </Box>
@@ -353,4 +396,4 @@ function App({ children }) {
     );
 }
 
-export default App;
+export default React.memo(App);
