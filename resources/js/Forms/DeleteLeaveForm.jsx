@@ -13,7 +13,10 @@ const DeleteLeaveForm = ({ open, closeModal, leaveId, setLeavesData, setLeaves, 
 
     const handleDelete = () => {
         if (!leaveId) {
-            toast.error('Invalid leave ID provided');
+            const toastPromise = Promise.reject(new Error('Invalid leave ID'));
+            toast.promise(toastPromise, {
+                error: 'Invalid leave ID provided'
+            });
             return;
         }
 

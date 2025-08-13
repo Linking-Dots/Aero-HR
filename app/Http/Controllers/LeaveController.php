@@ -15,6 +15,7 @@ use App\Services\Leave\LeaveValidationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Models\HRM\Department;
 
@@ -60,6 +61,13 @@ class LeaveController extends Controller
     {
         try {
             $leaveData = $this->queryService->getLeaveRecords($request);
+            
+            // Debug log the structure returned by LeaveQueryService
+            Log::info('LeaveController - leaveData structure:', [
+                'leavesData_keys' => array_keys($leaveData['leavesData'] ?? []),
+                'publicHolidays_count' => count($leaveData['leavesData']['publicHolidays'] ?? []),
+                'publicHolidays_sample' => array_slice($leaveData['leavesData']['publicHolidays'] ?? [], 0, 3)
+            ]);
             
             $response = [
                 'leaves' => new LeaveResourceCollection($leaveData['leaveRecords']),

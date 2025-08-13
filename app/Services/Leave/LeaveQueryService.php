@@ -4,9 +4,11 @@ namespace App\Services\Leave;
 
 use App\Models\HRM\Leave;
 use App\Models\HRM\LeaveSetting;
+use App\Models\HRM\Holiday;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Traits\HasPermissions;
 
 class LeaveQueryService
@@ -62,7 +64,35 @@ class LeaveQueryService
             ->paginate($perPage, ['*'], 'page', $page);
 
         $leaveTypes = LeaveSetting::all();
-        $leaveCountsWithRemainingByUser = $this->calculateLeaveCounts($year, $currentYear, $user);
+        $leaveCountsWithRemainingByUser = $this->calculateLeaveCounts($year, $currentYear, $user, $specificUserId);
+
+        // Get public holidays for the current year
+        $publicHolidays = Holiday::active()
+            ->currentYear()
+            ->get()
+            ->flatMap(function ($holiday) {
+                $dates = [];
+                $startDate = \Carbon\Carbon::parse($holiday->from_date);
+                $endDate = \Carbon\Carbon::parse($holiday->to_date);
+                
+                while ($startDate->lte($endDate)) {
+                    $dates[] = $startDate->format('Y-m-d');
+                    $startDate->addDay();
+                }
+                
+                return $dates;
+            })->toArray();
+            
+        // Debug log for holiday data
+        Log::info('LeaveQueryService - Holiday debug:', [
+            'current_year' => $currentYear,
+            'holiday_count_from_db' => Holiday::active()->currentYear()->count(),
+            'processed_holiday_dates_count' => count($publicHolidays),
+            'sample_holidays' => array_slice($publicHolidays, 0, 5),
+            'august_holidays' => array_filter($publicHolidays, function($date) {
+                return str_starts_with($date, '2025-08');
+            })
+        ]);
 
         // Process the data to fix date issues
         $processedLeaveRecords = $leaveRecords->getCollection()->map(function ($leave) {
@@ -97,6 +127,7 @@ class LeaveQueryService
             'leavesData' => [
                 'leaveTypes' => $leaveTypes,
                 'leaveCountsByUser' => $leaveCountsWithRemainingByUser,
+                'publicHolidays' => $publicHolidays,
             ],
             'message' => $message, // Include appropriate message for empty data
         ];
@@ -236,14 +267,26 @@ class LeaveQueryService
     /**
      * Calculate leave counts and remaining days for users
      */
-    private function calculateLeaveCounts(?int $year, int $currentYear, $user): array
+    private function calculateLeaveCounts(?int $year, int $currentYear, $user, ?int $specificUserId = null): array
     {
-        $userId = $user->id;
+        // Use specific user ID if provided, otherwise use authenticated user
+        $targetUserId = $specificUserId ?: $user->id;
+        
+        // If admin is viewing all users and no specific user is selected, calculate for all users
+        $calculateForAllUsers = is_null($specificUserId) && ($user->can('manage leaves') || $user->hasRole(['admin', 'hr']));
 
-        $allLeaves = Leave::with('leaveSetting')
-            ->where('user_id', $userId) // Always filter by the user ID
-            ->whereYear('from_date', $currentYear)
-            ->get();
+        if ($calculateForAllUsers) {
+            // Calculate for all users (admin view)
+            $allLeaves = Leave::with('leaveSetting')
+                ->whereYear('from_date', $currentYear)
+                ->get();
+        } else {
+            // Calculate for specific user only
+            $allLeaves = Leave::with('leaveSetting')
+                ->where('user_id', $targetUserId)
+                ->whereYear('from_date', $currentYear)
+                ->get();
+        }
 
         $leaveTypes = LeaveSetting::all();
 
@@ -251,18 +294,37 @@ class LeaveQueryService
         $leaveCountsByUser = [];
         foreach ($allLeaves as $leave) {
             $type = $leave->leaveSetting->type ?? 'Unknown';
+            $userId = $leave->user_id;
             $leaveCountsByUser[$userId][$type] = ($leaveCountsByUser[$userId][$type] ?? 0) + $leave->no_of_days;
         }
 
         $leaveCountsWithRemainingByUser = [];
-        foreach ($leaveCountsByUser as $userId => $counts) {
-            $leaveCountsWithRemainingByUser[$userId] = $leaveTypes->map(function ($type) use ($counts) {
+        
+        if ($calculateForAllUsers) {
+            // For admin view, calculate for all users with leaves
+            $allUserIds = array_unique(array_keys($leaveCountsByUser));
+            foreach ($allUserIds as $userId) {
+                $counts = $leaveCountsByUser[$userId] ?? [];
+                $leaveCountsWithRemainingByUser[$userId] = $leaveTypes->map(function ($type) use ($counts) {
+                    $used = $counts[$type->type] ?? 0;
+                    return [
+                        'leave_type' => $type->type,
+                        'total_days' => $type->days,
+                        'days_used' => $used,
+                        'remaining_days' => max(0, $type->days - $used),
+                    ];
+                })->toArray();
+            }
+        } else {
+            // For specific user, always include their data even if no leaves exist
+            $counts = $leaveCountsByUser[$targetUserId] ?? [];
+            $leaveCountsWithRemainingByUser[$targetUserId] = $leaveTypes->map(function ($type) use ($counts) {
                 $used = $counts[$type->type] ?? 0;
                 return [
                     'leave_type' => $type->type,
                     'total_days' => $type->days,
                     'days_used' => $used,
-                    'remaining_days' => $type->days - $used,
+                    'remaining_days' => max(0, $type->days - $used),
                 ];
             })->toArray();
         }

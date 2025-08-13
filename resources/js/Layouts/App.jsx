@@ -158,17 +158,7 @@ function App({ children }) {
         });
     }, []);
 
-    // ===== SCROLL SHADOW EFFECT HANDLER =====
-    const handleScroll = useCallback(() => {
-        if (!mainContentRef.current) return;
-        
-        // Use requestAnimationFrame for smoother scrolling effects
-        requestAnimationFrame(() => {
-            const scrollTop = mainContentRef.current.scrollTop;
-            setScrolled(scrollTop > 10);
-        });
-    }, []);
-
+  
     // ===== INITIALIZATION EFFECTS =====
     // Initialize Firebase only when user is authenticated (one-time setup)
     useEffect(() => {
@@ -300,17 +290,7 @@ function App({ children }) {
         };
     }, []);
 
-    // Add scroll event listener for shadow effect
-    useEffect(() => {
-        const contentElement = mainContentRef.current;
-        if (!contentElement) return;
-        
-        contentElement.addEventListener('scroll', handleScroll, { passive: true });
-        
-        return () => {
-            contentElement.removeEventListener('scroll', handleScroll);
-        };
-    }, [handleScroll]);
+   
 
     // Hide app loading screen with improved timing (one-time initialization)
     useEffect(() => {
@@ -530,7 +510,7 @@ function App({ children }) {
                                 }}
                                 role="main"
                                 aria-label="Main content"
-                                onScroll={handleScroll}
+                              
                             >
                                 <ScrollShadow>
                                     {children}

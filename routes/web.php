@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BulkLeaveController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailyWorkSummaryController;
 use App\Http\Controllers\DashboardController;
@@ -165,6 +166,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/leaves/bulk/validate', [BulkLeaveController::class, 'validateDates'])->name('leaves.bulk.validate');
         Route::post('/leaves/bulk', [BulkLeaveController::class, 'store'])->name('leaves.bulk.store');
         Route::get('/leaves/bulk/leave-types', [BulkLeaveController::class, 'getLeaveTypes'])->name('leaves.bulk.leave-types');
+        Route::get('/leaves/bulk/calendar-data', [BulkLeaveController::class, 'getCalendarData'])->name('leaves.bulk.calendar-data');
+    });
+
+    // Bulk leave deletion route
+    Route::middleware(['permission:leaves.delete'])->group(function () {
+        Route::delete('/leaves/bulk', [BulkLeaveController::class, 'bulkDelete'])->name('leaves.bulk.delete');
     });
 
     // Leave settings routes

@@ -39,6 +39,7 @@ import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
 import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
 import BulkLeaveModal from '@/Components/BulkLeave/BulkLeaveModal.jsx';
+import BulkDeleteModal from '@/Components/BulkDelete/BulkDeleteModal.jsx';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -146,7 +147,20 @@ const LeavesEmployee = ({ title, allUsers }) => {
         setError(error.response?.data?.message || 'No leaves found for the selected criteria.');
       } else {
         setError('Error retrieving leaves data. Please try again.');
-        toast.error('Failed to load leave data. Please try again.');
+        
+        // Use toast promise pattern for safety
+        const promise = Promise.reject('Failed to load leave data. Please try again.');
+        toast.promise(
+          promise,
+          {
+            error: {
+              render() {
+                return <div>Failed to load leave data. Please try again.</div>;
+              },
+              icon: '❌'
+            }
+          }
+        );
       }
       setLeaves([]);
       updatePaginationMetadata({
@@ -217,6 +231,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     edit_leave: false,
     delete_leave: false,
     bulk_leave: false,
+    bulk_delete: false,
   });
 
   // Modal handlers
@@ -225,7 +240,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   }, []);
 
   const closeModal = useCallback(() => {
-    setModalStates({ add_leave: false, edit_leave: false, delete_leave: false, bulk_leave: false });
+    setModalStates({ add_leave: false, edit_leave: false, delete_leave: false, bulk_leave: false, bulk_delete: false });
   }, []);
 
   const openModal = useCallback((modalType) => {
@@ -238,10 +253,17 @@ const LeavesEmployee = ({ title, allUsers }) => {
   }, []);
 
   const [currentLeave, setCurrentLeave] = useState(null);
+  const [selectedLeavesForBulkDelete, setSelectedLeavesForBulkDelete] = useState([]);
 
   const handleSetCurrentLeave = useCallback((leave) => {
     setCurrentLeave(leave);
   }, []);
+
+  // Handle bulk delete
+  const handleBulkDelete = useCallback((selectedLeaves) => {
+    setSelectedLeavesForBulkDelete(selectedLeaves);
+    openModal('bulk_delete');
+  }, [openModal]);
 
  
 
@@ -362,6 +384,64 @@ const LeavesEmployee = ({ title, allUsers }) => {
     fetchLeavesStats();
   }, [leaveMatchesFilters, sortLeavesByFromDate, pagination, totalRows, updatePaginationMetadata, fetchLeaves, fetchLeavesStats]);
 
+  // Optimistic UI for bulk add - optimized to handle only created leaves
+  const addBulkLeavesOptimized = useCallback((responseData) => {
+    // Handle the response data from backend (now returns only created leaves)
+    if (!responseData || !responseData.success) {
+      console.error('Invalid bulk response data:', responseData);
+      return;
+    }
+    
+    // Update leaves data with the fresh data from backend
+    if (responseData.leavesData) {
+      setLeavesData(responseData.leavesData);
+    }
+    
+    // Get the created leaves from the response
+    const createdLeaves = responseData.created_leaves || [];
+    if (createdLeaves.length === 0) {
+      // Just refresh stats if no leaves were created
+      fetchLeavesStats();
+      return;
+    }
+    
+    // Filter created leaves that match current filters
+    const filteredNewLeaves = createdLeaves.filter(leave => leaveMatchesFilters(leave));
+    
+    if (filteredNewLeaves.length === 0) {
+      // Even if no leaves match filters, update stats
+      fetchLeavesStats();
+      return;
+    }
+
+    setTableLoading(true);
+    
+    // Add the new leaves to the current page if they match filters
+    setLeaves(prevLeaves => {
+      const updatedLeaves = [...prevLeaves, ...filteredNewLeaves];
+      return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
+    });
+    
+    // Update pagination metadata based on successful creations
+    const successfulCount = responseData.summary?.successful || createdLeaves.length;
+    updatePaginationMetadata({
+      total: totalRows + successfulCount,
+      last_page: Math.ceil((totalRows + successfulCount) / pagination.perPage),
+      current_page: pagination.page,
+      per_page: pagination.perPage
+    });
+
+    setTableLoading(false);
+    
+    // If not on first page, might need to refresh to see all new data
+    if (pagination.page !== 1) {
+      fetchLeaves();
+    }
+    
+    // Refresh leave stats to update balance cards
+    fetchLeavesStats();
+  }, [leaveMatchesFilters, sortLeavesByFromDate, pagination, totalRows, updatePaginationMetadata, fetchLeaves, fetchLeavesStats]);
+
   const updateLeaveOptimized = useCallback((updatedLeave) => {
     const leaveExistsInCurrentPage = leaves.some(leave => leave.id === updatedLeave.id);
     setTableLoading(true);
@@ -369,7 +449,21 @@ const LeavesEmployee = ({ title, allUsers }) => {
       setLeaves(prevLeaves => {
         return prevLeaves.filter(leave => leave.id !== updatedLeave.id);
       });
-      toast.info('Leave removed from filtered view.');
+      
+      // Use toast promise pattern for safety
+      const promise = Promise.resolve();
+      toast.promise(
+        promise,
+        {
+          success: {
+            render() {
+              return <div>Leave removed from filtered view.</div>;
+            },
+            icon: 'ℹ️'
+          }
+        }
+      );
+      
       setTableLoading(false);
       return;
     }
@@ -389,7 +483,21 @@ const LeavesEmployee = ({ title, allUsers }) => {
       }
       return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
     });
-    toast.success('Leave updated!');
+    
+    // Use toast promise pattern for safety
+    const promise = Promise.resolve();
+    toast.promise(
+      promise,
+      {
+        success: {
+          render() {
+            return <div>Leave updated!</div>;
+          },
+          icon: '✅'
+        }
+      }
+    );
+    
     setTableLoading(false);
     if (pagination.page !== 1) {
       fetchLeaves();
@@ -416,6 +524,55 @@ const LeavesEmployee = ({ title, allUsers }) => {
     // Only fetch leave stats to update the balance cards
     fetchLeavesStats();
   }, [fetchLeavesStats, totalRows, pagination, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
+
+  // Optimistic UI for bulk deletion
+  const deleteBulkLeavesOptimized = useCallback((responseData) => {
+    // Handle the response data from backend
+    if (!responseData || !responseData.success) {
+      console.error('Invalid bulk delete response data:', responseData);
+      return;
+    }
+    
+    // Update leaves data with the fresh data from backend
+    if (responseData.leavesData) {
+      setLeavesData(responseData.leavesData);
+    }
+    
+    // Get the deleted leave IDs from the response
+    const deletedLeaves = responseData.deleted_leaves || [];
+    const deletedLeaveIds = deletedLeaves.map(leave => leave.id);
+    
+    if (deletedLeaveIds.length === 0) {
+      // Just refresh stats if no leaves were deleted
+      fetchLeavesStats();
+      return;
+    }
+
+    setTableLoading(true);
+    
+    // Remove the deleted leaves from the current page
+    setLeaves(prevLeaves => {
+      return prevLeaves.filter(leave => !deletedLeaveIds.includes(leave.id));
+    });
+    
+    // Update pagination metadata based on successful deletions
+    const deletedCount = responseData.deleted_count || deletedLeaves.length;
+    const newTotal = Math.max(0, totalRows - deletedCount);
+    updatePaginationMetadata({
+      total: newTotal,
+      last_page: Math.max(1, Math.ceil(newTotal / pagination.perPage)),
+      current_page: pagination.page,
+      per_page: pagination.perPage
+    });
+
+    setTableLoading(false);
+    
+    // Fetch additional items if needed to fill the page
+    fetchAdditionalItemsIfNeeded(leaves.filter(leave => !deletedLeaveIds.includes(leave.id)), newTotal, 'delete');
+    
+    // Refresh leave stats to update balance cards
+    fetchLeavesStats();
+  }, [updatePaginationMetadata, pagination, totalRows, leaves, fetchAdditionalItemsIfNeeded, fetchLeavesStats]);
 
   // Action buttons for the header
   const actionButtons = [
@@ -596,14 +753,28 @@ const LeavesEmployee = ({ title, allUsers }) => {
         <BulkLeaveModal
           open={modalStates.bulk_leave}
           onClose={() => closeModal()}
-          onSuccess={(result) => {
-            // Refresh the leave data after successful bulk creation
-            fetchLeaves();
-            fetchLeavesStats();
+          onSuccess={(responseData) => {
+            // Use the same optimization pattern as single leave
+            addBulkLeavesOptimized(responseData);
           }}
           allUsers={allUsers}
           leavesData={leavesData}
           isAdmin={false}
+          existingLeaves={leaves || []}
+          publicHolidays={leavesData?.publicHolidays || []}
+        />
+      )}
+
+      {modalStates.bulk_delete && (
+        <BulkDeleteModal
+          open={modalStates.bulk_delete}
+          onClose={() => closeModal()}
+          onSuccess={(responseData) => {
+            // Use the bulk deletion optimization
+            deleteBulkLeavesOptimized(responseData);
+          }}
+          selectedLeaves={selectedLeavesForBulkDelete}
+          allUsers={allUsers}
         />
       )}
 
@@ -738,6 +909,8 @@ const LeavesEmployee = ({ title, allUsers }) => {
                         isAdminView={false}
                         fetchLeavesStats={fetchLeavesStats}
                         updatePaginationMetadata={updatePaginationMetadata}
+                        onBulkDelete={handleBulkDelete}
+                        canDeleteLeaves={true}
                     />
                     </div>
                   ) : (

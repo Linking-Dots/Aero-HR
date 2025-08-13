@@ -59,12 +59,6 @@ class BulkLeaveService
                     $dateResult['warnings'][] = 'Weekend date - may require special approval';
                 }
 
-                // Check if it's in the past
-                if ($carbonDate->isPast()) {
-                    $dateResult['status'] = 'conflict';
-                    $dateResult['errors'][] = 'Cannot apply leave for past dates';
-                }
-
                 // Check if it's too far in the future (more than 1 year)
                 if ($carbonDate->isAfter(now()->addYear())) {
                     $dateResult['status'] = 'conflict';
@@ -188,11 +182,6 @@ class BulkLeaveService
             $errors[] = $overlapError;
         }
 
-        // Check if it's in the past
-        if ($date->isPast()) {
-            $errors[] = 'Cannot apply leave for past dates';
-        }
-
         // Check if it's too far in the future
         if ($date->isAfter(now()->addYear())) {
             $errors[] = 'Cannot apply leave more than one year in advance';
@@ -217,7 +206,7 @@ class BulkLeaveService
             ];
         }
 
-        // Get current year's used leave days for this type
+        // Get current year's used leave days for this type - using the same query pattern as single leave form
         $usedDays = Leave::where('user_id', $userId)
             ->where('leave_type', $leaveTypeId)
             ->whereYear('from_date', now()->year)
@@ -233,7 +222,8 @@ class BulkLeaveService
             'current_balance' => $currentBalance,
             'requested_days' => $requestedDays,
             'remaining_balance' => $remainingBalance,
-            'total_allowed' => $totalAllowedDays
+            'total_allowed' => $totalAllowedDays,
+            'used_days' => $usedDays
         ];
     }
 

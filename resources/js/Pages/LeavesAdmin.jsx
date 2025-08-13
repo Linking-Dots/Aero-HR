@@ -51,6 +51,7 @@ import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
 import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
 import BulkLeaveModal from '@/Components/BulkLeave/BulkLeaveModal.jsx';
+import BulkDeleteModal from '@/Components/BulkDelete/BulkDeleteModal.jsx';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -70,6 +71,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
     const [totalRows, setTotalRows] = useState(0);
     const [lastPage, setLastPage] = useState(0);
     const [currentLeave, setCurrentLeave] = useState();
+    const [selectedLeavesForBulkDelete, setSelectedLeavesForBulkDelete] = useState([]);
     const [error, setError] = useState('');
     const [departments, setDepartments] = useState([]);
 
@@ -190,13 +192,16 @@ const LeavesAdmin = ({ title, allUsers }) => {
         }));
     }, []);
 
-    const fetchLeavesData = useCallback(async () => {
+    const fetchLeavesData = useCallback(async (targetPage = null, targetPerPage = null) => {
     setLoading(true);
+    const pageToFetch = targetPage || pagination.currentPage;
+    const perPageToFetch = targetPerPage || pagination.perPage;
+    
     try {
         const response = await axios.get(route('leaves.paginate'), {
             params: {
-                page: pagination.currentPage,
-                perPage: pagination.perPage,
+                page: pageToFetch,
+                perPage: perPageToFetch,
                 employee: filters.employee,
                 month: filters.selectedMonth,
                 status: Array.isArray(filters.status) && filters.status.length > 0 ? filters.status : undefined,
@@ -214,6 +219,20 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 setLeaves(leaves.data);
                 setTotalRows(leaves.total || leaves.data.length);
                 setLastPage(leaves.last_page || 1);
+                
+                // Update pagination state if we used different parameters
+                if (targetPage && targetPage !== pagination.currentPage) {
+                    setPagination(prev => ({
+                        ...prev,
+                        currentPage: targetPage
+                    }));
+                }
+                if (targetPerPage && targetPerPage !== pagination.perPage) {
+                    setPagination(prev => ({
+                        ...prev,
+                        perPage: targetPerPage
+                    }));
+                }
             } else if (Array.isArray(leaves)) {
                 setLeaves(leaves);
                 setTotalRows(leaves.length);
@@ -283,11 +302,17 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             if (response.status === 200) {
                 fetchLeavesData();
-                toast.success('Selected leaves approved successfully');
+                const toastPromise = Promise.resolve();
+                toast.promise(toastPromise, {
+                    success: 'Selected leaves approved successfully'
+                });
             }
         } catch (error) {
             console.error('Error bulk approving leaves:', error);
-            toast.error('Failed to approve selected leaves');
+            const toastPromise = Promise.reject(error);
+            toast.promise(toastPromise, {
+                error: 'Failed to approve selected leaves'
+            });
         }
     }, [canApproveLeaves, fetchLeavesData]);
 
@@ -301,13 +326,25 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
             if (response.status === 200) {
                 fetchLeavesData();
-                toast.success('Selected leaves rejected successfully');
+                const toastPromise = Promise.resolve();
+                toast.promise(toastPromise, {
+                    success: 'Selected leaves rejected successfully'
+                });
             }
         } catch (error) {
             console.error('Error bulk rejecting leaves:', error);
-            toast.error('Failed to reject selected leaves');
+            const toastPromise = Promise.reject(error);
+            toast.promise(toastPromise, {
+                error: 'Failed to reject selected leaves'
+            });
         }
     }, [canApproveLeaves, fetchLeavesData]);
+
+    // Handle bulk delete
+    const handleBulkDelete = useCallback((selectedLeaves) => {
+        setSelectedLeavesForBulkDelete(selectedLeaves);
+        setModalStates(prev => ({ ...prev, bulk_delete: true }));
+    }, []);
 
     
 
@@ -370,6 +407,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         edit_leave: false,
         delete_leave: false,
         bulk_leave: false,
+        bulk_delete: false,
     });
     const leaveTableRef = useRef(null);
 
@@ -379,6 +417,10 @@ const LeavesAdmin = ({ title, allUsers }) => {
 
     const closeModal = useCallback((modalType) => {
         setModalStates(prev => ({ ...prev, [modalType]: false }));
+        // Clear selected leaves when closing bulk delete modal
+        if (modalType === 'bulk_delete') {
+            setSelectedLeavesForBulkDelete([]);
+        }
     }, []);
 
     // Optimized data manipulation functions
@@ -447,57 +489,6 @@ const LeavesAdmin = ({ title, allUsers }) => {
     // Memoize leaves for table rendering
     const memoizedLeaves = useMemo(() => leaves || [], [leaves]);
 
-    // Optimistic UI for add/edit
-    const addLeaveOptimized = useCallback((newLeave) => {
-        if (!leaveMatchesFilters(newLeave)) return;
-        setTableLoading(true);
-        setLeaves(prevLeaves => {
-            const updatedLeaves = [...prevLeaves, newLeave];
-            return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
-        });
-        updatePaginationMetadata(totalRows + 1);
-        setTableLoading(false);
-        if (pagination.currentPage !== 1) {
-            fetchLeavesData();
-        }
-    }, [leaveMatchesFilters, sortLeavesByFromDate, pagination.currentPage, pagination.perPage, totalRows, updatePaginationMetadata, fetchLeavesData]);
-
-    const updateLeaveOptimized = useCallback((updatedLeave) => {
-        const leaveExistsInCurrentPage = leaves.some(leave => leave.id === updatedLeave.id);
-        setTableLoading(true);
-        if (!leaveMatchesFilters(updatedLeave) && leaveExistsInCurrentPage) {
-            setLeaves(prevLeaves => {
-                return prevLeaves.filter(leave => leave.id !== updatedLeave.id);
-            });
-            toast.info('Leave removed from filtered view.');
-            setTableLoading(false);
-            return;
-        }
-        if (!leaveExistsInCurrentPage && !leaveMatchesFilters(updatedLeave)) {
-            setTableLoading(false);
-            return;
-        }
-        setLeaves(prevLeaves => {
-            const exists = prevLeaves.some(leave => leave.id === updatedLeave.id);
-            let updatedLeaves;
-            if (exists) {
-                updatedLeaves = prevLeaves.map(leave =>
-                    leave.id === updatedLeave.id ? updatedLeave : leave
-                );
-            } else {
-                updatedLeaves = [...prevLeaves, updatedLeave];
-            }
-            return sortLeavesByFromDate(updatedLeaves).slice(0, pagination.perPage);
-        });
-        toast.success('Leave updated!');
-        setTableLoading(false);
-        if (pagination.currentPage !== 1) {
-            fetchLeavesData();
-        }
-    }, [leaveMatchesFilters, sortLeavesByFromDate, leaves, pagination.currentPage, pagination.perPage, fetchLeavesData]);
-
-
-
     // Intelligently fetch additional items if needed without full reload
     const fetchAdditionalItemsIfNeeded = useCallback(async () => {
         // Only fetch if the number of displayed items is less than the perPage limit
@@ -529,7 +520,10 @@ const LeavesAdmin = ({ title, allUsers }) => {
                     });
                 }
             } catch (error) {
-                toast.error('Error fetching additional items.');
+                const toastPromise = Promise.reject(error);
+                toast.promise(toastPromise, {
+                    error: 'Error fetching additional items.'
+                });
                 console.error(`Error fetching additional items from page ${pagination.currentPage + 1}:`, error);
             } finally {
                 setTableLoading(false);
@@ -538,24 +532,221 @@ const LeavesAdmin = ({ title, allUsers }) => {
     }, [pagination.currentPage, pagination.perPage, leaves, filters, sortLeavesByFromDate, leaveMatchesFilters]);
 
 
-    const deleteLeaveOptimized = useCallback((leaveId) => {
-        // Check if the leave exists in the current page's data
-        const leaveExistsInCurrentPage = leaves.some(leave => leave.id === leaveId);
-        
-        if (leaveExistsInCurrentPage) {
-            // Simply remove the item from the current page
-            setLeaves(prevLeaves => {
-                return prevLeaves.filter(leave => leave.id !== leaveId);
-            });
-            
-            // Update pagination metadata without triggering a reload
-            updatePaginationMetadata(totalRows - 1);
-            
-            // Check if we need to fetch additional items to fill the page
-            fetchAdditionalItemsIfNeeded();
+     // Unified post-operation update handler for all CRUD operations
+    const handlePostOperationUpdate = useCallback((operation, responseData) => {
+        if (!responseData || !responseData.success) {
+            console.error(`Invalid ${operation} response data:`, responseData);
+            return;
         }
-        // Don't refresh data if the item wasn't on this page
-    }, [leaves, totalRows, updatePaginationMetadata, fetchAdditionalItemsIfNeeded]);
+
+        // Always refresh stats for any operation
+        fetchLeavesStats();
+
+        // Update global leaves data if provided
+        if (responseData.leavesData) {
+            setLeavesData(responseData.leavesData);
+        }
+
+        const itemsPerPage = pagination.perPage;
+        const currentPage = pagination.currentPage;
+
+        switch (operation) {
+            case 'bulk_delete': {
+                const deletedLeaves = responseData.deleted_leaves || [];
+                const deletedCount = responseData.deleted_count || deletedLeaves.length;
+                
+                if (deletedCount === 0) return;
+
+                const deletedLeaveIds = deletedLeaves.map(leave => leave.id);
+                const newTotal = Math.max(0, totalRows - deletedCount);
+                const remainingOnCurrentPage = leaves.filter(leave => !deletedLeaveIds.includes(leave.id)).length;
+                
+                // Determine refresh strategy based on operation impact
+                const shouldFullRefresh = (
+                    deletedCount > 5 || // Large bulk operation
+                    remainingOnCurrentPage === 0 || // Current page becomes empty
+                    (currentPage > 1 && remainingOnCurrentPage < itemsPerPage / 2) // Page significantly depleted
+                );
+
+                if (shouldFullRefresh) {
+                    // Calculate appropriate target page
+                    const newLastPage = Math.ceil(newTotal / itemsPerPage);
+                    let targetPage = currentPage;
+                    
+                    if (remainingOnCurrentPage === 0 && newTotal > 0) {
+                        // If current page is empty but data exists, go to previous page or page 1
+                        targetPage = Math.max(1, currentPage - 1);
+                    } else if (currentPage > newLastPage && newLastPage > 0) {
+                        // If current page exceeds new total pages, go to last page
+                        targetPage = newLastPage;
+                    }
+
+                    // Update pagination and fetch fresh data
+                    setPagination(prev => ({ ...prev, currentPage: targetPage }));
+                    fetchLeavesData(targetPage, itemsPerPage);
+                } else {
+                    // Optimistic update for small deletions
+                    setTableLoading(true);
+                    setLeaves(prevLeaves => prevLeaves.filter(leave => !deletedLeaveIds.includes(leave.id)));
+                    setTotalRows(newTotal);
+                    updatePaginationMetadata(newTotal);
+                    setTableLoading(false);
+                    
+                    // Fill page if needed
+                    fetchAdditionalItemsIfNeeded();
+                }
+                break;
+            }
+
+            case 'single_delete': {
+                const deletedLeaveId = responseData.deleted_leave_id;
+                if (!deletedLeaveId) return;
+
+                const newTotal = Math.max(0, totalRows - 1);
+                const remainingOnCurrentPage = leaves.filter(leave => leave.id !== deletedLeaveId).length;
+
+                if (remainingOnCurrentPage === 0 && newTotal > 0 && currentPage > 1) {
+                    // Navigate to previous page if current page becomes empty
+                    const targetPage = currentPage - 1;
+                    setPagination(prev => ({ ...prev, currentPage: targetPage }));
+                    fetchLeavesData(targetPage, itemsPerPage);
+                } else {
+                    // Optimistic update
+                    setTableLoading(true);
+                    setLeaves(prevLeaves => prevLeaves.filter(leave => leave.id !== deletedLeaveId));
+                    setTotalRows(newTotal);
+                    updatePaginationMetadata(newTotal);
+                    setTableLoading(false);
+                    
+                    // Fill page if needed
+                    fetchAdditionalItemsIfNeeded();
+                }
+                break;
+            }
+
+            case 'bulk_add':
+            case 'single_add': {
+                const addedCount = responseData.added_count || 1;
+                const newTotal = totalRows + addedCount;
+                
+                // For bulk additions or if we're on the last page, refresh data
+                if (operation === 'bulk_add' || (leaves.length < itemsPerPage)) {
+                    setTotalRows(newTotal);
+                    updatePaginationMetadata(newTotal);
+                    fetchLeavesData(currentPage, itemsPerPage);
+                } else {
+                    // For single additions on full pages, just update total count
+                    setTotalRows(newTotal);
+                    updatePaginationMetadata(newTotal);
+                }
+                break;
+            }
+
+            case 'edit': {
+                // For edits, optimistically update the specific item
+                const updatedLeave = responseData.updated_leave || responseData.leave;
+                if (updatedLeave) {
+                    setLeaves(prevLeaves => 
+                        prevLeaves.map(leave => 
+                            leave.id === updatedLeave.id ? updatedLeave : leave
+                        )
+                    );
+                }
+                break;
+            }
+        }
+    }, [
+        pagination.perPage, 
+        pagination.currentPage, 
+        totalRows, 
+        leaves, 
+        fetchLeavesStats, 
+        updatePaginationMetadata, 
+        fetchLeavesData, 
+        fetchAdditionalItemsIfNeeded
+    ]);
+
+    // Optimistic UI for add/edit
+    // Single add handler using unified post-operation update
+    const addLeaveOptimized = useCallback((newLeave) => {
+        const responseData = {
+            success: true,
+            added_count: 1,
+            leave: newLeave
+        };
+        handlePostOperationUpdate('single_add', responseData);
+    }, [handlePostOperationUpdate]);
+
+    // Update handler using unified post-operation update
+    const updateLeaveOptimized = useCallback((updatedLeave) => {
+        const responseData = {
+            success: true,
+            updated_leave: updatedLeave
+        };
+        handlePostOperationUpdate('edit', responseData);
+        
+        const toastPromise = Promise.resolve(['Leave updated!']);
+        toast.promise(toastPromise, {
+            success: {
+                render({ data }) {
+                    return (
+                        <>
+                            {data.map((message, index) => (
+                                <div key={index}>{message}</div>
+                            ))}
+                        </>
+                    );
+                },
+                icon: '🟢',
+                style: {
+                    backdropFilter: 'blur(16px) saturate(200%)',
+                    background: theme.glassCard.background,
+                    border: theme.glassCard.border,
+                    color: theme.palette.text.primary,
+                },
+            },
+        });
+    }, [fetchLeavesData, fetchLeavesStats, theme]);
+
+    // Bulk add handler using unified post-operation update
+    const addBulkLeavesOptimized = useCallback((responseData) => {
+        if (!responseData || !responseData.success) {
+            console.error('Invalid bulk response data:', responseData);
+            return;
+        }
+
+        // Calculate added count from response data
+        const createdLeaves = responseData.created_leaves || [];
+        const addedCount = responseData.summary?.successful || createdLeaves.length;
+        
+        const updatedResponseData = {
+            ...responseData,
+            added_count: addedCount
+        };
+        
+        handlePostOperationUpdate('bulk_add', updatedResponseData);
+    }, [handlePostOperationUpdate]);
+
+
+    
+
+    // Single delete handler using unified post-operation update
+    const deleteLeaveOptimized = useCallback((leaveId) => {
+        // Create response data structure for the unified handler
+        const responseData = {
+            success: true,
+            deleted_leave_id: leaveId
+        };
+        handlePostOperationUpdate('single_delete', responseData);
+    }, [handlePostOperationUpdate]);
+
+    // Optimistic UI for bulk deletion
+   
+
+    // Simplified bulk delete handler
+    const deleteBulkLeavesOptimized = useCallback((responseData) => {
+        handlePostOperationUpdate('bulk_delete', responseData);
+    }, [handlePostOperationUpdate]);
 
    
 
@@ -637,14 +828,26 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 <BulkLeaveModal
                     open={modalStates.bulk_leave}
                     onClose={() => closeModal("bulk_leave")}
-                    onSuccess={(result) => {
-                        // Refresh the leave data after successful bulk creation
-                        fetchLeavesData();
-                        fetchLeavesStats();
+                    onSuccess={(responseData) => {
+                        // Use the same optimization pattern as single leave
+                        addBulkLeavesOptimized(responseData);
                     }}
                     allUsers={allUsers}
                     leavesData={leavesData}
                     isAdmin={true}
+                />
+            )}
+
+            {modalStates.bulk_delete && (
+                <BulkDeleteModal
+                    open={modalStates.bulk_delete}
+                    onClose={() => closeModal("bulk_delete")}
+                    onSuccess={(responseData) => {
+                        // Use the bulk deletion optimization
+                        deleteBulkLeavesOptimized(responseData);
+                    }}
+                    selectedLeaves={selectedLeavesForBulkDelete}
+                    allUsers={allUsers}
                 />
             )}
 
@@ -841,6 +1044,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                                 canEditLeaves={canEditLeaves}
                                                     canDeleteLeaves={canDeleteLeaves}
                                                     fetchLeavesStats={fetchLeavesStats}
+                                                    onBulkDelete={handleBulkDelete}
                                             />
                                         </div>
                                     ) : error ? (

@@ -483,21 +483,6 @@ const Sidebar = React.memo(({ toggleSideBar, pages, url, sideBarOpen }) => {
       {/* Compact Navigation */}
       <ScrollShadow className="flex-1 overflow-auto" hideScrollBar size={5}>
         <div className="p-3 space-y-1">
-          {/* Quick Dashboard - Using PageHeader theming */}
-          <Button
-            variant="flat"
-            size="sm"
-            startContent={
-              <div className={GRADIENT_PRESETS.iconContainer}>
-                <HomeIcon className="w-4 h-4 text-blue-500" />
-              </div>
-            }
-            className={`w-full justify-start h-9 px-3 transition-all duration-300 hover:scale-105 ${GRADIENT_PRESETS.secondaryButton}`}
-          >
-            <span className="text-sm font-medium">Dashboard</span>
-          </Button>
-
-          <Divider className="bg-white/10 my-2" />
           
           {/* Main Navigation - Compact */}
           {groupedPages.mainPages.length > 0 && (

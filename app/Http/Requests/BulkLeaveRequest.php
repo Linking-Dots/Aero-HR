@@ -25,7 +25,7 @@ class BulkLeaveRequest extends FormRequest
         return [
             'user_id' => 'required|exists:users,id',
             'dates' => 'required|array|min:1|max:50',
-            'dates.*' => 'required|date|after_or_equal:today',
+            'dates.*' => 'required|date',
             'leave_type_id' => 'required|exists:leave_settings,id',
             'reason' => 'required|string|min:5|max:500',
             'allow_partial_success' => 'boolean',
@@ -45,7 +45,6 @@ class BulkLeaveRequest extends FormRequest
             'dates.min' => 'At least one date must be selected.',
             'dates.max' => 'Cannot select more than 50 dates at once.',
             'dates.*.date' => 'All selected dates must be valid dates.',
-            'dates.*.after_or_equal' => 'Cannot select past dates.',
             'leave_type_id.required' => 'Leave type selection is required.',
             'leave_type_id.exists' => 'The selected leave type is invalid.',
             'reason.required' => 'Leave reason is required.',

@@ -79,6 +79,7 @@ const LeaveEmployeeTable = React.forwardRef(({
     isAdminView = false,
     onBulkApprove,
     onBulkReject,
+    onBulkDelete,
     canApproveLeaves = false,
     canEditLeaves = false,
     canDeleteLeaves = false,
@@ -94,9 +95,47 @@ const LeaveEmployeeTable = React.forwardRef(({
     const [updatingLeave, setUpdatingLeave] = useState(null);
 
     const [updatingLeaveId, setUpdatingLeaveId] = useState(null);
-    const [selectedLeaves, setSelectedLeaves] = useState(new Set());
+    const [selectedKeys, setSelectedKeys] = useState(new Set());
 
-    // Check permissions using new system
+    const selectedValue = React.useMemo(
+        () => Array.from(selectedKeys).join(", ").replaceAll("_", " "),
+        [selectedKeys]
+    );
+
+    const topContent = React.useMemo(() => {
+        const isAllSelected = selectedKeys === "all";
+        const hasSelection = isAllSelected || selectedKeys.size > 0;
+        const selectedCount = isAllSelected ? leaves.length : selectedKeys.size;
+        
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between gap-3 items-end">
+                    <div className="flex gap-3">
+                        {hasSelection && onBulkDelete && (
+                            <Button
+                                color="danger"
+                                variant="flat"
+                                startContent={<TrashIcon className="w-4 h-4" />}
+                                onPress={() => {
+                                    const selectedLeavesArray = isAllSelected 
+                                        ? leaves 
+                                        : leaves.filter(leave => selectedKeys.has(leave.id.toString()));
+                                    onBulkDelete(selectedLeavesArray);
+                                }}
+                            >
+                                Delete {selectedCount} selected
+                            </Button>
+                        )}
+                    </div>
+                </div>
+                {hasSelection && (
+                    <span className="text-default-400 text-small">
+                        {selectedCount} of {leaves.length} selected
+                    </span>
+                )}
+            </div>
+        );
+    }, [selectedKeys, leaves, onBulkDelete]);
     const canViewLeaves = auth.permissions?.includes('leaves.view') || false;
     const canManageOwnLeaves = auth.permissions?.includes('leave.own.view') || false;
     const hasAdminAccess = isAdminView && (canApproveLeaves || canEditLeaves || canDeleteLeaves);
@@ -590,12 +629,14 @@ const LeaveEmployeeTable = React.forwardRef(({
 
     return (
         <Box sx={{ maxHeight: "84vh", overflowY: "auto" }}>
-
-
             <ScrollShadow className="max-h-[70vh]">
                 <Table
                     isStriped
-                    selectionMode="none"
+                    selectionMode="multiple"
+                    selectedKeys={selectedKeys}
+                    onSelectionChange={setSelectedKeys}
+                    topContent={topContent}
+                    topContentPlacement="outside"
                     isCompact
                     isHeaderSticky
                     removeWrapper
