@@ -30,6 +30,8 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+// Include authentication routes
+require __DIR__.'/auth.php';
 
 Route::redirect('/', '/dashboard');
 
@@ -573,14 +575,5 @@ require __DIR__ . '/analytics.php';
 require __DIR__ . '/project-management.php';
 require __DIR__ . '/hr.php';
 require __DIR__ . '/dms.php';
-require __DIR__ . '/security.php';
 
 require __DIR__ . '/auth.php';
-
-Route::middleware(['security_headers'])->group(function () {
-    // Your routes
-});
-
-Route::middleware(['enhanced_rate_limit:100,1'])->group(function () {
-    // API routes that need rate limiting
-});

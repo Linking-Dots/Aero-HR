@@ -1,266 +1,163 @@
-import React, { useState } from 'react';
-import {Head, Link, router} from '@inertiajs/react';
-import { Box, CardContent, Container, Grid, Typography } from '@mui/material';
-import GlassCard from "@/Components/GlassCard.jsx";
-import { Button, Input } from "@heroui/react";
-import EmailIcon from "@mui/icons-material/Email";
-import KeyIcon from "@mui/icons-material/VpnKey"; // Icon for OTP field
-import LockIcon from "@mui/icons-material/Lock"; // Icon for password field
-import App from "@/Layouts/App.jsx";
-import logo from '../../../../public/assets/images/logo.png';
-import {toast} from "react-toastify";
-import {useTheme} from "@mui/material/styles";
-import PasswordIcon from "@mui/icons-material/Password.js";
-import VisibilityOff from "@mui/icons-material/VisibilityOff.js";
-import Visibility from "@mui/icons-material/Visibility.js";
+import React, { useState, useEffect } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { 
+    EnvelopeIcon,
+    ArrowLeftIcon,
+    CheckCircleIcon,
+    InformationCircleIcon 
+} from '@heroicons/react/24/outline';
+import AuthLayout from '@/Components/AuthLayout';
+import Input from '@/Components/Input';
+import Button from '@/Components/Button';
 
-export default function ForgotPassword() {
-    const theme = useTheme();
-    const [data, setData] = useState({
+export default function ForgotPassword({ status }) {
+    const { data, setData, post, processing, errors } = useForm({
         email: '',
-        otp: '',
-        newPassword: '',
-        confirmPassword: ''
     });
-    const [processing, setProcessing] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [step, setStep] = useState(1); // Track current step in the flow
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setProcessing(true);
+    const [showSuccess, setShowSuccess] = useState(false);
 
-        if (step === 1) {
-            // Send OTP
-            axios.post(route('password.send-otp'), {
-                email: data.email
-            })
-                .then((response) => {
-                    setErrors({}); // Clear previous errors
-                    setStep(2); // Move to OTP verification step
-                })
-                .catch((error) => {
-                    console.error(error)
-                    console.error('Password reset OTP request failed:', error.response.data.errors);
-                    setErrors(error.response.data.errors); // Store errors for displaying in UI
-                })
-                .finally(() => {
-                    setProcessing(false);
-                });
-        } else if (step === 2) {
-            // Verify OTP
-            axios.post(route('password.verify'), {
-                email: data.email,
-                otp: data.otp
-            })
-                .then((response) => {
-                    setErrors({}); // Clear previous errors
-                    setStep(3); // Move to password reset step
-                })
-                .catch((error) => {
-                    console.error(error)
-                    console.error('OTP verification failed:', error.response.data.errors);
-                    setErrors(error.response.data.errors); // Store errors for displaying in UI
-                })
-                .finally(() => {
-                    setProcessing(false);
-                });
-        } else if (step === 3) {
-            // Reset Password
-            axios.post(route('password.reset-custom'), {
-                email: data.email,
-                newPassword: data.newPassword,
-                newPassword_confirmation: data.confirmPassword
-            })
-                .then((response) => {
-                    router.get(route('login'));
-                })
-                .catch((error) => {
-                    console.error(error)
-                    console.error('Password reset failed:', error.response.data.errors);
-                    setErrors(error.response.data.errors); // Store errors for displaying in UI
-                })
-                .finally(() => {
-                    setProcessing(false);
-                });
+    useEffect(() => {
+        if (status) {
+            setShowSuccess(true);
+            const timer = setTimeout(() => setShowSuccess(false), 10000);
+            return () => clearTimeout(timer);
         }
+    }, [status]);
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route('password.email'));
     };
 
     return (
-        <App>
+        <AuthLayout
+            title="Reset password"
+            subtitle="Enter your email to receive a reset link"
+        >
             <Head title="Forgot Password" />
-            <Box sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '100vh',
-                p: 2
-            }}>
-                <Grid container spacing={2} justifyContent="center">
-                    <Grid item xs={12} md={8} lg={6} xl={5}>
-                        <GlassCard>
-                            <CardContent>
-                                <Box textAlign="center">
-                                    <Link style={{
-                                        alignItems: 'center',
-                                        display: 'inline-flex',
 
-                                    }} href={route('dashboard')} className="d-inline-block auth-logo">
-                                        <img src={logo} alt="Logo" className="h-24 md:h-40 sm:h-40 xs:h-10"/>
-                                    </Link>
-                                </Box>
-                                <Box mt={4}>
-                                    <form onSubmit={handleSubmit}>
-                                        {step === 1 && (
-                                            <>
-                                                <Box mb={3}>
-                                                    <Input
-                                                        isClearable
-                                                        type="email"
-                                                        label="Enter your email address"
-                                                        variant="underlined"
-                                                        id="email"
-                                                        name="email"
-                                                        value={data.email || ''}
-                                                        onChange={(e) => {
-                                                            setData({ ...data, email: e.target.value });
-                                                        }}
-                                                        required
-                                                        fullWidth
-                                                        isInvalid={!!errors.email}
-                                                        errorMessage={errors.email}
-                                                        placeholder="you@example.com"
-                                                        labelPlacement="outside"
-                                                        startContent={
-                                                            <EmailIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
-                                                        }
-                                                    />
-                                                </Box>
-                                                <Box mt={4}>
-                                                    <Button
-                                                        fullWidth
-                                                        variant="bordered"
-                                                        color="primary"
-                                                        type="submit"
-                                                        isLoading={processing}>
-                                                        Send OTP
-                                                    </Button>
-                                                </Box>
-                                            </>
-                                        )}
-                                        {step === 2 && (
-                                            <>
-                                                <Box mb={3}>
-                                                    <Input
-                                                        isClearable
-                                                        type="text"
-                                                        label="Enter OTP sent to your email"
-                                                        variant="underlined"
-                                                        id="otp"
-                                                        name="otp"
-                                                        value={data.otp || ''}
-                                                        onChange={(e) => {
-                                                            setData({ ...data, otp: e.target.value });
-                                                        }}
-                                                        required
-                                                        fullWidth
-                                                        isInvalid={!!errors.otp}
-                                                        errorMessage={errors.otp}
-                                                        placeholder="Enter the OTP"
-                                                        labelPlacement="outside"
-                                                        startContent={
-                                                            <KeyIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
-                                                        }
-                                                    />
-                                                </Box>
-                                                <Box mt={4}>
-                                                    <Button
-                                                        fullWidth
-                                                        variant="bordered"
-                                                        color="primary"
-                                                        type="submit"
-                                                        isLoading={processing}>
-                                                        Verify OTP
-                                                    </Button>
-                                                </Box>
-                                            </>
-                                        )}
-                                        {step === 3 && (
-                                            <>
-                                                <Box mb={4}>
-                                                    <Input
-                                                        label="New Password"
-                                                        id="newPassword"
-                                                        name="newPassword"
-                                                        variant="underlined"
-                                                        startContent={
-                                                            <PasswordIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
-                                                        }
-                                                        type="password"
-                                                        value={data.newPassword || ''}
-                                                        onChange={(e) => {
-                                                            setData({ ...data, newPassword: e.target.value });
-                                                        }}
-                                                        required
-                                                        isInvalid={!!errors.newPassword}
-                                                        errorMessage={errors.newPassword}
-                                                        placeholder="Enter new password"
-                                                        labelPlacement="outside"
-                                                    />
-                                                </Box>
-                                                <Box mb={4}>
-                                                    <Input
-                                                        isClearable
-                                                        type="password"
-                                                        label="Confirm New Password"
-                                                        variant="underlined"
-                                                        id="confirmPassword"
-                                                        name="confirmPassword"
-                                                        value={data.confirmPassword || ''}
-                                                        onChange={(e) => {
-                                                            setData({ ...data, confirmPassword: e.target.value });
-                                                        }}
-                                                        required
-                                                        fullWidth
-                                                        isInvalid={!!errors.confirmPassword}
-                                                        errorMessage={errors.confirmPassword}
-                                                        placeholder="Confirm new password"
-                                                        labelPlacement="outside"
-                                                        startContent={
-                                                            <PasswordIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
-                                                        }
-                                                    />
-                                                </Box>
-                                                <Box mt={4}>
-                                                    <Button
-                                                        fullWidth
-                                                        variant="bordered"
-                                                        color="primary"
-                                                        type="submit"
-                                                        isLoading={processing}>
-                                                        Reset Password
-                                                    </Button>
-                                                </Box>
-                                            </>
-                                        )}
-                                    </form>
-                                </Box>
-                            </CardContent>
-                        </GlassCard>
-                    </Grid>
-                </Grid>
-            </Box>
-            <footer>
-                <Container>
-                    <Grid container justifyContent="center">
-                        <Grid item xs={12} textAlign="center">
-                            <Typography variant="body2" color="text.secondary">
-                                &copy; {new Date().getFullYear()} Emam Hosen. Crafted with <i className="mdi mdi-heart text-danger"></i>
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Container>
-            </footer>
-        </App>
+            {/* Success Message */}
+            {status && showSuccess && (
+                <motion.div
+                    className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                            <CheckCircleIcon className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div className="ml-3">
+                            <h3 className="text-sm font-medium text-green-800">
+                                Reset link sent
+                            </h3>
+                            <p className="text-sm text-green-700 mt-1">
+                                {status}
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            <form onSubmit={submit} className="space-y-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <Input
+                        label="Email address"
+                        type="email"
+                        value={data.email}
+                        onChange={(e) => setData('email', e.target.value)}
+                        error={errors.email}
+                        icon={EnvelopeIcon}
+                        placeholder="Enter your email address"
+                        autoComplete="username"
+                        autoFocus
+                        required
+                    />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                >
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        className="w-full"
+                        loading={processing}
+                        disabled={processing}
+                    >
+                        {processing ? 'Sending...' : 'Send reset link'}
+                    </Button>
+                </motion.div>
+
+                <motion.div
+                    className="text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <Link
+                        href={route('login')}
+                        className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                        <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                        Back to login
+                    </Link>
+                </motion.div>
+            </form>
+
+            {/* Information */}
+            <motion.div
+                className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
+                <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                        <InformationCircleIcon className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800">
+                            Secure Reset Process
+                        </h3>
+                        <div className="text-sm text-blue-700 mt-2 space-y-1">
+                            <p>• Reset links expire after 1 hour for security</p>
+                            <p>• You'll receive a verification code via email</p>
+                            <p>• All reset attempts are logged for security</p>
+                            <p>• Check your spam folder if you don't see the email</p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Support */}
+            <motion.div
+                className="mt-6 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+            >
+                <p className="text-sm text-gray-500">
+                    Still having trouble?{' '}
+                    <Link
+                        href="#"
+                        className="font-medium text-blue-600 hover:text-blue-500"
+                    >
+                        Contact support
+                    </Link>
+                </p>
+            </motion.div>
+        </AuthLayout>
     );
 }

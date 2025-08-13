@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Jurisdiction;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\CompanySettingRepositoryInterface;
@@ -22,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
             CompanySettingRepositoryInterface::class,
             CompanySettingRepository::class
         );
-        
+
         $this->app->bind(
             AttendanceSettingRepositoryInterface::class,
             AttendanceSettingRepository::class
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+
         Validator::extend('custom_location', function ($attribute, $value, $parameters, $validator) {
             // Regex for validating chainage format with optional text afterwards
             $chainageRegex = '/([A-Z]*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)-([A-Z]*K[0-9]+(?:\+[0-9]+(?:\.[0-9]+)?)?)|([A-Z]*K[0-9]+)(.*)/';

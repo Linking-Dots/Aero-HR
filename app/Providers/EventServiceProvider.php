@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Listeners\EnhancedAuthenticationEventListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -27,7 +26,7 @@ class EventServiceProvider extends ServiceProvider
      * @var array<int, class-string>
      */
     protected $subscribe = [
-        EnhancedAuthenticationEventListener::class,
+        // Event subscribers will be registered here
     ];
 
     /**

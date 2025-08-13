@@ -1,272 +1,285 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Container,
-    Grid,
-    IconButton,
-    InputAdornment,
-    TextField,
-    Typography,
-    Alert,
-    Chip,
-    Stack,
-    Avatar,
-    LinearProgress,
-    Tooltip
-} from '@mui/material';
-import {
-    Visibility,
-    VisibilityOff,
-    PersonAdd,
-    Security,
-    Shield,
-    VerifiedUser,
-    AdminPanelSettings,
-    DevicesOther
-} from '@mui/icons-material';
-import { useTheme, alpha } from '@mui/material/styles';
-import App from "@/Layouts/App.jsx";
-import logo from "../../../../public/assets/images/logo.png";
-import Grow from "@mui/material/Grow";
+import { motion } from 'framer-motion';
+import { 
+    UserIcon,
+    EnvelopeIcon, 
+    LockClosedIcon,
+    ShieldCheckIcon 
+} from '@heroicons/react/24/outline';
+import AuthLayout from '@/Components/AuthLayout';
+import Input from '@/Components/Input';
+import Button from '@/Components/Button';
+import Checkbox from '@/Components/Checkbox';
 
-export default function Register(props) {
-    const theme = useTheme();
+export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        terms: false,
     });
 
-    const [showPassword, setShowPassword] = useState(false);
-    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
-    const [securityFeatures, setSecurityFeatures] = useState([]);
     const [passwordStrength, setPasswordStrength] = useState(0);
 
-    useEffect(() => {
-        // Initialize security features
-        setSecurityFeatures([
-            { icon: Security, label: 'Secure Registration', color: 'success' },
-            { icon: DevicesOther, label: 'Device Recognition', color: 'info' },
-            { icon: Shield, label: 'Data Protection', color: 'warning' },
-            { icon: VerifiedUser, label: 'Identity Verification', color: 'primary' }
-        ]);
-
-        return () => {
-            reset('password', 'password_confirmation');
-        };
-    }, []);
-
-    // Password strength calculation
-    const calculatePasswordStrength = useCallback((password) => {
+    const calculatePasswordStrength = (password) => {
         let strength = 0;
-        if (password.length >= 8) strength += 25;
-        if (/[a-z]/.test(password)) strength += 25;
-        if (/[A-Z]/.test(password)) strength += 25;
-        if (/[0-9]/.test(password)) strength += 25;
+        if (password.length >= 8) strength += 1;
+        if (/[a-z]/.test(password)) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
         return strength;
-    }, []);
+    };
 
-    const handlePasswordChange = useCallback((value) => {
-        setData('password', value);
-        setPasswordStrength(calculatePasswordStrength(value));
-    }, [setData, calculatePasswordStrength]);
+    const handlePasswordChange = (e) => {
+        const password = e.target.value;
+        setData('password', password);
+        setPasswordStrength(calculatePasswordStrength(password));
+    };
 
-    const trackSecurityMetrics = useCallback(() => {
-        const deviceInfo = {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            screenResolution: `${screen.width}x${screen.height}`,
-            timestamp: new Date().toISOString()
-        };
+    const getPasswordStrengthText = () => {
+        switch (passwordStrength) {
+            case 0:
+            case 1:
+                return 'Very weak';
+            case 2:
+                return 'Weak';
+            case 3:
+                return 'Fair';
+            case 4:
+                return 'Good';
+            case 5:
+                return 'Strong';
+            default:
+                return '';
+        }
+    };
 
-        localStorage.setItem('registrationDeviceFingerprint', JSON.stringify(deviceInfo));
-        return deviceInfo;
-    }, []);
+    const getPasswordStrengthColor = () => {
+        switch (passwordStrength) {
+            case 0:
+            case 1:
+                return 'bg-red-500';
+            case 2:
+                return 'bg-orange-500';
+            case 3:
+                return 'bg-yellow-500';
+            case 4:
+                return 'bg-blue-500';
+            case 5:
+                return 'bg-green-500';
+            default:
+                return 'bg-gray-200';
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
-        
-        // Track security metrics
-        const deviceInfo = trackSecurityMetrics();
-        
-        // Enhanced registration with security data
         post(route('register'), {
-            data: {
-                ...data,
-                deviceFingerprint: deviceInfo,
-                securityDefaults: {
-                    emailNotifications: true,
-                    pushNotifications: true,
-                    realTimeMonitoring: true,
-                    deviceFingerprinting: true
-                }
-            },
-            onSuccess: () => {
-                localStorage.setItem('registrationTime', new Date().toISOString());
-            },
-            onError: () => {
-                console.warn('Registration failed - security monitoring active');
-            }
+            onFinish: () => reset('password', 'password_confirmation'),
         });
     };
 
-    const togglePasswordVisibility = (id) => {
-        const passwordField = document.getElementById(id);
-        passwordField.type = passwordField.type === 'password' ? 'text' : 'password';
-    };
-
     return (
-        <App>
+        <AuthLayout
+            title="Create account"
+            subtitle="Join AeroHR and streamline your workforce management"
+        >
             <Head title="Register" />
-            <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
-                <Grid container spacing={2} justifyContent="center">
-                    <Grid item xs={12} textAlign="center">
-                        <Link style={{alignItems: 'center', display: 'inline-flex'}} href={route('dashboard')} className="mt-3 d-inline-block auth-logo">
-                            <img src={logo} alt="Logo" height="100"/>
-                        </Link>
-                        <Typography variant="h6" className="mt-3" color="text.secondary">Daily Task
-                            Management</Typography>
-                    </Grid>
-                    <Grid item xs={12} md={8} lg={6} xl={5}>
-                        <Grow in>
-                            <Card sx={{
-                                backdropFilter: 'blur(16px) saturate(200%)',
-                                backgroundColor: 'rgba(17, 25, 40, 0.5)',
-                                border: '1px solid rgba(255, 255, 255, 0.125)',
-                                p: '20px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                position: 'relative',
-                                borderRadius: '20px',
-                                minWidth: '0px',
-                                wordWrap: 'break-word',
-                                bg: mode('#ffffff', 'navy.800')(props),
-                                boxShadow: mode(
-                                    '14px 17px 40px 4px rgba(112, 144, 176, 0.08)',
-                                    'unset',
-                                )(props),
-                                backgroundClip: 'border-box',
-                            }}>
-                                <CardContent>
-                                    <Box textAlign="center">
-                                        <Typography variant="h5" color="primary" textAlign="center">Register</Typography>
-                                        <Typography variant="body2" color="text.secondary" textAlign="center">Access to our dashboard</Typography>
-                                    </Box>
-                                    <Box mt={4}>
 
-                                        <form onSubmit={submit}>
-                                            <Box mb={3}>
-                                                <TextField
-                                                    label="Email"
-                                                    variant="outlined"
-                                                    type="email"
-                                                    id="email"
-                                                    name="email"
-                                                    value={data.email}
-                                                    onChange={(e) => setData('email', e.target.value)}
-                                                    required
-                                                    fullWidth
-                                                    error={!!errors.email}
-                                                    helperText={errors.email}
-                                                />
-                                            </Box>
-                                            <Box mb={3}>
-                                                <TextField
-                                                    label="Password"
-                                                    variant="outlined"
-                                                    type="password"
-                                                    id="password"
-                                                    name="password"
-                                                    value={data.password}
-                                                    onChange={(e) => setData('password', e.target.value)}
-                                                    required
-                                                    fullWidth
-                                                    error={!!errors.password}
-                                                    helperText={errors.password}
-                                                    InputProps={{
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <IconButton
-                                                                    aria-label="toggle password visibility"
-                                                                    onClick={() => togglePasswordVisibility('password')}
-                                                                >
-                                                                    {document.getElementById('password')?.type === 'password' ? <VisibilityOff /> : <Visibility />}
-                                                                </IconButton>
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Box mb={3}>
-                                                <TextField
-                                                    label="Repeat Password"
-                                                    variant="outlined"
-                                                    type="password"
-                                                    id="repeat-password"
-                                                    name="password_confirmation"
-                                                    value={data.password_confirmation}
-                                                    onChange={(e) => setData('password_confirmation', e.target.value)}
-                                                    required
-                                                    fullWidth
-                                                    error={!!errors.password_confirmation}
-                                                    helperText={errors.password_confirmation}
-                                                    InputProps={{
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <IconButton
-                                                                    aria-label="toggle password visibility"
-                                                                    onClick={() => togglePasswordVisibility('repeat-password')}
-                                                                >
-                                                                    {document.getElementById('repeat-password')?.type === 'password' ? <VisibilityOff /> : <Visibility />}
-                                                                </IconButton>
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Box mt={4}>
-                                                <Button
-                                                    fullWidth
-                                                    variant="contained"
-                                                    color="primary"
-                                                    type="submit"
-                                                    disabled={processing}
-                                                >
-                                                    Register
-                                                </Button>
-                                            </Box>
-                                        </form>
-                                        <Box mt={3} textAlign="center">
-                                            <Typography variant="body2">
-                                                Already have an account? <Link href="/login">Login</Link>
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grow>
-                    </Grid>
-                </Grid>
-            </Box>
-            <footer>
-                <Container>
-                    <Grid container justifyContent="center">
-                        <Grid item xs={12} textAlign="center">
-                            <Typography variant="body2" color="text.secondary">
-                                &copy; {new Date().getFullYear()} Emam Hosen. Crafted with <i
-                                className="mdi mdi-heart text-danger"></i>
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Container>
-            </footer>
-        </App>
+            <form onSubmit={submit} className="space-y-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <Input
+                        label="Full name"
+                        type="text"
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        error={errors.name}
+                        icon={UserIcon}
+                        placeholder="Enter your full name"
+                        autoComplete="name"
+                        autoFocus
+                        required
+                    />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                >
+                    <Input
+                        label="Email address"
+                        type="email"
+                        value={data.email}
+                        onChange={(e) => setData('email', e.target.value)}
+                        error={errors.email}
+                        icon={EnvelopeIcon}
+                        placeholder="Enter your email"
+                        autoComplete="username"
+                        required
+                    />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <div>
+                        <Input
+                            label="Password"
+                            type="password"
+                            value={data.password}
+                            onChange={handlePasswordChange}
+                            error={errors.password}
+                            icon={LockClosedIcon}
+                            placeholder="Create a strong password"
+                            autoComplete="new-password"
+                            showPasswordToggle
+                            required
+                        />
+                        
+                        {/* Password Strength Indicator */}
+                        {data.password && (
+                            <motion.div
+                                className="mt-2"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                        <motion.div
+                                            className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(passwordStrength / 5) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-xs text-gray-600 w-16">
+                                        {getPasswordStrengthText()}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Use 8+ characters with letters, numbers, and symbols
+                                </p>
+                            </motion.div>
+                        )}
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                >
+                    <Input
+                        label="Confirm password"
+                        type="password"
+                        value={data.password_confirmation}
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        error={errors.password_confirmation}
+                        icon={LockClosedIcon}
+                        placeholder="Confirm your password"
+                        autoComplete="new-password"
+                        showPasswordToggle
+                        required
+                    />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                >
+                    <Checkbox
+                        checked={data.terms}
+                        onChange={(e) => setData('terms', e.target.checked)}
+                        error={errors.terms}
+                        label={
+                            <span>
+                                I agree to the{' '}
+                                <Link
+                                    href="#"
+                                    className="text-blue-600 hover:text-blue-500 underline"
+                                >
+                                    Terms of Service
+                                </Link>
+                                {' '}and{' '}
+                                <Link
+                                    href="#"
+                                    className="text-blue-600 hover:text-blue-500 underline"
+                                >
+                                    Privacy Policy
+                                </Link>
+                            </span>
+                        }
+                    />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                >
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        className="w-full"
+                        loading={processing}
+                        disabled={processing}
+                    >
+                        {processing ? 'Creating account...' : 'Create account'}
+                    </Button>
+                </motion.div>
+
+                <motion.div
+                    className="text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                >
+                    <p className="text-sm text-gray-600">
+                        Already have an account?{' '}
+                        <Link
+                            href={route('login')}
+                            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                        >
+                            Sign in here
+                        </Link>
+                    </p>
+                </motion.div>
+            </form>
+
+            {/* Security Features */}
+            <motion.div
+                className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+            >
+                <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                        <ShieldCheckIcon className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div className="ml-3">
+                        <h3 className="text-sm font-medium text-green-800">
+                            Enterprise Security
+                        </h3>
+                        <p className="text-sm text-green-700 mt-1">
+                            Your account is protected with enterprise-grade security including encryption, 
+                            audit logging, and advanced threat detection.
+                        </p>
+                    </div>
+                </div>
+            </motion.div>
+        </AuthLayout>
     );
 }
