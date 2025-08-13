@@ -28,12 +28,16 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $userWithDesignation = $user ? \App\Models\User::with('designation')->find($user->id) : null;
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? $request->user() : '',
-                'roles' => $request->user() ? $request->user()->roles->pluck('name')->toArray() : [],
-                'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name')->toArray() : [],
+                'user' => $userWithDesignation ?: '',
+                'roles' => $user ? $user->roles->pluck('name')->toArray() : [],
+                'permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
+                'designation' => $userWithDesignation?->designation?->title,
             ],
             
             // Theme and UI Configuration

@@ -68,8 +68,8 @@ class ProfileUpdateService
         $messages = [];
 
         // Handle department change which affects designation and report_to
-        if (array_key_exists('department', $validated) && $user->department !== $validated['department']) {
-            $user->designation = null;
+        if (array_key_exists('department', $validated) && $user->department_id !== $validated['department']) {
+            $user->designation_id = null;
             $user->report_to = null;
         }
 
@@ -97,7 +97,7 @@ class ProfileUpdateService
                 return 'Department updated to ' . Department::find($value)->name;
 
             case 'designation':
-                $user->designation = $value;
+                $user->designation_id = $value;
                 return 'Designation updated to ' . Designation::find($value)->title;
 
             case 'report_to':

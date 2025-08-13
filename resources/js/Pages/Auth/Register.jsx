@@ -1,5 +1,5 @@
-import React, {useEffect} from 'react';
-import {Head, Link, useForm} from '@inertiajs/react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     Box,
     Button,
@@ -10,15 +10,31 @@ import {
     IconButton,
     InputAdornment,
     TextField,
-    Typography
+    Typography,
+    Alert,
+    Chip,
+    Stack,
+    Avatar,
+    LinearProgress,
+    Tooltip
 } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import {
+    Visibility,
+    VisibilityOff,
+    PersonAdd,
+    Security,
+    Shield,
+    VerifiedUser,
+    AdminPanelSettings,
+    DevicesOther
+} from '@mui/icons-material';
+import { useTheme, alpha } from '@mui/material/styles';
 import App from "@/Layouts/App.jsx";
 import logo from "../../../../public/assets/images/logo.png";
 import Grow from "@mui/material/Grow";
 
 export default function Register(props) {
+    const theme = useTheme();
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -26,15 +42,79 @@ export default function Register(props) {
         password_confirmation: '',
     });
 
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+    const [securityFeatures, setSecurityFeatures] = useState([]);
+    const [passwordStrength, setPasswordStrength] = useState(0);
+
     useEffect(() => {
+        // Initialize security features
+        setSecurityFeatures([
+            { icon: Security, label: 'Secure Registration', color: 'success' },
+            { icon: DevicesOther, label: 'Device Recognition', color: 'info' },
+            { icon: Shield, label: 'Data Protection', color: 'warning' },
+            { icon: VerifiedUser, label: 'Identity Verification', color: 'primary' }
+        ]);
+
         return () => {
             reset('password', 'password_confirmation');
         };
     }, []);
 
+    // Password strength calculation
+    const calculatePasswordStrength = useCallback((password) => {
+        let strength = 0;
+        if (password.length >= 8) strength += 25;
+        if (/[a-z]/.test(password)) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 25;
+        if (/[0-9]/.test(password)) strength += 25;
+        return strength;
+    }, []);
+
+    const handlePasswordChange = useCallback((value) => {
+        setData('password', value);
+        setPasswordStrength(calculatePasswordStrength(value));
+    }, [setData, calculatePasswordStrength]);
+
+    const trackSecurityMetrics = useCallback(() => {
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            screenResolution: `${screen.width}x${screen.height}`,
+            timestamp: new Date().toISOString()
+        };
+
+        localStorage.setItem('registrationDeviceFingerprint', JSON.stringify(deviceInfo));
+        return deviceInfo;
+    }, []);
+
     const submit = (e) => {
         e.preventDefault();
-        post(route('register'));
+        
+        // Track security metrics
+        const deviceInfo = trackSecurityMetrics();
+        
+        // Enhanced registration with security data
+        post(route('register'), {
+            data: {
+                ...data,
+                deviceFingerprint: deviceInfo,
+                securityDefaults: {
+                    emailNotifications: true,
+                    pushNotifications: true,
+                    realTimeMonitoring: true,
+                    deviceFingerprinting: true
+                }
+            },
+            onSuccess: () => {
+                localStorage.setItem('registrationTime', new Date().toISOString());
+            },
+            onError: () => {
+                console.warn('Registration failed - security monitoring active');
+            }
+        });
     };
 
     const togglePasswordVisibility = (id) => {

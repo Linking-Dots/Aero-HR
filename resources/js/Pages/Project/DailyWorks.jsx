@@ -194,7 +194,7 @@ const DailyWorks = React.memo(({ auth, title, allData, jurisdictions, users, rep
 
     // Action buttons configuration
     const actionButtons = [
-        ...(auth.roles.includes('Administrator') || auth.roles.includes('Supervision Engineer') ? [{
+        ...(auth.roles.includes('Administrator') || auth.designation === 'Supervision Engineer' ? [{
             label: "Add Work",
             icon: <PlusIcon className="w-4 h-4" />,
             onPress: () => openModal('addDailyWork'),

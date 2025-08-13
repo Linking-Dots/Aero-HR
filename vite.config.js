@@ -33,6 +33,7 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
+            external: ['motion-dom'],
             output: {
                 manualChunks: undefined,
             }

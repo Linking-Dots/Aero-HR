@@ -111,7 +111,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
 
     // Action buttons configuration
     const actionButtons = [
-        ...(auth.roles.includes('Administrator') ? [{
+        ...(auth.roles.includes('Administrator') || auth.designation === 'Supervision Engineer' ? [{
             label: "Export",
             icon: <DocumentArrowDownIcon className="w-4 h-4" />,
             variant: "flat", 
@@ -230,7 +230,7 @@ const DailyWorkSummary = ({ auth, title, summary, jurisdictions, inCharges }) =>
                                             </div>
                                         </div>
 
-                                        {auth.roles.includes('Administrator') && (
+                                        {(auth.roles.includes('Administrator') || auth.designation === 'Supervision Engineer') && (
                                             <div className="flex gap-2 items-center">
                                                 <UserIcon className="w-5 h-5 text-default-400" />
                                                 <Select

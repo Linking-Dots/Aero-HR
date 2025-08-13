@@ -211,14 +211,14 @@ class DepartmentController extends Controller
             }
 
             // Check if department changed
-            $departmentChanged = $user->department !== $newDepartmentId;
+            $departmentChanged = $user->department_id !== $newDepartmentId;
 
             // Update department
-            $user->department = $newDepartmentId;
+            $user->department_id = $newDepartmentId;
 
             // Optionally reset designation if department changed
             if ($departmentChanged) {
-                $user->designation = null; // Reset designation when department changes
+                $user->designation_id = null; // Reset designation when department changes
             }
 
             $user->save();

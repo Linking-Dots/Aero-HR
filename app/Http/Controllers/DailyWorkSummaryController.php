@@ -20,20 +20,23 @@ class DailyWorkSummaryController extends Controller
     public function index()
     {
         // Get the authenticated user
-        $user = Auth::user();
+        $user = User::with('designation')->find(Auth::id());
+        $userDesignationTitle = $user->designation?->title;
         // Query tasks based on date range
         $tasksQuery = DailyWork::query();
         $summaryQuery = DailyWorkSummary::query();
-        // Check if the user has the 'se' role
-        if ($user->hasRole('Supervision Engineer')) {
-            // If user has the 'se' role, get the daily summaries based on the incharge column
+        // Check if the user has the 'Supervision Engineer' designation
+        if ($userDesignationTitle === 'Supervision Engineer') {
+            // If user has the 'Supervision Engineer' designation, get the daily summaries based on the incharge column
             $tasksQuery->where('incharge', $user->id);
             $summaryQuery->where('incharge', $user->id);
         }
 
         $dailyTasks = $tasksQuery->get();
         $dailySummaries = $summaryQuery->get();
-        $inCharges = User::role('Supervision Engineer')->get();
+        $inCharges = User::whereHas('designation', function($q) {
+            $q->where('title', 'Supervision Engineer');
+        })->get();
 
         $mergedSummaries = [];
 
@@ -119,14 +122,15 @@ class DailyWorkSummaryController extends Controller
     {
 
         // Get the authenticated user
-        $user = Auth::user();
+        $user = User::with('designation')->find(Auth::id());
+        $userDesignationTitle = $user->designation?->title;
         try {
             // Query tasks based on date range
             $tasksQuery = Tasks::query();
             $summaryQuery = DailySummary::query();
-            // Check if the user has the 'se' role
-            if ($user->hasRole('Supervision Engineer')) {
-                // If user has the 'se' role, get the daily summaries based on the incharge column
+            // Check if the user has the 'Supervision Engineer' designation
+            if ($userDesignationTitle === 'Supervision Engineer') {
+                // If user has the 'Supervision Engineer' designation, get the daily summaries based on the incharge column
                 $tasksQuery->where('incharge', $user->user_name);
                 $summaryQuery->where('incharge', $user->user_name);
             }

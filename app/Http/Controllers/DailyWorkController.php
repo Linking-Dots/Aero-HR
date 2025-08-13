@@ -37,18 +37,22 @@ class DailyWorkController extends Controller
 
     public function index()
     {
-        $user = Auth::user();
-        $allData = $user->hasRole('Supervision Engineer')
+        $user = User::with('designation')->find(Auth::id());
+        $userDesignationTitle = $user->designation?->title;
+        
+        $allData = $userDesignationTitle === 'Supervision Engineer'
             ? [
                 'allInCharges' => [],
                 'juniors' => User::where('report_to', $user->id)->get(),
 
             ]
-            : ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')
+            : (in_array($userDesignationTitle, ['Quality Control Inspector', 'Asst. Quality Control Inspector'])
                 ? []
                 : ($user->hasRole('Administrator')
                     ? [
-                        'allInCharges' => User::role('Supervision Engineer')->get(),
+                        'allInCharges' => User::whereHas('designation', function($q) {
+                            $q->where('title', 'Supervision Engineer');
+                        })->get(),
                         'juniors' => [],
                     ]
                     : []

@@ -70,7 +70,7 @@ const appName = 'DBEDC ERP';
 createInertiaApp({
     progress: {
         color: '#29d',
-        delay: 250, // Delay progress bar to avoid flicker
+        delay: 100, // Reduced delay for better SPA feel
         includeCSS: true,
         showSpinner: false,
     },

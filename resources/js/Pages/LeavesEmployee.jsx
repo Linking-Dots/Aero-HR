@@ -38,6 +38,7 @@ import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
 import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
+import BulkLeaveModal from '@/Components/BulkLeave/BulkLeaveModal.jsx';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -215,6 +216,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
     add_leave: false,
     edit_leave: false,
     delete_leave: false,
+    bulk_leave: false,
   });
 
   // Modal handlers
@@ -223,7 +225,7 @@ const LeavesEmployee = ({ title, allUsers }) => {
   }, []);
 
   const closeModal = useCallback(() => {
-    setModalStates({ add_leave: false, edit_leave: false, delete_leave: false });
+    setModalStates({ add_leave: false, edit_leave: false, delete_leave: false, bulk_leave: false });
   }, []);
 
   const openModal = useCallback((modalType) => {
@@ -424,6 +426,12 @@ const LeavesEmployee = ({ title, allUsers }) => {
       className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
     },
     {
+      label: "Add Bulk",
+      icon: <CalendarIcon className="w-4 h-4" />,
+      onPress: () => openModal('bulk_leave'),
+      className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+    },
+    {
       label: "Current Year",
       icon: <CalendarIcon className="w-4 h-4" />,
       onPress: () => handleFilterChange('year', new Date().getFullYear()),
@@ -581,6 +589,21 @@ const LeavesEmployee = ({ title, allUsers }) => {
           deleteLeaveOptimized={deleteLeaveOptimized}
           updatePaginationMetadata={updatePaginationMetadata}
           fetchLeavesStats={fetchLeavesStats}
+        />
+      )}
+
+      {modalStates.bulk_leave && (
+        <BulkLeaveModal
+          open={modalStates.bulk_leave}
+          onClose={() => closeModal()}
+          onSuccess={(result) => {
+            // Refresh the leave data after successful bulk creation
+            fetchLeaves();
+            fetchLeavesStats();
+          }}
+          allUsers={allUsers}
+          leavesData={leavesData}
+          isAdmin={false}
         />
       )}
 

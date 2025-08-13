@@ -55,15 +55,18 @@ class DailyWorkPaginationService
     }
 
     /**
-     * Build base query based on user role
+     * Build base query based on user designation
      */
     private function buildBaseQuery(User $user)
     {
-        if ($user->hasRole('Supervision Engineer')) {
+        $userWithDesignation = User::with('designation')->find($user->id);
+        $userDesignationTitle = $userWithDesignation->designation?->title;
+        
+        if ($userDesignationTitle === 'Supervision Engineer') {
             return DailyWork::with('reports')->where('incharge', $user->id);
         }
 
-        if ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')) {
+        if (in_array($userDesignationTitle, ['Quality Control Inspector', 'Asst. Quality Control Inspector'])) {
             return DailyWork::with('reports')->where('assigned', $user->id);
         }
 
@@ -110,19 +113,22 @@ class DailyWorkPaginationService
     }
 
     /**
-     * Get user role for response
+     * Get user role for response based on designation
      */
     private function getUserRole(User $user): string
     {
-        if ($user->hasRole('Supervision Engineer')) {
+        $userWithDesignation = User::with('designation')->find($user->id);
+        $userDesignationTitle = $userWithDesignation->designation?->title;
+        
+        if ($userDesignationTitle === 'Supervision Engineer') {
             return 'Supervision Engineer';
         }
 
-        if ($user->hasRole('Quality Control Inspector')) {
+        if ($userDesignationTitle === 'Quality Control Inspector') {
             return 'Quality Control Inspector';
         }
 
-        if ($user->hasRole('Asst. Quality Control Inspector')) {
+        if ($userDesignationTitle === 'Asst. Quality Control Inspector') {
             return 'Asst. Quality Control Inspector';
         }
 
@@ -134,11 +140,14 @@ class DailyWorkPaginationService
     }
 
     /**
-     * Get additional user info for response
+     * Get additional user info for response based on designation
      */
     private function getUserInfo(User $user): array
     {
-        if ($user->hasRole('Supervision Engineer')) {
+        $userWithDesignation = User::with('designation')->find($user->id);
+        $userDesignationTitle = $userWithDesignation->designation?->title;
+        
+        if ($userDesignationTitle === 'Supervision Engineer') {
             return [
                 'allInCharges' => [],
                 'juniors' => User::where('incharge', $user->user_name)->get(),
@@ -147,7 +156,9 @@ class DailyWorkPaginationService
 
         if ($user->hasRole('Administrator')) {
             return [
-                'allInCharges' => User::role('Supervision Engineer')->get(),
+                'allInCharges' => User::whereHas('designation', function($q) {
+                    $q->where('title', 'Supervision Engineer');
+                })->get(),
                 'juniors' => [],
             ];
         }

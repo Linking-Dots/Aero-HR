@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\TrackSecurityActivity::class,
         ]);        // Register custom middleware aliases
         $middleware->alias([
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'security_headers' => \App\Http\Middleware\SecurityHeaders::class,
             'enhanced_rate_limit' => \App\Http\Middleware\EnhancedRateLimit::class,
             'role_permission_sync' => \App\Http\Middleware\EnsureRolePermissionSync::class,
+            'track_security' => \App\Http\Middleware\TrackSecurityActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

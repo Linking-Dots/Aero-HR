@@ -41,7 +41,7 @@ const LettersTable = ({ allData, setData, users, loading, handleClickOpen, openM
     });
 
     const userIsAdmin = auth.roles.includes('Administrator');
-    const userIsSe = auth.roles.includes('Supervision Engineer');
+    const userIsSe = auth.designation === 'Supervision Engineer';
     const itemsPerPage = 10;
 
     const getStatusColor = (status) => {

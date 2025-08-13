@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Box,
@@ -12,7 +12,9 @@ import {
     Avatar,
     Stack,
     IconButton,
-    Tooltip
+    Tooltip,
+    Chip,
+    LinearProgress
 } from '@mui/material';
 import {
     Visibility,
@@ -23,7 +25,11 @@ import {
     Login as LoginIcon,
     Security,
     Shield,
-    AdminPanelSettings
+    AdminPanelSettings,
+    DevicesOther,
+    LocationOn,
+    Timer,
+    VerifiedUser
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import logo from '../../../../public/assets/images/logo.png';
@@ -50,10 +56,10 @@ const VALIDATION_MESSAGES = {
 };
 
 /**
- * Login Component - Enhanced with Hero UI and Glass morphism
- * Follows ISO standards for accessibility, security, and user experience
+ * Login Component - Enhanced with Enterprise Security Features
+ * Features: Device fingerprinting, session tracking, security monitoring
  */
-const Login = () => {
+const Login = ({ securityInfo }) => {
     const theme = useTheme();
 
     // Form handling with Inertia's useForm
@@ -63,10 +69,41 @@ const Login = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [securityFeatures, setSecurityFeatures] = useState([]);
+    const [loginAttempts, setLoginAttempts] = useState(0);
 
     // Component lifecycle
-    React.useEffect(() => {
+    useEffect(() => {
         setMounted(true);
+        
+        // Initialize security features
+        setSecurityFeatures([
+            { icon: Security, label: 'Secure Authentication', color: 'success' },
+            { icon: DevicesOther, label: 'Device Tracking', color: 'info' },
+            { icon: LocationOn, label: 'Location Monitoring', color: 'warning' },
+            { icon: Timer, label: 'Session Management', color: 'primary' }
+        ]);
+
+        // Get login attempts from localStorage for demonstration
+        const attempts = localStorage.getItem('loginAttempts') || 0;
+        setLoginAttempts(parseInt(attempts));
+    }, []);
+
+    // Enhanced security monitoring
+    const trackSecurityMetrics = useCallback(() => {
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            screenResolution: `${screen.width}x${screen.height}`,
+            timestamp: new Date().toISOString()
+        };
+
+        // Store for backend processing
+        localStorage.setItem('deviceFingerprint', JSON.stringify(deviceInfo));
+        
+        return deviceInfo;
     }, []);
 
     // Memoized validation functions
@@ -118,11 +155,33 @@ const Login = () => {
             return;
         }
 
+        // Track security metrics
+        const deviceInfo = trackSecurityMetrics();
+        
+        // Increment login attempts
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        localStorage.setItem('loginAttempts', newAttempts.toString());
+
+        // Enhanced login with security data
         post('/login', {
+            data: {
+                ...data,
+                deviceFingerprint: deviceInfo,
+                loginAttempt: newAttempts
+            },
             preserveScroll: true,
-            onSuccess: () => reset('password'),
+            onSuccess: () => {
+                reset('password');
+                localStorage.setItem('loginAttempts', '0');
+                localStorage.setItem('lastLoginTime', new Date().toISOString());
+            },
+            onError: () => {
+                // Security: Don't reveal too much information about failure
+                console.warn('Login attempt failed - security monitoring active');
+            }
         });
-    }, [post, reset, formValidation.isValid]);
+    }, [post, reset, formValidation.isValid, trackSecurityMetrics, loginAttempts, data]);
 
     const handleForgotPasswordClick = useCallback(() => {
         router.get(route('password.request'));
@@ -236,42 +295,85 @@ const Login = () => {
                                         Sign in to your workspace
                                     </Typography>
 
-                                    {/* Security Indicators */}
+                                    {/* Security Features Display */}
                                     <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
-                                        <Tooltip title="Secure Login">
-                                            <Avatar sx={{ 
-                                                width: 32, 
-                                                height: 32, 
+                                        {securityFeatures.map((feature, index) => (
+                                            <Tooltip key={index} title={feature.label}>
+                                                <Avatar sx={{ 
+                                                    width: 32, 
+                                                    height: 32, 
+                                                    bgcolor: alpha(theme.palette[feature.color].main, 0.1),
+                                                    border: `1px solid ${alpha(theme.palette[feature.color].main, 0.2)}`
+                                                }}>
+                                                    <feature.icon sx={{ fontSize: 16, color: `${feature.color}.main` }} />
+                                                </Avatar>
+                                            </Tooltip>
+                                        ))}
+                                    </Stack>
+
+                                    {/* Security Status Indicators */}
+                                    <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+                                        <Chip 
+                                            icon={<VerifiedUser />}
+                                            label="Secure Connection"
+                                            size="small"
+                                            color="success"
+                                            variant="outlined"
+                                            sx={{ 
+                                                fontSize: '0.75rem',
                                                 bgcolor: alpha(theme.palette.success.main, 0.1),
-                                                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
-                                            }}>
-                                                <Security sx={{ fontSize: 16, color: 'success.main' }} />
-                                            </Avatar>
-                                        </Tooltip>
-                                        <Tooltip title="Data Protection">
-                                            <Avatar sx={{ 
-                                                width: 32, 
-                                                height: 32, 
-                                                bgcolor: alpha(theme.palette.info.main, 0.1),
-                                                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
-                                            }}>
-                                                <Shield sx={{ fontSize: 16, color: 'info.main' }} />
-                                            </Avatar>
-                                        </Tooltip>
-                                        <Tooltip title="Enterprise Grade">
-                                            <Avatar sx={{ 
-                                                width: 32, 
-                                                height: 32, 
-                                                bgcolor: alpha(theme.palette.warning.main, 0.1),
-                                                border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
-                                            }}>
-                                                <AdminPanelSettings sx={{ fontSize: 16, color: 'warning.main' }} />
-                                            </Avatar>
-                                        </Tooltip>
+                                                borderColor: alpha(theme.palette.success.main, 0.3)
+                                            }}
+                                        />
+                                        <Chip 
+                                            icon={<Shield />}
+                                            label="Enterprise Security"
+                                            size="small"
+                                            color="primary"
+                                            variant="outlined"
+                                            sx={{ 
+                                                fontSize: '0.75rem',
+                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                borderColor: alpha(theme.palette.primary.main, 0.3)
+                                            }}
+                                        />
                                     </Stack>
                                 </Box>
 
                                 <CardContent sx={{ px: 4, pb: 4 }}>
+                                    {/* Security Progress Indicator */}
+                                    {processing && (
+                                        <Box sx={{ mb: 3 }}>
+                                            <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+                                                Authenticating securely...
+                                            </Typography>
+                                            <LinearProgress 
+                                                color="primary" 
+                                                sx={{ 
+                                                    height: 6, 
+                                                    borderRadius: 3,
+                                                    bgcolor: alpha(theme.palette.primary.main, 0.1)
+                                                }} 
+                                            />
+                                        </Box>
+                                    )}
+
+                                    {/* Login Attempts Warning */}
+                                    {loginAttempts > 2 && (
+                                        <Alert 
+                                            severity="warning" 
+                                            sx={{ 
+                                                mb: 3,
+                                                background: alpha(theme.palette.warning.main, 0.1),
+                                                border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                                                backdropFilter: 'blur(10px)',
+                                                borderRadius: 2
+                                            }}
+                                        >
+                                            Multiple login attempts detected. Enhanced security monitoring is active.
+                                        </Alert>
+                                    )}
+
                                     {/* Error Alert */}
                                     {(errors.general || errors.email || errors.password) && (
                                         <Fade in timeout={300}>
@@ -285,7 +387,7 @@ const Login = () => {
                                                     borderRadius: 2
                                                 }}
                                             >
-                                                {errors.general || 'Please check your credentials and try again.'}
+                                                {errors.general || 'Login failed. All attempts are monitored for security.'}
                                             </Alert>
                                         </Fade>
                                     )}

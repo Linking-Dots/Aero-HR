@@ -35,7 +35,7 @@ class Designation extends Model
 
     public function users(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(User::class, 'designation'); // updated foreign key
+        return $this->hasMany(User::class, 'designation_id');
     }
 
     public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo

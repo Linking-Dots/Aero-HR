@@ -50,6 +50,7 @@ import App from '@/Layouts/App.jsx';
 import LeaveEmployeeTable from '@/Tables/LeaveEmployeeTable.jsx';
 import LeaveForm from '@/Forms/LeaveForm.jsx';
 import DeleteLeaveForm from '@/Forms/DeleteLeaveForm.jsx';
+import BulkLeaveModal from '@/Components/BulkLeave/BulkLeaveModal.jsx';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -368,6 +369,7 @@ const LeavesAdmin = ({ title, allUsers }) => {
         add_leave: false,
         edit_leave: false,
         delete_leave: false,
+        bulk_leave: false,
     });
     const leaveTableRef = useRef(null);
 
@@ -631,6 +633,21 @@ const LeavesAdmin = ({ title, allUsers }) => {
                 />
             )}
 
+            {modalStates.bulk_leave && (
+                <BulkLeaveModal
+                    open={modalStates.bulk_leave}
+                    onClose={() => closeModal("bulk_leave")}
+                    onSuccess={(result) => {
+                        // Refresh the leave data after successful bulk creation
+                        fetchLeavesData();
+                        fetchLeavesStats();
+                    }}
+                    allUsers={allUsers}
+                    leavesData={leavesData}
+                    isAdmin={true}
+                />
+            )}
+
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <Grow in>
                     <GlassCard>
@@ -644,6 +661,12 @@ const LeavesAdmin = ({ title, allUsers }) => {
                                     label: "Add Leave",
                                     icon: <PlusIcon className="w-4 h-4" />,
                                     onPress: () => openModalNew('add_leave'),
+                                    className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                                }] : []),
+                                ...(canCreateLeaves ? [{
+                                    label: "Add Bulk",
+                                    icon: <CalendarIcon className="w-4 h-4" />,
+                                    onPress: () => openModalNew('bulk_leave'),
                                     className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
                                 }] : []),
                                 {

@@ -46,6 +46,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
     });
 
+    // Security Dashboard route - available to authenticated users
+    Route::get('/security/dashboard', function () {
+        return inertia('Security/Dashboard');
+    })->name('security.dashboard');
+
     // Updates route - require updates permission
     Route::middleware(['permission:core.updates.view'])->get('/updates', [DashboardController::class, 'updates'])->name('updates');
 
@@ -153,6 +158,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['permission:leaves.approve'])->group(function () {
         Route::post('/leaves/bulk-approve', [LeaveController::class, 'bulkApprove'])->name('leaves.bulk-approve');
         Route::post('/leaves/bulk-reject', [LeaveController::class, 'bulkReject'])->name('leaves.bulk-reject');
+    });
+
+    // Bulk leave creation routes
+    Route::middleware(['permission:leaves.create'])->group(function () {
+        Route::post('/leaves/bulk/validate', [BulkLeaveController::class, 'validateDates'])->name('leaves.bulk.validate');
+        Route::post('/leaves/bulk', [BulkLeaveController::class, 'store'])->name('leaves.bulk.store');
+        Route::get('/leaves/bulk/leave-types', [BulkLeaveController::class, 'getLeaveTypes'])->name('leaves.bulk.leave-types');
     });
 
     // Leave settings routes
@@ -554,6 +566,7 @@ require __DIR__ . '/analytics.php';
 require __DIR__ . '/project-management.php';
 require __DIR__ . '/hr.php';
 require __DIR__ . '/dms.php';
+require __DIR__ . '/security.php';
 
 require __DIR__ . '/auth.php';
 

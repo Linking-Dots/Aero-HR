@@ -149,15 +149,18 @@ class TaskCrudService
     }
 
     /**
-     * Build task query based on user role
+     * Build task query based on user designation
      */
     private function buildTaskQuery(User $user)
     {
-        if ($user->hasRole('Supervision Engineer')) {
+        $userWithDesignation = User::with('designation')->find($user->id);
+        $userDesignationTitle = $userWithDesignation->designation?->title;
+        
+        if ($userDesignationTitle === 'Supervision Engineer') {
             return Tasks::with('reports')->where('incharge', $user->user_name);
         }
 
-        if ($user->hasRole('Quality Control Inspector') || $user->hasRole('Asst. Quality Control Inspector')) {
+        if (in_array($userDesignationTitle, ['Quality Control Inspector', 'Asst. Quality Control Inspector'])) {
             return Tasks::with('reports')->where('assigned', $user->user_name);
         }
 
@@ -169,11 +172,14 @@ class TaskCrudService
     }
 
     /**
-     * Get user info for response
+     * Get user info for response based on designation
      */
     private function getUserInfo(User $user): array
     {
-        if ($user->hasRole('Supervision Engineer')) {
+        $userWithDesignation = User::with('designation')->find($user->id);
+        $userDesignationTitle = $userWithDesignation->designation?->title;
+        
+        if ($userDesignationTitle === 'Supervision Engineer') {
             return [
                 'incharges' => [],
                 'juniors' => User::where('incharge', $user->user_name)->get(),

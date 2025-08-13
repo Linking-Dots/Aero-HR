@@ -103,10 +103,10 @@ const DailyWorksTable = ({
     const [isUpdating, setIsUpdating] = useState(false);
     const [updatingWorkId, setUpdatingWorkId] = useState(null);
 
-    // Permission-based access control
+    // Permission-based access control using designations
     const userIsAdmin = auth.roles?.includes('Administrator') || auth.roles?.includes('Super Administrator') || false;
-    const userIsSE = auth.roles?.includes('Supervision Engineer') || false;
-    const userIsQCI = auth.roles?.includes('Quality Control Inspector') || auth.roles?.includes('Asst. Quality Control Inspector') || false;
+    const userIsSE = auth.designation === 'Supervision Engineer' || false;
+    const userIsQCI = auth.designation === 'Quality Control Inspector' || auth.designation === 'Asst. Quality Control Inspector' || false;
 
     // Use available data with fallbacks
     const availableInCharges = allInCharges || users || [];

@@ -110,7 +110,7 @@ class DesignationController extends Controller
         ]);
 
         $user = User::findOrFail($id);
-        $user->designation = $request->input('designation_id');
+        $user->designation_id = $request->input('designation_id');
         $user->save();
 
         return response()->json(['messages' => ['Designation updated successfully']], 200);

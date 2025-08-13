@@ -96,7 +96,10 @@ class EnhancedRateLimit
                 return ['requests_per_minute' => 150];
             }
             
-            if ($user->hasRole('Supervision Engineer')) {
+            $userWithDesignation = \App\Models\User::with('designation')->find($user->id);
+            $userDesignationTitle = $userWithDesignation->designation?->title;
+            
+            if ($userDesignationTitle === 'Supervision Engineer') {
                 return ['requests_per_minute' => 100];
             }
             

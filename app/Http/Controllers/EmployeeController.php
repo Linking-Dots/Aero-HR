@@ -39,8 +39,8 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|unique:users,phone',
             'employee_id' => 'nullable|string|unique:users,employee_id',
-            'department' => 'nullable|exists:departments,id',
-            'designation' => 'nullable|exists:designations,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'designation_id' => 'nullable|exists:designations,id',
             'attendance_type_id' => 'nullable|exists:attendance_types,id',
             'date_of_joining' => 'nullable|date',
             'birthday' => 'nullable|date',
@@ -62,8 +62,8 @@ class EmployeeController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'employee_id' => $request->employee_id ?? $this->generateEmployeeId(),
-                'department' => $request->department,
-                'designation' => $request->designation,
+                'department_id' => $request->department_id,
+                'designation_id' => $request->designation_id,
                 'attendance_type_id' => $request->attendance_type_id,
                 'date_of_joining' => $request->date_of_joining ?? now(),
                 'birthday' => $request->birthday,
@@ -117,8 +117,8 @@ class EmployeeController extends Controller
             'email' => ['required', 'email', Rule::unique('users')->ignore($id)],
             'phone' => ['nullable', 'string', Rule::unique('users')->ignore($id)],
             'employee_id' => ['nullable', 'string', Rule::unique('users')->ignore($id)],
-            'department' => 'nullable|exists:departments,id',
-            'designation' => 'nullable|exists:designations,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'designation_id' => 'nullable|exists:designations,id',
             'attendance_type_id' => 'nullable|exists:attendance_types,id',
             'date_of_joining' => 'nullable|date',
             'birthday' => 'nullable|date',
@@ -135,8 +135,8 @@ class EmployeeController extends Controller
         DB::beginTransaction();
         try {
             $employee->update($request->only([
-                'name', 'email', 'phone', 'employee_id', 'department', 
-                'designation', 'attendance_type_id', 'date_of_joining', 
+                'name', 'email', 'phone', 'employee_id', 'department_id', 
+                'designation_id', 'attendance_type_id', 'date_of_joining', 
                 'birthday', 'gender', 'address', 'salary_amount', 'active'
             ]));
 
@@ -235,11 +235,11 @@ class EmployeeController extends Controller
 
             // Apply filters
             if (!empty($department) && $department !== 'all') {
-                $query->where('department', $department);
+                $query->where('department_id', $department);
             }
 
             if (!empty($designation) && $designation !== 'all') {
-                $query->where('designation', $designation);
+                $query->where('designation_id', $designation);
             }
 
             if (!empty($attendanceType) && $attendanceType !== 'all') {
@@ -264,15 +264,15 @@ class EmployeeController extends Controller
             $employees->getCollection()->transform(function($employee) {
                 // Get department name safely
                 $departmentName = null;
-                if ($employee->department) {
-                    $dept = \App\Models\HRM\Department::find($employee->department);
+                if ($employee->department_id) {
+                    $dept = \App\Models\HRM\Department::find($employee->department_id);
                     $departmentName = $dept ? $dept->name : null;
                 }
                 
                 // Get designation name safely
                 $designationName = null;
-                if ($employee->designation) {
-                    $desig = \App\Models\HRM\Designation::find($employee->designation);
+                if ($employee->designation_id) {
+                    $desig = \App\Models\HRM\Designation::find($employee->designation_id);
                     $designationName = $desig ? $desig->title : null;
                 }
                 
@@ -291,9 +291,9 @@ class EmployeeController extends Controller
                     'employee_id' => $employee->employee_id,
                     'profile_image' => $employee->profile_image,
                     'active' => $employee->active,
-                    'department_id' => $employee->department,
+                    'department_id' => $employee->department_id,
                     'department_name' => $departmentName,
-                    'designation_id' => $employee->designation,
+                    'designation_id' => $employee->designation_id,
                     'designation_name' => $designationName,
                     'attendance_type_id' => $employee->attendance_type_id,
                     'attendance_type_name' => $attendanceTypeName,
