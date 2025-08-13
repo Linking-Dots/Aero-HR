@@ -348,7 +348,13 @@ const TimeSheetTable = ({ handleDateChange, selectedDate, updateTimeSheet, exter
     
     // Column definitions with improved descriptive labels
     const columns = [
-        { name: "Date", uid: "date", icon: CalendarDaysIcon, ariaLabel: "Attendance date" },
+        ...(!(canViewAllAttendance) && url !== '/attendance' ? [
+            { name: "Date", uid: "date", icon: CalendarDaysIcon, ariaLabel: "Attendance date" }
+        ] : []),
+        ...(url == '/attendance-employee' ? [
+            { name: "Date", uid: "date", icon: CalendarDaysIcon, ariaLabel: "Attendance date" }
+        ] : []),
+        
         ...(canViewAllAttendance && (url !== '/attendance-employee') ? [
             { name: "Employee", uid: "employee", icon: UserIcon, ariaLabel: "Employee name and information" }
         ] : []),
