@@ -70,18 +70,18 @@ return new class extends Migration
             Schema::create('authentication_events', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-                $table->string('event_type'); // login, logout, password_change, 2fa_enabled, etc.
+                $table->string('event_type', 50); // Limited length to prevent index issues
                 $table->string('ip_address', 45);
                 $table->text('user_agent')->nullable();
                 $table->json('metadata')->nullable(); // Additional context data
-                $table->string('status'); // success, failure, attempted
-                $table->string('risk_level')->default('low'); // low, medium, high, critical
+                $table->string('status', 20); // Limited length: success, failure, attempted
+                $table->string('risk_level', 20)->default('low'); // Limited length: low, medium, high, critical
                 $table->timestamp('occurred_at');
                 $table->timestamps();
                 
                 $table->index(['user_id', 'event_type']);
                 $table->index(['ip_address', 'occurred_at']);
-                $table->index(['event_type', 'status']);
+                $table->index(['event_type', 'status']); // Now safe with limited lengths
             });
         }
 
@@ -89,11 +89,11 @@ return new class extends Migration
         if (!Schema::hasTable('user_sessions')) {
             Schema::create('user_sessions', function (Blueprint $table) {
                 $table->id();
-                $table->string('session_id')->unique();
+                $table->string('session_id', 191)->unique(); // Limited for index
                 $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
                 $table->string('ip_address', 45);
                 $table->text('user_agent');
-                $table->string('device_fingerprint')->nullable();
+                $table->string('device_fingerprint', 191)->nullable(); // Limited for potential indexing
                 $table->json('device_info')->nullable(); // browser, os, device type
                 $table->json('location_info')->nullable(); // country, city, timezone
                 $table->boolean('is_current')->default(true);
@@ -112,7 +112,7 @@ return new class extends Migration
             Schema::create('password_reset_tokens_secure', function (Blueprint $table) {
                 $table->id();
                 $table->string('email');
-                $table->string('token');
+                $table->string('token', 191); // Limited for index safety
                 $table->string('verification_code', 6)->nullable(); // For OTP verification
                 $table->boolean('is_verified')->default(false);
                 $table->integer('attempts')->default(0);
@@ -134,7 +134,7 @@ return new class extends Migration
                 $table->string('email');
                 $table->string('ip_address', 45);
                 $table->text('user_agent')->nullable();
-                $table->string('failure_reason'); // invalid_credentials, account_locked, etc.
+                $table->string('failure_reason', 100); // Limited length for index safety
                 $table->json('metadata')->nullable();
                 $table->timestamp('attempted_at');
                 $table->timestamps();
