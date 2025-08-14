@@ -5,7 +5,7 @@ import {
     ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import GlassCard from '@/Components/GlassCard';
-import { useAuthThemeSync } from '@/hooks/useThemeSync';
+import { useAuthThemeSync } from '@/Hooks/useThemeSync';
 // Import theme CSS files to ensure background patterns work on auth pages
 import '../../css/theme-transitions.css';
 import '../../css/smooth-animations.css';
