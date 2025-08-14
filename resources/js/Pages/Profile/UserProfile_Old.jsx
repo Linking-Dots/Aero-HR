@@ -88,6 +88,26 @@ const projects = [
         ],
         progress: 40
     },
+    {
+        title: "Office Management",
+        openTasks: 1,
+        completedTasks: 9,
+        description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+        deadline: "17 Apr 2019",
+        leaders: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        team: [
+            { name: "John Doe", avatar: "assets/img/profiles/avatar-02.jpg" },
+            { name: "Richard Miles", avatar: "assets/img/profiles/avatar-09.jpg" },
+            { name: "John Smith", avatar: "assets/img/profiles/avatar-10.jpg" },
+            { name: "Mike Litorus", avatar: "assets/img/profiles/avatar-05.jpg" }
+        ],
+        progress: 40
+    },
     // Add other projects similarly...
 ];
 
@@ -516,146 +536,130 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                             </span>
                                         </Typography>
                                     </div>
-
-                                    {loading ? (
-                                        <div className="text-center py-8">
-                                            <CircularProgress size={40} />
-                                            <Typography className="mt-4" color="textSecondary">
-                                                Loading profile data...
-                                            </Typography>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <CardContent>
-                                                <Grid container spacing={2} direction="row" alignItems="flex-start">
-                                                    {/* Avatar */}
-                                                    <Grid item xs={12} md={5}>
-                                                        <Grid container spacing={2} direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'center', md: 'flex-start' }}>
-                                                            {/* Avatar */}
-                                                            <Grid item>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                                    <Avatar
-                                                                        src={user.profile_image}
-                                                                        alt={user.name}
-                                                                        sx={{ width: 100, height: 100, mr: 2 }}
-                                                                    />
-                                                                </Box>
-                                                            </Grid>
-                                                            {/* User Info */}
-                                                            <Grid item xs={12} md>
-                                                                <Box direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'center', md: 'flex-start' }} sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
-                                                                    <Typography variant="h5">{user.name}</Typography>
-                                                                    <Typography variant="subtitle1" color="textSecondary">{departments.find((department) => department.id === user.department)?.name || 'N/A'}</Typography>
-                                                                    <Typography variant="body2" color="textSecondary">{designations.find((designation) => designation.id === user.designation)?.title || 'N/A'}</Typography>
-                                                                    <Typography variant="body2" color="textSecondary">Employee ID : {user.employee_id  || 'N/A'}</Typography>
-                                                                    <Typography variant="body2" color="textSecondary">Date of Join : {user.date_of_joining  || 'N/A'}</Typography>
-                                                                    <Button variant="outlined" color="primary" sx={{ mt: 1 }}>Send Message</Button>
-                                                                </Box>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Grid>
-                                                    <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
-                                                    {/* Personal Info */}
-                                                    <Grid item xs={12} md={6}>
-                                                        <List>
-                                                            <ListItem>
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Phone:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText primary={user.phone || 'N/A'} />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                            <ListItem>
-                                                                <Grid container>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Email:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText primary={user.email || 'N/A'} />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                            <ListItem>
-                                                                <Grid container>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Birthday:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText primary={user.birthday || 'N/A'} />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                            <ListItem>
-                                                                <Grid container>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Address:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText primary={user.address || 'N/A'} />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                            <ListItem>
-                                                                <Grid container>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Gender:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText primary={user.gender || 'N/A'} />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                            <ListItem>
-                                                                <Grid container>
-                                                                    <Grid item xs={5}>
-                                                                        <ListItemText primary="Reports to:" />
-                                                                    </Grid>
-                                                                    <Grid item xs={7}>
-                                                                        <ListItemText
-                                                                            primary={
-                                                                                allUsers.find((found) => found.id === user.report_to) ?
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                    <Avatar
-                                                                                        src={`/assets/images/users/${allUsers.find((found) => found.id === user.report_to)?.user_name}.jpg`}
-                                                                                        alt={allUsers.find((found) => found.id === user.report_to)?.name}
-                                                                                        sx={{ width: 24, height: 24, mr: 1 }}
-                                                                                    />
-                                                                                    <Typography color="primary">
-                                                                                        {allUsers.find((found) => found.id === user.report_to)?.name}
-                                                                                    </Typography>
-                                                                                </Box> : 'N/A'
-                                                                            }
-                                                                        />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </ListItem>
-                                                        </List>
-                                                    </Grid>
+                            <Grid container spacing={2} direction="row" alignItems="flex-start">
+                                {/* Avatar */}
+                                <Grid item xs={12} md={5}>
+                                    <Grid container spacing={2} direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'center', md: 'flex-start' }}>
+                                        {/* Avatar */}
+                                        <Grid item>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                <Avatar
+                                                    src={user.profile_image}
+                                                    alt={user.name}
+                                                    sx={{ width: 100, height: 100, mr: 2 }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                        {/* User Info */}
+                                        <Grid item xs={12} md>
+                                            <Box direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'center', md: 'flex-start' }} sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+                                                <Typography variant="h5">{user.name}</Typography>
+                                                <Typography variant="subtitle1" color="textSecondary">{departments.find((department) => department.id === user.department)?.name || 'N/A'}</Typography>
+                                                <Typography variant="body2" color="textSecondary">{designations.find((designation) => designation.id === user.designation)?.title || 'N/A'}</Typography>
+                                                <Typography variant="body2" color="textSecondary">Employee ID : {user.employee_id  || 'N/A'}</Typography>
+                                                <Typography variant="body2" color="textSecondary">Date of Join : {user.date_of_joining  || 'N/A'}</Typography>
+                                                <Button variant="outlined" color="primary" sx={{ mt: 1 }}>Send Message</Button>
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                {/* Personal Info */}
+                                <Grid item xs={12} md={6}>
+                                    <List>
+                                        <ListItem>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Phone:" />
                                                 </Grid>
-                                            </CardContent>
-                                            <CardContent sx={{paddingBottom: "0px !important"}}>
-                                                <Tabs
-                                                    value={tabIndex}
-                                                    onChange={handleTabChange}
-                                                    aria-label="User Profile Tabs"
-                                                    variant="scrollable"
-                                                    scrollButtons="auto"
-                                                    allowScrollButtonsMobile
-                                                >
-                                                    <Tab label="Profile" />
-                                                    <Tab label="Projects" />
-                                                    <Tab label="Salary & Statutory" />
-                                                    <Tab label="Assets" />
-                                                </Tabs>
-                                            </CardContent>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </PageHeader>
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.phone || 'N/A'} />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                        <ListItem>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Email:" />
+                                                </Grid>
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.email || 'N/A'} />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                        <ListItem>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Birthday:" />
+                                                </Grid>
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.birthday || 'N/A'} />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                        <ListItem>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Address:" />
+                                                </Grid>
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.address || 'N/A'} />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                        <ListItem>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Gender:" />
+                                                </Grid>
+                                                <Grid item xs={7}>
+                                                    <ListItemText primary={user.gender || 'N/A'} />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                        <ListItem>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    <ListItemText primary="Reports to:" />
+                                                </Grid>
+                                                <Grid item xs={7}>
+                                                    <ListItemText
+                                                        primary={
+                                                            allUsers.find((found) => found.id === user.report_to)?
+                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Avatar
+                                                                    src={`/assets/images/users/${allUsers.find((found) => found.id === user.report_to)?.user_name}.jpg`}
+                                                                    alt={report_to.name}
+                                                                    sx={{ width: 24, height: 24, mr: 1 }}
+                                                                />
+                                                                <Typography color="primary">
+                                                                    {allUsers.find((found) => found.id === user.report_to)?.name}
+                                                                </Typography>
+                                                            </Box> : 'N/A'
+                                                        }
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </ListItem>
+                                    </List>
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                        <CardContent sx={{paddingBottom: "0px !important"}}>
+                            <Tabs
+                                value={tabIndex}
+                                onChange={handleTabChange}
+                                aria-label="User Profile Tabs"
+                                variant="scrollable"
+                                scrollButtons="auto"
+                                allowScrollButtonsMobile
+                            >
+                                <Tab label="Profile" />
+                                <Tab label="Projects" />
+                                <Tab label="Salary & Statutory" />
+                                <Tab label="Assets" />
+                            </Tabs>
+                        </CardContent>
                     </GlassCard>
                 </Grow>
             </Box>
@@ -669,16 +673,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Personal Information"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('personal')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('personal')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -808,16 +810,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Emergency Contact"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('emergency')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('emergency')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -908,16 +908,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Bank Information"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('bank')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('bank')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -985,16 +983,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Family Information"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('family')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('family')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -1062,16 +1058,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Education Information"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('education')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('education')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -1109,16 +1103,14 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                     title="Experience"
                                     sx={{padding: '24px'}}
                                     action={
-                                        canEditProfile && (
-                                            <IconButton
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => openModal('experience')}
-                                                sx={{ position: 'absolute', top: 16, right: 16 }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )
+                                        <IconButton
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => openModal('experience')}
+                                            sx={{ position: 'absolute', top: 16, right: 16 }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
                                     }
                                 />
                                 <CardContent>
@@ -1184,8 +1176,9 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
 
             </Box>
         </>
+
     );
 };
-
 UserProfile.layout = (page) => <App>{page}</App>;
 export default UserProfile;
+

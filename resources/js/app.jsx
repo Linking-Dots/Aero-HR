@@ -93,7 +93,7 @@ createInertiaApp({
     },
     title: (title) => {
         const page = window.Laravel?.inertiaProps || {};
-        const appName = page.app?.name || 'DBEDC ERP';
+        const appName = page.app?.name || 'Aero Enterprise Suite';
         return `${title} - ${appName}`;
     },
     resolve: (name) =>

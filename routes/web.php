@@ -127,6 +127,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/profile/{user}', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete');
+        
+        // New API endpoints for enhanced profile functionality (consistent with other modules)
+        Route::get('/profile/{user}/stats', [ProfileController::class, 'stats'])->name('profile.stats');
+        Route::get('/profile/{user}/export', [ProfileController::class, 'export'])->name('profile.export');
+        Route::post('/profile/{user}/track-view', [ProfileController::class, 'trackView'])->name('profile.trackView');
 
         //Education Routes:
         Route::post('/education/update', [EducationController::class, 'update'])->name('education.update');
@@ -220,6 +225,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [UserController::class, 'index2'])->name('users');
         Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
         Route::get('/users/stats', [UserController::class, 'stats'])->name('users.stats');
+        
+        // Profile search for admin usage (consistent with other modules)
+        Route::get('/profiles/search', [ProfileController::class, 'search'])->name('profiles.search');
     });
 
     Route::middleware(['permission:users.create'])->post('/users', [ProfileController::class, 'store'])->name('addUser');

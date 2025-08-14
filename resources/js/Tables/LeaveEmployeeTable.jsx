@@ -94,7 +94,6 @@ const LeaveEmployeeTable = React.forwardRef(({
     const [isUpdating, setIsUpdating] = useState(false);
     const [updatingLeave, setUpdatingLeave] = useState(null);
 
-    const [updatingLeaveId, setUpdatingLeaveId] = useState(null);
     const [selectedKeys, setSelectedKeys] = useState(new Set());
 
     const selectedValue = React.useMemo(
@@ -200,41 +199,54 @@ const LeaveEmployeeTable = React.forwardRef(({
 
 
     const updateLeaveStatus = useCallback(async (leave, newStatus) => {
-        if (updatingLeaveId === leave.id) return; // Prevent multiple updates for the same leave
+    // If the leave is already in the desired status, resolve early and do not trigger loader or API
+    if (leave.status === newStatus) {
+        toast.info(`Leave is already ${newStatus}.`);
+        return Promise.resolve(`The leave status is already updated to ${newStatus}`);
+    }
 
-        setUpdatingLeaveId(leave.id);
-        const promise = new Promise(async (resolve, reject) => {
-            try {
-                const response = await axios.post(route("leave-update-status"), {
-                    id: leave.id,
-                    status: newStatus
-                });
+    // Prevent multiple updates for the same leave/status action
+    const actionKey = `${leave.id}-${newStatus}`;
+    if (updatingLeave === actionKey) return;
 
-                if (response.status === 200) {
-                    setLeaves((prevLeaves) => {
-                        return prevLeaves.map((l) =>
-                            l.id === leave.id ? { ...l, status: newStatus } : l
-                        );
-                    });
-                    fetchLeavesStats();
-                    resolve(response.data.message || "Leave status updated successfully");
-                }
-            } catch (error) {
-                const errorMsg = error.response?.data?.message || 
-                    error.response?.statusText || 
-                    "Failed to update leave status";
-                reject(errorMsg);
-            } finally { // This finally runs after resolve or reject
-                setUpdatingLeaveId(null);
+    setUpdatingLeave(actionKey);
+
+    const promise = new Promise(async (resolve, reject) => {
+        try {
+            const response = await axios.post(route("leave-update-status"), {
+                id: leave.id,
+                status: newStatus
+            });
+
+            if (response.status === 200) {
+                setLeaves((prevLeaves) =>
+                    prevLeaves.map((l) =>
+                        l.id === leave.id ? { ...l, status: newStatus } : l
+                    )
+                );
+                fetchLeavesStats();
+                resolve(response.data.message || "Leave status updated successfully");
+            } else {
+                reject(response.data?.message || "Failed to update leave status");
             }
-        });
+        } catch (error) {
+            const errorMsg = error.response?.data?.message ||
+                error.response?.statusText ||
+                "Failed to update leave status";
+            reject(errorMsg);
+        } finally {
+            setUpdatingLeave(null);
+        }
+    });
 
-        toast.promise(promise, {
-            pending: "Updating leave status...",
-            success: "Leave status updated successfully!",
-            error: "Failed to update leave status"
-        });
-    }, [setLeaves, isUpdating]);
+    toast.promise(promise, {
+        pending: "Updating leave status...",
+        success: "Leave status updated successfully!",
+        error: "Failed to update leave status"
+    });
+
+    return promise;
+    }, [setLeaves, updatingLeave, fetchLeavesStats]);
     
     const getStatusChip = (status) => {
         const config = statusConfig[status] || statusConfig['New'];
@@ -277,10 +289,11 @@ const LeaveEmployeeTable = React.forwardRef(({
     };
 
     // Mobile card component for better mobile experience
-    const MobileLeaveCard = ({ leave, updatingLeaveId, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus, canEditLeaves, canDeleteLeaves, canApproveLeaves, isAdminView }) => {
+    const MobileLeaveCard = ({ leave, updatingLeave, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus, canEditLeaves, canDeleteLeaves, canApproveLeaves, isAdminView }) => {
         const user = getUserInfo(leave.user_id);
         const duration = getLeaveDuration(leave.from_date, leave.to_date);
         const statusConf = statusConfig[leave.status] || statusConfig['New'];
+        console.log(isAdminView ? "Admin View" : "User View");
 
         return (
             <GlassCard className="mb-2" shadow="sm">
@@ -388,10 +401,13 @@ const LeaveEmployeeTable = React.forwardRef(({
                                         size="sm"
                                         variant={leave.status === status ? "solid" : "bordered"}
                                         color={statusConfig[status].color}
-                                        isLoading={updatingLeaveId === leave.id}
-                                        onPress={() => updateLeaveStatus(leave, status)}
+                                        isLoading={updatingLeave === `${leave.id}-${status}`}
+                                        onPress={() => {
+                                            if (updatingLeave === `${leave.id}-${status}`) return; // Prevent multiple clicks
+                                            updateLeaveStatus(leave, status);
+                                        }}
                                         startContent={
-                                            !updatingLeave || updatingLeave !== `${leave.id}-${status}` ? 
+                                            updatingLeave !== `${leave.id}-${status}` ? 
                                             React.createElement(statusConfig[status].icon, {
                                                 className: "w-3 h-3"
                                             }) : null
@@ -485,7 +501,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                             isIconOnly 
                                             size="sm" 
                                             variant="light"
-                                            isDisabled={updatingLeaveId === leave.id}
+                                            isDisabled={updatingLeave && updatingLeave.startsWith(`${leave.id}-`)}
                                         >
                                             <EllipsisVerticalIcon className="w-4 h-4" />
                                         </Button>
@@ -539,7 +555,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                     <IconButton
                                         size="small"
                                         onClick={() => {
-                                            if (updatingLeaveId === leave.id) return;
+                                            if (updatingLeave && updatingLeave.startsWith(`${leave.id}-`)) return;
                                        
                                             setCurrentLeave(leave);
                                             openModal("edit_leave");
@@ -560,7 +576,7 @@ const LeaveEmployeeTable = React.forwardRef(({
                                     <IconButton
                                         size="small"
                                         onClick={() => {
-                                            if (updatingLeaveId === leave.id) return;
+                                            if (updatingLeave && updatingLeave.startsWith(`${leave.id}-`)) return;
                                             setCurrentLeave(leave);
                                             handleClickOpen(leave.id, "delete_leave");
                                         }}
@@ -582,7 +598,7 @@ const LeaveEmployeeTable = React.forwardRef(({
             default:
                 return <TableCell>{leave[columnKey]}</TableCell>;
         }
-    }, [isAdminView, canApproveLeaves, isLargeScreen, updatingLeaveId, theme, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus]);
+    }, [isAdminView, canApproveLeaves, isLargeScreen, updatingLeave, theme, setCurrentLeave, openModal, handleClickOpen, updateLeaveStatus]);
 
     const columns = [
         ...(isAdminView ? [{ name: "Employee", uid: "employee", icon: UserIcon }] : []),
@@ -598,15 +614,20 @@ const LeaveEmployeeTable = React.forwardRef(({
         return (
             <Box className="space-y-4">
                 <ScrollShadow className="max-h-[70vh]">
-                    {leaves.map((leave) => ( // Use the leave.id directly for disabling buttons on the card
-                        // Need to pass updatingLeaveId and handle disabled state within MobileLeaveCard
-                        // Or, render a different component or add overlay/spinner based on updatingLeaveId
-                        // For simplicity here, let's assume MobileLeaveCard uses updatingLeaveId prop
-                        // and disables its internal buttons if leave.id matches updatingLeaveId
-                        // Note: This requires modifying MobileLeaveCard to accept updatingLeaveId
-                        // For this diff, we just map and assume the prop is handled inside.
-                        // A better approach would be to check updatingLeaveId inside MobileLeaveCard and render a spinner/disable actions.
-                        <MobileLeaveCard key={leave.id} leave={leave} />
+                    {leaves.map((leave) => (
+                        <MobileLeaveCard
+                            key={leave.id}
+                            leave={leave}
+                            updatingLeave={updatingLeave}
+                            setCurrentLeave={setCurrentLeave}
+                            openModal={openModal}
+                            handleClickOpen={handleClickOpen}
+                            updateLeaveStatus={updateLeaveStatus}
+                            canEditLeaves={canEditLeaves}
+                            canDeleteLeaves={canDeleteLeaves}
+                            canApproveLeaves={canApproveLeaves}
+                            isAdminView={isAdminView}
+                        />
                     ))}
                 </ScrollShadow>
                 {totalRows > perPage && (
