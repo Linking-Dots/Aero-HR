@@ -18,6 +18,21 @@ if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
 
+// Setup axios baseURL to match Laravel backend in development
+if (import.meta.env.DEV) {
+    axios.defaults.baseURL = 'http://127.0.0.1:8000';
+}
+
+// Function to initialize CSRF token for authentication requests
+const initCsrfToken = async () => {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+        console.log('CSRF token cookie initialized');
+    } catch (error) {
+        console.error('Failed to initialize CSRF token:', error);
+    }
+};
+
 // Performance monitoring only in development or when explicitly enabled
 const ENABLE_MONITORING = import.meta.env.DEV || 
     (typeof window !== 'undefined' && window.location.search.includes('monitor=true')) ||
@@ -82,6 +97,11 @@ if (ENABLE_MONITORING) {
             return Promise.reject(error);
         }
     );
+}
+
+// Make initCsrfToken globally available
+if (typeof window !== 'undefined') {
+    window.initCsrfToken = initCsrfToken;
 }
 
 createInertiaApp({

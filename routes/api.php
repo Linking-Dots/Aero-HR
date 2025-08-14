@@ -78,6 +78,31 @@ Route::post('/log-performance', function (Request $request) {
     }
 })->middleware(['web']);
 
+// Domain availability check for registration
+Route::post('/check-domain', function (Request $request) {
+    try {
+        $request->validate([
+            'domain' => 'required|string|min:3|max:50|regex:/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/'
+        ]);
+
+        $domain = strtolower(trim($request->domain));
+        
+        // Check if domain already exists
+        $exists = DB::table('tenants')->where('id', $domain)->exists();
+        
+        return response()->json([
+            'available' => !$exists,
+            'domain' => $domain
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Domain check failed: ' . $e->getMessage());
+        return response()->json([
+            'available' => false,
+            'error' => 'Domain check failed'
+        ], 500);
+    }
+})->middleware(['web']);
+
 // System monitoring API routes
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/system-monitoring/metrics', [SystemMonitoringController::class, 'getMetrics'])->name('api.system-monitoring.metrics');

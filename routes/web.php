@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BulkLeaveController;
 use App\Http\Controllers\DailyWorkController;
 use App\Http\Controllers\DailyWorkSummaryController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Settings\AttendanceSettingController;
 use App\Http\Controllers\Settings\CompanySettingController;
 use App\Http\Controllers\Settings\LeaveSettingController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SystemMonitoringController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
@@ -34,6 +36,16 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/auth.php';
 
 Route::redirect('/', '/dashboard');
+
+// Public SaaS routes (central domain)
+Route::get('/pricing', [BillingController::class, 'pricing'])->name('pricing');
+Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('subscribe');
+Route::get('/billing/complete', [BillingController::class, 'complete'])->name('billing.complete');
+Route::get('/payment/success', [BillingController::class, 'paymentSuccess'])->name('payment.success');
+Route::get('/payment/cancel', [BillingController::class, 'paymentCancel'])->name('payment.cancel');
+
+// Stripe webhook (no auth required)
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 Route::get('/session-check', function () {
     return response()->json(['authenticated' => auth()->check()]);

@@ -15,6 +15,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- SEO & Social Meta -->
     <meta name="description" content="{{ config('app.name') }} - Comprehensive Enterprise Resource Planning System for efficient business management">

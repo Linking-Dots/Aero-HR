@@ -11,7 +11,7 @@ import '../../css/theme-transitions.css';
 import '../../css/smooth-animations.css';
 import logo from '../../../public/assets/images/logo.png';
 
-const AuthLayout = ({ children, title, subtitle }) => {
+const AuthLayout = ({ children, title, subtitle, fullWidth = false }) => {
     const theme = useTheme();
     const [isDesktop, setIsDesktop] = useState(false);
     
@@ -87,7 +87,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 </>
             )}
 
-            <Container maxWidth="sm" sx={{ px: { xs: 1, sm: 2 } }}>
+            <Container maxWidth={fullWidth ? false : "sm"} sx={{ px: { xs: 1, sm: 2 } }}>
                 <Box
                     sx={{
                         display: 'flex',
@@ -98,96 +98,16 @@ const AuthLayout = ({ children, title, subtitle }) => {
                         py: { xs: 2, sm: 4 }
                     }}
                 >
-                    {/* Auth Form Card */}
+                    {/* Auth Form Card or Full Width Content */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="w-full"
-                        style={{ maxWidth: '420px' }}
+                        
                     >
-                        <GlassCard
-                            sx={{
-                                p: { xs: 2.5, sm: 3, md: 4 },
-                                position: 'relative',
-                                overflow: 'visible',
-                                width: '100%',
-                                borderRadius: { xs: 3, sm: 4 }
-                            }}
-                        >
-                            {/* Logo at top of form card */}
-                            <motion.div
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.3 }}
-                                style={{ textAlign: 'center', marginBottom: theme.spacing(3) }}
-                            >
-                                <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1.5, sm: 2 } }}>
-                                    <motion.div
-                                        className="inline-flex items-center justify-center rounded-xl"
-                                       
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                    >
-                                        <img 
-                                            src={logo} 
-                                            alt="Logo" 
-                                            style={{
-                                                width: '160px',
-                                                height: '160px',
-                                                objectFit: 'contain'
-                                            }}
-                                            onError={(e) => {
-                                                // Fallback to text logo if image fails to load
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling.style.display = 'block';
-                                            }}
-                                        />
-                                       
-                                    </motion.div>
-                                </Box>
-                            </motion.div>
-
-                            {/* Header */}
-                            <Box sx={{ mb: { xs: 3, sm: 4 }, textAlign: 'center' }}>
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.4 }}
-                                >
-                                    <Typography
-                                        variant="h4"
-                                        component="h1"
-                                        fontWeight="600"
-                                        gutterBottom
-                                        sx={{
-                                            background: `linear-gradient(135deg, ${theme.palette.text.primary}, ${theme.palette.primary.main})`,
-                                            backgroundClip: 'text',
-                                            WebkitBackgroundClip: 'text',
-                                            WebkitTextFillColor: 'transparent',
-                                            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                                            mb: { xs: 1, sm: 1.5 }
-                                        }}
-                                    >
-                                        {title}
-                                    </Typography>
-                                    {subtitle && (
-                                        <Typography
-                                            variant="body1"
-                                            color="text.secondary"
-                                            sx={{ 
-                                                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
-                                                lineHeight: 1.4,
-                                                px: { xs: 1, sm: 0 }
-                                            }}
-                                        >
-                                            {subtitle}
-                                        </Typography>
-                                    )}
-                                </motion.div>
-                            </Box>
-
-                            {/* Form Content */}
+                        {fullWidth ? (
+                            // Full width content without GlassCard wrapper
                             <motion.div
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -195,31 +115,119 @@ const AuthLayout = ({ children, title, subtitle }) => {
                             >
                                 {children}
                             </motion.div>
-
-                            {/* Decorative Elements - Minimized */}
-                            <motion.div
-                                className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
-                                style={{
-                                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                                    opacity: 0.4
+                        ) : (
+                            // Standard auth layout with GlassCard
+                            <GlassCard
+                                sx={{
+                                    p: { xs: 2.5, sm: 3, md: 4 },
+                                    position: 'relative',
+                                    overflow: 'visible',
+                                    width: '100%',
+                                    borderRadius: { xs: 3, sm: 4 }
                                 }}
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 3, repeat: Infinity }}
-                            />
-                            <motion.div
-                                className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full"
-                                style={{
-                                    background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-                                    opacity: 0.4
-                                }}
-                                animate={{ scale: [1, 1.3, 1] }}
-                                transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
-                            />
-                        </GlassCard>
+                            >
+                                {/* Logo at top of form card */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.3 }}
+                                    style={{ textAlign: 'center', marginBottom: theme.spacing(3) }}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1.5, sm: 2 } }}>
+                                        <motion.div
+                                            className="inline-flex items-center justify-center rounded-xl"
+                                           
+                                            whileHover={{ scale: 1.05 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                        >
+                                            <img 
+                                                src={logo} 
+                                                alt="Logo" 
+                                                style={{
+                                                    width: '160px',
+                                                    height: '160px',
+                                                    objectFit: 'contain'
+                                                }}
+                                                onError={(e) => {
+                                                    // Fallback to text logo if image fails to load
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'block';
+                                                }}
+                                            />
+                                           
+                                        </motion.div>
+                                    </Box>
+                                </motion.div>
 
-                       
+                                {/* Header */}
+                                <Box sx={{ mb: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.6, delay: 0.4 }}
+                                    >
+                                        <Typography
+                                            variant="h4"
+                                            component="h1"
+                                            fontWeight="600"
+                                            gutterBottom
+                                            sx={{
+                                                background: `linear-gradient(135deg, ${theme.palette.text.primary}, ${theme.palette.primary.main})`,
+                                                backgroundClip: 'text',
+                                                WebkitBackgroundClip: 'text',
+                                                WebkitTextFillColor: 'transparent',
+                                                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                                                mb: { xs: 1, sm: 1.5 }
+                                            }}
+                                        >
+                                            {title}
+                                        </Typography>
+                                        {subtitle && (
+                                            <Typography
+                                                variant="body1"
+                                                color="text.secondary"
+                                                sx={{ 
+                                                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
+                                                    lineHeight: 1.4,
+                                                    px: { xs: 1, sm: 0 }
+                                                }}
+                                            >
+                                                {subtitle}
+                                            </Typography>
+                                        )}
+                                    </motion.div>
+                                </Box>
 
-                        
+                                {/* Form Content */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.6 }}
+                                >
+                                    {children}
+                                </motion.div>
+
+                                {/* Decorative Elements - Minimized */}
+                                <motion.div
+                                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                                        opacity: 0.4
+                                    }}
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 3, repeat: Infinity }}
+                                />
+                                <motion.div
+                                    className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                                        opacity: 0.4
+                                    }}
+                                    animate={{ scale: [1, 1.3, 1] }}
+                                    transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
+                                />
+                            </GlassCard>
+                        )}
                     </motion.div>
                 </Box>
             </Container>
