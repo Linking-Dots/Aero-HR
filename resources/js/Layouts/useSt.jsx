@@ -157,7 +157,7 @@ function App({ children }) {
             toggleSideBar={toggleSideBar}
             sideBarOpen={sideBarOpen}
         />
-    ), [url, pages, toggleSideBar, sideBarOpen]);
+    ), [pages, toggleSideBar, sideBarOpen]);
 
 
     

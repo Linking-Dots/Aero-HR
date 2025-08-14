@@ -17,23 +17,23 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <!-- SEO & Social Meta -->
-    <meta name="description" content="DBEDC ERP - Comprehensive Enterprise Resource Planning System for efficient business management">
-    <meta name="keywords" content="ERP, Enterprise Resource Planning, Business Management, HR Management, DBEDC">
+    <meta name="description" content="{{ config('app.name') }} - Comprehensive Enterprise Resource Planning System for efficient business management">
+    <meta name="keywords" content="ERP, Enterprise Resource Planning, Business Management, HR Management">
     <meta name="author" content="Emam Hosen">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#134e9d">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ config('app.name', 'DBEDC ERP') }}">
+    <meta property="og:title" content="{{ config('app.name') }}">
     <meta property="og:description" content="Comprehensive Enterprise Resource Planning System">
     <meta property="og:image" content="{{ asset('assets/images/og-image.png') }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:site_name" content="{{ config('app.name', 'DBEDC ERP') }}">
+    <meta property="og:site_name" content="{{ config('app.name') }}">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ config('app.name', 'DBEDC ERP') }}">
+    <meta name="twitter:title" content="{{ config('app.name') }}">
     <meta name="twitter:description" content="Comprehensive Enterprise Resource Planning System">
     <meta name="twitter:image" content="{{ asset('assets/images/twitter-card.png') }}">
 
@@ -42,7 +42,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'DBEDC ERP') }}">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
 
     <!-- Icons & Favicons -->
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/images/favicon.ico') }}">
@@ -61,7 +61,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@300..700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Title -->
-    <title inertia>{{ config('app.name', 'DBEDC ERP') }}</title>
+    <title inertia>{{ config('app.name') }}</title>
 
     <!-- Critical CSS Inline (Optimized) -->
     <style>
@@ -134,7 +134,7 @@
             background: rgba(15, 20, 25, 1);
         }
 
-        /* Modern Loading Screen - Glassmorphism Design */
+        /* Enhanced Loading Screen - Optimized Performance & UX */
         #app-loading {
             position: fixed;
             top: 0;
@@ -142,46 +142,28 @@
             width: 100%;
             height: 100%;
             background: 
-                linear-gradient(135deg, rgba(20, 30, 48, 0.95) 0%, rgba(36, 59, 85, 0.9) 50%, rgba(59, 130, 246, 0.85) 100%),
-                radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 70%),
-                url('https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1920&q=80&fm=webp');
-            background-size: cover, 800px 800px, 600px 600px, 1000px 1000px, cover;
-            background-position: center, 20% 20%, 80% 80%, 50% 50%, center;
-            background-attachment: fixed;
+                linear-gradient(135deg, rgba(20, 30, 48, 0.98) 0%, rgba(36, 59, 85, 0.95) 50%, rgba(59, 130, 246, 0.92) 100%),
+                radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+            background-size: cover, 400px 400px, 300px 300px;
+            background-position: center, 20% 20%, 80% 80%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 9999;
             opacity: 1;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px) saturate(150%);
+            -webkit-backdrop-filter: blur(8px) saturate(150%);
             overflow: hidden;
+            will-change: opacity, transform;
         }
 
         #app-loading.hidden {
             opacity: 0;
             pointer-events: none;
-            transform: scale(1.1);
-        }
-
-        /* Animated background particles */
-        #app-loading::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 30%),
-                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 30%),
-                radial-gradient(circle at 40% 60%, rgba(14, 165, 233, 0.1) 0%, transparent 40%);
-            animation: floating 6s ease-in-out infinite;
-            pointer-events: none;
+            transform: scale(1.02);
         }
 
         .loading-content {
@@ -190,28 +172,29 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 3rem;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 
                 0 8px 32px rgba(0, 0, 0, 0.3),
-                0 16px 64px rgba(0, 0, 0, 0.2),
+                0 16px 64px rgba(0, 0, 0, 0.1),
                 inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            animation: contentFloat 4s ease-in-out infinite;
-            max-width: 420px;
+            animation: contentFloat 3s ease-in-out infinite;
+            max-width: 380px;
             text-align: center;
+            will-change: transform;
         }
 
-        /* Advanced Loading Animation */
+        /* Optimized Loading Spinner */
         .loading-spinner {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             position: relative;
-            margin-bottom: 2rem;
-            animation: spinContainer 3s linear infinite;
+            margin-bottom: 1.5rem;
+            will-change: transform;
         }
 
         .loading-spinner::before {
@@ -225,75 +208,93 @@
             border-top: 3px solid rgba(14, 165, 233, 0.8);
             border-right: 3px solid rgba(168, 85, 247, 0.6);
             border-radius: 50%;
-            animation: spin 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-            box-shadow: 0 0 40px rgba(14, 165, 233, 0.4);
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
         }
 
         .loading-spinner::after {
             content: '';
             position: absolute;
-            top: 15px;
-            left: 15px;
-            width: calc(100% - 30px);
-            height: calc(100% - 30px);
+            top: 12px;
+            left: 12px;
+            width: calc(100% - 24px);
+            height: calc(100% - 24px);
             border: 2px solid transparent;
             border-bottom: 2px solid rgba(34, 197, 94, 0.7);
             border-left: 2px solid rgba(255, 200, 87, 0.5);
             border-radius: 50%;
-            animation: spin 1.5s linear infinite reverse;
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+            animation: spin 1s linear infinite reverse;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
         }
 
-        /* Pulsing center dot */
-        .loading-spinner-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 16px;
-            height: 16px;
-            background: linear-gradient(135deg, rgba(14, 165, 233, 1) 0%, rgba(168, 85, 247, 1) 100%);
+        /* Optimized Logo */
+        .loading-logo {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 1rem;
+            position: relative;
+            animation: logoFloat 2.5s ease-in-out infinite;
+            will-change: transform;
+        }
+
+        .logo-circle {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 2s ease-in-out infinite;
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
             box-shadow: 
-                0 0 20px rgba(14, 165, 233, 0.6),
-                0 0 40px rgba(168, 85, 247, 0.4);
+                0 0 30px rgba(14, 165, 233, 0.4),
+                0 0 60px rgba(59, 130, 246, 0.2),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            animation: logoGlow 2s ease-in-out infinite alternate;
+            will-change: box-shadow;
+        }
+
+        .logo-text {
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
         }
 
         .loading-text {
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             text-align: center;
-            margin-bottom: 0.75rem;
-            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
             background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: textShimmer 3s ease-in-out infinite;
             text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .loading-subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
             font-weight: 400;
             text-align: center;
-            margin-bottom: 1.5rem;
-            animation: subtitleFade 2s ease-in-out infinite alternate;
+            margin-bottom: 1rem;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
-        /* Progress bar */
+        /* Optimized progress bar */
         .loading-progress {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 2px;
             overflow: hidden;
             position: relative;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
         }
 
         .loading-progress::before {
@@ -309,219 +310,38 @@
                 rgba(168, 85, 247, 0.6)
             );
             animation: progressSlide 2s ease-in-out infinite;
+            will-change: transform;
         }
 
-        /* Feature dots */
-        .loading-dots {
-            display: flex;
-            gap: 8px;
-            margin-top: 1rem;
-        }
-
-        .loading-dot {
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            animation: dotPulse 1.5s ease-in-out infinite;
-        }
-
-        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-        .loading-dot:nth-child(4) { animation-delay: 0.6s; }
-
-        /* Animated Logo Styles */
-        .loading-logo {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 1.5rem;
-            position: relative;
-            animation: logoFloat 3s ease-in-out infinite;
-        }
-
-        .logo-circle {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #8b5cf6 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 
-                0 0 40px rgba(14, 165, 233, 0.4),
-                0 0 80px rgba(59, 130, 246, 0.2),
-                inset 0 2px 4px rgba(255, 255, 255, 0.2);
-            animation: logoGlow 2s ease-in-out infinite alternate;
-        }
-
-        .logo-text {
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            font-size: 1.2rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            letter-spacing: 1px;
-            animation: logoTextPulse 2s ease-in-out infinite;
-        }
-
-        .logo-ring {
-            position: absolute;
-            width: 120%;
-            height: 120%;
-            border: 2px solid rgba(14, 165, 233, 0.3);
-            border-radius: 50%;
-            top: -10%;
-            left: -10%;
-            animation: logoRingRotate 4s linear infinite;
-        }
-
-        .logo-ring::before {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: linear-gradient(45deg, #0ea5e9, #8b5cf6);
-            border-radius: 50%;
-            top: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.6);
-        }
-
-        .logo-particles {
-            position: absolute;
-            width: 150%;
-            height: 150%;
-            top: -25%;
-            left: -25%;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(14, 165, 233, 0.6);
-            border-radius: 50%;
-            animation: particleFloat 3s ease-in-out infinite;
-        }
-
-        .particle:nth-child(1) { 
-            top: 20%; left: 10%; 
-            animation-delay: 0s;
-            background: rgba(14, 165, 233, 0.8);
-        }
-        .particle:nth-child(2) { 
-            top: 60%; right: 15%; 
-            animation-delay: 0.5s;
-            background: rgba(59, 130, 246, 0.6);
-        }
-        .particle:nth-child(3) { 
-            bottom: 30%; left: 20%; 
-            animation-delay: 1s;
-            background: rgba(139, 92, 246, 0.7);
-        }
-        .particle:nth-child(4) { 
-            top: 40%; right: 10%; 
-            animation-delay: 1.5s;
-            background: rgba(14, 165, 233, 0.5);
-        }
-
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-8px) scale(1.02); }
-        }
-
-        @keyframes logoGlow {
-            0% { 
-                box-shadow: 
-                    0 0 40px rgba(14, 165, 233, 0.4),
-                    0 0 80px rgba(59, 130, 246, 0.2),
-                    inset 0 2px 4px rgba(255, 255, 255, 0.2);
-            }
-            100% { 
-                box-shadow: 
-                    0 0 60px rgba(14, 165, 233, 0.6),
-                    0 0 120px rgba(59, 130, 246, 0.3),
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            }
-        }
-
-        @keyframes logoTextPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.9; }
-        }
-
-        @keyframes logoRingRotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes particleFloat {
-            0%, 100% { 
-                transform: translateY(0px) scale(1);
-                opacity: 0.6;
-            }
-            25% { 
-                transform: translateY(-10px) scale(1.2);
-                opacity: 1;
-            }
-            50% { 
-                transform: translateY(-5px) scale(0.8);
-                opacity: 0.8;
-            }
-            75% { 
-                transform: translateY(-15px) scale(1.1);
-                opacity: 0.9;
-            }
-        }
-
+        /* Optimized animations */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        @keyframes spinContainer {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { 
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-            }
-            50% { 
-                transform: translate(-50%, -50%) scale(1.3);
-                opacity: 0.7;
-            }
-        }
-
-        @keyframes floating {
+        @keyframes logoFloat {
             0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-20px) scale(1.02); }
+            50% { transform: translateY(-6px) scale(1.02); }
+        }
+
+        @keyframes logoGlow {
+            0% { 
+                box-shadow: 
+                    0 0 30px rgba(14, 165, 233, 0.4),
+                    0 0 60px rgba(59, 130, 246, 0.2),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            }
+            100% { 
+                box-shadow: 
+                    0 0 40px rgba(14, 165, 233, 0.6),
+                    0 0 80px rgba(59, 130, 246, 0.3),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            }
         }
 
         @keyframes contentFloat {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes textShimmer {
-            0%, 100% { 
-                background-position: 0% 50%;
-                opacity: 1;
-            }
-            50% { 
-                background-position: 100% 50%;
-                opacity: 0.9;
-            }
-        }
-
-        @keyframes subtitleFade {
-            0% { opacity: 0.7; }
-            100% { opacity: 1; }
+            50% { transform: translateY(-8px); }
         }
 
         @keyframes progressSlide {
@@ -529,21 +349,10 @@
             100% { left: 100%; }
         }
 
-        @keyframes dotPulse {
-            0%, 100% { 
-                transform: scale(1);
-                opacity: 0.4;
-            }
-            50% { 
-                transform: scale(1.5);
-                opacity: 1;
-            }
-        }
-
         @keyframes fadeInUp {
             0% { 
                 opacity: 0; 
-                transform: translateY(20px);
+                transform: translateY(15px);
             }
             100% { 
                 opacity: 1; 
@@ -552,20 +361,21 @@
         }
 
         .loading-content {
-            animation: fadeInUp 0.6s ease-out;
+            animation: fadeInUp 0.5s ease-out;
         }
 
-        /* App container styling for persistent layout */
+        /* App container optimization */
         #app {
             opacity: 0;
-            transition: opacity 0.3s ease-in;
+            transition: opacity 0.25s ease-in;
+            will-change: opacity;
         }
 
         #app.loaded {
             opacity: 1;
         }
 
-        /* Persistent layout optimizations */
+        /* Performance optimizations */
         .persistent-layout {
             contain: layout style paint;
             will-change: contents;
@@ -576,7 +386,7 @@
             isolation: isolate;
         }
 
-        /* Accessibility */
+        /* Accessibility & Mobile optimizations */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -586,62 +396,28 @@
             }
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .loading-content {
-                padding: 2rem 1.5rem;
+                padding: 1.5rem 1rem;
                 margin: 1rem;
-                border-radius: 20px;
+                border-radius: 16px;
                 max-width: 90vw;
             }
 
             .loading-logo {
-                width: 80px;
-                height: 80px;
+                width: 60px;
+                height: 60px;
                 margin-bottom: 1rem;
             }
 
             .logo-text {
-                font-size: 1rem;
-            }
-
-            .loading-spinner {
-                width: 80px;
-                height: 80px;
-                margin-bottom: 1.5rem;
-            }
-
-            .loading-text {
-                font-size: 1.25rem;
-            }
-
-            .loading-subtitle {
                 font-size: 0.9rem;
             }
 
-            #app-loading {
-                background-size: cover, 400px 400px, 300px 300px, 500px 500px, cover;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .loading-content {
-                padding: 1.5rem 1rem;
-                margin: 0.5rem;
-            }
-
-            .loading-logo {
-                width: 60px;
-                height: 60px;
-            }
-
-            .logo-text {
-                font-size: 0.8rem;
-            }
-
             .loading-spinner {
                 width: 60px;
                 height: 60px;
+                margin-bottom: 1rem;
             }
 
             .loading-text {
@@ -650,6 +426,27 @@
 
             .loading-subtitle {
                 font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .loading-content {
+                padding: 1rem 0.75rem;
+                margin: 0.5rem;
+            }
+
+            .loading-logo {
+                width: 50px;
+                height: 50px;
+            }
+
+            .loading-spinner {
+                width: 50px;
+                height: 50px;
+            }
+
+            .loading-text {
+                font-size: 1rem;
             }
         }
 
@@ -673,42 +470,26 @@
         Skip to main content
     </a>
 
-    <!-- Enhanced Loading Screen -->
+    <!-- Enhanced Loading Screen with Optimized UX -->
     <div id="app-loading" aria-label="Loading application">
         <div class="loading-content">
-            <!-- Animated Logo -->
+            <!-- Optimized Logo -->
             <div class="loading-logo">
-                <div class="logo-particles">
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                </div>
-                <div class="logo-ring"></div>
-                <div class="logo-circle">
-                    <div class="logo-text">ERP</div>
-                </div>
+                <img src="{{ asset('assets/images/logo.png') }}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 12px;" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                
             </div>
             
-            <!-- Loading Spinner -->
+            <!-- Optimized Loading Spinner -->
             <div class="loading-spinner" role="status" aria-label="Loading">
-                <div class="loading-spinner-center"></div>
             </div>
             
             <!-- Text Content -->
-            <div class="loading-text">DBEDC ERP</div>
+            <div class="loading-text">Hello</div>
             <div class="loading-subtitle">Preparing your workspace...</div>
             
             <!-- Progress Bar -->
             <div class="loading-progress"></div>
-            
-            <!-- Loading Dots -->
-            <div class="loading-dots">
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-            </div>
         </div>
     </div>
     <!-- Inertia & Vite Scripts -->
@@ -721,14 +502,14 @@
 
     <!-- Enhanced Loading Management -->
     <script>
-        // Enhanced Loading Management for Persistent Layout
+        // Enhanced Loading Management for Optimized Performance
         window.AppLoader = {
             hideLoading: function() {
                 const loading = document.getElementById('app-loading');
                 const app = document.getElementById('app');
 
                 if (loading && app) {
-                    // Smooth fade out with delayed removal
+                    // Smooth fade out with optimized timing
                     loading.style.opacity = '0';
                     app.classList.add('loaded');
 
@@ -737,11 +518,11 @@
                         if (loading && loading.style.opacity === '0') {
                             loading.remove();
                         }
-                    }, 500); // Match the CSS transition duration
+                    }, 400); // Optimized timing
                 }
             },
 
-            showLoading: function(message = 'Loading...') {
+            showLoading: function(message = 'Loading...', subtitle = 'Please wait...') {
                 let loading = document.getElementById('app-loading');
                 const app = document.getElementById('app');
 
@@ -752,39 +533,18 @@
                     loading.setAttribute('aria-label', 'Loading application');
                     loading.innerHTML = `
                         <div class="loading-content">
-                            <!-- Animated Logo -->
                             <div class="loading-logo">
-                                <div class="logo-particles">
-                                    <div class="particle"></div>
-                                    <div class="particle"></div>
-                                    <div class="particle"></div>
-                                    <div class="particle"></div>
-                                </div>
-                                <div class="logo-ring"></div>
-                                <div class="logo-circle">
-                                    <div class="logo-text">ERP</div>
-                                </div>
+                                <img src="{{ asset('assets/images/logo.png') }}" alt="Logo" style="width: 160px; height: 160px; object-fit: contain; border-radius: 12px;" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                               
                             </div>
                             
-                            <!-- Loading Spinner -->
-                            <div class="loading-spinner" role="status" aria-label="Loading">
-                                <div class="loading-spinner-center"></div>
-                            </div>
+                            <div class="loading-spinner" role="status" aria-label="Loading"></div>
                             
-                            <!-- Text Content -->
                             <div class="loading-text">${message}</div>
-                            <div class="loading-subtitle">Please wait...</div>
+                            <div class="loading-subtitle">${subtitle}</div>
                             
-                            <!-- Progress Bar -->
                             <div class="loading-progress"></div>
-                            
-                            <!-- Loading Dots -->
-                            <div class="loading-dots">
-                                <div class="loading-dot"></div>
-                                <div class="loading-dot"></div>
-                                <div class="loading-dot"></div>
-                                <div class="loading-dot"></div>
-                            </div>
                         </div>
                     `;
                     document.body.appendChild(loading);
@@ -806,22 +566,25 @@
             }
         };
 
-
-
-        // Optimized Inertia.js progress and loading management for persistent layout
+        // Optimized Inertia.js progress and loading management for enhanced performance
         document.addEventListener('DOMContentLoaded', function() {
             let appReady = false;
             
-            // Listen for Inertia events
+            // Listen for Inertia events with optimized handling
             document.addEventListener('inertia:start', function(event) {
-                // For persistent layout, we only show loading for non-GET requests or slow operations
-                if (event.detail.visit.method !== 'get' || event.detail.visit.hasFiles) {
-                    window.AppLoader.showLoading('Processing...', 'Please wait while we handle your request');
+                // Check if this is an authentication-related request
+                const url = event.detail.visit.url;
+                const urlString = typeof url === 'string' ? url : (url ? url.toString() : '');
+                const isAuthRequest = urlString.includes('/login') || urlString.includes('/register') || urlString.includes('/logout') || urlString.includes('/password');
+                
+                // For optimized loading, only show for non-GET requests or slow operations
+                if ((event.detail.visit.method !== 'get' || event.detail.visit.hasFiles) && !isAuthRequest) {
+                    window.AppLoader.showLoading('Processing...', 'Please wait...');
                 }
             });
 
             document.addEventListener('inertia:progress', function(event) {
-                // Update loading progress if needed
+                // Optimized progress handling
                 if (event.detail.progress && event.detail.progress.percentage) {
                     const percentage = Math.round(event.detail.progress.percentage);
                     window.AppLoader.updateLoadingMessage(
@@ -832,31 +595,31 @@
             });
 
             document.addEventListener('inertia:finish', function(event) {
-                // Hide loading immediately for persistent layout navigation
+                // Hide loading immediately for optimized navigation
                 if (appReady) {
                     setTimeout(() => {
                         window.AppLoader.hideLoading();
-                    }, 100);
+                    }, 50); // Faster response
                 }
             });
 
-            // Initial app loading management
+            // Optimized app initialization
             const initializeApp = () => {
                 if (!appReady) {
                     window.AppLoader.updateLoadingMessage(
-                        'Initializing DBEDC ERP', 
-                        'Setting up your workspace...'
+                        'Initializing', 
+                        'Setting up components...'
                     );
                     
-                    // Hide loading after React app mounts
+                    // Hide loading after optimized timing
                     setTimeout(() => {
                         appReady = true;
                         window.AppLoader.hideLoading();
-                    }, 800); // Allow time for React to mount and components to load
+                    }, 600); // Optimized from 800ms
                 }
             };
 
-            // Multiple fallbacks to ensure loading screen disappears
+            // Enhanced fallbacks with better timing
             
             // 1. When DOM is ready
             if (document.readyState === 'loading') {
@@ -868,7 +631,7 @@
             // 2. When window loads
             window.addEventListener('load', initializeApp);
             
-            // 3. When React might be ready
+            // 3. Enhanced React readiness check
             const checkReactReady = () => {
                 if (window.React || document.querySelector('[data-reactroot]') || document.querySelector('#app > *')) {
                     initializeApp();
@@ -877,23 +640,23 @@
                 return false;
             };
             
-            // Check React readiness periodically
+            // Optimized React check interval
             let reactCheckCount = 0;
             const reactCheckInterval = setInterval(() => {
                 reactCheckCount++;
-                if (checkReactReady() || reactCheckCount > 20) { // Stop after 2 seconds
+                if (checkReactReady() || reactCheckCount > 15) { // Reduced from 20 checks
                     clearInterval(reactCheckInterval);
                 }
             }, 100);
             
-            // 4. Absolute fallback - hide loading after maximum time
+            // 4. Reduced fallback timeout
             setTimeout(() => {
                 if (!appReady) {
                     console.warn('App loading timed out, forcing hide');
                     appReady = true;
                     window.AppLoader.hideLoading();
                 }
-            }, 3000);
+            }, 2000); // Reduced from 3000ms
         });
 
         // Performance monitoring
@@ -913,9 +676,14 @@
         window.addEventListener('error', function(e) {
             console.error('Unhandled error:', e.error);
             // Hide loading screen on error but show error message
-            window.AppLoader.updateLoadingMessage('Error Loading', 'Refreshing page...');
+            window.AppLoader.updateLoadingMessage('Error Loading', 'Attempting to recover...');
             setTimeout(() => {
-                window.location.reload();
+                // Instead of full reload, try to navigate to dashboard
+                if (window.Inertia) {
+                    window.Inertia.visit('/dashboard');
+                } else {
+                    window.AppLoader.hideLoading();
+                }
             }, 1500);
         });
 
@@ -949,7 +717,7 @@
         {
             "@context": "https://schema.org",
             "@type": "WebApplication",
-            "name": "{{ config('app.name', 'DBEDC ERP') }}",
+            "name": "{{ config('app.name') }}",
             "description": "Comprehensive Enterprise Resource Planning System",
             "url": "{{ url('/') }}",
             "applicationCategory": "BusinessApplication",

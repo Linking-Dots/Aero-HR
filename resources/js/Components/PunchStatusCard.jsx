@@ -494,10 +494,29 @@ const PunchStatusCard = () => {
     };
 
     return (
-        <Box sx={{ mx: 'auto', p: 2, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ 
+            p: 2, 
+            display: 'flex', 
+            flexDirection: 'column',
+            width: '100%',
+            height: '100%'
+        }}>
             {/* Compact Hero Status Card */}
-            <GlassCard>
-                <CardContent sx={{ p: 2, textAlign: 'center', position: 'relative' }}>
+            <GlassCard sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                height: '100%',
+                width: '100%'
+            }}>
+                <CardContent sx={{ 
+                    p: 2, 
+                    textAlign: 'center', 
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    width: '100%'
+                }}>
 
 
                     {/* Compact Header with User & Time */}

@@ -95,7 +95,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const SystemMonitoringEnhanced = ({ title, initialData }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const { auth } = usePage().props;
+    const { auth, app } = usePage().props;
     
     // State management
     const [data, setData] = useState(initialData || {});
@@ -1181,7 +1181,7 @@ const SystemMonitoringEnhanced = ({ title, initialData }) => {
                                                     System Version
                                                 </Typography>
                                                 <Typography variant="body2" className="font-medium">
-                                                    DBEDC ERP v2.0
+                                                    {app?.name || 'ERP System'} v{app?.version || '2.0'}
                                                 </Typography>
                                             </div>
                                             <div>

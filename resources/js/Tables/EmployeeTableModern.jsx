@@ -553,6 +553,7 @@ const EmployeeTableModern = ({
                       isDisabled={isDeptLoading}
                       className={`${isDeptLoading ? 'opacity-50' : 'hover:bg-white/10'} transition-all duration-200`}
                       startContent={<BuildingOfficeIcon className="w-4 h-4" />}
+                      textValue={dept.name}
                     >
                       {dept.name}
                     </DropdownItem>
@@ -627,6 +628,7 @@ const EmployeeTableModern = ({
                       isDisabled={isDesigLoading}
                       className={`${isDesigLoading ? 'opacity-50' : 'hover:bg-white/10'} transition-all duration-200`}
                       startContent={<BriefcaseIcon className="w-4 h-4" />}
+                      textValue={desig.title}
                     >
                       {desig.title}
                     </DropdownItem>
@@ -696,6 +698,7 @@ const EmployeeTableModern = ({
                       isDisabled={isAttendanceLoading}
                       className={`${isAttendanceLoading ? 'opacity-50' : 'hover:bg-white/10'} transition-all duration-200`}
                       startContent={<ClockIcon className="w-4 h-4" />}
+                      textValue={type.name}
                     >
                       {type.name}
                     </DropdownItem>
@@ -741,6 +744,7 @@ const EmployeeTableModern = ({
                     onPress={() => window.location.href = route('profile', { user: user.id })}
                     isDisabled={isDeleteLoading}
                     className={`${isDeleteLoading ? 'opacity-50' : 'hover:bg-white/10'} transition-all duration-200`}
+                    textValue="Edit Profile"
                   >
                     Edit Profile
                   </DropdownItem>
@@ -755,6 +759,7 @@ const EmployeeTableModern = ({
                       <TrashIcon className="w-4 h-4" />
                     }
                     onPress={() => handleDelete(user.id, user.name)}
+                    textValue="Delete User"
                     isDisabled={isDeleteLoading}
                   >
                     {isDeleteLoading ? 'Deleting...' : 'Delete'}

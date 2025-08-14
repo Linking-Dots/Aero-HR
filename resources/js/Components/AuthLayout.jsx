@@ -1,119 +1,229 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Box, Container, Typography, useTheme } from '@mui/material';
+import { 
+    ShieldCheckIcon
+} from '@heroicons/react/24/outline';
+import GlassCard from '@/Components/GlassCard';
+import { useAuthThemeSync } from '@/hooks/useThemeSync';
+// Import theme CSS files to ensure background patterns work on auth pages
+import '../../css/theme-transitions.css';
+import '../../css/smooth-animations.css';
+import logo from '../../../public/assets/images/logo.png';
 
 const AuthLayout = ({ children, title, subtitle }) => {
+    const theme = useTheme();
+    const [isDesktop, setIsDesktop] = useState(false);
+    
+    // Use the enhanced theme sync hook for authentication pages
+    useAuthThemeSync();
+
+    // Check if screen is desktop for showing floating elements
+    useEffect(() => {
+        const checkScreenSize = () => {
+            setIsDesktop(window.innerWidth > 768);
+        };
+        
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+        
+        return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
+
     return (
-        <div className="min-h-screen flex">
-            {/* Left side - Branding/Design */}
-            <motion.div 
-                className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 relative overflow-hidden"
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.8 }}
-            >
-                {/* Background Pattern */}
-                <div 
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        <Box
+            sx={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: { xs: 1, sm: 2 },
+                position: 'relative',
+                overflow: 'hidden',
+                // Let the document/body handle the themed background
+                // No background override - preserves theme background patterns
+            }}
+        >
+            {/* Floating Background Elements - Responsive positioning */}
+            {isDesktop && (
+                <>
+                    <motion.div
+                        className="absolute w-12 h-12 rounded-full"
+                        style={{
+                            top: '10%',
+                            left: '8%',
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.secondary.main}15)`,
+                            backdropFilter: 'blur(8px)'
+                        }}
+                        animate={{ 
+                            y: [-10, 10, -10],
+                            rotate: [0, 180, 360] 
+                        }}
+                        transition={{ 
+                            duration: 12, 
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                    />
+                    <motion.div
+                        className="absolute w-8 h-8 rounded-full"
+                        style={{
+                            bottom: '15%',
+                            right: '10%',
+                            background: `linear-gradient(135deg, ${theme.palette.secondary.main}20, ${theme.palette.primary.main}20)`,
+                            backdropFilter: 'blur(6px)'
+                        }}
+                        animate={{ 
+                            x: [-8, 8, -8],
+                            scale: [1, 1.1, 1]
+                        }}
+                        transition={{ 
+                            duration: 8, 
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: 2
+                        }}
+                    />
+                </>
+            )}
+
+            <Container maxWidth="sm" sx={{ px: { xs: 1, sm: 2 } }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: { xs: '100vh', sm: '80vh' },
+                        py: { xs: 2, sm: 4 }
                     }}
-                ></div>
-                
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center items-center text-white p-12 text-center">
-                    <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3, duration: 0.6 }}
-                    >
-                        <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
-                            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                            </svg>
-                        </div>
-                        
-                        <h1 className="text-4xl font-bold mb-4">
-                            Aero<span className="text-blue-200">HR</span>
-                        </h1>
-                        
-                        <p className="text-xl text-blue-100 mb-6 max-w-md">
-                            Your comprehensive human resources management platform
-                        </p>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                                <div className="font-semibold">Employee Management</div>
-                                <div className="text-blue-200">Complete HR solutions</div>
-                            </div>
-                            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                                <div className="font-semibold">Secure & Compliant</div>
-                                <div className="text-blue-200">Enterprise-grade security</div>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-
-                {/* Floating Elements */}
-                <motion.div
-                    className="absolute top-20 right-20 w-12 h-12 bg-white/10 rounded-full backdrop-blur-sm"
-                    animate={{ y: [-10, 10, -10] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                />
-                <motion.div
-                    className="absolute bottom-32 left-16 w-8 h-8 bg-white/10 rounded-full backdrop-blur-sm"
-                    animate={{ y: [10, -10, 10] }}
-                    transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-                />
-            </motion.div>
-
-            {/* Right side - Form */}
-            <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
-                <motion.div
-                    className="max-w-md mx-auto w-full"
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.4, duration: 0.5 }}
+                    {/* Auth Form Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="w-full"
+                        style={{ maxWidth: '420px' }}
+                    >
+                        <GlassCard
+                            sx={{
+                                p: { xs: 2.5, sm: 3, md: 4 },
+                                position: 'relative',
+                                overflow: 'visible',
+                                width: '100%',
+                                borderRadius: { xs: 3, sm: 4 }
+                            }}
                         >
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                {title}
-                            </h2>
-                            {subtitle && (
-                                <p className="text-gray-600">
-                                    {subtitle}
-                                </p>
-                            )}
-                        </motion.div>
-                    </div>
+                            {/* Logo at top of form card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.3 }}
+                                style={{ textAlign: 'center', marginBottom: theme.spacing(3) }}
+                            >
+                                <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1.5, sm: 2 } }}>
+                                    <motion.div
+                                        className="inline-flex items-center justify-center rounded-xl"
+                                       
+                                        whileHover={{ scale: 1.05 }}
+                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                    >
+                                        <img 
+                                            src={logo} 
+                                            alt="Logo" 
+                                            style={{
+                                                width: '160px',
+                                                height: '160px',
+                                                objectFit: 'contain'
+                                            }}
+                                            onError={(e) => {
+                                                // Fallback to text logo if image fails to load
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'block';
+                                            }}
+                                        />
+                                       
+                                    </motion.div>
+                                </Box>
+                            </motion.div>
 
-                    {/* Form Content */}
-                    <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.6, duration: 0.5 }}
-                        className="bg-white py-8 px-6 rounded-2xl shadow-xl border border-gray-200"
-                    >
-                        {children}
-                    </motion.div>
+                            {/* Header */}
+                            <Box sx={{ mb: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.4 }}
+                                >
+                                    <Typography
+                                        variant="h4"
+                                        component="h1"
+                                        fontWeight="600"
+                                        gutterBottom
+                                        sx={{
+                                            background: `linear-gradient(135deg, ${theme.palette.text.primary}, ${theme.palette.primary.main})`,
+                                            backgroundClip: 'text',
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent',
+                                            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                                            mb: { xs: 1, sm: 1.5 }
+                                        }}
+                                    >
+                                        {title}
+                                    </Typography>
+                                    {subtitle && (
+                                        <Typography
+                                            variant="body1"
+                                            color="text.secondary"
+                                            sx={{ 
+                                                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
+                                                lineHeight: 1.4,
+                                                px: { xs: 1, sm: 0 }
+                                            }}
+                                        >
+                                            {subtitle}
+                                        </Typography>
+                                    )}
+                                </motion.div>
+                            </Box>
 
-                    {/* Footer */}
-                    <motion.div
-                        className="mt-8 text-center text-sm text-gray-500"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1, duration: 0.5 }}
-                    >
-                        <p>© 2025 AeroHR. All rights reserved.</p>
+                            {/* Form Content */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.6 }}
+                            >
+                                {children}
+                            </motion.div>
+
+                            {/* Decorative Elements - Minimized */}
+                            <motion.div
+                                className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                                style={{
+                                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                                    opacity: 0.4
+                                }}
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                            />
+                            <motion.div
+                                className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full"
+                                style={{
+                                    background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                                    opacity: 0.4
+                                }}
+                                animate={{ scale: [1, 1.3, 1] }}
+                                transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
+                            />
+                        </GlassCard>
+
+                       
+
+                        
                     </motion.div>
-                </motion.div>
-            </div>
-        </div>
+                </Box>
+            </Container>
+        </Box>
     );
 };
 

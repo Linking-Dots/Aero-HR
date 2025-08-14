@@ -14,10 +14,14 @@ import { Skeleton, Card } from '@heroui/react';
 
 const StatisticCard = ({ title, value, icon: IconComponent, color, isLoaded, testId }) => (
     <Grow in timeout={300}>
-        <GlassCard sx={{ height: '100%' }}>
+        <GlassCard sx={{ 
+            height: '100%',
+            width: '100%' 
+        }}>
             <CardContent sx={{ 
                 p: { xs: 2, sm: 3 },
                 height: '100%',
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'column'
             }}>
@@ -218,7 +222,8 @@ const StatisticsWidgets = () => {
                 pt: 2, 
                 pr: 2, 
                 pl: 2, 
-                height: '100%' 
+                height: '100%',
+                width: '100%'
             }}
             component="section"
             aria-label="Statistics Dashboard"

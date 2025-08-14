@@ -370,6 +370,7 @@ const ProjectListView = ({
                                                 key="view"
                                                 startContent={<EyeIcon className="w-4 h-4" />}
                                                 onPress={() => handleQuickAction('view', project)}
+                                                textValue="View Details"
                                             >
                                                 View Details
                                             </DropdownItem>
@@ -378,6 +379,7 @@ const ProjectListView = ({
                                                     key="edit"
                                                     startContent={<PencilIcon className="w-4 h-4" />}
                                                     onPress={() => handleQuickAction('edit', project)}
+                                                    textValue="Edit Project"
                                                 >
                                                     Edit Project
                                                 </DropdownItem>

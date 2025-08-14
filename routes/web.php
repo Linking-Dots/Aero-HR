@@ -39,6 +39,10 @@ Route::get('/session-check', function () {
     return response()->json(['authenticated' => auth()->check()]);
 });
 
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');

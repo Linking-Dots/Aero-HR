@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\CompanySetting;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -30,6 +31,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $userWithDesignation = $user ? \App\Models\User::with('designation')->find($user->id) : null;
+        
+        // Get company settings for global use
+        $companySettings = CompanySetting::first();
+        $companyName = $companySettings?->companyName ?? config('app.name', 'DBEDC ERP');
 
         return [
             ...parent::share($request),
@@ -39,6 +44,9 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
                 'designation' => $userWithDesignation?->designation?->title,
             ],
+            
+            // Company Settings
+            'companySettings' => $companySettings,
             
             // Theme and UI Configuration
             'theme' => [
@@ -50,7 +58,7 @@ class HandleInertiaRequests extends Middleware
             
             // Application Configuration
             'app' => [
-                'name' => config('app.name', 'DBEDC ERP'),
+                'name' => $companyName,
                 'version' => config('app.version', '1.0.0'),
                 'debug' => config('app.debug', false),
                 'environment' => config('app.env', 'production'),

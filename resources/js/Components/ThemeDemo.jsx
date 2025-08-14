@@ -268,7 +268,7 @@ const ThemeDemo = ({ currentTheme, darkMode }) => {
           How to Use the Theme System
         </Typography>
         <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-          The AeroHR theme system provides a comprehensive, smooth, and professional theming experience:
+          The theme system provides a comprehensive, smooth, and professional theming experience:
         </Typography>
         <Box component="ul" sx={{ pl: 3 }}>
           <Typography component="li" variant="body2" sx={{ mb: 1 }}>

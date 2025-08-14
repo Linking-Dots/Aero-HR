@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import {
     Box,
     Grid,
@@ -101,7 +101,10 @@ const SecurityDashboard = () => {
                         <Button
                             variant="outlined"
                             startIcon={<Refresh />}
-                            onClick={() => window.location.reload()}
+                            onClick={() => {
+                                // Instead of full reload, refresh the page data
+                                router.reload({ only: ['stats', 'logs', 'alerts'] });
+                            }}
                         >
                             Refresh
                         </Button>

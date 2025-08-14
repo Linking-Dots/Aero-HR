@@ -74,7 +74,16 @@ class ErrorBoundary extends React.Component {
     };
 
     handleReload = () => {
-        window.location.reload();
+        // Instead of full page reload, try to recover gracefully
+        // First try to retry the component
+        this.handleRetry();
+        
+        // If that doesn't work, navigate to dashboard instead of reload
+        setTimeout(() => {
+            if (this.state.hasError) {
+                this.handleGoHome();
+            }
+        }, 1000);
     };    render() {
         if (this.state.hasError) {
             const { error, errorInfo, errorId, showDetails } = this.state;
@@ -135,7 +144,7 @@ class ErrorBoundary extends React.Component {
                                 startContent={<ArrowPathIcon className="w-4 h-4" />}
                                 onClick={this.handleReload}
                             >
-                                Reload Page
+                                Recover
                             </Button>
                         </div>
 

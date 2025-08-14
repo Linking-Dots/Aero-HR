@@ -2046,10 +2046,13 @@ const RoleManagement = (props) => {
                             <Button
                                 color="warning"
                                 size="small"
-                                onClick={() => window.location.reload()}
+                                onClick={() => {
+                                    // Instead of full reload, refresh the page data
+                                    router.reload({ only: ['roles', 'permissions', 'users'] });
+                                }}
                                 startContent={<ArrowPathIcon className="w-4 h-4" />}
                             >
-                                Refresh Page
+                                Refresh Data
                             </Button>
                         }
                     >

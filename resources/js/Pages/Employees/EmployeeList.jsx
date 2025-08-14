@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Head, usePage } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import { 
   Box, 
   Typography, 
@@ -316,7 +316,7 @@ const EmployeesList = ({ title, departments, designations, attendanceTypes }) =>
     return (
       <Card 
         className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-200 cursor-pointer h-full"
-        onPress={() => window.location.href = route('profile', { user: user.id })}
+        onPress={() => router.visit(route('profile', { user: user.id }))}
       >
         <CardBody className="p-4 flex flex-col h-full">
           {/* Card Header with Employee Info */}
@@ -346,7 +346,7 @@ const EmployeesList = ({ title, departments, designations, attendanceTypes }) =>
                 className="text-default-400 hover:text-foreground"
                 onPress={(e) => {
                   e.stopPropagation();
-                  window.location.href = route('profile', { user: user.id });
+                  router.visit(route('profile', { user: user.id }));
                 }}
               >
                 <PencilIcon className="w-4 h-4" />

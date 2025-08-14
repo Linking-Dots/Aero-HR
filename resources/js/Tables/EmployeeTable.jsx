@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useTheme } from "@mui/material/styles";
 import { toast } from "react-toastify";
 import { CircularProgress } from "@mui/material";
@@ -564,7 +564,7 @@ const EmployeeTable = ({
                 <DropdownItem 
                   key="edit" 
                   startContent={<PencilIcon className="w-4 h-4" />}
-                  onPress={() => window.location.href = route('profile', { user: user.id })}
+                  onPress={() => router.visit(route('profile', { user: user.id }))}
                 >
                   Edit Profile
                 </DropdownItem>

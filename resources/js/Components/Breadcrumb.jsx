@@ -140,7 +140,7 @@ const Breadcrumb = ({ }) => {
         <Box sx={{
             display: 'flex',
             justifyContent: 'center',
-            padding: '0px 16px 0px 16px'
+            p: 1.5,
         }}>
             <Grow in>
                 <Grid container>

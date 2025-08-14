@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
+import { useTheme } from '@mui/material/styles';
 
 const Button = forwardRef(({ 
     children, 
@@ -15,25 +16,99 @@ const Button = forwardRef(({
     iconPosition = 'left',
     ...props 
 }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const theme = useTheme();
     
-    const variants = {
-        primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:ring-blue-500',
-        secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-500',
-        outline: 'border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
-        ghost: 'hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
-        danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm focus:ring-red-500',
-        success: 'bg-green-600 hover:bg-green-700 text-white shadow-sm focus:ring-green-500',
+    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
+    
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    color: theme.palette.primary.contrastText,
+                    border: 'none',
+                    boxShadow: `0 4px 15px ${theme.palette.primary.main}30, 0 2px 8px rgba(0, 0, 0, 0.1)`,
+                    '&:hover': {
+                        boxShadow: `0 6px 20px ${theme.palette.primary.main}40, 0 4px 12px rgba(0, 0, 0, 0.15)`,
+                        transform: 'translateY(-2px)'
+                    }
+                };
+            case 'secondary':
+                return {
+                    background: theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.1)'
+                        : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px) saturate(180%)',
+                    color: theme.palette.text.primary,
+                    border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    '&:hover': {
+                        background: theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.15)'
+                            : 'rgba(255, 255, 255, 0.9)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        transform: 'translateY(-1px)'
+                    }
+                };
+            case 'outline':
+                return {
+                    background: 'transparent',
+                    color: theme.palette.primary.main,
+                    border: `2px solid ${theme.palette.primary.main}40`,
+                    backdropFilter: 'blur(5px)',
+                    '&:hover': {
+                        background: `${theme.palette.primary.main}10`,
+                        border: `2px solid ${theme.palette.primary.main}60`,
+                        transform: 'translateY(-1px)'
+                    }
+                };
+            case 'ghost':
+                return {
+                    background: 'transparent',
+                    color: theme.palette.text.primary,
+                    border: 'none',
+                    '&:hover': {
+                        background: theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.05)',
+                    }
+                };
+            case 'danger':
+                return {
+                    background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
+                    color: theme.palette.error.contrastText,
+                    border: 'none',
+                    boxShadow: `0 4px 15px ${theme.palette.error.main}30, 0 2px 8px rgba(0, 0, 0, 0.1)`,
+                    '&:hover': {
+                        boxShadow: `0 6px 20px ${theme.palette.error.main}40, 0 4px 12px rgba(0, 0, 0, 0.15)`,
+                        transform: 'translateY(-2px)'
+                    }
+                };
+            case 'success':
+                return {
+                    background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                    color: theme.palette.success.contrastText,
+                    border: 'none',
+                    boxShadow: `0 4px 15px ${theme.palette.success.main}30, 0 2px 8px rgba(0, 0, 0, 0.1)`,
+                    '&:hover': {
+                        boxShadow: `0 6px 20px ${theme.palette.success.main}40, 0 4px 12px rgba(0, 0, 0, 0.15)`,
+                        transform: 'translateY(-2px)'
+                    }
+                };
+            default:
+                return {};
+        }
     };
     
     const sizes = {
-        sm: 'px-3 py-1.5 text-sm',
-        md: 'px-4 py-2.5 text-sm',
+        sm: 'px-3 py-2 text-sm',
+        md: 'px-5 py-2.5 text-sm',
         lg: 'px-6 py-3 text-base',
         xl: 'px-8 py-4 text-lg',
     };
 
     const isDisabled = disabled || loading;
+    const variantStyles = getVariantStyles();
 
     // If using Link component, don't pass type and disabled props
     const componentProps = Component === 'button' 
@@ -42,24 +117,43 @@ const Button = forwardRef(({
 
     return (
         <motion.div
-            ref={ref}
-            className={clsx(
-                baseStyles,
-                variants[variant],
-                sizes[size],
-                className
-            )}
-            whileHover={!isDisabled ? { scale: 1.02 } : undefined}
-            whileTap={!isDisabled ? { scale: 0.98 } : undefined}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className={clsx(baseStyles, sizes[size], className)}
+            style={variantStyles}
+            whileHover={!isDisabled ? { 
+                scale: 1.02,
+                transition: { type: "spring", stiffness: 400, damping: 30 }
+            } : undefined}
+            whileTap={!isDisabled ? { 
+                scale: 0.98,
+                transition: { type: "spring", stiffness: 400, damping: 30 }
+            } : undefined}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
         >
+            {/* Shimmer effect for primary buttons */}
+            {variant === 'primary' && !isDisabled && (
+                <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                        ease: "easeInOut"
+                    }}
+                />
+            )}
+            
             <Component
-                className="w-full h-full flex items-center justify-center"
+                ref={ref}
+                className="w-full h-full flex items-center justify-center relative z-10"
                 {...componentProps}
             >
                 {loading && (
                     <motion.div
-                        className="mr-2"
+                        className="mr-3"
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     >
@@ -82,13 +176,33 @@ const Button = forwardRef(({
                 )}
                 
                 {Icon && iconPosition === 'left' && !loading && (
-                    <Icon className="w-4 h-4 mr-2" />
+                    <motion.div
+                        className="mr-2"
+                        initial={{ opacity: 0, x: -5 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <Icon className="w-4 h-4" />
+                    </motion.div>
                 )}
                 
-                {children}
+                <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    {children}
+                </motion.span>
                 
                 {Icon && iconPosition === 'right' && !loading && (
-                    <Icon className="w-4 h-4 ml-2" />
+                    <motion.div
+                        className="ml-2"
+                        initial={{ opacity: 0, x: 5 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <Icon className="w-4 h-4" />
+                    </motion.div>
                 )}
             </Component>
         </motion.div>

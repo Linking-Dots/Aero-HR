@@ -1,58 +1,39 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Box, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
 import { usePage } from "@inertiajs/react";
 import useTheme from "@/theme.jsx";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../../css/theme-transitions.css';
+import '../../css/smooth-animations.css';
 import { Inertia } from '@inertiajs/inertia';
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
 import { HeroUIProvider } from "@heroui/react";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
 import {ScrollShadow} from "@heroui/scroll-shadow";
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Lazy load components with code splitting
-const Header = lazy(() => import("@/Layouts/Header.jsx"));
-const Breadcrumb = lazy(() => import("@/Components/Breadcrumb.jsx"));
-const BottomNav = lazy(() => import("@/Layouts/BottomNav.jsx"));
-const Sidebar = lazy(() => import("@/Layouts/Sidebar.jsx"));
-const SessionExpiredModal = lazy(() => import('@/Components/SessionExpiredModal.jsx'));
-const ThemeSettingDrawer = lazy(() => import("@/Components/ThemeSettingDrawer.jsx"));
+// Direct imports - eager loading with smooth animations
+import Header from "@/Layouts/Header.jsx";
+import Sidebar from "@/Layouts/Sidebar.jsx";
+import Breadcrumb from "@/Components/Breadcrumb.jsx";
+import BottomNav from "@/Layouts/BottomNav.jsx";
+import SessionExpiredModal from '@/Components/SessionExpiredModal.jsx';
+import ThemeSettingDrawer from "@/Components/ThemeSettingDrawer.jsx";
+import { FadeIn, SlideIn } from '@/Components/Animations/SmoothAnimations';
 
 import axios from 'axios';
 
-// Optimized loading component with skeleton
-const LoadingFallback = React.memo(({ type = 'default' }) => {
-    const skeletonStyles = {
-        default: { height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-        header: { height: '64px', background: 'rgba(255,255,255,0.1)', borderRadius: '12px', margin: '8px' },
-        sidebar: { height: '100%', width: '280px', background: 'rgba(255,255,255,0.05)' },
-        content: { height: '200px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', margin: '8px' }
-    };
-
-    return (
-        <Box sx={skeletonStyles[type]}>
-            {type === 'default' && (
-                <div className="animate-pulse">
-                    <div className="h-4 w-20 bg-gray-300 rounded"></div>
-                </div>
-            )}
-        </Box>
-    );
-});
-
-LoadingFallback.displayName = 'LoadingFallback';
-
 /**
- * Main App Layout Component
- * Optimized for performance with memoization, virtualization and efficient state management
+ * Enhanced App Layout Component
+ * Optimized for performance with direct component imports (eager loading)
  */
 function App({ children }) {
     // ===== STATE MANAGEMENT =====
     const [sessionExpired, setSessionExpired] = useState(false);
     const [scrolled, setScrolled] = useState(false); // Track scroll position for shadow effect
-    let { auth, url, csrfToken } = usePage().props;
+    let { auth, app, url, csrfToken } = usePage().props;
     
     // Memoize auth to prevent unnecessary re-renders
     const memoizedAuth = useMemo(() => ({
@@ -309,11 +290,12 @@ function App({ children }) {
         }
     }, [memoizedAuth?.user]);
 
-    // ===== MEMOIZED LAYOUT COMPONENTS =====
+    // ===== ENHANCED MEMOIZED LAYOUT COMPONENTS WITH ANIMATIONS =====
     // These components are memoized to prevent re-rendering on page navigation
+    // with smooth entry animations for better UX
     const headerContent = useMemo(() => (
         memoizedAuth?.user ? (
-            <Suspense fallback={<LoadingFallback type="header" />}>
+            <FadeIn delay={0.1} direction="down" duration={0.5}>
                 <Header
                     url={url}
                     pages={pages}
@@ -324,34 +306,34 @@ function App({ children }) {
                     toggleSideBar={toggleSideBar}
                     themeDrawerOpen={themeDrawerOpen}
                 />
-            </Suspense>
+            </FadeIn>
         ) : null
     ), [url, pages, darkMode, toggleDarkMode, toggleThemeDrawer, sideBarOpen, toggleSideBar, themeDrawerOpen, memoizedAuth?.user]);
 
     const sidebarContent = useMemo(() => (
         memoizedAuth?.user ? (
-            <Suspense fallback={<LoadingFallback type="sidebar" />}>
+            <SlideIn direction="left" delay={0.2} duration={0.6}>
                 <Sidebar 
                     url={url} 
                     pages={pages} 
                     toggleSideBar={toggleSideBar}
                     sideBarOpen={sideBarOpen}
                 />
-            </Suspense>
+            </SlideIn>
         ) : null
-    ), [url, pages, toggleSideBar, sideBarOpen, memoizedAuth?.user]);
+    ), [pages, toggleSideBar, sideBarOpen, memoizedAuth?.user]);
 
     const breadcrumbContent = useMemo(() => (
         memoizedAuth?.user ? (
-            <Suspense fallback={null}>
+            <FadeIn delay={0.3} direction="right" duration={0.4}>
                 <Breadcrumb />
-            </Suspense>
+            </FadeIn>
         ) : null
     ), [memoizedAuth?.user]);
 
     const bottomNavContent = useMemo(() => (
         memoizedAuth?.user && isMobile ? (
-            <Suspense fallback={null}>
+            <SlideIn direction="up" delay={0.4} duration={0.5}>
                 <BottomNav
                     setBottomNavHeight={setBottomNavHeight}
                     contentRef={contentRef}
@@ -359,7 +341,7 @@ function App({ children }) {
                     toggleSideBar={toggleSideBar}
                     sideBarOpen={sideBarOpen}
                 />
-            </Suspense>
+            </SlideIn>
         ) : null
     ), [memoizedAuth?.user, isMobile, setBottomNavHeight, toggleSideBar, sideBarOpen]);
 
@@ -369,21 +351,17 @@ function App({ children }) {
             <HeroUIProvider>
                 {/* Global modals and overlays */}
                 {sessionExpired && (
-                    <Suspense fallback={null}>
-                        <SessionExpiredModal setSessionExpired={setSessionExpired}/>
-                    </Suspense>
+                    <SessionExpiredModal setSessionExpired={setSessionExpired}/>
                 )}
                 
-                <Suspense fallback={null}>
-                    <ThemeSettingDrawer
-                        toggleThemeColor={toggleThemeColor}
-                        themeColor={themeColor}
-                        darkMode={darkMode}
-                        toggleDarkMode={toggleDarkMode}
-                        toggleThemeDrawer={toggleThemeDrawer}
-                        themeDrawerOpen={themeDrawerOpen}
-                    />
-                </Suspense>
+                <ThemeSettingDrawer
+                    toggleThemeColor={toggleThemeColor}
+                    themeColor={themeColor}
+                    darkMode={darkMode}
+                    toggleDarkMode={toggleDarkMode}
+                    toggleThemeDrawer={toggleThemeDrawer}
+                    themeDrawerOpen={themeDrawerOpen}
+                />
                 
                 <ToastContainer
                     position="top-center"
@@ -401,7 +379,7 @@ function App({ children }) {
                 <CssBaseline />
                 
                 {/* Main layout container */}
-                <main id="app-main" className={darkMode ? "dark" : "light"}>
+                <main id="app-main" className={`${darkMode ? "dark" : "light"}`}>
                     
                     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
                         {/* Mobile overlay */}
@@ -429,17 +407,18 @@ function App({ children }) {
                                     position: 'fixed',
                                     top: 0,
                                     left: 0,
-                                    height: '100vh',
+                                    height: '100vh', // Fixed to viewport height
                                     zIndex: 1200,
-                                    width: '280px',
+                                    width: isMobile ? '280px' : '280px',
                                     transform: sideBarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
                                     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    overflowY: 'auto',
-                                    overflowX: 'hidden',
+                                    overflow: 'hidden', // Prevent container scrolling
                                     willChange: 'transform',
                                     backfaceVisibility: 'hidden',
                                     WebkitBackfaceVisibility: 'hidden',
-                                    WebkitOverflowScrolling: 'touch',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    boxShadow: sideBarOpen ? '0 0 20px rgba(0,0,0,0.1)' : 'none',
                                 }}
                             >
                                 {sidebarContent}
@@ -486,7 +465,7 @@ function App({ children }) {
                                 {breadcrumbContent}
                             </Box>
                             
-                            {/* Dynamic page content - ONLY this section re-renders on navigation */}
+                            {/* Dynamic page content with smooth transitions */}
                             <Box
                                 ref={mainContentRef}
                                 component="section"
@@ -507,15 +486,42 @@ function App({ children }) {
                                             : 'rgba(0,0,0,0.2)',
                                         borderRadius: '3px',
                                     },
+                                
                                 }}
                                 role="main"
                                 aria-label="Main content"
-                              
                             >
                                 <ScrollShadow>
-                                    {children}
+                                    <motion.div
+                                        key={url} // Re-trigger animation on route change
+                                        initial={{ opacity: 0, y: 10, scale: 0.99 }}
+                                        animate={{ 
+                                            opacity: 1, 
+                                            y: 0, 
+                                            scale: 1,
+                                            transition: {
+                                                duration: 0.4,
+                                                ease: "easeOut"
+                                            }
+                                        }}
+                                        exit={{ 
+                                            opacity: 0, 
+                                            y: -5, 
+                                            scale: 1.01,
+                                            transition: {
+                                                duration: 0.2,
+                                                ease: "easeIn"
+                                            }
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            maxWidth: '100%',
+                                            margin: '0 auto'
+                                        }}
+                                    >
+                                        {children}
+                                    </motion.div>
                                 </ScrollShadow>
-                                
                             </Box>
                             
                            

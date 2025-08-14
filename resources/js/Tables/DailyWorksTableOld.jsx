@@ -315,6 +315,7 @@ const DailyWorksTable = ({
                                                 setCurrentRow(work);
                                                 openModal("editDailyWork");
                                             }}
+                                            textValue="Edit Work"
                                         >
                                             Edit Work
                                         </DropdownItem>
@@ -323,6 +324,7 @@ const DailyWorksTable = ({
                                             className="text-danger"
                                             color="danger"
                                             startContent={<TrashIcon className="w-4 h-4" />}
+                                            textValue="Delete Work"
                                             onPress={() => handleClickOpen(work.id, "deleteDailyWork")}
                                         >
                                             Delete Work

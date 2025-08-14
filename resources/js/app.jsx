@@ -57,15 +57,32 @@ if (ENABLE_MONITORING) {
                     data: error.response.data
                 });
             }
+            // Handle CSRF token mismatch without full page reload
             if (error.response && error.response.status === 419) {
-                window.location.reload();
+                // Refresh CSRF token and retry the request
+                const token = document.head.querySelector('meta[name="csrf-token"]');
+                if (token) {
+                    // Try to get a fresh CSRF token
+                    fetch('/csrf-token')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.csrf_token) {
+                                token.content = data.csrf_token;
+                                axios.defaults.headers.common['X-CSRF-TOKEN'] = data.csrf_token;
+                            }
+                        })
+                        .catch(() => {
+                            // If we can't refresh the token, navigate to login instead of reload
+                            if (typeof window !== 'undefined' && window.Inertia) {
+                                window.Inertia.visit('/login');
+                            }
+                        });
+                }
             }
             return Promise.reject(error);
         }
     );
 }
-
-const appName = 'DBEDC ERP';
 
 createInertiaApp({
     progress: {
@@ -74,7 +91,11 @@ createInertiaApp({
         includeCSS: true,
         showSpinner: false,
     },
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => {
+        const page = window.Laravel?.inertiaProps || {};
+        const appName = page.app?.name || 'DBEDC ERP';
+        return `${title} - ${appName}`;
+    },
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.jsx`,

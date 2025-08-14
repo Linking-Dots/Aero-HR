@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Box, Typography, useMediaQuery, useTheme, Grow, Grid, Card, CardContent } from '@mui/material';
 import { 
     CalendarIcon, 
@@ -62,13 +62,13 @@ const TimeOffIndex = ({ title, timeOffRequests = [] }) => {
         {
             label: "View Calendar",
             icon: <CalendarIcon className="w-4 h-4" />,
-            onPress: () => window.location.href = '/hr/time-off/calendar',
+            onPress: () => router.visit('/hr/time-off/calendar'),
             className: GRADIENT_PRESETS.primaryButton
         },
         {
             label: "Manage Holidays",
             icon: <CalendarIcon className="w-4 h-4" />,
-            onPress: () => window.location.href = '/holidays',
+            onPress: () => router.visit('/holidays'),
             className: GRADIENT_PRESETS.secondaryButton
         }
     ];
@@ -137,7 +137,7 @@ const TimeOffIndex = ({ title, timeOffRequests = [] }) => {
                                             <div 
                                                 key={index}
                                                 className={`p-6 rounded-lg backdrop-blur-md border ${card.color} ${card.borderColor} hover:bg-white/10 transition-all duration-300 cursor-pointer group`}
-                                                onClick={() => window.location.href = card.href}
+                                                onClick={() => router.visit(card.href)}
                                             >
                                                 <div className="flex flex-col items-center text-center">
                                                     <div className="p-3 rounded-full bg-white/10 mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -173,7 +173,7 @@ const TimeOffIndex = ({ title, timeOffRequests = [] }) => {
                                                 className="mt-4"
                                                 color="primary"
                                                 variant="flat"
-                                                onPress={() => window.location.href = '/leaves'}
+                                                onPress={() => router.visit('/leaves')}
                                             >
                                                 View All Requests
                                             </Button>
