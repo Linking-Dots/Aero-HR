@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     Avatar,
     Box,
-    Button,
     CardContent,
     CardHeader,
     Divider,
@@ -28,7 +27,8 @@ import {
     Chip,
     Select,
     SelectItem,
-    Pagination
+    Pagination,
+    Button
 } from "@heroui/react";
 import EditIcon from '@mui/icons-material/Edit';
 import {
@@ -265,7 +265,8 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                 label: isMobile ? "Edit" : "Edit Profile",
                 icon: <UserPlusIcon className="w-4 h-4" />,
                 onPress: () => openModal('profile'),
-                className: "bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] text-white font-medium hover:opacity-90"
+                color: "primary",
+                variant: "solid"
             });
         }
 
@@ -273,8 +274,8 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
             label: isMobile ? "" : "Export",
             isIconOnly: isMobile,
             icon: <DocumentArrowDownIcon className="w-4 h-4" />,
-            variant: "bordered",
-            className: "border-[rgba(var(--theme-primary-rgb),0.3)] bg-[rgba(var(--theme-primary-rgb),0.05)] hover:bg-[rgba(var(--theme-primary-rgb),0.1)]"
+            color: "default",
+            variant: "bordered"
         });
         
         return buttons;
@@ -549,7 +550,7 @@ const UserProfile = ({ title, allUsers, report_to, departments, designations }) 
                                                                     <Typography variant="body2" color="textSecondary">{designations.find((designation) => designation.id === user.designation)?.title || 'N/A'}</Typography>
                                                                     <Typography variant="body2" color="textSecondary">Employee ID : {user.employee_id  || 'N/A'}</Typography>
                                                                     <Typography variant="body2" color="textSecondary">Date of Join : {user.date_of_joining  || 'N/A'}</Typography>
-                                                                    <Button variant="outlined" color="primary" sx={{ mt: 1 }}>Send Message</Button>
+                                                                    <Button variant="bordered" color="primary" className="mt-2">Send Message</Button>
                                                                 </Box>
                                                             </Grid>
                                                         </Grid>

@@ -88,14 +88,7 @@ const BulkCalendar = ({
     const finalExistingLeaves = fetchFromAPI ? apiCalendarData.existingLeaves : existingLeaves;
     const finalPublicHolidays = fetchFromAPI ? apiCalendarData.publicHolidays : publicHolidays;
 
-    // Debug logs only when data changes (reduced logging)
-    useEffect(() => {
-        if (fetchFromAPI && !loading) {
-            console.log('BulkCalendar - Calendar data loaded for year:', currentDate.getFullYear());
-            console.log('BulkCalendar - Public holidays count:', finalPublicHolidays?.length || 0);
-            console.log('BulkCalendar - Existing leaves count:', finalExistingLeaves?.length || 0);
-        }
-    }, [finalPublicHolidays, finalExistingLeaves, loading, fetchFromAPI, currentDate.getFullYear()]);
+   
 
     // Get calendar days data for the current month
     const calendarDays = useMemo(() => {

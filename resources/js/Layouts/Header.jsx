@@ -810,7 +810,7 @@ const Header = React.memo(({
       return first + last || 'U';
     };
 
-    console.log(auth)
+   
 
     return (
       <DropdownMenu 

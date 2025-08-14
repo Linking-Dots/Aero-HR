@@ -299,8 +299,7 @@ const BulkLeaveModal = ({
                     allow_partial_success: allowPartialSuccess
                 });
 
-                console.log('Bulk response status:', response.status);
-                console.log('Bulk response data:', response.data);
+             
 
                 if (response.status === 200 || response.status === 201) {
                     // Pass the response data to parent component for optimized updates

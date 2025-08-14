@@ -206,12 +206,10 @@ const LeaveForm = ({
                     data.id = currentLeave.id;
                 }
 
-                console.log('Submitting data:', data);
-                console.log('API route:', apiRoute);
+              
 
                 const response = await axios.post(apiRoute, data);
-                console.log('Response status:', response.status);
-                console.log('Response data:', response.data);
+               
     
 
                 if (response.status === 200 || response.status === 201) {

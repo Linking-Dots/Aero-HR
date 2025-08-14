@@ -478,7 +478,7 @@ const RoleManagement = (props) => {
             const rolePerms = getRolePermissions(roleId);
             setSelectedPermissions(new Set(rolePerms));
             setErrorMessage('');
-            console.log('Role selected:', roleId, 'Permissions:', rolePerms.length);
+          
         } catch (error) {
             console.error('Error selecting role:', error);
             setErrorMessage('Failed to select role. Please try again.');

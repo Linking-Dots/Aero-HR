@@ -81,8 +81,7 @@ const BulkDeleteModal = ({
                     }
                 });
 
-                console.log('Bulk delete response status:', response.status);
-                console.log('Bulk delete response data:', response.data);
+               
 
                 if (response.status === 200 && response.data.success) {
                     // Pass the response data to parent component for optimized updates
