@@ -15,9 +15,9 @@ use App\Http\Controllers\FMSController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\IMSController;
 use App\Http\Controllers\JurisdictionController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LetterController;
-use App\Http\Controllers\LMSController;
 use App\Http\Controllers\PicnicController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProfileController;
@@ -31,29 +31,250 @@ use App\Http\Controllers\SystemMonitoringController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-// Include authentication routes
-require __DIR__.'/auth.php';
+// Import all controllers for consolidated routes
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Analytics\ReportController as AnalyticsReportController;
+use App\Http\Controllers\Analytics\DashboardController as AnalyticsDashboardController;
+use App\Http\Controllers\Analytics\KPIController;
+use App\Http\Controllers\Compliance\DocumentController;
+use App\Http\Controllers\Compliance\AuditController;
+use App\Http\Controllers\ProjectManagement\ProjectController;
+use App\Http\Controllers\ProjectManagement\MilestoneController;
+use App\Http\Controllers\ProjectManagement\TaskController as PMTaskController;
+use App\Http\Controllers\ProjectManagement\IssueController;
+use App\Http\Controllers\ProjectManagement\ResourceController;
+use App\Http\Controllers\ProjectManagement\TimeTrackingController;
+use App\Http\Controllers\ProjectManagement\BudgetController;
+use App\Http\Controllers\ProjectManagement\GanttController;
+use App\Http\Controllers\Quality\InspectionController;
+use App\Http\Controllers\Quality\NCRController;
+use App\Http\Controllers\Quality\CalibrationController;
+use App\Http\Controllers\HR\PerformanceReviewController;
+use App\Http\Controllers\HR\TrainingController;
+use App\Http\Controllers\HR\RecruitmentController;
+use App\Http\Controllers\HR\OnboardingController;
+use App\Http\Controllers\HR\SkillsController;
+use App\Http\Controllers\HR\BenefitsController;
+use App\Http\Controllers\HR\TimeOffController;
+use App\Http\Controllers\HR\TimeOffManagementController;
+use App\Http\Controllers\HR\WorkplaceSafetyController;
+use App\Http\Controllers\HR\HrAnalyticsController;
+use App\Http\Controllers\HR\HrDocumentController;
+use App\Http\Controllers\HR\EmployeeSelfServiceController;
+use App\Http\Controllers\HR\PayrollController;
+use App\Http\Controllers\Central\TenantRegistrationController;
+use App\Http\Controllers\NotificationController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-Route::redirect('/', '/dashboard');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group.
+|
+*/
 
-// Public SaaS routes (central domain)
+// ============================================================================
+// HOME/LANDING PAGE ROUTE
+// ============================================================================
+
+Route::get('/', [LandingController::class, 'index'])->name('home');
+
+// Additional landing page routes
+Route::get('/features', [LandingController::class, 'features'])->name('features');
+Route::get('/landing-pricing', [LandingController::class, 'pricing'])->name('landing.pricing');
+
+// ============================================================================
+// AUTHENTICATION ROUTES
+// ============================================================================
+
+Route::middleware('guest')->group(function () {
+    // Registration Routes
+    Route::get('register', [RegisterController::class, 'create'])->name('register');
+    Route::post('register', [RegisterController::class, 'store']);
+
+    // Login Routes
+    Route::get('login', [LoginController::class, 'create'])->name('login');
+    Route::post('login', [LoginController::class, 'store']);
+
+    // Password Reset Routes
+    Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
+    // Email Verification Routes
+    Route::get('verify-email', [EmailVerificationController::class, 'prompt'])->name('verification.notice');
+    Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+                ->middleware(['signed', 'throttle:6,1'])
+                ->name('verification.verify');
+    Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
+                ->middleware('throttle:6,1')
+                ->name('verification.send');
+
+    // Logout Route
+    Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+});
+
+// ============================================================================
+// CENTRAL DOMAIN ROUTES (SaaS/Multi-tenant)
+// ============================================================================
+
+// Public SaaS routes
 Route::get('/pricing', [BillingController::class, 'pricing'])->name('pricing');
 Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('subscribe');
 Route::get('/billing/complete', [BillingController::class, 'complete'])->name('billing.complete');
 Route::get('/payment/success', [BillingController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [BillingController::class, 'paymentCancel'])->name('payment.cancel');
 
+// Central tenant registration
+Route::get('/register', [TenantRegistrationController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [TenantRegistrationController::class, 'register'])->name('register.store');
+
+// Central API routes
+Route::prefix('api')->group(function () {
+    Route::post('/check-domain', [TenantRegistrationController::class, 'checkDomain'])->name('api.check-domain');
+    Route::get('/plans/{plan}', [TenantRegistrationController::class, 'getPlan'])->name('api.plan');
+    Route::post('/create-payment-intent', [TenantRegistrationController::class, 'createPaymentIntent'])->name('api.create-payment-intent');
+});
+
+// Success pages
+Route::get('/registration-success', function () {
+    return inertia('Auth/RegistrationSuccess');
+})->name('registration.success');
+
+// Static pages
+Route::get('/pricing', function () {
+    $plans = \App\Models\Plan::where('is_active', true)->orderBy('price')->get();
+    return inertia('Pages/Pricing', ['plans' => $plans]);
+})->name('pricing');
+
 // Stripe webhook (no auth required)
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
+// ============================================================================
+// API ROUTES
+// ============================================================================
+
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+// Error logging endpoint
+Route::post('/log-error', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'error_id' => 'required|string',
+            'message' => 'required|string',
+            'stack' => 'nullable|string',
+            'component_stack' => 'nullable|string',
+            'url' => 'required|string',
+            'user_agent' => 'nullable|string',
+            'timestamp' => 'required|string'
+        ]);
+
+        DB::table('error_logs')->insert([
+            'error_id' => $validated['error_id'],
+            'message' => $validated['message'],
+            'stack_trace' => $validated['stack'] ?? null,
+            'component_stack' => $validated['component_stack'] ?? null,
+            'url' => $validated['url'],
+            'user_agent' => $validated['user_agent'] ?? null,
+            'user_id' => Auth::id(),
+            'ip_address' => $request->ip(),
+            'metadata' => json_encode([
+                'timestamp' => $validated['timestamp'],
+                'session_id' => session()->getId()
+            ]),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('Failed to log frontend error: ' . $e->getMessage());
+        return response()->json(['success' => false], 500);
+    }
+})->middleware(['web']);
+
+// Performance logging endpoint
+Route::post('/log-performance', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'metric_type' => 'required|string|in:page_load,api_response,query_execution,render_time',
+            'identifier' => 'required|string',
+            'execution_time_ms' => 'required|numeric',
+            'metadata' => 'nullable|array'
+        ]);
+
+        DB::table('performance_metrics')->insert([
+            'metric_type' => $validated['metric_type'],
+            'identifier' => $validated['identifier'],
+            'execution_time_ms' => $validated['execution_time_ms'],
+            'metadata' => json_encode($validated['metadata'] ?? []),
+            'user_id' => Auth::id(),
+            'ip_address' => $request->ip(),
+            'created_at' => now()
+        ]);
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('Failed to log performance metric: ' . $e->getMessage());
+        return response()->json(['success' => false], 500);
+    }
+})->middleware(['web']);
+
+// Domain availability check for registration
+Route::post('/check-domain', function (Request $request) {
+    try {
+        $request->validate([
+            'domain' => 'required|string|min:3|max:50|regex:/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/'
+        ]);
+
+        $domain = strtolower(trim($request->domain));
+        
+        // Check if domain already exists
+        $exists = DB::table('tenants')->where('id', $domain)->exists();
+        
+        return response()->json([
+            'available' => !$exists,
+            'domain' => $domain
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Domain check failed: ' . $e->getMessage());
+        return response()->json([
+            'available' => false,
+        ]);
+    }
+});
+
+// Notification token endpoint
+Route::post('/notification-token', [NotificationController::class, 'storeToken'])->middleware(['auth:sanctum']);
+
+// Session and CSRF token endpoints
 Route::get('/session-check', function () {
-    return response()->json(['authenticated' => auth()->check()]);
+    return response()->json(['authenticated' => Auth::check()]);
 });
 
 Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
+
+// ============================================================================
+// AUTHENTICATED USER ROUTES
+// ============================================================================
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -510,41 +731,7 @@ Route::middleware(['auth', 'verified', 'role:Super Administrator'])->group(funct
         Route::put('/settings', [IMSController::class, 'updateSettings'])->name('ims.settings.update')->middleware('permission:warehousing.manage');
     });
 
-    // LMS Module routes (Learning Management System)
-    Route::middleware(['permission:lms.view'])->prefix('lms')->group(function () {
-        Route::get('/', [LMSController::class, 'index'])->name('lms.index');
 
-        // Course Management
-        Route::get('/courses', [LMSController::class, 'courses'])->name('lms.courses')->middleware('permission:lms.courses.view');
-        Route::post('/courses', [LMSController::class, 'storeCourse'])->name('lms.courses.store')->middleware('permission:lms.courses.create');
-
-
-        // Student Management
-        Route::get('/students', [LMSController::class, 'students'])->name('lms.students')->middleware('permission:lms.students.view');
-        Route::post('/students', [LMSController::class, 'storeStudent'])->name('lms.students.store')->middleware('permission:lms.students.create');
-        Route::put('/students/{id}', [LMSController::class, 'updateStudent'])->name('lms.students.update')->middleware('permission:lms.students.update');
-        Route::delete('/students/{id}', [LMSController::class, 'destroyStudent'])->name('lms.students.destroy')->middleware('permission:lms.students.delete');
-
-        // Instructor Management
-        Route::get('/instructors', [LMSController::class, 'instructors'])->name('lms.instructors')->middleware('permission:lms.instructors.view');
-        Route::post('/instructors', [LMSController::class, 'storeInstructor'])->name('lms.instructors.store')->middleware('permission:lms.instructors.create');
-        Route::put('/instructors/{id}', [LMSController::class, 'updateInstructor'])->name('lms.instructors.update')->middleware('permission:lms.instructors.update');
-        Route::delete('/instructors/{id}', [LMSController::class, 'destroyInstructor'])->name('lms.instructors.destroy')->middleware('permission:lms.instructors.delete');
-
-        // Assessment Management
-        Route::get('/assessments', [LMSController::class, 'assessments'])->name('lms.assessments')->middleware('permission:lms.assessments.view');
-        Route::post('/assessments', [LMSController::class, 'storeAssessment'])->name('lms.assessments.store')->middleware('permission:lms.assessments.create');
-
-
-        // Certificate Management
-        Route::get('/certificates', [LMSController::class, 'certificates'])->name('lms.certificates')->middleware('permission:lms.certificates.view');
-        Route::post('/certificates', [LMSController::class, 'storeCertificate'])->name('lms.certificates.store')->middleware('permission:lms.certificates.create');
-        Route::put('/certificates/{id}', [LMSController::class, 'updateCertificate'])->name('lms.certificates.update')->middleware('permission:lms.certificates.update');
-        Route::delete('/certificates/{id}', [LMSController::class, 'destroyCertificate'])->name('lms.certificates.destroy')->middleware('permission:lms.certificates.delete');
-
-        // Reports
-        Route::get('/reports', [LMSController::class, 'reports'])->name('lms.reports')->middleware('permission:lms.reports.view');
-    });
 
     // Designation Management
     Route::middleware(['permission:hr.designations.view'])->group(function () {
@@ -591,13 +778,436 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
 
-// Include all module routes
-require __DIR__ . '/modules.php';
-require __DIR__ . '/compliance.php';
-require __DIR__ . '/quality.php';
-require __DIR__ . '/analytics.php';
-require __DIR__ . '/project-management.php';
-require __DIR__ . '/hr.php';
-require __DIR__ . '/dms.php';
+    // ============================================================================
+    // ANALYTICS MODULE ROUTES
+    // ============================================================================
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        // Reports routes
+        Route::middleware(['permission:analytics.reports.view'])->group(function () {
+            Route::get('/reports', [AnalyticsReportController::class, 'index'])->name('reports.index');
+            Route::get('/reports/create', [AnalyticsReportController::class, 'create'])->name('reports.create');
+            Route::get('/reports/{report}/edit', [AnalyticsReportController::class, 'edit'])->name('reports.edit');
+            Route::get('/reports/{report}', [AnalyticsReportController::class, 'show'])->name('reports.show');
+            Route::get('/reports/{report}/schedule', [AnalyticsReportController::class, 'scheduleForm'])->name('reports.schedule.form');
+            Route::get('/reports/{report}/export', [AnalyticsReportController::class, 'export'])->name('reports.export');
+        });
 
-require __DIR__ . '/auth.php';
+        Route::middleware(['permission:analytics.reports.create'])->post('/reports', [AnalyticsReportController::class, 'store'])->name('reports.store');
+        Route::middleware(['permission:analytics.reports.update'])->put('/reports/{report}', [AnalyticsReportController::class, 'update'])->name('reports.update');
+        Route::middleware(['permission:analytics.reports.delete'])->delete('/reports/{report}', [AnalyticsReportController::class, 'destroy'])->name('reports.destroy');
+        Route::middleware(['permission:analytics.reports.schedule'])->post('/reports/{report}/schedule', [AnalyticsReportController::class, 'schedule'])->name('reports.schedule');
+
+        // Dashboards routes
+        Route::middleware(['permission:analytics.dashboards.view'])->group(function () {
+            Route::get('/dashboards', [AnalyticsDashboardController::class, 'index'])->name('dashboards.index');
+            Route::get('/dashboards/create', [AnalyticsDashboardController::class, 'create'])->name('dashboards.create');
+            Route::get('/dashboards/{dashboard}/edit', [AnalyticsDashboardController::class, 'edit'])->name('dashboards.edit');
+            Route::get('/dashboards/{dashboard}', [AnalyticsDashboardController::class, 'show'])->name('dashboards.show');
+        });
+
+        Route::middleware(['permission:analytics.dashboards.create'])->post('/dashboards', [AnalyticsDashboardController::class, 'store'])->name('dashboards.store');
+        Route::middleware(['permission:analytics.dashboards.update'])->put('/dashboards/{dashboard}', [AnalyticsDashboardController::class, 'update'])->name('dashboards.update');
+        Route::middleware(['permission:analytics.dashboards.delete'])->delete('/dashboards/{dashboard}', [AnalyticsDashboardController::class, 'destroy'])->name('dashboards.destroy');
+
+        // KPI routes
+        Route::middleware(['permission:analytics.kpi.view'])->group(function () {
+            Route::get('/kpi', [KPIController::class, 'index'])->name('kpi.index');
+            Route::get('/kpi/create', [KPIController::class, 'create'])->name('kpi.create');
+            Route::get('/kpi/{kpi}/edit', [KPIController::class, 'edit'])->name('kpi.edit');
+            Route::get('/kpi/{kpi}', [KPIController::class, 'show'])->name('kpi.show');
+        });
+
+        Route::middleware(['permission:analytics.kpi.create'])->post('/kpi', [KPIController::class, 'store'])->name('kpi.store');
+        Route::middleware(['permission:analytics.kpi.update'])->put('/kpi/{kpi}', [KPIController::class, 'update'])->name('kpi.update');
+        Route::middleware(['permission:analytics.kpi.delete'])->delete('/kpi/{kpi}', [KPIController::class, 'destroy'])->name('kpi.destroy');
+        Route::middleware(['permission:analytics.kpi.log'])->post('/kpi/{kpi}/log-value', [KPIController::class, 'logValue'])->name('kpi.log-value');
+    });
+
+    // ============================================================================
+    // COMPLIANCE MODULE ROUTES
+    // ============================================================================
+    Route::prefix('compliance')->name('compliance.')->group(function () {
+        // Documents
+        Route::middleware(['permission:compliance.documents.view'])->group(function () {
+            Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+            Route::get('/documents/create', [DocumentController::class, 'create'])->name('documents.create');
+            Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+            Route::get('/documents/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
+            Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+        });
+
+        Route::middleware(['permission:compliance.documents.create'])->post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+        Route::middleware(['permission:compliance.documents.update'])->put('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+        Route::middleware(['permission:compliance.documents.delete'])->delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+
+        // Audits
+        Route::middleware(['permission:compliance.audits.view'])->group(function () {
+            Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
+            Route::get('/audits/create', [AuditController::class, 'create'])->name('audits.create');
+            Route::get('/audits/{audit}', [AuditController::class, 'show'])->name('audits.show');
+            Route::get('/audits/{audit}/edit', [AuditController::class, 'edit'])->name('audits.edit');
+        });
+
+        Route::middleware(['permission:compliance.audits.create'])->post('/audits', [AuditController::class, 'store'])->name('audits.store');
+        Route::middleware(['permission:compliance.audits.update'])->group(function () {
+            Route::put('/audits/{audit}', [AuditController::class, 'update'])->name('audits.update');
+            Route::post('/audits/{audit}/findings', [AuditController::class, 'storeFinding'])->name('audits.findings.store');
+            Route::put('/findings/{finding}', [AuditController::class, 'updateFinding'])->name('findings.update');
+            Route::delete('/findings/{finding}', [AuditController::class, 'destroyFinding'])->name('findings.destroy');
+        });
+        Route::middleware(['permission:compliance.audits.delete'])->delete('/audits/{audit}', [AuditController::class, 'destroy'])->name('audits.destroy');
+     });
+
+    // ============================================================================
+    // PROJECT MANAGEMENT MODULE ROUTES
+    // ============================================================================
+    Route::prefix('project-management')->name('project-management.')->group(function () {
+        // Dashboard
+        Route::middleware(['permission:project-management.dashboard.view'])->get('/dashboard', [ProjectController::class, 'dashboard'])->name('dashboard');
+
+        // Global Views (All items across all projects)
+        Route::middleware(['permission:project-management.tasks.view'])->get('/tasks', [PMTaskController::class, 'globalIndex'])->name('tasks.global');
+        Route::middleware(['permission:project-management.milestones.view'])->get('/milestones', [MilestoneController::class, 'globalIndex'])->name('milestones.global');
+        Route::middleware(['permission:project-management.issues.view'])->get('/issues', [IssueController::class, 'globalIndex'])->name('issues.global');
+        Route::middleware(['permission:project-management.resources.view'])->get('/resources', [ResourceController::class, 'globalIndex'])->name('resources.global');
+
+        // Projects
+        Route::middleware(['permission:project-management.projects.view'])->group(function () {
+            Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+            Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
+            Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+            Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        });
+
+        Route::middleware(['permission:project-management.projects.create'])->post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+        Route::middleware(['permission:project-management.projects.update'])->put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::middleware(['permission:project-management.projects.delete'])->delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+        // Project Milestones
+        Route::middleware(['permission:project-management.milestones.view'])->group(function () {
+            Route::get('/projects/{project}/milestones', [MilestoneController::class, 'index'])->name('milestones.index');
+            Route::get('/projects/{project}/milestones/create', [MilestoneController::class, 'create'])->name('milestones.create');
+            Route::get('/projects/{project}/milestones/{milestone}/edit', [MilestoneController::class, 'edit'])->name('milestones.edit');
+        });
+
+        Route::middleware(['permission:project-management.milestones.create'])->post('/projects/{project}/milestones', [MilestoneController::class, 'store'])->name('milestones.store');
+        Route::middleware(['permission:project-management.milestones.update'])->put('/projects/{project}/milestones/{milestone}', [MilestoneController::class, 'update'])->name('milestones.update');
+        Route::middleware(['permission:project-management.milestones.delete'])->delete('/projects/{project}/milestones/{milestone}', [MilestoneController::class, 'destroy'])->name('milestones.destroy');
+
+        // Project Tasks
+        Route::middleware(['permission:project-management.tasks.view'])->group(function () {
+            Route::get('/projects/{project}/tasks', [PMTaskController::class, 'index'])->name('tasks.index');
+            Route::get('/projects/{project}/tasks/create', [PMTaskController::class, 'create'])->name('tasks.create');
+            Route::get('/projects/{project}/tasks/{task}/edit', [PMTaskController::class, 'edit'])->name('tasks.edit');
+            Route::get('/projects/{project}/tasks/{task}', [PMTaskController::class, 'show'])->name('tasks.show');
+        });
+
+        Route::middleware(['permission:project-management.tasks.create'])->post('/projects/{project}/tasks', [PMTaskController::class, 'store'])->name('tasks.store');
+        Route::middleware(['permission:project-management.tasks.update'])->put('/projects/{project}/tasks/{task}', [PMTaskController::class, 'update'])->name('tasks.update');
+        Route::middleware(['permission:project-management.tasks.delete'])->delete('/projects/{project}/tasks/{task}', [PMTaskController::class, 'destroy'])->name('tasks.destroy');
+        Route::middleware(['permission:project-management.tasks.assign'])->post('/projects/{project}/tasks/{task}/assign', [PMTaskController::class, 'assign'])->name('tasks.assign');
+
+        // Project Issues
+        Route::middleware(['permission:project-management.issues.view'])->group(function () {
+            Route::get('/projects/{project}/issues', [IssueController::class, 'index'])->name('issues.index');
+            Route::get('/projects/{project}/issues/create', [IssueController::class, 'create'])->name('issues.create');
+            Route::get('/projects/{project}/issues/{issue}/edit', [IssueController::class, 'edit'])->name('issues.edit');
+            Route::get('/projects/{project}/issues/{issue}', [IssueController::class, 'show'])->name('issues.show');
+        });
+
+        Route::middleware(['permission:project-management.issues.create'])->post('/projects/{project}/issues', [IssueController::class, 'store'])->name('issues.store');
+        Route::middleware(['permission:project-management.issues.update'])->put('/projects/{project}/issues/{issue}', [IssueController::class, 'update'])->name('issues.update');
+        Route::middleware(['permission:project-management.issues.delete'])->delete('/projects/{project}/issues/{issue}', [IssueController::class, 'destroy'])->name('issues.destroy');
+
+        // Project Resources
+        Route::middleware(['permission:project-management.resources.view'])->get('/projects/{project}/resources', [ResourceController::class, 'index'])->name('resources.index');
+        Route::middleware(['permission:project-management.resources.assign'])->post('/projects/{project}/resources', [ResourceController::class, 'store'])->name('resources.store');
+        Route::middleware(['permission:project-management.resources.assign'])->put('/projects/{project}/resources/{resource}', [ResourceController::class, 'update'])->name('resources.update');
+        Route::middleware(['permission:project-management.resources.assign'])->delete('/projects/{project}/resources/{resource}', [ResourceController::class, 'destroy'])->name('resources.destroy');
+
+        // Time Tracking
+        Route::middleware(['permission:project-management.time-tracking.view'])->group(function () {
+            Route::get('/time-tracking', [TimeTrackingController::class, 'index'])->name('time-tracking.index');
+            Route::get('/time-tracking/create', [TimeTrackingController::class, 'create'])->name('time-tracking.create');
+            Route::get('/time-tracking/{timeEntry}/edit', [TimeTrackingController::class, 'edit'])->name('time-tracking.edit');
+            Route::get('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'show'])->name('time-tracking.show');
+            Route::get('/time-tracking/reports', [TimeTrackingController::class, 'reports'])->name('time-tracking.reports');
+        });
+
+        Route::middleware(['permission:project-management.time-tracking.create'])->post('/time-tracking', [TimeTrackingController::class, 'store'])->name('time-tracking.store');
+        Route::middleware(['permission:project-management.time-tracking.update'])->put('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'update'])->name('time-tracking.update');
+        Route::middleware(['permission:project-management.time-tracking.delete'])->delete('/time-tracking/{timeEntry}', [TimeTrackingController::class, 'destroy'])->name('time-tracking.destroy');
+        Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/{timeEntry}/approve', [TimeTrackingController::class, 'approve'])->name('time-tracking.approve');
+        Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/{timeEntry}/unapprove', [TimeTrackingController::class, 'unapprove'])->name('time-tracking.unapprove');
+        Route::middleware(['permission:project-management.time-tracking.approve'])->post('/time-tracking/bulk-approve', [TimeTrackingController::class, 'bulkApprove'])->name('time-tracking.bulk-approve');
+
+        // Budget Management
+        Route::middleware(['permission:project-management.budgets.view'])->group(function () {
+            Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+            Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
+            Route::get('/budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.edit');
+            Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
+        });
+
+        Route::middleware(['permission:project-management.budgets.create'])->post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+        Route::middleware(['permission:project-management.budgets.update'])->put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+        Route::middleware(['permission:project-management.budgets.delete'])->delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+
+        // Gantt Charts
+        Route::middleware(['permission:project-management.gantt.view'])->group(function () {
+            Route::get('/gantt', [GanttController::class, 'index'])->name('gantt.index');
+            Route::get('/gantt/{project}', [GanttController::class, 'show'])->name('gantt.show');
+            Route::get('/gantt/{project}/data', [GanttController::class, 'getData'])->name('gantt.data');
+        });
+
+        Route::middleware(['permission:project-management.gantt.update'])->post('/gantt/{project}/update', [GanttController::class, 'update'])->name('gantt.update');
+    });
+
+    // ============================================================================
+    // QUALITY MODULE ROUTES
+    // ============================================================================
+    Route::prefix('quality')->name('quality.')->group(function () {
+        // Quality Dashboard
+        Route::middleware(['permission:quality.dashboard.view'])->get('/dashboard', [InspectionController::class, 'dashboard'])->name('dashboard');
+
+        // Inspections
+        Route::middleware(['permission:quality.inspections.view'])->group(function () {
+            Route::get('/inspections', [InspectionController::class, 'index'])->name('inspections.index');
+            Route::get('/inspections/create', [InspectionController::class, 'create'])->name('inspections.create');
+            Route::get('/inspections/{inspection}', [InspectionController::class, 'show'])->name('inspections.show');
+            Route::get('/inspections/{inspection}/edit', [InspectionController::class, 'edit'])->name('inspections.edit');
+        });
+
+        Route::middleware(['permission:quality.inspections.create'])->post('/inspections', [InspectionController::class, 'store'])->name('inspections.store');
+        Route::middleware(['permission:quality.inspections.update'])->put('/inspections/{inspection}', [InspectionController::class, 'update'])->name('inspections.update');
+        Route::middleware(['permission:quality.inspections.delete'])->delete('/inspections/{inspection}', [InspectionController::class, 'destroy'])->name('inspections.destroy');
+
+        // Non-Conformance Reports (NCRs)
+        Route::middleware(['permission:quality.ncr.view'])->group(function () {
+            Route::get('/ncrs', [NCRController::class, 'index'])->name('ncrs.index');
+            Route::get('/ncrs/create', [NCRController::class, 'create'])->name('ncrs.create');
+            Route::get('/ncrs/{ncr}', [NCRController::class, 'show'])->name('ncrs.show');
+            Route::get('/ncrs/{ncr}/edit', [NCRController::class, 'edit'])->name('ncrs.edit');
+        });
+
+        Route::middleware(['permission:quality.ncr.create'])->post('/ncrs', [NCRController::class, 'store'])->name('ncrs.store');
+        Route::middleware(['permission:quality.ncr.update'])->put('/ncrs/{ncr}', [NCRController::class, 'update'])->name('ncrs.update');
+        Route::middleware(['permission:quality.ncr.delete'])->delete('/ncrs/{ncr}', [NCRController::class, 'destroy'])->name('ncrs.destroy');
+
+        // Calibrations
+        Route::middleware(['permission:quality.calibrations.view'])->group(function () {
+            Route::get('/calibrations', [CalibrationController::class, 'index'])->name('calibrations.index');
+            Route::get('/calibrations/create', [CalibrationController::class, 'create'])->name('calibrations.create');
+            Route::get('/calibrations/{calibration}', [CalibrationController::class, 'show'])->name('calibrations.show');
+            Route::get('/calibrations/{calibration}/edit', [CalibrationController::class, 'edit'])->name('calibrations.edit');
+        });
+
+        Route::middleware(['permission:quality.calibrations.create'])->post('/calibrations', [CalibrationController::class, 'store'])->name('calibrations.store');
+        Route::middleware(['permission:quality.calibrations.update'])->put('/calibrations/{calibration}', [CalibrationController::class, 'update'])->name('calibrations.update');
+        Route::middleware(['permission:quality.calibrations.delete'])->delete('/calibrations/{calibration}', [CalibrationController::class, 'destroy'])->name('calibrations.destroy');
+    });
+
+    // ============================================================================
+    // HR MODULE ROUTES
+    // ============================================================================
+    Route::prefix('hr')->name('hr.')->group(function () {
+        // HR Dashboard
+        Route::middleware(['permission:hr.dashboard.view'])->get('/dashboard', [PerformanceReviewController::class, 'dashboard'])->name('dashboard');
+
+        // Performance Management
+        Route::middleware(['permission:hr.performance.view'])->group(function () {
+            Route::get('/performance', [PerformanceReviewController::class, 'index'])->name('performance.index');
+            Route::get('/performance/create', [PerformanceReviewController::class, 'create'])->name('performance.create');
+            Route::post('/performance', [PerformanceReviewController::class, 'store'])->name('performance.store');
+            Route::get('/performance/{id}', [PerformanceReviewController::class, 'show'])->name('performance.show');
+            Route::get('/performance/{id}/edit', [PerformanceReviewController::class, 'edit'])->name('performance.edit');
+            Route::put('/performance/{id}', [PerformanceReviewController::class, 'update'])->name('performance.update');
+            Route::delete('/performance/{id}', [PerformanceReviewController::class, 'destroy'])->name('performance.destroy');
+
+            // Performance Templates
+            Route::get('/performance/templates', [PerformanceReviewController::class, 'templates'])->name('performance.templates.index');
+            Route::get('/performance/templates/create', [PerformanceReviewController::class, 'createTemplate'])->name('performance.templates.create');
+            Route::post('/performance/templates', [PerformanceReviewController::class, 'storeTemplate'])->name('performance.templates.store');
+            Route::get('/performance/templates/{id}', [PerformanceReviewController::class, 'showTemplate'])->name('performance.templates.show');
+            Route::get('/performance/templates/{id}/edit', [PerformanceReviewController::class, 'editTemplate'])->name('performance.templates.edit');
+            Route::put('/performance/templates/{id}', [PerformanceReviewController::class, 'updateTemplate'])->name('performance.templates.update');
+            Route::delete('/performance/templates/{id}', [PerformanceReviewController::class, 'destroyTemplate'])->name('performance.templates.destroy');
+        });
+
+        // Training Management
+        Route::middleware(['permission:hr.training.view'])->group(function () {
+            Route::get('/training', [TrainingController::class, 'index'])->name('training.index');
+            Route::get('/training/create', [TrainingController::class, 'create'])->name('training.create');
+            Route::post('/training', [TrainingController::class, 'store'])->name('training.store');
+            Route::get('/training/{id}', [TrainingController::class, 'show'])->name('training.show');
+            Route::get('/training/{id}/edit', [TrainingController::class, 'edit'])->name('training.edit');
+            Route::put('/training/{id}', [TrainingController::class, 'update'])->name('training.update');
+            Route::delete('/training/{id}', [TrainingController::class, 'destroy'])->name('training.destroy');
+
+            // Training Categories
+            Route::get('/training/categories', [TrainingController::class, 'categories'])->name('training.categories.index');
+            Route::post('/training/categories', [TrainingController::class, 'storeCategory'])->name('training.categories.store');
+            Route::put('/training/categories/{id}', [TrainingController::class, 'updateCategory'])->name('training.categories.update');
+            Route::delete('/training/categories/{id}', [TrainingController::class, 'destroyCategory'])->name('training.categories.destroy');
+
+            // Training Materials
+            Route::get('/training/{id}/materials', [TrainingController::class, 'materials'])->name('training.materials.index');
+            Route::post('/training/{id}/materials', [TrainingController::class, 'storeMaterial'])->name('training.materials.store');
+            Route::put('/training/{id}/materials/{materialId}', [TrainingController::class, 'updateMaterial'])->name('training.materials.update');
+            Route::delete('/training/{id}/materials/{materialId}', [TrainingController::class, 'destroyMaterial'])->name('training.materials.destroy');
+
+            // Training Enrollment
+            Route::get('/training/{id}/enrollments', [TrainingController::class, 'enrollments'])->name('training.enrollments.index');
+            Route::post('/training/{id}/enrollments', [TrainingController::class, 'storeEnrollment'])->name('training.enrollments.store');
+            Route::put('/training/{id}/enrollments/{enrollmentId}', [TrainingController::class, 'updateEnrollment'])->name('training.enrollments.update');
+            Route::delete('/training/{id}/enrollments/{enrollmentId}', [TrainingController::class, 'destroyEnrollment'])->name('training.enrollments.destroy');
+        });
+
+        // Recruitment Management
+        Route::middleware(['permission:hr.recruitment.view'])->group(function () {
+            Route::get('/recruitment', [RecruitmentController::class, 'index'])->name('recruitment.index');
+            Route::post('/recruitment', [RecruitmentController::class, 'store'])->name('recruitment.store');
+            Route::get('/recruitment/{id}', [RecruitmentController::class, 'show'])->name('recruitment.show');
+            Route::get('/recruitment/{id}/edit', [RecruitmentController::class, 'edit'])->name('recruitment.edit');
+            Route::put('/recruitment/{id}', [RecruitmentController::class, 'update'])->name('recruitment.update');
+            Route::delete('/recruitment/{id}', [RecruitmentController::class, 'destroy'])->name('recruitment.destroy');
+
+            // AJAX API routes for modal operations
+            Route::put('/recruitment/{id}/ajax', [RecruitmentController::class, 'updateAjax'])->name('recruitment.update.ajax');
+            Route::post('/recruitment/ajax', [RecruitmentController::class, 'storeAjax'])->name('recruitment.store.ajax');
+
+            // AJAX/Data Routes for SPA refreshes
+            Route::get('/recruitment/data', [RecruitmentController::class, 'indexData'])->name('recruitment.data.index');
+            Route::get('/recruitment/{id}/data', [RecruitmentController::class, 'showData'])->name('recruitment.data.show');
+            Route::get('/recruitment/{id}/applications/data', [RecruitmentController::class, 'applicationsData'])->name('recruitment.data.applications');
+
+            // Job status management
+            Route::post('/recruitment/{id}/publish', [RecruitmentController::class, 'publish'])->name('recruitment.publish');
+            Route::post('/recruitment/{id}/unpublish', [RecruitmentController::class, 'unpublish'])->name('recruitment.unpublish');
+            Route::post('/recruitment/{id}/close', [RecruitmentController::class, 'close'])->name('recruitment.close');
+
+            // Statistics and Reports
+            Route::get('/recruitment/statistics', [RecruitmentController::class, 'getStatistics'])->name('recruitment.statistics');
+            Route::get('/recruitment/{id}/report', [RecruitmentController::class, 'generateJobReport'])->name('recruitment.report');
+            Route::get('/recruitment/{id}/applications/export', [RecruitmentController::class, 'exportApplications'])->name('recruitment.applications.export');
+        });
+
+        // Onboarding Management
+        Route::middleware(['permission:hr.onboarding.view'])->group(function () {
+            Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
+            Route::get('/onboarding/create', [OnboardingController::class, 'create'])->name('onboarding.create');
+            Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+            Route::get('/onboarding/{id}', [OnboardingController::class, 'show'])->name('onboarding.show');
+            Route::get('/onboarding/{id}/edit', [OnboardingController::class, 'edit'])->name('onboarding.edit');
+            Route::put('/onboarding/{id}', [OnboardingController::class, 'update'])->name('onboarding.update');
+            Route::delete('/onboarding/{id}', [OnboardingController::class, 'destroy'])->name('onboarding.destroy');
+        });
+
+        // Skills Management
+        Route::middleware(['permission:hr.skills.view'])->group(function () {
+            Route::get('/skills', [SkillsController::class, 'index'])->name('skills.index');
+            Route::get('/skills/create', [SkillsController::class, 'create'])->name('skills.create');
+            Route::post('/skills', [SkillsController::class, 'store'])->name('skills.store');
+            Route::get('/skills/{id}', [SkillsController::class, 'show'])->name('skills.show');
+            Route::get('/skills/{id}/edit', [SkillsController::class, 'edit'])->name('skills.edit');
+            Route::put('/skills/{id}', [SkillsController::class, 'update'])->name('skills.update');
+            Route::delete('/skills/{id}', [SkillsController::class, 'destroy'])->name('skills.destroy');
+        });
+
+        // Benefits Management
+        Route::middleware(['permission:hr.benefits.view'])->group(function () {
+            Route::get('/benefits', [BenefitsController::class, 'index'])->name('benefits.index');
+            Route::get('/benefits/create', [BenefitsController::class, 'create'])->name('benefits.create');
+            Route::post('/benefits', [BenefitsController::class, 'store'])->name('benefits.store');
+            Route::get('/benefits/{id}', [BenefitsController::class, 'show'])->name('benefits.show');
+            Route::get('/benefits/{id}/edit', [BenefitsController::class, 'edit'])->name('benefits.edit');
+            Route::put('/benefits/{id}', [BenefitsController::class, 'update'])->name('benefits.update');
+            Route::delete('/benefits/{id}', [BenefitsController::class, 'destroy'])->name('benefits.destroy');
+        });
+
+        // Time Off Management
+        Route::middleware(['permission:hr.time-off.view'])->group(function () {
+            Route::get('/time-off', [TimeOffController::class, 'index'])->name('time-off.index');
+            Route::get('/time-off/create', [TimeOffController::class, 'create'])->name('time-off.create');
+            Route::post('/time-off', [TimeOffController::class, 'store'])->name('time-off.store');
+            Route::get('/time-off/{id}', [TimeOffController::class, 'show'])->name('time-off.show');
+            Route::get('/time-off/{id}/edit', [TimeOffController::class, 'edit'])->name('time-off.edit');
+            Route::put('/time-off/{id}', [TimeOffController::class, 'update'])->name('time-off.update');
+            Route::delete('/time-off/{id}', [TimeOffController::class, 'destroy'])->name('time-off.destroy');
+        });
+
+        // Workplace Safety
+        Route::middleware(['permission:hr.safety.view'])->group(function () {
+            Route::get('/safety', [WorkplaceSafetyController::class, 'index'])->name('safety.index');
+            Route::get('/safety/create', [WorkplaceSafetyController::class, 'create'])->name('safety.create');
+            Route::post('/safety', [WorkplaceSafetyController::class, 'store'])->name('safety.store');
+            Route::get('/safety/{id}', [WorkplaceSafetyController::class, 'show'])->name('safety.show');
+            Route::get('/safety/{id}/edit', [WorkplaceSafetyController::class, 'edit'])->name('safety.edit');
+            Route::put('/safety/{id}', [WorkplaceSafetyController::class, 'update'])->name('safety.update');
+            Route::delete('/safety/{id}', [WorkplaceSafetyController::class, 'destroy'])->name('safety.destroy');
+        });
+
+        // HR Analytics
+        Route::middleware(['permission:hr.analytics.view'])->group(function () {
+            Route::get('/analytics', [HrAnalyticsController::class, 'index'])->name('analytics.index');
+            Route::get('/analytics/reports', [HrAnalyticsController::class, 'reports'])->name('analytics.reports');
+            Route::get('/analytics/export', [HrAnalyticsController::class, 'export'])->name('analytics.export');
+        });
+
+        // HR Documents
+        Route::middleware(['permission:hr.documents.view'])->group(function () {
+            Route::get('/documents', [HrDocumentController::class, 'index'])->name('documents.index');
+            Route::get('/documents/create', [HrDocumentController::class, 'create'])->name('documents.create');
+            Route::post('/documents', [HrDocumentController::class, 'store'])->name('documents.store');
+            Route::get('/documents/{id}', [HrDocumentController::class, 'show'])->name('documents.show');
+            Route::get('/documents/{id}/edit', [HrDocumentController::class, 'edit'])->name('documents.edit');
+            Route::put('/documents/{id}', [HrDocumentController::class, 'update'])->name('documents.update');
+            Route::delete('/documents/{id}', [HrDocumentController::class, 'destroy'])->name('documents.destroy');
+        });
+
+        // Employee Self Service
+        Route::middleware(['permission:hr.self-service.view'])->group(function () {
+            Route::get('/self-service', [EmployeeSelfServiceController::class, 'index'])->name('self-service.index');
+            Route::get('/self-service/profile', [EmployeeSelfServiceController::class, 'profile'])->name('self-service.profile');
+            Route::put('/self-service/profile', [EmployeeSelfServiceController::class, 'updateProfile'])->name('self-service.profile.update');
+        });
+
+        // Payroll Management
+        Route::middleware(['permission:hr.payroll.view'])->group(function () {
+            Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+            Route::get('/payroll/create', [PayrollController::class, 'create'])->name('payroll.create');
+            Route::post('/payroll', [PayrollController::class, 'store'])->name('payroll.store');
+            Route::get('/payroll/{id}', [PayrollController::class, 'show'])->name('payroll.show');
+            Route::get('/payroll/{id}/edit', [PayrollController::class, 'edit'])->name('payroll.edit');
+            Route::put('/payroll/{id}', [PayrollController::class, 'update'])->name('payroll.update');
+            Route::delete('/payroll/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
+        });
+    });
+
+    Route::post('/update-fcm-token', [UserController::class, 'updateFcmToken'])->name('updateFcmToken');
+
+    // ============================================================================
+    // UTILITY API ROUTES
+    // ============================================================================
+    Route::get('/api/designations/list', function () {
+        return response()->json(\App\Models\HRM\Designation::select('id', 'title as name')->get());
+    })->name('api.designations.list');
+
+    Route::get('/api/departments/list', function () {
+        return response()->json(\App\Models\HRM\Department::select('id', 'name')->get());
+    })->name('api.departments.list');
+
+    Route::get('/api/users/managers/list', function () {
+        return response()->json(\App\Models\User::whereHas('roles', function ($query) {
+            $query->whereIn('name', [
+                'Super Administrator',
+                'Administrator',
+                'HR Manager',
+                'Project Manager',
+                'Department Manager',
+                'Team Lead'
+            ]);
+        })
+            ->select('id', 'name')
+            ->get());
+    })->name('api.users.managers.list');

@@ -103,7 +103,7 @@ export const getPages = (permissions, auth = null) => [
         category: 'time',
         subMenu: [
           ...(permissions.includes('attendance.view') ? [{ name: 'Attendance', icon: <CalendarDaysIcon  />, route: 'attendances' }] : []),
-          ...(permissions.includes('hr.timeoff.view') ? [{ name: 'Time-off Management', icon: <CalendarIcon  />, route: 'hr.timeoff.index' }] : []),
+          
           ...(permissions.includes('holidays.view') ? [{ name: 'Holidays', icon: <CalendarIcon  />, route: 'holidays' }] : []),
           ...(permissions.includes('leaves.view') ? [
             { name: 'Leaves', icon: <ArrowRightOnRectangleIcon  />, route: 'leaves' },
