@@ -31,7 +31,7 @@ import {
   GlobeAltIcon,
   ShieldExclamationIcon,
   KeyIcon,
-  DatabaseIcon,
+  
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
@@ -270,7 +270,7 @@ export const getSuperAdminPages = (permissions = [], auth = null) => [
       },
       { 
         name: 'Database', 
-        icon: <DatabaseIcon />, 
+        icon: <ServerIcon />, 
         route: 'admin.system.database',
         description: 'Database management'
       },
