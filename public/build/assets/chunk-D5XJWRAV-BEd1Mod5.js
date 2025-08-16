@@ -1,0 +1,1 @@
+import{m as f,u as h,n as p,o as v,i as x}from"./app-DDhVNfvV.js";var r=f((o,d)=>{var a;const{as:t,className:l,children:c,...n}=o,m=t||"div",i=h(d),{slots:e,classNames:s}=p(),u=v(s==null?void 0:s.header,l);return x.jsx(m,{ref:i,className:(a=e.header)==null?void 0:a.call(e,{class:u}),...n,children:c})});r.displayName="HeroUI.CardHeader";var N=r;export{N as c};
