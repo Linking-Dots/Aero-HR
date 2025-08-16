@@ -117,8 +117,8 @@ if (app()->environment('local')) {
 
 // Billing and subscription management (for existing tenants)
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Logout route
-    Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'destroy'])->name('logout');
+    // Logout route for central domain (super admin)
+    Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'destroy'])->name('central.logout');
     
     // ============================================================================
     // SUPER ADMIN DASHBOARD ROUTES

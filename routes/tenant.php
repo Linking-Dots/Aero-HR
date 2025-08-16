@@ -5,7 +5,12 @@ declare(strict_types=1);
 /*
 |--------------------------------------------------------------------------
 | Tenant Routes
-|--------------------------------------------------------------------------
+|----------------------------------            // Attendance Management  
+            Route::resource('attendance', AttendanceController::class)->only(['index', 'store', 'update'])->names([
+                'index' => 'tenant.attendance.index',
+                'store' => 'tenant.attendance.store',
+                'update' => 'tenant.attendance.update'
+            ]);--------------------------------------
 |
 | These routes handle tenant-specific functionality.
 | For development (127.0.0.1:8000): Uses path-based routing /tenant/{domain}/
@@ -104,7 +109,7 @@ $tenantRoutes = function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
             
             // Profile Management
-            Route::prefix('profile')->name('profile.')->group(function () {
+            Route::prefix('profile')->name('tenant.profile.')->group(function () {
                 Route::get('/', [ProfileController::class, 'edit'])->name('edit');
                 Route::patch('/', [ProfileController::class, 'update'])->name('update');
                 Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
@@ -130,13 +135,37 @@ $tenantRoutes = function () {
             ]);
             
             // Department Management
-            Route::resource('departments', DepartmentController::class);
+            Route::resource('departments', DepartmentController::class)->names([
+                'index' => 'tenant.departments.index',
+                'create' => 'tenant.departments.create', 
+                'store' => 'tenant.departments.store',
+                'show' => 'tenant.departments.show',
+                'edit' => 'tenant.departments.edit',
+                'update' => 'tenant.departments.update',
+                'destroy' => 'tenant.departments.destroy'
+            ]);
             
             // Designation Management
-            Route::resource('designations', DesignationController::class);
+            Route::resource('designations', DesignationController::class)->names([
+                'index' => 'tenant.designations.index',
+                'create' => 'tenant.designations.create', 
+                'store' => 'tenant.designations.store',
+                'show' => 'tenant.designations.show',
+                'edit' => 'tenant.designations.edit',
+                'update' => 'tenant.designations.update',
+                'destroy' => 'tenant.designations.destroy'
+            ]);
             
             // Leave Management
-            Route::resource('leaves', LeaveController::class);
+            Route::resource('leaves', LeaveController::class)->names([
+                'index' => 'tenant.leaves.index',
+                'create' => 'tenant.leaves.create', 
+                'store' => 'tenant.leaves.store',
+                'show' => 'tenant.leaves.show',
+                'edit' => 'tenant.leaves.edit',
+                'update' => 'tenant.leaves.update',
+                'destroy' => 'tenant.leaves.destroy'
+            ]);
             Route::prefix('leaves')->name('leaves.')->group(function () {
                 Route::post('/{leave}/approve', [LeaveController::class, 'approve'])->name('approve');
                 Route::post('/{leave}/reject', [LeaveController::class, 'reject'])->name('reject');
@@ -154,10 +183,26 @@ $tenantRoutes = function () {
             });
             
             // Holiday Management
-            Route::resource('holidays', HolidayController::class);
+            Route::resource('holidays', HolidayController::class)->names([
+                'index' => 'tenant.holidays.index',
+                'create' => 'tenant.holidays.create', 
+                'store' => 'tenant.holidays.store',
+                'show' => 'tenant.holidays.show',
+                'edit' => 'tenant.holidays.edit',
+                'update' => 'tenant.holidays.update',
+                'destroy' => 'tenant.holidays.destroy'
+            ]);
             
             // Task Management
-            Route::resource('tasks', TaskController::class);
+            Route::resource('tasks', TaskController::class)->names([
+                'index' => 'tenant.tasks.index',
+                'create' => 'tenant.tasks.create', 
+                'store' => 'tenant.tasks.store',
+                'show' => 'tenant.tasks.show',
+                'edit' => 'tenant.tasks.edit',
+                'update' => 'tenant.tasks.update',
+                'destroy' => 'tenant.tasks.destroy'
+            ]);
             Route::prefix('tasks')->name('tasks.')->group(function () {
                 Route::post('/{task}/complete', [TaskController::class, 'complete'])->name('complete');
                 Route::post('/{task}/assign', [TaskController::class, 'assign'])->name('assign');
@@ -182,7 +227,15 @@ $tenantRoutes = function () {
             Route::middleware(['role:owner|admin'])->group(function () {
                 
                 // Role and Permission Management
-                Route::resource('roles', RoleController::class);
+                Route::resource('roles', RoleController::class)->names([
+                    'index' => 'tenant.roles.index',
+                    'create' => 'tenant.roles.create', 
+                    'store' => 'tenant.roles.store',
+                    'show' => 'tenant.roles.show',
+                    'edit' => 'tenant.roles.edit',
+                    'update' => 'tenant.roles.update',
+                    'destroy' => 'tenant.roles.destroy'
+                ]);
                 Route::prefix('roles')->name('roles.')->group(function () {
                     Route::post('/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('permissions');
                     Route::get('/permissions', [RoleController::class, 'permissions'])->name('permissions.index');

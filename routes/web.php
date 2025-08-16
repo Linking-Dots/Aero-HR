@@ -87,12 +87,10 @@ use Illuminate\Support\Facades\Log;
 // ============================================================================
 // HOME/LANDING PAGE ROUTE
 // ============================================================================
+// Note: Landing page routes are now in routes/central.php for multi-tenant setup
 
-Route::get('/', [LandingController::class, 'index'])->name('home');
-
-// Additional landing page routes
+// Additional landing page routes (if needed for tenant-specific pages)
 Route::get('/features', [LandingController::class, 'features'])->name('features');
-Route::get('/landing-pricing', [LandingController::class, 'pricing'])->name('landing.pricing');
 
 // ============================================================================
 // AUTHENTICATION ROUTES
@@ -251,9 +249,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/picnic', [PicnicController::class, 'index'])->name('picnic');
 
-    // Dashboard routes - require dashboard permission
+    // Dashboard routes - Note: Main dashboard is handled by tenant.php for tenants
+    // and central.php for super admin. These are module-specific dashboards only.
     Route::middleware(['permission:core.dashboard.view'])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        // Module stats and reports (not main dashboard)
         Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
     });
 
