@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Card, CardBody, Button, Input, Chip, Progress } from '@heroui/react';
 import { Link } from '@inertiajs/react';
-import AuthLayout from "@/Layouts/AuthLayout.jsx";
+import AuthLayout from "@/Components/AuthLayout.jsx";
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
