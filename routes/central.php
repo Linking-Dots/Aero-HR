@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Central\TenantRegistrationController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\TenantController as SuperAdminTenantController;
+use App\Http\Controllers\SuperAdmin\PlanController as SuperAdminPlanController;
+use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 
 // Landing and marketing pages
 Route::get('/', [LandingController::class, 'index'])->name('landing.home');
@@ -116,36 +120,83 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Logout route
     Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'destroy'])->name('logout');
     
-    // Central Admin Dashboard (Superadmin)
-    Route::get('/admin', function () {
-        return inertia('Admin/Dashboard', [
-            'tenants' => \App\Models\Tenant::with('plan')->orderBy('created_at', 'desc')->paginate(10),
-            'stats' => [
-                'total_tenants' => \App\Models\Tenant::count(),
-                'active_tenants' => \App\Models\Tenant::where('status', 'active')->count(),
-                'trial_tenants' => \App\Models\Tenant::where('trial_ends_at', '>', now())->count(),
-                'revenue_this_month' => 0, // Implement based on your billing system
-            ]
-        ]);
-    })->name('admin.dashboard');
+    // ============================================================================
+    // SUPER ADMIN DASHBOARD ROUTES
+    // ============================================================================
     
-    // Tenant Management Routes
-    Route::prefix('admin/tenants')->name('admin.tenants.')->group(function () {
-        Route::get('/', function () {
-            return inertia('Admin/Tenants/Index', [
-                'tenants' => \App\Models\Tenant::with('plan')->orderBy('created_at', 'desc')->paginate(20)
-            ]);
-        })->name('index');
+    // Main Dashboard
+    Route::get('/admin', [SuperAdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/analytics', [SuperAdminDashboardController::class, 'analytics'])->name('admin.analytics');
+    Route::get('/admin/system-status', [SuperAdminDashboardController::class, 'systemStatus'])->name('admin.system-status');
+    
+    // ============================================================================
+    // TENANT MANAGEMENT ROUTES
+    // ============================================================================
+    
+    Route::prefix('admin/tenants')->name('superadmin.tenants.')->group(function () {
+        Route::get('/', [SuperAdminTenantController::class, 'index'])->name('index');
+        Route::get('/create', [SuperAdminTenantController::class, 'create'])->name('create');
+        Route::post('/', [SuperAdminTenantController::class, 'store'])->name('store');
+        Route::get('/{tenant}', [SuperAdminTenantController::class, 'show'])->name('show');
+        Route::get('/{tenant}/edit', [SuperAdminTenantController::class, 'edit'])->name('edit');
+        Route::put('/{tenant}', [SuperAdminTenantController::class, 'update'])->name('update');
+        Route::delete('/{tenant}', [SuperAdminTenantController::class, 'destroy'])->name('destroy');
         
-        Route::get('/{tenant}', function (\App\Models\Tenant $tenant) {
-            return inertia('Admin/Tenants/Show', [
-                'tenant' => $tenant->load('plan', 'tenantUsers'),
-                'stats' => [
-                    'users_count' => $tenant->tenantUsers()->count(),
-                    'last_login' => $tenant->tenantUsers()->latest('updated_at')->first()?->updated_at,
-                ]
-            ]);
-        })->name('show');
+        // Tenant Actions
+        Route::post('/{tenant}/suspend', [SuperAdminTenantController::class, 'suspend'])->name('suspend');
+        Route::post('/{tenant}/activate', [SuperAdminTenantController::class, 'activate'])->name('activate');
+        Route::get('/{tenant}/activity-logs', [SuperAdminTenantController::class, 'activityLogs'])->name('activity-logs');
+    });
+    
+    // ============================================================================
+    // PLAN MANAGEMENT ROUTES
+    // ============================================================================
+    
+    Route::prefix('admin/plans')->name('superadmin.plans.')->group(function () {
+        Route::get('/', [SuperAdminPlanController::class, 'index'])->name('index');
+        Route::get('/create', [SuperAdminPlanController::class, 'create'])->name('create');
+        Route::post('/', [SuperAdminPlanController::class, 'store'])->name('store');
+        Route::get('/{plan}', [SuperAdminPlanController::class, 'show'])->name('show');
+        Route::get('/{plan}/edit', [SuperAdminPlanController::class, 'edit'])->name('edit');
+        Route::put('/{plan}', [SuperAdminPlanController::class, 'update'])->name('update');
+        Route::delete('/{plan}', [SuperAdminPlanController::class, 'destroy'])->name('destroy');
+        
+        // Plan Actions
+        Route::post('/{plan}/toggle-status', [SuperAdminPlanController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/{plan}/toggle-popular', [SuperAdminPlanController::class, 'togglePopular'])->name('toggle-popular');
+        Route::get('/{plan}/analytics', [SuperAdminPlanController::class, 'analytics'])->name('analytics');
+    });
+    
+    // ============================================================================
+    // USER MANAGEMENT ROUTES (Cross-Tenant)
+    // ============================================================================
+    
+    Route::prefix('admin/users')->name('superadmin.users.')->group(function () {
+        Route::get('/', [SuperAdminUserController::class, 'index'])->name('index');
+        Route::get('/create', [SuperAdminUserController::class, 'create'])->name('create');
+        Route::post('/', [SuperAdminUserController::class, 'store'])->name('store');
+        Route::get('/{user}', [SuperAdminUserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [SuperAdminUserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [SuperAdminUserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [SuperAdminUserController::class, 'destroy'])->name('destroy');
+        
+        // User Actions
+        Route::post('/{user}/suspend', [SuperAdminUserController::class, 'suspend'])->name('suspend');
+        Route::post('/{user}/activate', [SuperAdminUserController::class, 'activate'])->name('activate');
+        Route::post('/{user}/force-password-reset', [SuperAdminUserController::class, 'forcePasswordReset'])->name('force-password-reset');
+        
+        // Analytics and Export
+        Route::get('/analytics/data', [SuperAdminUserController::class, 'analytics'])->name('analytics');
+        Route::get('/export', [SuperAdminUserController::class, 'export'])->name('export');
+    });
+
+    // Legacy routes for backwards compatibility
+    Route::get('/admin/tenants', function () {
+        return redirect()->route('superadmin.tenants.index');
+    });
+    
+    Route::get('/admin/tenants/{tenant}', function ($tenant) {
+        return redirect()->route('superadmin.tenants.show', $tenant);
     });
 
     Route::prefix('billing')->name('billing.')->group(function () {
