@@ -159,7 +159,10 @@ class PasswordResetController extends Controller
             $request
         );
         
-        return redirect()->route('login')->with('status', 'Your password has been reset successfully.');
+        // Determine the correct login route based on tenant context
+        $loginRoute = tenant() ? 'tenant.login' : 'central.login';
+        
+        return redirect()->route($loginRoute)->with('status', 'Your password has been reset successfully.');
     }
     
     /**

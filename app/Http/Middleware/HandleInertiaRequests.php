@@ -48,6 +48,34 @@ class HandleInertiaRequests extends Middleware
             // Company Settings
             'companySettings' => $companySettings,
             
+            // Tenant information for route generation
+            'tenant' => function () use ($request) {
+                if (function_exists('tenant') && tenant()) {
+                    return tenant()->domain;
+                }
+                // For development with path-based routing, extract from URL
+                if (app()->environment('local')) {
+                    $path = $request->path();
+                    if (preg_match('/^tenant\/([^\/]+)/', $path, $matches)) {
+                        return $matches[1];
+                    }
+                }
+                return null;
+            },
+            
+            // Context information (central vs tenant)
+            'isTenant' => function () use ($request) {
+                // Check if we're in tenant context
+                if (function_exists('tenant') && tenant()) {
+                    return true;
+                }
+                // For development, check if URL starts with /tenant/
+                if (app()->environment('local')) {
+                    return str_starts_with($request->path(), 'tenant/');
+                }
+                return false;
+            },
+            
             // Theme and UI Configuration
             'theme' => [
                 'defaultTheme' => 'OCEAN',
@@ -65,7 +93,7 @@ class HandleInertiaRequests extends Middleware
             ],
             
             'url' => $request->getPathInfo(),
-            'csrfToken' => session('csrfToken')
+            'csrfToken' => csrf_token(),
         ];
     }
 }

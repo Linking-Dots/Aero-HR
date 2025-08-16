@@ -99,33 +99,15 @@ Route::get('/landing-pricing', [LandingController::class, 'pricing'])->name('lan
 // ============================================================================
 
 Route::middleware('guest')->group(function () {
-    // Registration Routes
-    Route::get('register', [RegisterController::class, 'create'])->name('register');
-    Route::post('register', [RegisterController::class, 'store']);
-
-    // Login Routes
-    Route::get('login', [LoginController::class, 'create'])->name('login');
-    Route::post('login', [LoginController::class, 'store']);
-
-    // Password Reset Routes
-    Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
-    Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+    // Note: Authentication routes are now handled in central.php for central domain
+    // and tenant.php for tenant domains to avoid conflicts
+    
+    // Central registration is handled in central.php
 });
 
 Route::middleware('auth')->group(function () {
-    // Email Verification Routes
-    Route::get('verify-email', [EmailVerificationController::class, 'prompt'])->name('verification.notice');
-    Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-                ->middleware(['signed', 'throttle:6,1'])
-                ->name('verification.verify');
-    Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
-                ->middleware('throttle:6,1')
-                ->name('verification.send');
-
-    // Logout Route
-    Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+    // Note: Auth routes are now handled in respective domain-specific route files
+    // (central.php for central domain, tenant.php for tenant domains)
 });
 
 // ============================================================================
@@ -138,17 +120,6 @@ Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name(
 Route::get('/billing/complete', [BillingController::class, 'complete'])->name('billing.complete');
 Route::get('/payment/success', [BillingController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [BillingController::class, 'paymentCancel'])->name('payment.cancel');
-
-// Central tenant registration
-Route::get('/register', [TenantRegistrationController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [TenantRegistrationController::class, 'register'])->name('register.store');
-
-// Central API routes
-Route::prefix('api')->group(function () {
-    Route::post('/check-domain', [TenantRegistrationController::class, 'checkDomain'])->name('api.check-domain');
-    Route::get('/plans/{plan}', [TenantRegistrationController::class, 'getPlan'])->name('api.plan');
-    Route::post('/create-payment-intent', [TenantRegistrationController::class, 'createPaymentIntent'])->name('api.create-payment-intent');
-});
 
 // Success pages
 Route::get('/registration-success', function () {

@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { Input, Tabs, Tab } from '@heroui/react';
+import axios from 'axios';
 import AuthLayout from '@/Components/AuthLayout';
 import Button from '@/Components/Button';
 import Checkbox from '@/Components/Checkbox';
@@ -52,6 +53,46 @@ export default function Register({ plans = [], features = {} }) {
     // Set max form width for consistent sizing across all steps
     const maxFormWidth = "max-w-6xl mx-auto"; // Increased from max-w-3xl to max-w-4xl for wider layout
 
+    // Determine if we're on a tenant domain
+    const isTenantDomain = () => {
+        if (typeof window === 'undefined') return false;
+        
+        const host = window.location.hostname;
+        const pathname = window.location.pathname;
+        
+        // Development: check for path-based routing
+        if (host === '127.0.0.1' || host === 'localhost') {
+            return pathname.startsWith('/tenant/');
+        }
+        
+        // Production: check if it's not a central domain
+        const centralDomains = ['aero-hr.com', 'aero-hr.local', 'aero.com'];
+        return !centralDomains.includes(host);
+    };
+
+    const getCurrentTenantInfo = () => {
+        if (!isTenantDomain()) return null;
+        
+        const host = window.location.hostname;
+        const pathname = window.location.pathname;
+        
+        // Development: extract from path
+        if (host === '127.0.0.1' || host === 'localhost') {
+            const match = pathname.match(/\/tenant\/([^\/]+)/);
+            return match ? { domain: match[1], name: match[1] } : null;
+        }
+        
+        // Production: extract from subdomain
+        const parts = host.split('.');
+        if (parts.length >= 3) {
+            return { domain: parts[0], name: parts[0] };
+        }
+        
+        return null;
+    };
+
+    const tenantInfo = getCurrentTenantInfo();
+
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
@@ -59,6 +100,9 @@ export default function Register({ plans = [], features = {} }) {
     const [domainChecking, setDomainChecking] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [step, setStep] = useState(1);
+    const [paymentProcessing, setPaymentProcessing] = useState(false);
+    const [paymentError, setPaymentError] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
     const theme = useTheme();
 
     // Initialize with first plan if available
@@ -98,25 +142,46 @@ export default function Register({ plans = [], features = {} }) {
     const checkDomainAvailability = async (domain) => {
         if (!domain || domain.length < 3) {
             setDomainAvailable(null);
+            setData(prevData => ({
+                ...prevData,
+                domainError: null
+            }));
             return;
         }
         
         setDomainChecking(true);
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-            const response = await fetch('/api/check-domain', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }),
-                },
-                body: JSON.stringify({ domain }),
-            });
-            const result = await response.json();
-            setDomainAvailable(result.available);
+            const response = await axios.post(route('check-domain'), { domain });
+            setDomainAvailable(response.data.available);
+            setData(prevData => ({
+                ...prevData,
+                domainError: null
+            }));
         } catch (error) {
             console.error('Domain check failed:', error);
-            setDomainAvailable(null);
+            
+            if (error.response && error.response.status === 422) {
+                // Handle validation errors from the API
+                const errorData = error.response.data;
+                setDomainAvailable(false);
+                
+                // Set the specific error message from the API
+                const domainError = errorData.message || 
+                                  (errorData.errors && errorData.errors.domain && errorData.errors.domain[0]) ||
+                                  'Domain validation failed';
+                                  
+                setData(prevData => ({
+                    ...prevData,
+                    domainError: domainError
+                }));
+            } else {
+                // Handle other types of errors (network, etc.)
+                setDomainAvailable(null);
+                setData(prevData => ({
+                    ...prevData,
+                    domainError: 'Unable to check domain availability. Please try again.'
+                }));
+            }
         } finally {
             setDomainChecking(false);
         }
@@ -167,7 +232,13 @@ export default function Register({ plans = [], features = {} }) {
 
     const handleDomainChange = (e) => {
         const formatted = formatDomain(e.target.value);
-        setData('domain', formatted);
+        setData(prevData => ({
+            ...prevData,
+            domain: formatted,
+            domainError: null // Clear any previous domain errors
+        }));
+        // Reset domain availability state when user types
+        setDomainAvailable(null);
     };
 
     const handleCompanyNameChange = (e) => {
@@ -235,7 +306,42 @@ export default function Register({ plans = [], features = {} }) {
             return;
         }
         
+        if (step === 3) {
+            if (!data.plan_id || !data.terms) {
+                return;
+            }
+            // Check if it's a paid plan that requires payment
+            const selectedPlan = plans.find(p => p.id === parseInt(data.plan_id));
+            if (selectedPlan && selectedPlan.price > 0) {
+                setStep(4); // Go to payment step
+                return;
+            } else {
+                // Free plan, proceed directly to registration
+                // Fall through to registration processing
+            }
+        }
+        
+        // Step 4 (Payment) or Free plan registration
         try {
+            // Clear any previous domain errors
+            if (data.domainError) {
+                setData(prevData => ({
+                    ...prevData,
+                    domainError: undefined
+                }));
+            }
+            
+            // Final validations before submission
+            if (data.password !== data.password_confirmation) {
+                alert('Passwords do not match.');
+                return;
+            }
+            
+            if (passwordStrength < 3) {
+                alert('Password must be stronger. Please include uppercase, lowercase, numbers, and special characters.');
+                return;
+            }
+            
             // Get CSRF token before submitting the form
             if (window.initCsrfToken) {
                 await window.initCsrfToken();
@@ -249,8 +355,25 @@ export default function Register({ plans = [], features = {} }) {
                 }
             }
             
-            post(route('register'), {
+            post(route('register.store'), {
                 onFinish: () => reset('password', 'password_confirmation'),
+                onSuccess: (page) => {
+                    // Success will be handled by the backend redirect
+                    console.log('Registration submitted successfully');
+                },
+                onError: (errors) => {
+                    console.error('Registration errors:', errors);
+                    
+                    // Handle specific error cases
+                    if (errors.domain) {
+                        setDomainAvailable(false);
+                    }
+                    
+                    // Show user-friendly error message if generic error
+                    if (errors.error && !Object.keys(errors).some(key => key !== 'error')) {
+                        alert(errors.error);
+                    }
+                }
             });
         } catch (error) {
             console.error('Registration failed:', error);
@@ -269,13 +392,15 @@ export default function Register({ plans = [], features = {} }) {
     const canProceedStep2 = data.owner_name && data.owner_email && isValidEmail(data.owner_email) && 
                            data.password && data.password_confirmation && passwordStrength >= 3 &&
                            data.password === data.password_confirmation;
-    const canSubmit = canProceedStep2 && data.plan_id && data.terms;
+    const canProceedStep3 = canProceedStep2 && data.plan_id && data.terms;
+    const canSubmit = step === 3 ? canProceedStep3 : (step === 4 ? canProceedStep3 : canProceedStep2);
 
     const getStepTitle = () => {
         switch (step) {
             case 1: return "Company Information";
             case 2: return "Account Details";
             case 3: return "Choose Your Plan";
+            case 4: return "Payment Details";
             default: return "Registration";
         }
     };
@@ -285,6 +410,7 @@ export default function Register({ plans = [], features = {} }) {
             case 1: return "Let's start by setting up your company profile and subdomain";
             case 2: return "Create your admin account to manage your HR platform";
             case 3: return "Select the perfect plan for your organization's needs";
+            case 4: return "Complete your payment to activate your HR platform";
             default: return "";
         }
     };
@@ -304,7 +430,7 @@ export default function Register({ plans = [], features = {} }) {
                 className="mb-4"
             >
                 <div className="flex justify-between">
-                    {[1, 2, 3].map((stepNumber) => (
+                    {[1, 2, 3, 4].map((stepNumber) => (
                         <motion.div
                             key={stepNumber}
                             className="flex flex-col items-center"
@@ -326,7 +452,7 @@ export default function Register({ plans = [], features = {} }) {
                                 )}
                             </div>
                             <span className="text-xs font-medium mt-1 text-center text-gray-600 dark:text-gray-400">
-                                {stepNumber === 1 ? 'Company' : stepNumber === 2 ? 'Account' : 'Plan'}
+                                {stepNumber === 1 ? 'Company' : stepNumber === 2 ? 'Account' : stepNumber === 3 ? 'Plan' : 'Payment'}
                             </span>
                         </motion.div>
                     ))}
@@ -336,7 +462,7 @@ export default function Register({ plans = [], features = {} }) {
                     <div className={`absolute left-0 right-0 h-0.5 top-0 bg-gray-100 dark:bg-gray-700 rounded-full`}></div>
                     <div 
                         className={`absolute left-0 h-0.5 top-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500`}
-                        style={{ width: step === 1 ? '16.66%' : step === 2 ? '50%' : '100%' }}
+                        style={{ width: step === 1 ? '25%' : step === 2 ? '50%' : step === 3 ? '75%' : '100%' }}
                     ></div>
                 </div>
             </motion.div>
@@ -421,18 +547,22 @@ export default function Register({ plans = [], features = {} }) {
                                         placeholder="your-company"
                                         value={data.domain}
                                         onChange={handleDomainChange}
-                                        isInvalid={!!errors.domain || domainAvailable === false}
-                                        errorMessage={errors.domain || (domainAvailable === false ? 'Domain is already taken' : '')}
+                                        isInvalid={!!errors.domain || domainAvailable === false || !!data.domainError}
+                                        errorMessage={
+                                            errors.domain || 
+                                            data.domainError || 
+                                            (domainAvailable === false ? 'Domain is already taken' : '')
+                                        }
                                         description={`Your platform will be accessible at: ${data.domain || 'your-company'}.aerohraznil.com`}
                                         endContent={
                                             <div className="flex items-center">
                                                 {domainChecking && (
                                                     <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-1" />
                                                 )}
-                                                {domainAvailable === true && (
+                                                {domainAvailable === true && !data.domainError && (
                                                     <CheckIcon className="w-4 h-4 text-green-500" />
                                                 )}
-                                                {domainAvailable === false && (
+                                                {(domainAvailable === false || data.domainError) && (
                                                     <span className="text-red-500 text-sm">✕</span>
                                                 )}
                                             </div>
@@ -874,7 +1004,7 @@ export default function Register({ plans = [], features = {} }) {
                                 className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                                 disabled={!canSubmit || processing}
                             >
-                                {processing ? 'Creating your platform...' : 'Create My HR Platform'}
+                                {selectedPlan && selectedPlan.price > 0 ? 'Continue to Payment' : (processing ? 'Creating your platform...' : 'Create My HR Platform')}
                             </button>
 
                             {/* Form errors */}
@@ -887,6 +1017,117 @@ export default function Register({ plans = [], features = {} }) {
                             )}
                         </motion.div>
                     )}
+
+                    {/* Step 4: Payment (for paid plans only) */}
+                    {step === 4 && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -50 }}
+                            className="space-y-4"
+                        >
+                            <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white text-center">
+                                Complete Payment
+                            </h2>
+                            
+                            {selectedPlan && (
+                                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-medium text-gray-900 dark:text-white">{selectedPlan.name} Plan</span>
+                                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                            ${selectedPlan.price}
+                                            <span className="text-sm text-gray-500">/{data.billing_cycle === 'monthly' ? 'mo' : 'yr'}</span>
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedPlan.description}</p>
+                                </div>
+                            )}
+
+                            {/* Payment Method Selection */}
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Payment Method
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`p-3 border rounded-lg text-sm font-medium transition-all ${
+                                            paymentMethod === 'card'
+                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <CreditCardIcon className="w-5 h-5 mx-auto mb-1" />
+                                        Credit Card
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('bank')}
+                                        className={`p-3 border rounded-lg text-sm font-medium transition-all ${
+                                            paymentMethod === 'bank'
+                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <BuildingOfficeIcon className="w-5 h-5 mx-auto mb-1" />
+                                        Bank Transfer
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Payment Form (Stripe Elements would go here) */}
+                            {paymentMethod === 'card' && (
+                                <div className="space-y-3">
+                                    <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                                            🔒 Stripe payment form will be integrated here
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-500 text-center mt-2">
+                                            Secure payment processing powered by Stripe
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {paymentMethod === 'bank' && (
+                                <div className="space-y-3">
+                                    <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                                            Bank transfer instructions will be provided after registration
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Payment Error */}
+                            {paymentError && (
+                                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                    <p className="text-red-600 dark:text-red-400 text-sm text-center">
+                                        {paymentError}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={goBack}
+                                    className="flex-1 py-2.5 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-2.5 px-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    disabled={paymentProcessing || processing}
+                                >
+                                    {paymentProcessing ? 'Processing Payment...' : processing ? 'Creating Platform...' : 'Complete Registration'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </form>
             
@@ -895,7 +1136,11 @@ export default function Register({ plans = [], features = {} }) {
                 <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                     Already have an account?{' '}
                     <Link
-                        href={route('login')}
+                        href={
+                            isTenantDomain() && tenantInfo
+                                ? route('tenant.login', { tenant: tenantInfo.domain })
+                                : route('central.login')
+                        }
                         className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 hover:underline"
                     >
                         Sign in here

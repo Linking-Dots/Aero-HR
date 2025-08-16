@@ -50,6 +50,14 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasMany(TenantUser::class);
     }
 
+    /**
+     * Relationship to domains (required by Stancl\Tenancy)
+     */
+    public function domains()
+    {
+        return $this->hasMany(\Stancl\Tenancy\Database\Models\Domain::class);
+    }
+
     public function isOnTrial(): bool
     {
         return $this->trial_ends_at && $this->trial_ends_at->isFuture();

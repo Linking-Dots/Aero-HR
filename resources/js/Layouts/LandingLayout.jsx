@@ -60,6 +60,7 @@ const LandingLayout = ({ children, currentPage = 'home' }) => {
                                 href="/login"
                                 variant="light"
                                 className="text-gray-700 hover:text-blue-600"
+                                title="Login - Works for both admins and tenant users"
                             >
                                 Login
                             </Button>
@@ -69,6 +70,7 @@ const LandingLayout = ({ children, currentPage = 'home' }) => {
                                 color="primary"
                                 className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
                                 startContent={<ArrowRightIcon className="w-4 h-4" />}
+                                title="Register your company for a free trial"
                             >
                                 Get Started
                             </Button>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\ModernAuthenticationService;
+use App\Services\UnifiedLoginService;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,10 +18,14 @@ use Inertia\Response;
 class LoginController extends Controller
 {
     protected ModernAuthenticationService $authService;
+    protected UnifiedLoginService $unifiedLoginService;
 
-    public function __construct(ModernAuthenticationService $authService)
-    {
+    public function __construct(
+        ModernAuthenticationService $authService,
+        UnifiedLoginService $unifiedLoginService
+    ) {
         $this->authService = $authService;
+        $this->unifiedLoginService = $unifiedLoginService;
     }
 
     /**
@@ -36,6 +41,7 @@ class LoginController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     * Supports both central and tenant domain authentication
      */
     public function store(Request $request)
     {
@@ -82,69 +88,115 @@ class LoginController extends Controller
             ]);
         }
 
-        // Find user
-        $user = User::where('email', $email)->first();
+        // Determine if this is central domain or tenant domain login
+        $isTenantDomain = $this->isTenantDomain($request);
+        
+        if ($isTenantDomain) {
+            // Handle direct tenant domain login
+            return $this->handleTenantDomainLogin($request, $email, $password, $remember);
+        } else {
+            // Handle central domain login with smart redirection
+            return $this->handleCentralDomainLogin($request, $email, $password, $remember);
+        }
+    }
 
-        // Validate credentials
-        if (!$user || !Hash::check($password, $user->password)) {
-            RateLimiter::hit($key, 60); // 1 minute decay
-
-            $this->authService->recordFailedAttempt(
-                $email,
-                $request,
-                $user ? 'invalid_password' : 'invalid_email'
-            );
-
-            $this->authService->logAuthenticationEvent(
-                $user,
-                'login_failed',
-                'failure',
-                $request,
-                ['email' => $email, 'reason' => 'invalid_credentials']
-            );
-
+    /**
+     * Handle login from central domain (smart user detection and redirection)
+     */
+    private function handleCentralDomainLogin(Request $request, string $email, string $password, bool $remember)
+    {
+        $authResult = $this->unifiedLoginService->authenticateFromCentral($email, $password);
+        
+        if (!$authResult['success']) {
+            RateLimiter::hit('login.' . $request->ip(), 60);
+            
             throw ValidationException::withMessages([
-                'email' => 'The provided credentials are incorrect.',
+                'email' => $authResult['error'],
             ]);
         }
 
-        // Check if user account is active
-        if (!$user->is_active) {
+        // Clear rate limiting on successful authentication
+        RateLimiter::clear('login.' . $request->ip());
+
+        if ($authResult['user_type'] === 'central') {
+            // Central admin user - login normally
+            Auth::login($authResult['user'], $remember);
+            
+            $this->authService->updateLoginStats($authResult['user'], $request);
+            $this->authService->trackUserSession($authResult['user'], $request);
             $this->authService->logAuthenticationEvent(
-                $user,
-                'login_inactive_account',
-                'failure',
+                $authResult['user'],
+                'central_login_success',
+                'success',
                 $request
             );
 
+            $request->session()->regenerate();
+            
+            return redirect()->intended($authResult['redirect_url'])->with('success', $authResult['message']);
+            
+        } else {
+            // Tenant user - redirect to their subdomain with auto-login token
+            return redirect($authResult['redirect_url'])->with([
+                'success' => $authResult['message'],
+                'tenant_name' => $authResult['tenant']->name
+            ]);
+        }
+    }
+
+    /**
+     * Handle login directly on tenant domain
+     */
+    private function handleTenantDomainLogin(Request $request, string $email, string $password, bool $remember)
+    {
+        $authResult = $this->unifiedLoginService->authenticateOnTenantDomain($email, $password);
+        
+        if (!$authResult['success']) {
+            RateLimiter::hit('login.' . $request->ip(), 60);
+            
             throw ValidationException::withMessages([
-                'email' => 'This account has been deactivated. Please contact your administrator.',
+                'email' => $authResult['error'],
             ]);
         }
 
-        // Clear rate limiting on successful login
-        RateLimiter::clear($key);
+        // Clear rate limiting on successful authentication
+        RateLimiter::clear('login.' . $request->ip());
 
-        // Login user
-        Auth::login($user, $remember);
+        // Login user in tenant context
+        Auth::login($authResult['user'], $remember);
 
-        // Update login statistics
-        $this->authService->updateLoginStats($user, $request);
-
-        // Track session
-        $this->authService->trackUserSession($user, $request);
-
-        // Log successful login
+        // Update login statistics (tenant context)
+        $this->authService->updateLoginStats($authResult['user'], $request);
+        $this->authService->trackUserSession($authResult['user'], $request);
         $this->authService->logAuthenticationEvent(
-            $user,
-            'login_success',
+            $authResult['user'],
+            'tenant_direct_login_success',
             'success',
             $request
         );
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended($authResult['redirect_url'])->with('success', $authResult['message']);
+    }
+
+    /**
+     * Determine if current request is on a tenant domain
+     */
+    private function isTenantDomain(Request $request): bool
+    {
+        $host = $request->getHost();
+        
+        // For development (path-based routing)
+        if (app()->environment('local') && 
+            ($host === '127.0.0.1' || $host === 'localhost')) {
+            return str_contains($request->getPathInfo(), '/tenant/');
+        }
+        
+        // For production (subdomain-based routing)
+        $centralDomains = config('tenancy.central_domains', []);
+        
+        return !in_array($host, $centralDomains);
     }
 
     /**

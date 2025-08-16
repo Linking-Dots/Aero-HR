@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { 
     EnvelopeIcon,
@@ -14,6 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import { Typography } from '@mui/material';
 
 export default function ForgotPassword({ status }) {
+    const { props } = usePage();
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
@@ -31,7 +32,52 @@ export default function ForgotPassword({ status }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('password.email'));
+        
+        // Determine if we're on a tenant domain
+        const isTenantDomain = () => {
+            if (typeof window === 'undefined') return false;
+            
+            const host = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            // Development: check for path-based routing
+            if (host === '127.0.0.1' || host === 'localhost') {
+                return pathname.startsWith('/tenant/');
+            }
+            
+            // Production: check if it's not a central domain
+            const centralDomains = ['aero-hr.com', 'aero-hr.local', 'aero.com'];
+            return !centralDomains.includes(host);
+        };
+
+        const getCurrentTenantInfo = () => {
+            if (!isTenantDomain()) return null;
+            
+            const host = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            // Development: extract from path
+            if (host === '127.0.0.1' || host === 'localhost') {
+                const match = pathname.match(/\/tenant\/([^\/]+)/);
+                return match ? { domain: match[1], name: match[1] } : null;
+            }
+            
+            // Production: extract from subdomain
+            const parts = host.split('.');
+            if (parts.length >= 3) {
+                return { domain: parts[0], name: parts[0] };
+            }
+            
+            return null;
+        };
+
+        const tenantInfo = getCurrentTenantInfo();
+        
+        if (isTenantDomain() && tenantInfo) {
+            post(route('tenant.password.email', { tenant: tenantInfo.domain }));
+        } else {
+            post(route('central.password.email'));
+        }
     };
 
     return (
@@ -156,7 +202,7 @@ export default function ForgotPassword({ status }) {
                 >
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Link
-                            href={route('login')}
+                            href={route('login', props.isTenant && props.tenant ? { tenant: props.tenant } : {})}
                             className="inline-flex items-center text-sm font-medium transition-colors duration-200"
                             style={{ color: theme.palette.text.secondary }}
                         >

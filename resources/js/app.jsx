@@ -18,11 +18,6 @@ if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
 
-// Setup axios baseURL to match Laravel backend in development
-if (import.meta.env.DEV) {
-    axios.defaults.baseURL = 'http://127.0.0.1:8000';
-}
-
 // Function to initialize CSRF token for authentication requests
 const initCsrfToken = async () => {
     try {

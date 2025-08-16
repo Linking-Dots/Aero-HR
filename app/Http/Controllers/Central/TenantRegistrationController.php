@@ -8,7 +8,9 @@ use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Services\TenantService;
 use App\Services\SubscriptionService;
+use App\Services\TenantLoginTokenService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -19,7 +21,8 @@ class TenantRegistrationController extends Controller
 {
     public function __construct(
         private TenantService $tenantService,
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private TenantLoginTokenService $loginTokenService
     ) {}
 
     /**
@@ -44,14 +47,29 @@ class TenantRegistrationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'company_name' => ['required', 'string', 'max:255'],
-            'domain' => ['required', 'string', 'max:255', 'unique:tenants,domain', 'alpha_dash'],
+            'domain' => [
+                'required', 
+                'string', 
+                'max:63', 
+                'unique:tenants,domain', 
+                'alpha_dash', 
+                'regex:/^[a-z0-9-]+$/',
+                new \App\Rules\ReservedDomainRule()
+            ],
             'owner_name' => ['required', 'string', 'max:255'],
-            'owner_email' => ['required', 'string', 'email', 'max:255'],
+            'owner_email' => ['required', 'string', 'email', 'max:255', 'unique:tenant_users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'plan_id' => ['required', 'exists:plans,id'],
-            'payment_method' => ['required_unless:trial,true', 'string'],
-            'trial' => ['boolean'],
+            'billing_cycle' => ['required', 'in:monthly,yearly'],
+            'timezone' => ['nullable', 'string', 'max:255'],
+            'currency' => ['nullable', 'string', 'max:3'],
             'terms' => ['accepted'],
+        ], [
+            'domain.unique' => 'This domain is already taken. Please choose a different one.',
+            'domain.alpha_dash' => 'Domain can only contain letters, numbers, and hyphens.',
+            'domain.regex' => 'Domain must be lowercase and contain only letters, numbers, and hyphens.',
+            'owner_email.unique' => 'An account with this email already exists.',
+            'terms.accepted' => 'You must accept the terms and conditions.',
         ]);
 
         if ($validator->fails()) {
@@ -61,52 +79,131 @@ class TenantRegistrationController extends Controller
         try {
             $plan = Plan::findOrFail($request->plan_id);
             
-            // Create tenant
-            $tenant = $this->tenantService->createTenant([
-                'name' => $request->company_name,
-                'domain' => $request->domain,
-                'plan_id' => $plan->id,
-                'settings' => [
-                    'timezone' => $request->timezone ?? 'UTC',
-                    'currency' => $request->currency ?? 'USD',
-                    'registration_ip' => $request->ip(),
-                ]
-            ]);
-
-            // Create owner user
-            $owner = $this->tenantService->createTenantOwner($tenant, [
-                'name' => $request->owner_name,
-                'email' => $request->owner_email,
-                'password' => $request->password,
-            ]);
-
-            // Create subscription if not trial
-            if (!$request->trial && $request->payment_method) {
-                $subscription = $this->subscriptionService->createSubscription($tenant, $plan, [
-                    'email' => $request->owner_email,
-                    'payment_method' => $request->payment_method
-                ]);
+            // Validate domain format
+            $domain = strtolower(trim($request->domain));
+            if (strlen($domain) < 3 || strlen($domain) > 63) {
+                return back()->withErrors(['domain' => 'Domain must be between 3 and 63 characters.'])->withInput();
             }
+            
+            // Wrap entire registration process in transaction
+            DB::transaction(function () use ($request, $plan, $domain, &$tenant, &$owner, &$subscription) {
+                // Create tenant
+                $tenant = $this->tenantService->createTenant([
+                    'name' => $request->company_name,
+                    'domain' => $domain,
+                    'plan_id' => $plan->id,
+                    'settings' => [
+                        'timezone' => $request->timezone ?? 'UTC',
+                        'currency' => $request->currency ?? 'USD',
+                        'billing_cycle' => $request->billing_cycle,
+                        'registration_ip' => $request->ip(),
+                        'registered_at' => now()->toDateTimeString(),
+                    ]
+                ]);
 
-            // Seed default data
-            $this->tenantService->seedTenantDefaults($tenant);
+                // Create owner user
+                $owner = $this->tenantService->createTenantOwner($tenant, [
+                    'name' => $request->owner_name,
+                    'email' => $request->owner_email,
+                    'password' => $request->password,
+                ]);
+
+                // Create subscription if plan is not free
+                if ($plan->price > 0) {
+                    $subscription = $this->subscriptionService->createSubscription($tenant, $plan, [
+                        'email' => $request->owner_email,
+                        'billing_cycle' => $request->billing_cycle
+                    ]);
+                }
+
+                // Seed default data
+                $this->tenantService->seedTenantDefaults($tenant);
+            });
 
             // Send welcome email (implement as needed)
             // $this->sendWelcomeEmail($tenant, $owner);
 
-            return Inertia::render('Auth/RegistrationSuccess', [
-                'tenant' => $tenant,
+            // Log successful registration
+            Log::info('Tenant registration successful', [
+                'tenant_id' => $tenant->id,
                 'domain' => $tenant->domain,
-                'loginUrl' => "https://{$tenant->domain}." . config('app.domain')
+                'owner_email' => $owner->email,
+                'plan' => $plan->name,
+                'registration_ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Tenant registration failed: ' . $e->getMessage());
+            // Generate auto-login URL for seamless redirect
+            $autoLoginUrl = $this->loginTokenService->generateLoginUrl($tenant, $owner);
+
+            // Redirect to success page with auto-login URL
+            return redirect()->route('registration.success')->with([
+                'tenant' => $tenant,
+                'loginUrl' => $autoLoginUrl,
+                'domain' => $tenant->domain,
+                'company_name' => $tenant->name,
+                'owner_name' => $owner->name,
+                'plan_name' => $plan->name
+            ]);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database-specific errors
+            Log::error('Database error during tenant registration', [
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'request_data' => $request->except(['password', 'password_confirmation'])
+            ]);
+            
+            $errorMessage = 'Registration failed due to a database error. Please try again.';
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                if (str_contains($e->getMessage(), 'domain')) {
+                    $errorMessage = 'This domain is already taken. Please choose a different one.';
+                } elseif (str_contains($e->getMessage(), 'email')) {
+                    $errorMessage = 'An account with this email already exists.';
+                }
+            }
             
             return back()
-                ->withErrors(['error' => 'Registration failed. Please try again.'])
+                ->withErrors(['error' => $errorMessage])
+                ->withInput();
+                
+        } catch (\Exception $e) {
+            Log::error('Tenant registration failed: ' . $e->getMessage(), [
+                'request_data' => $request->except(['password', 'password_confirmation']),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'registration_ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+            
+            return back()
+                ->withErrors(['error' => 'Registration failed. Please check your information and try again. If the problem persists, please contact support.'])
                 ->withInput();
         }
+    }
+
+    /**
+     * Get tenant login URL based on domain and environment
+     */
+    private function getTenantLoginUrl(string $domain): string
+    {
+        // For development server (127.0.0.1:8000 or localhost:8000)
+        if (app()->environment('local') && 
+            (request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost')) {
+            $port = request()->getPort();
+            $portSuffix = ($port && $port != 80 && $port != 443) ? ":{$port}" : '';
+            return "http://127.0.0.1{$portSuffix}/tenant/{$domain}/login";
+        }
+        
+        // For production with subdomains
+        $appDomain = config('app.domain', 'aero-hr.local');
+        
+        if (app()->environment('local')) {
+            return "http://{$domain}.{$appDomain}/login";
+        }
+        
+        return "https://{$domain}.{$appDomain}/login";
     }
 
     /**
@@ -114,17 +211,34 @@ class TenantRegistrationController extends Controller
      */
     public function checkDomain(Request $request)
     {
-        $domain = $request->input('domain');
-        
-        if (!$domain) {
-            return response()->json(['available' => false, 'message' => 'Domain is required']);
+        $validator = Validator::make($request->all(), [
+            'domain' => [
+                'required', 
+                'string', 
+                'min:3', 
+                'max:63',
+                'regex:/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/',
+                new \App\Rules\ReservedDomainRule()
+            ]
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'available' => false,
+                'message' => $validator->errors()->first('domain'),
+                'errors' => $validator->errors()
+            ], 422);
         }
 
+        $domain = strtolower(trim($request->domain));
+        
+        // Check if domain exists in tenants table
         $exists = Tenant::where('domain', $domain)->exists();
         
         return response()->json([
             'available' => !$exists,
-            'message' => $exists ? 'Domain is already taken' : 'Domain is available'
+            'message' => $exists ? 'Domain is already taken' : 'Domain is available',
+            'domain' => $domain
         ]);
     }
 

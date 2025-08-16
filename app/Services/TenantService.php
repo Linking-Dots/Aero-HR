@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Tenant;
 use App\Models\Plan;
 use App\Models\TenantUser;
+use Stancl\Tenancy\Database\Models\Domain;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -18,28 +19,58 @@ class TenantService
      */
     public function createTenant(array $data): Tenant
     {
-        try {
-            // Create tenant record
-            $tenant = Tenant::create([
-                'id' => (string) Str::uuid(),
-                'name' => $data['name'],
-                'slug' => Str::slug($data['name']),
-                'domain' => $data['domain'] ?? Str::slug($data['name']),
-                'database_name' => 'tenant_' . Str::random(8),
-                'plan_id' => $data['plan_id'],
-                'status' => 'active',
-                'trial_ends_at' => now()->addDays(14),
-                'settings' => $data['settings'] ?? []
-            ]);
+        return DB::transaction(function () use ($data) {
+            try {
+                // Create tenant record
+                $tenant = Tenant::create([
+                    'id' => (string) Str::uuid(),
+                    'name' => $data['name'],
+                    'slug' => Str::slug($data['name']),
+                    'domain' => $data['domain'] ?? Str::slug($data['name']),
+                    'database_name' => 'tenant_' . Str::random(8),
+                    'plan_id' => $data['plan_id'],
+                    'status' => 'active',
+                    'trial_ends_at' => now()->addDays(14),
+                    'settings' => $data['settings'] ?? []
+                ]);
 
-            // The tenancy package will automatically create the database
-            // and run migrations through the TenantCreated event
+                // Create domain records for the tenant
+                $domain = $data['domain'] ?? Str::slug($data['name']);
+                
+                // Production domain (subdomain)
+                Domain::create([
+                    'domain' => $domain . '.' . config('app.domain', 'aero-hr.local'),
+                    'tenant_id' => $tenant->id
+                ]);
+                
+                // Development domain (path-based)
+                if (app()->environment('local')) {
+                    Domain::create([
+                        'domain' => '127.0.0.1:8000/tenant/' . $domain,
+                        'tenant_id' => $tenant->id
+                    ]);
+                }
 
-            return $tenant;
-            
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to create tenant: " . $e->getMessage());
-        }
+                Log::info('Tenant created successfully', [
+                    'tenant_id' => $tenant->id,
+                    'domain' => $tenant->domain,
+                    'plan_id' => $tenant->plan_id
+                ]);
+
+                // The tenancy package will automatically create the database
+                // and run migrations through the TenantCreated event
+
+                return $tenant;
+                
+            } catch (\Exception $e) {
+                Log::error('Tenant creation failed', [
+                    'error' => $e->getMessage(),
+                    'data' => $data,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw new \Exception("Failed to create tenant: " . $e->getMessage());
+            }
+        });
     }
 
     /**
@@ -60,18 +91,31 @@ class TenantService
             // Initialize tenant context and create user in tenant database
             Tenancy::initialize($tenant);
             
+            // Check if User model exists in tenant context
+            if (!class_exists(\App\Models\User::class)) {
+                throw new \Exception("User model not found in tenant context");
+            }
+            
             $user = \App\Models\User::create([
                 'name' => $ownerData['name'],
                 'email' => $ownerData['email'],
                 'password' => bcrypt($ownerData['password']),
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'role' => 'Super Administrator', // Ensure owner gets admin role
             ]);
 
-            // Assign owner role if roles exist
+            // Assign owner role if Spatie Permission package is available
             if (class_exists(\Spatie\Permission\Models\Role::class)) {
-                $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Administrator']);
-                $user->assignRole($ownerRole);
+                try {
+                    $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate([
+                        'name' => 'Super Administrator',
+                        'guard_name' => 'web'
+                    ]);
+                    $user->assignRole($ownerRole);
+                } catch (\Exception $e) {
+                    Log::warning("Failed to assign role to tenant owner: " . $e->getMessage());
+                }
             }
 
             Tenancy::end();

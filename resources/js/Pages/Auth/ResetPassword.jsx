@@ -81,9 +81,56 @@ export default function ResetPassword({ token, email }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('password.update'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
+        
+        // Determine if we're on a tenant domain
+        const isTenantDomain = () => {
+            if (typeof window === 'undefined') return false;
+            
+            const host = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            // Development: check for path-based routing
+            if (host === '127.0.0.1' || host === 'localhost') {
+                return pathname.startsWith('/tenant/');
+            }
+            
+            // Production: check if it's not a central domain
+            const centralDomains = ['aero-hr.com', 'aero-hr.local', 'aero.com'];
+            return !centralDomains.includes(host);
+        };
+
+        const getCurrentTenantInfo = () => {
+            if (!isTenantDomain()) return null;
+            
+            const host = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            // Development: extract from path
+            if (host === '127.0.0.1' || host === 'localhost') {
+                const match = pathname.match(/\/tenant\/([^\/]+)/);
+                return match ? { domain: match[1], name: match[1] } : null;
+            }
+            
+            // Production: extract from subdomain
+            const parts = host.split('.');
+            if (parts.length >= 3) {
+                return { domain: parts[0], name: parts[0] };
+            }
+            
+            return null;
+        };
+
+        const tenantInfo = getCurrentTenantInfo();
+        
+        if (isTenantDomain() && tenantInfo) {
+            post(route('tenant.password.update', { tenant: tenantInfo.domain }), {
+                onFinish: () => reset('password', 'password_confirmation'),
+            });
+        } else {
+            post(route('central.password.update'), {
+                onFinish: () => reset('password', 'password_confirmation'),
+            });
+        }
     };
 
     return (

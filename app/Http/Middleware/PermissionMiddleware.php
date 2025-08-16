@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -22,7 +23,8 @@ class PermissionMiddleware
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login');
+            $loginRoute = tenant() ? 'tenant.login' : 'central.login';
+            return redirect()->route($loginRoute);
         }
 
         $user = Auth::user();
@@ -30,7 +32,7 @@ class PermissionMiddleware
         // Check if user has the required permission
         if (!$user->can($permission)) {
             // Log unauthorized access attempt
-            \Log::warning('Unauthorized access attempt', [
+            Log::warning('Unauthorized access attempt', [
                 'user_id' => $user->id,
                 'permission' => $permission,
                 'route' => $request->route()->getName(),

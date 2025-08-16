@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -20,7 +21,8 @@ class RoleHierarchyMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login');
+            $loginRoute = tenant() ? 'tenant.login' : 'central.login';
+            return redirect()->route($loginRoute);
         }
 
         $user = Auth::user();
@@ -34,7 +36,7 @@ class RoleHierarchyMiddleware
             $targetRole = \Spatie\Permission\Models\Role::find($targetRoleId);
 
             if ($targetRole && $targetRole->hierarchy_level <= $userHierarchyLevel) {
-                \Log::warning('Hierarchy violation attempt', [
+                Log::warning('Hierarchy violation attempt', [
                     'user_id' => $user->id,
                     'user_hierarchy' => $userHierarchyLevel,
                     'target_role' => $targetRole->name,

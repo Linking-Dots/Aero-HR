@@ -32,7 +32,6 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
-            \App\Http\Middleware\Cors::class,
         ],
 
         'api' => [
@@ -64,5 +63,7 @@ class Kernel extends HttpKernel
         'api_security' => \App\Http\Middleware\ApiSecurityMiddleware::class,
         'custom_permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'role_hierarchy' => \App\Http\Middleware\RoleHierarchyMiddleware::class,
+        // Tenancy Middleware
+        'tenancy.domain_path' => \App\Http\Middleware\InitializeTenancyByDomainPath::class,
     ];
 }

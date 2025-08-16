@@ -19,7 +19,8 @@ return [
     'central_domains' => [
         '127.0.0.1',
         'localhost',
-        env('CENTRAL_DOMAIN', 'aero-hr.local'),
+        'aero.com',
+        env('CENTRAL_DOMAIN', 'aero.com'),
     ],
 
     /**

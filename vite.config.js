@@ -27,8 +27,37 @@ export default defineConfig({
         ViteMinifyPlugin(), // Additional minification
     ],
     server: {
+        host: '127.0.0.1',
+        port: 5173,
         hmr: {
             overlay: false
+        },
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/login': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/register': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/check-user-type': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/check-domain': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+                secure: false,
+            }
         }
     },
     build: {

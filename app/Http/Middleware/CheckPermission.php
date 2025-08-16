@@ -23,7 +23,8 @@ class CheckPermission
         $authGuard = Auth::guard($guard);
         
         if ($authGuard->guest()) {
-            return redirect()->route('login');
+            $loginRoute = tenant() ? 'tenant.login' : 'central.login';
+            return redirect()->route($loginRoute);
         }
 
         $user = $authGuard->user();
