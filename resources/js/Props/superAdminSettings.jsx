@@ -11,7 +11,6 @@ import {
     GlobeAltIcon,
     EnvelopeIcon,
     BellIcon,
-    DatabaseIcon,
     CloudIcon,
     CodeBracketIcon,
     WrenchScrewdriverIcon,
@@ -174,7 +173,7 @@ export const getSuperAdminSettingsPages = (permissions = [], auth = null) => {
 
     settings.push({
         name: 'Database Configuration', 
-        icon: <DatabaseIcon className="w-5 h-5" />, 
+        icon: <ServerIcon className="w-5 h-5" />, 
         route: 'admin.settings.database',
         category: 'infrastructure-management',
         priority: 14,
