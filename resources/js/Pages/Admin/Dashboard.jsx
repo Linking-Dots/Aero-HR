@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
-import AdminLayout from '@/Layouts/AdminLayout';
+import App from '@/Layouts/App';
 import { 
     BuildingOfficeIcon, 
     UserGroupIcon, 
@@ -31,11 +31,10 @@ export default function AdminDashboard({ tenants, stats, recentActivity, systemH
     );
 
     return (
-        <>
+        <App>
             <Head title="Super Admin Dashboard" />
             
-            <AdminLayout>
-                <div className="py-6">
+            <div className="py-6">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Header */}
                         <div className="mb-8">
@@ -145,7 +144,6 @@ export default function AdminDashboard({ tenants, stats, recentActivity, systemH
                         </div>
                     </div>
                 </div>
-            </AdminLayout>
-        </>
+        </App>
     );
 }

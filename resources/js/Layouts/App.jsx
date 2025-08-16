@@ -9,7 +9,8 @@ import '../../css/smooth-animations.css';
 import { Inertia } from '@inertiajs/inertia';
 import { getPages } from '@/Props/pages.jsx';
 import { getSettingsPages } from '@/Props/settings.jsx';
-import { getFilteredSuperAdminPages, shouldShowSuperAdminNav } from '@/Props/superAdminPages.jsx';
+import { getSuperAdminPages } from '@/Props/superAdminPages.jsx';
+import { getSuperAdminSettingsPages } from '@/Props/superAdminSettings.jsx';
 import { HeroUIProvider } from "@heroui/react";
 import { applyThemeToRoot } from "@/utils/themeUtils.js";
 import {ScrollShadow} from "@heroui/scroll-shadow";
@@ -99,8 +100,9 @@ function App({ children }) {
     
     const pages = useMemo(() => {
         // Check if user is super admin and should see super admin navigation
-        if (shouldShowSuperAdminNav(memoizedAuth)) {
-            return getFilteredSuperAdminPages(permissions, memoizedAuth);
+        if (memoizedAuth?.roles?.includes('Super Administrator')) {
+            const isSettingsPage = url.startsWith('/settings') || url.includes('settings');
+            return isSettingsPage ? getSuperAdminSettingsPages(permissions, memoizedAuth) : getSuperAdminPages(permissions, memoizedAuth);
         }
         
         // Regular tenant user navigation

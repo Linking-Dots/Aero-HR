@@ -84,7 +84,7 @@
           "react-data-table-component": "^7.7.0",
           "react-datepicker": "^7.3.0",
           "react-draggable": "^4.4.6",
-          "react-dropzone": "^14.2.3",
+          "react-dropzone": "^14.3.8",
           "react-hook-form": "^7.62.0",
           "react-hot-toast": "^2.5.2",
           "react-leaflet": "^4.2.1",
