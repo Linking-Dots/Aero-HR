@@ -61,7 +61,7 @@ class TenantUserLookup extends Model
     /**
      * Add email to tenant lookup.
      */
-    public static function addEmailToTenant(string $email, int $tenantId, bool $isAdmin = false): self
+    public static function addEmailToTenant(string $email, string $tenantId, bool $isAdmin = false): self
     {
         return static::firstOrCreate(
             ['email' => $email, 'tenant_id' => $tenantId],
@@ -72,7 +72,7 @@ class TenantUserLookup extends Model
     /**
      * Remove email from tenant lookup.
      */
-    public static function removeEmailFromTenant(string $email, int $tenantId): bool
+    public static function removeEmailFromTenant(string $email, string $tenantId): bool
     {
         return static::where('email', $email)
             ->where('tenant_id', $tenantId)

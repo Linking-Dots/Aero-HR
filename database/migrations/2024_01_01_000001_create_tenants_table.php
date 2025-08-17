@@ -19,15 +19,15 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             
-            // Database connection details (encrypted)
-            $table->string('db_name');
-            $table->text('db_username'); // encrypted
-            $table->text('db_password'); // encrypted
+            // Database connection details (encrypted) - nullable until provisioned
+            $table->string('db_name')->nullable();
+            $table->text('db_username')->nullable(); // encrypted
+            $table->text('db_password')->nullable(); // encrypted
             $table->string('db_host')->default('127.0.0.1');
             $table->integer('db_port')->default(3306);
             
             // Tenant status and metadata
-            $table->enum('status', ['pending', 'provisioning', 'active', 'suspended', 'terminated'])
+            $table->enum('status', ['pending', 'provisioning', 'active', 'suspended', 'terminated', 'failed'])
                   ->default('pending');
             $table->json('settings')->nullable();
             $table->string('storage_prefix')->nullable();

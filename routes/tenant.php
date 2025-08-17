@@ -40,7 +40,6 @@ use App\Http\Controllers\Tenant\AutoLoginController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use App\Http\Middleware\InitializeTenancyByDomainPath;
 
 // Check if we're in development mode (127.0.0.1:8000)
 $isDevelopment = app()->environment('local') && 
@@ -330,13 +329,14 @@ $tenantRoutes = function () {
 */
 
 if ($isDevelopment) {
-    // Development: Use domain-based path routing (127.0.0.1:8000/tenant/company/...)
-    Route::prefix('{tenant}')->middleware([
+    // Development: Use path-based routing (127.0.0.1:8000/tenant/{tenant}/...)
+    Route::prefix('tenant/{tenant}')->middleware([
         'web',
-        InitializeTenancyByDomainPath::class,
+        InitializeTenancyByPath::class,
+        PreventAccessFromCentralDomains::class,
     ])->group($tenantRoutes);
 } else {
-    // Production: Use subdomain routing (company.domain.com/...)
+    // Production: Use subdomain routing ({tenant}.domain.com/...)
     Route::middleware([
         'web',
         InitializeTenancyByDomain::class,

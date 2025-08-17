@@ -15,6 +15,9 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\SendAttendanceReminders::class,
+        \App\Console\Commands\TestTenantProvisioning::class,
+        \App\Console\Commands\CreateTenantCommand::class,
+        \App\Console\Commands\CleanupEmptyTenantDatabases::class,
     ];
 
     /**

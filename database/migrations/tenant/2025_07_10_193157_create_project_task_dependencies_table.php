@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('project_task_dependencies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('predecessor_id')->constrained('project_tasks')->onDelete('cascade');
-            $table->foreignId('successor_id')->constrained('project_tasks')->onDelete('cascade');
+            $table->foreignId('predecessor_id')->constrained('tasks')->onDelete('cascade');
+            $table->foreignId('successor_id')->constrained('tasks')->onDelete('cascade');
             $table->enum('dependency_type', ['finish_to_start', 'start_to_start', 'finish_to_finish', 'start_to_finish'])->default('finish_to_start');
             $table->integer('lag_days')->default(0);
             $table->timestamps();

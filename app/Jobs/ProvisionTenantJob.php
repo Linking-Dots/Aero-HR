@@ -55,61 +55,40 @@ class ProvisionTenantJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            Log::info("Starting tenant provisioning for tenant: {$this->tenant->slug}");
-
-            // Check if already provisioned (idempotency)
-            if ($this->tenant->isActive()) {
-                Log::info("Tenant {$this->tenant->slug} is already active, skipping provisioning");
-                return;
-            }
+            Log::info("Starting tenant provisioning for tenant: {$this->tenant->id}");
 
             // Update status to provisioning
             $this->tenant->update(['status' => 'provisioning']);
 
-            // Step 1: Generate database credentials
-            $this->generateDatabaseCredentials();
+            // Step 1: Use stancl/tenancy package to run migrations
+            $this->runTenantMigrations();
 
-            // Step 2: Create tenant database
-            $this->createTenantDatabase();
-
-            // Step 3: Configure tenant database connection
-            $connectionName = $this->configureTenantConnection();
-
-            // Step 4: Run tenant migrations
-            $this->runTenantMigrations($connectionName);
-
-            // Step 5: Seed default data
+            // Step 2: Use stancl/tenancy package to seed data
             if ($this->shouldSeedData) {
-                $this->seedTenantDefaults($connectionName);
+                $this->seedTenantData();
             }
 
-            // Step 6: Create tenant admin user
+            // Step 3: Create tenant admin user within tenant context
             if (!empty($this->adminUser)) {
-                $this->createTenantAdminUser($connectionName);
+                $this->createTenantAdminUser();
             }
 
-            // Step 7: Setup storage prefix
-            $this->setupStoragePrefix();
+            // Step 4: Setup storage directory for tenant
+            $this->setupTenantStorage();
 
-            // Step 8: Create default domain if not exists
-            $this->createDefaultDomain();
-
-            // Step 9: Mark tenant as active
+            // Step 5: Mark tenant as active
             $this->tenant->update(['status' => 'active']);
 
-            Log::info("Successfully provisioned tenant: {$this->tenant->slug}");
+            Log::info("Successfully provisioned tenant: {$this->tenant->id}");
 
             // Dispatch success event
             event(new TenantProvisioned($this->tenant));
 
         } catch (Throwable $e) {
-            Log::error("Failed to provision tenant {$this->tenant->slug}: " . $e->getMessage(), [
+            Log::error("Failed to provision tenant {$this->tenant->id}: " . $e->getMessage(), [
                 'tenant_id' => $this->tenant->id,
                 'exception' => $e->getTraceAsString()
             ]);
-
-            // Cleanup on failure
-            $this->cleanupOnFailure();
 
             // Mark tenant as failed
             $this->tenant->update(['status' => 'failed']);
@@ -122,314 +101,113 @@ class ProvisionTenantJob implements ShouldQueue
     }
 
     /**
-     * Generate database name and credentials for the tenant.
+     * Run tenant migrations using stancl/tenancy package approach.
      */
-    private function generateDatabaseCredentials(): void
+    private function runTenantMigrations(): void
     {
-        if (empty($this->tenant->db_name)) {
-            $this->tenant->db_name = Tenant::generateDatabaseName();
-        }
-
-        if (empty($this->tenant->db_username)) {
-            $this->tenant->db_username = 'tenant_' . Str::random(12);
-        }
-
-        if (empty($this->tenant->db_password)) {
-            $this->tenant->db_password = Str::random(32);
-        }
-
-        $this->tenant->save();
-    }
-
-    /**
-     * Create the tenant database and user (MySQL).
-     */
-    private function createTenantDatabase(): void
-    {
-        $adminConnection = DB::connection('tenant_admin');
-        
-        // Create database
-        $dbName = $this->tenant->db_name;
-        $adminConnection->statement("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-
-        // Create database user (optional - can use same credentials)
-        $username = $this->tenant->db_username;
-        $password = $this->tenant->db_password;
-        $host = config('database.connections.tenant.host', '127.0.0.1');
-
-        $adminConnection->statement("CREATE USER IF NOT EXISTS '{$username}'@'{$host}' IDENTIFIED BY '{$password}'");
-        $adminConnection->statement("GRANT ALL PRIVILEGES ON `{$dbName}`.* TO '{$username}'@'{$host}'");
-        $adminConnection->statement("FLUSH PRIVILEGES");
-
-        Log::info("Created database and user for tenant: {$this->tenant->slug}");
-    }
-
-    /**
-     * Configure the dynamic tenant database connection.
-     */
-    private function configureTenantConnection(): string
-    {
-        $connectionName = "tenant_{$this->tenant->id}";
-        
-        $connectionConfig = array_merge(
-            config('database.connections.tenant'),
-            $this->tenant->getDatabaseConnection()
-        );
-
-        Config::set("database.connections.{$connectionName}", $connectionConfig);
-        
-        // Test the connection
-        DB::connection($connectionName)->getPdo();
-        
-        Log::info("Configured database connection for tenant: {$this->tenant->slug}");
-        
-        return $connectionName;
-    }
-
-    /**
-     * Run tenant-specific migrations.
-     */
-    private function runTenantMigrations(string $connectionName): void
-    {
-        $exitCode = Artisan::call('migrate', [
-            '--database' => $connectionName,
-            '--path' => 'database/migrations/tenant',
-            '--force' => true,
+        $exitCode = Artisan::call('tenants:migrate', [
+            '--tenants' => [$this->tenant->id],
         ]);
 
         if ($exitCode !== 0) {
-            throw new Exception("Failed to run tenant migrations for {$this->tenant->slug}");
+            throw new Exception("Failed to run tenant migrations for {$this->tenant->id}");
         }
 
-        Log::info("Ran tenant migrations for: {$this->tenant->slug}");
+        Log::info("Ran tenant migrations for: {$this->tenant->id}");
     }
 
     /**
-     * Seed default tenant data (roles, permissions, etc.).
+     * Seed tenant data using stancl/tenancy package approach.
      */
-    private function seedTenantDefaults(string $connectionName): void
-    {
-        // Switch to tenant database connection
-        $originalConnection = config('database.default');
-        Config::set('database.default', $connectionName);
-
-        try {
-            // Use comprehensive TenantRolesSeeder for roles and permissions
-            $this->seedComprehensiveRolesAndPermissions($connectionName);
-            
-            // Create default departments
-            $this->createDefaultDepartments($connectionName);
-            
-            // Create additional tenant-specific defaults
-            $this->createDefaultSettings($connectionName);
-
-            Log::info("Seeded comprehensive default data for tenant: {$this->tenant->slug}");
-        } finally {
-            // Restore original connection
-            Config::set('database.default', $originalConnection);
-        }
-    }
-
-    /**
-     * Seed comprehensive roles and permissions using TenantRolesSeeder.
-     */
-    private function seedComprehensiveRolesAndPermissions(string $connectionName): void
+    private function seedTenantData(): void
     {
         try {
-            // Use Artisan to run the tenant seeder with comprehensive roles
-            $exitCode = Artisan::call('db:seed', [
-                '--database' => $connectionName,
-                '--class' => 'Database\\Seeders\\Tenant\\TenantRolesSeeder',
-                '--force' => true,
+            // Seed roles and permissions
+            $exitCode = Artisan::call('tenants:seed', [
+                '--tenants' => [$this->tenant->id],
+                '--class' => 'TenantRolesSeeder',
             ]);
 
             if ($exitCode !== 0) {
-                throw new Exception("Failed to seed tenant roles and permissions for {$this->tenant->slug}");
+                throw new Exception("Failed to seed tenant data for {$this->tenant->id}");
             }
 
-            Log::info("Seeded comprehensive roles and permissions for tenant: {$this->tenant->slug}");
+            Log::info("Seeded tenant data for: {$this->tenant->id}");
         } catch (Exception $e) {
-            Log::error("Failed to seed roles for tenant {$this->tenant->slug}: " . $e->getMessage());
+            Log::error("Failed to seed data for tenant {$this->tenant->id}: " . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Create default settings for the tenant.
+     * Create tenant admin user within tenant context.
      */
-    private function createDefaultSettings(string $connectionName): void
+    private function createTenantAdminUser(): void
     {
-        $settings = [
-            [
-                'key' => 'company_name',
-                'value' => $this->tenant->name,
-                'type' => 'string',
-                'description' => 'Company name',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'timezone',
-                'value' => 'UTC',
-                'type' => 'string',
-                'description' => 'Default timezone',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'date_format',
-                'value' => 'Y-m-d',
-                'type' => 'string',
-                'description' => 'Default date format',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'currency',
-                'value' => 'USD',
-                'type' => 'string',
-                'description' => 'Default currency',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'working_hours_start',
-                'value' => '09:00',
-                'type' => 'string',
-                'description' => 'Working hours start time',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'working_hours_end',
-                'value' => '17:00',
-                'type' => 'string',
-                'description' => 'Working hours end time',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'leave_year_start',
-                'value' => '01-01',
-                'type' => 'string',
-                'description' => 'Leave year start date (MM-DD)',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'default_leave_balance',
-                'value' => '25',
-                'type' => 'integer',
-                'description' => 'Default annual leave balance in days',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ];
-
-        foreach ($settings as $setting) {
-            DB::connection($connectionName)->table('settings')->insertOrIgnore($setting);
+        if (empty($this->adminUser)) {
+            return;
         }
 
-        Log::info("Created default settings for tenant: {$this->tenant->slug}");
-    }
-
-    /**
-     * Create default departments for the tenant.
-     */
-    private function createDefaultDepartments(string $connectionName): void
-    {
-        $departments = [
-            ['name' => 'Human Resources', 'code' => 'HR', 'description' => 'Human Resources Department'],
-            ['name' => 'Information Technology', 'code' => 'IT', 'description' => 'IT Department'],
-            ['name' => 'Finance', 'code' => 'FIN', 'description' => 'Finance Department'],
-            ['name' => 'Operations', 'code' => 'OPS', 'description' => 'Operations Department'],
-        ];
-
-        foreach ($departments as $department) {
-            DB::connection($connectionName)->table('departments')->insertOrIgnore($department);
-        }
-    }
-
-    /**
-     * Create the tenant admin user.
-     */
-    private function createTenantAdminUser(string $connectionName): void
-    {
-        $userData = array_merge([
-            'password' => bcrypt('password'),
-            'is_active' => true,
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ], $this->adminUser);
-
-        $userId = DB::connection($connectionName)->table('users')->insertGetId($userData);
-
-        // Assign Tenant Admin role (from our comprehensive system)
-        $tenantAdminRoleId = DB::connection($connectionName)
-            ->table('roles')
-            ->where('name', 'Tenant Admin')
-            ->value('id');
-
-        if ($tenantAdminRoleId) {
-            DB::connection($connectionName)->table('model_has_roles')->insert([
-                'role_id' => $tenantAdminRoleId,
-                'model_type' => 'App\\Models\\User',
-                'model_id' => $userId,
+        $this->tenant->run(function () {
+            $adminUser = \App\Models\User::create([
+                'id' => Str::uuid()->toString(),
+                'name' => $this->adminUser['name'],
+                'email' => $this->adminUser['email'],
+                'password' => bcrypt($this->adminUser['password'] ?? 'password123'),
+                'email_verified_at' => now(),
+                'status' => 'active',
+                'employee_id' => 'ADMIN001',
+                'user_type' => 'admin',
+                'is_tenant_admin' => true,
             ]);
-        } else {
-            Log::warning("Tenant Admin role not found for tenant: {$this->tenant->slug}");
-        }
 
-        // Add to tenant user lookup
-        TenantUserLookup::addEmailToTenant(
-            $userData['email'],
-            $this->tenant->id,
-            true // is_admin
-        );
+            // Assign tenant admin role
+            if ($adminUser && class_exists('Spatie\Permission\Models\Role')) {
+                $tenantAdminRole = \Spatie\Permission\Models\Role::where('name', 'Tenant Admin')->first();
+                if ($tenantAdminRole) {
+                    $adminUser->assignRole($tenantAdminRole);
+                }
+            }
 
-        Log::info("Created admin user for tenant: {$this->tenant->slug}");
-    }
-
-    /**
-     * Setup storage prefix for tenant file isolation.
-     */
-    private function setupStoragePrefix(): void
-    {
-        $prefix = "tenants/{$this->tenant->slug}";
-        
-        // Update tenant with storage prefix
-        $this->tenant->update(['storage_prefix' => $prefix]);
-
-        // Create storage directories if using local storage
-        if (config('filesystems.default') === 'local') {
-            Storage::makeDirectory($prefix);
-            Storage::makeDirectory("{$prefix}/uploads");
-            Storage::makeDirectory("{$prefix}/exports");
-            Storage::makeDirectory("{$prefix}/documents");
-        }
-
-        Log::info("Setup storage prefix for tenant: {$this->tenant->slug}");
-    }
-
-    /**
-     * Create default domain for the tenant.
-     */
-    private function createDefaultDomain(): void
-    {
-        $domainName = "{$this->tenant->slug}.mysoftwaredomain.com";
-        
-        Domain::firstOrCreate(
-            ['domain' => $domainName],
-            [
+            // Create tenant user lookup record
+            \App\Models\TenantUserLookup::create([
                 'tenant_id' => $this->tenant->id,
-                'is_primary' => true,
-                'is_verified' => true,
-                'verified_at' => now(),
-            ]
-        );
+                'user_id' => $adminUser->id,
+                'email' => $adminUser->email,
+                'role' => 'tenant_admin',
+                'is_active' => true,
+            ]);
 
-        Log::info("Created default domain for tenant: {$this->tenant->slug}");
+            Log::info("Created admin user for tenant: {$this->tenant->id}");
+        });
+    }
+
+    /**
+     * Setup storage directory for tenant.
+     */
+    private function setupTenantStorage(): void
+    {
+        try {
+            // Create tenant-specific storage directories
+            $directories = [
+                "tenant-{$this->tenant->id}/documents",
+                "tenant-{$this->tenant->id}/avatars",
+                "tenant-{$this->tenant->id}/exports",
+                "tenant-{$this->tenant->id}/imports",
+                "tenant-{$this->tenant->id}/temp",
+            ];
+
+            foreach ($directories as $directory) {
+                if (!Storage::disk('public')->exists($directory)) {
+                    Storage::disk('public')->makeDirectory($directory);
+                }
+            }
+
+            Log::info("Setup storage directories for tenant: {$this->tenant->id}");
+        } catch (Exception $e) {
+            Log::warning("Failed to setup storage for tenant {$this->tenant->id}: " . $e->getMessage());
+            // Don't fail the job for storage issues
+        }
     }
 
     /**
@@ -438,22 +216,11 @@ class ProvisionTenantJob implements ShouldQueue
     private function cleanupOnFailure(): void
     {
         try {
-            // Drop database if it was created
-            if (!empty($this->tenant->db_name)) {
-                $adminConnection = DB::connection('tenant_admin');
-                $adminConnection->statement("DROP DATABASE IF EXISTS `{$this->tenant->db_name}`");
-                
-                // Drop user if it was created
-                if (!empty($this->tenant->db_username)) {
-                    $host = config('database.connections.tenant.host', '127.0.0.1');
-                    $adminConnection->statement("DROP USER IF EXISTS '{$this->tenant->db_username}'@'{$host}'");
-                }
-            }
-
+            // The stancl/tenancy package handles database cleanup automatically
+            // We just need to clean up our custom resources
+            
             // Remove storage directory
-            if (!empty($this->tenant->storage_prefix)) {
-                Storage::deleteDirectory($this->tenant->storage_prefix);
-            }
+            Storage::disk('public')->deleteDirectory("tenant-{$this->tenant->id}");
 
             // Remove domain entries
             Domain::where('tenant_id', $this->tenant->id)->delete();
@@ -461,10 +228,10 @@ class ProvisionTenantJob implements ShouldQueue
             // Remove user lookup entries
             TenantUserLookup::where('tenant_id', $this->tenant->id)->delete();
 
-            Log::info("Cleaned up failed provisioning for tenant: {$this->tenant->slug}");
+            Log::info("Cleaned up failed provisioning for tenant: {$this->tenant->id}");
 
         } catch (Exception $e) {
-            Log::error("Failed to cleanup tenant {$this->tenant->slug}: " . $e->getMessage());
+            Log::error("Failed to cleanup tenant {$this->tenant->id}: " . $e->getMessage());
         }
     }
 
@@ -473,7 +240,7 @@ class ProvisionTenantJob implements ShouldQueue
      */
     public function failed(Throwable $exception): void
     {
-        Log::error("ProvisionTenantJob failed for tenant {$this->tenant->slug}", [
+        Log::error("ProvisionTenantJob failed for tenant {$this->tenant->id}", [
             'tenant_id' => $this->tenant->id,
             'exception' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString()

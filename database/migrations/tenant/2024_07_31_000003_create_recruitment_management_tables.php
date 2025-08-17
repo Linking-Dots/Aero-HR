@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
             $table->string('location')->nullable();
             $table->enum('type', ['full_time', 'part_time', 'contract', 'temporary', 'internship', 'remote'])->default('full_time');
-            $table->enum('status', ['draft', 'open', 'closed', 'on_hold', 'cancelled'])->default('draft');
+            $table->enum('status', ['draft', 'open', 'closed', 'on_hold', 'cancelled'])->default('draft'); // Updated to include 'cancelled'
             $table->integer('positions')->default(1);
             $table->decimal('salary_min', 10, 2)->nullable();
             $table->decimal('salary_max', 10, 2)->nullable();
@@ -67,13 +67,20 @@ return new class extends Migration
             $table->string('resume_path')->nullable();
             $table->foreignId('current_stage_id')->nullable()->constrained('job_hiring_stages')->onDelete('set null');
             $table->enum('status', ['new', 'in_review', 'shortlisted', 'interviewed', 'offered', 'hired', 'rejected', 'withdrawn'])->default('new');
+            $table->decimal('rating', 3, 2)->nullable(); // Added from consistency update
             $table->date('application_date');
+            $table->datetime('last_status_change')->nullable(); // Added from consistency update
             $table->string('source')->nullable();
+            $table->string('referral_source')->nullable(); // Added from consistency update
+            $table->foreignId('referrer_id')->nullable()->constrained('users')->onDelete('set null'); // Added from consistency update
             $table->json('skills')->nullable();
             $table->decimal('expected_salary', 10, 2)->nullable();
             $table->string('salary_currency', 3)->default('USD');
+            $table->integer('notice_period')->nullable(); // Added from consistency update
+            $table->decimal('experience_years', 4, 1)->nullable(); // Added from consistency update
             $table->text('notes')->nullable();
             $table->json('custom_fields')->nullable();
+            $table->string('application_ip')->nullable(); // Added from consistency update
             $table->timestamps();
             $table->softDeletes();
         });
@@ -95,13 +102,17 @@ return new class extends Migration
             $table->foreignId('application_id')->constrained('job_applications')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->dateTime('scheduled_at');
+            $table->dateTime('interview_date'); // Renamed from scheduled_at for consistency
             $table->integer('duration_minutes')->default(60);
             $table->string('location')->nullable();
             $table->string('meeting_link')->nullable();
             $table->enum('type', ['phone', 'video', 'in_person', 'technical', 'panel'])->default('video');
             $table->enum('status', ['scheduled', 'completed', 'cancelled', 'rescheduled', 'no_show'])->default('scheduled');
             $table->json('interviewers')->nullable();
+            $table->json('interviewer_ids')->nullable(); // Added from consistency update
+            $table->foreignId('scheduled_by')->nullable()->constrained('users')->onDelete('set null'); // Added from consistency update
+            $table->text('interview_notes')->nullable(); // Added from consistency update
+            $table->text('feedback')->nullable(); // Added from consistency update
             $table->timestamps();
             $table->softDeletes();
         });
