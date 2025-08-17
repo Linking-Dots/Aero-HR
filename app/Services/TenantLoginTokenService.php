@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Tenant;
-use App\Models\TenantUser;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -14,18 +14,21 @@ class TenantLoginTokenService
     private const TOKEN_PREFIX = 'tenant_login_token:';
 
     /**
-     * Generate a secure one-time login token for tenant owner
+     * Generate a secure one-time login token for tenant user
      */
-    public function generateLoginToken(Tenant $tenant, TenantUser $tenantUser): string
+    public function generateLoginToken(Tenant $tenant, User $user): string
     {
         $token = Str::random(64);
         $cacheKey = self::TOKEN_PREFIX . $token;
         
+        // Get tenant domain
+        $domain = $tenant->domains()->first();
+        
         $tokenData = [
             'tenant_id' => $tenant->id,
-            'tenant_domain' => $tenant->domain,
-            'user_id' => $tenantUser->id,
-            'user_email' => $tenantUser->email,
+            'tenant_domain' => $domain ? $domain->domain : null,
+            'user_id' => $user->id,
+            'user_email' => $user->email,
             'created_at' => now()->toDateTimeString(),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
@@ -35,8 +38,8 @@ class TenantLoginTokenService
 
         Log::info('Tenant login token generated', [
             'tenant_id' => $tenant->id,
-            'domain' => $tenant->domain,
-            'user_email' => $tenantUser->email,
+            'domain' => $domain ? $domain->domain : 'No domain',
+            'user_email' => $user->email,
             'token_expires_at' => now()->addSeconds(self::TOKEN_EXPIRY),
         ]);
 
@@ -72,37 +75,51 @@ class TenantLoginTokenService
     }
 
     /**
+     * Validate token without consuming it
+     */
+    public function validateToken(string $token): ?array
+    {
+        $cacheKey = self::TOKEN_PREFIX . $token;
+        $tokenData = Cache::get($cacheKey);
+
+        if (!$tokenData) {
+            return null;
+        }
+
+        return $tokenData;
+    }
+
+    /**
      * Generate tenant login URL with auto-login token
      */
-    public function generateLoginUrl(Tenant $tenant, TenantUser $tenantUser): string
+    public function generateLoginUrl(Tenant $tenant, User $user): string
     {
-        $token = $this->generateLoginToken($tenant, $tenantUser);
-        $baseUrl = $this->getTenantBaseUrl($tenant->domain);
+        $token = $this->generateLoginToken($tenant, $user);
+        $domain = $tenant->domains()->first();
+        $baseUrl = $this->getTenantBaseUrl($domain ? $domain->domain : null);
         
         return "{$baseUrl}/auto-login?token={$token}";
     }
 
     /**
-     * Get tenant base URL based on environment
+     * Get tenant base URL based on environment using package standards
      */
-    private function getTenantBaseUrl(string $domain): string
+    private function getTenantBaseUrl(?string $domain): string
     {
-        // For development server (path-based routing)
-        if (app()->environment('local') && 
-            (request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost')) {
+        if (!$domain) {
+            throw new \Exception('No domain configured for tenant');
+        }
+
+        if (app()->environment('local')) {
+            // Development: path-based routing
             $port = request()->getPort();
             $portSuffix = ($port && $port != 80 && $port != 443) ? ":{$port}" : '';
-            return "http://127.0.0.1{$portSuffix}/tenant/{$domain}";
+            return "http://127.0.0.1{$portSuffix}/{$domain}";
+        } else {
+            // Production: subdomain-based routing
+            $appDomain = config('app.domain', 'aero-hr.local');
+            return "https://{$domain}.{$appDomain}";
         }
-        
-        // For production (subdomain-based routing)
-        $appDomain = config('app.domain', 'aero-hr.local');
-        
-        if (app()->environment('local')) {
-            return "http://{$domain}.{$appDomain}";
-        }
-        
-        return "https://{$domain}.{$appDomain}";
     }
 
     /**

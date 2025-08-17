@@ -6,7 +6,6 @@ use App\Events\TenantProvisioned;
 use App\Events\TenantProvisioningFailed;
 use App\Jobs\ProvisionTenantJob;
 use App\Models\Tenant;
-use App\Models\TenantUserLookup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;

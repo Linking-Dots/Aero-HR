@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
+use App\Models\Domain;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantUser;
@@ -30,12 +31,52 @@ class TenantRegistrationController extends Controller
      */
     public function showRegistrationForm()
     {
-        $plans = Plan::where('is_active', true)
-            ->orderBy('price')
+        $basePlans = Plan::where('is_active', true)
+            ->orderBy('price_monthly')
             ->get();
 
+        // Transform plans to include monthly and yearly variants
+        // Frontend expects separate entries for each billing cycle but needs consistent plan identification
+        $plans = collect();
+        
+        foreach ($basePlans as $plan) {
+            // Monthly plan
+            $plans->push([
+                'id' => $plan->id,
+                'base_plan_id' => $plan->id, // Reference to the base plan
+                'name' => $plan->name,
+                'slug' => $plan->slug,
+                'description' => $plan->description,
+                'price' => $plan->price_monthly / 100, // Convert cents to dollars
+                'billing_cycle' => 'monthly',
+                'features' => $plan->features,
+                'max_users' => $plan->max_users,
+                'max_storage_gb' => $plan->max_storage_gb,
+                'is_featured' => $plan->is_featured,
+                'stripe_price_id' => $plan->stripe_price_id_monthly,
+                'sort_order' => $plan->sort_order ?? 0,
+            ]);
+            
+            // Yearly plan - use different ID to ensure uniqueness
+            $plans->push([
+                'id' => $plan->id * 1000 + 1, // Unique ID for yearly (e.g., 1001, 2001, 3001)
+                'base_plan_id' => $plan->id, // Reference to the base plan
+                'name' => $plan->name,
+                'slug' => $plan->slug,
+                'description' => $plan->description,
+                'price' => $plan->price_yearly / 100, // Convert cents to dollars
+                'billing_cycle' => 'yearly',
+                'features' => $plan->features,
+                'max_users' => $plan->max_users,
+                'max_storage_gb' => $plan->max_storage_gb,
+                'is_featured' => $plan->is_featured,
+                'stripe_price_id' => $plan->stripe_price_id_yearly,
+                'sort_order' => $plan->sort_order ?? 0,
+            ]);
+        }
+
         return Inertia::render('Auth/Register', [
-            'plans' => $plans,
+            'plans' => $plans->sortBy('sort_order')->values()->toArray(),
             'features' => $this->getPlanFeatures()
         ]);
     }
@@ -51,7 +92,7 @@ class TenantRegistrationController extends Controller
                 'required', 
                 'string', 
                 'max:63', 
-                'unique:tenants,domain', 
+                'unique:domains,domain', 
                 'alpha_dash', 
                 'regex:/^[a-z0-9-]+$/',
                 new \App\Rules\ReservedDomainRule()
@@ -59,7 +100,7 @@ class TenantRegistrationController extends Controller
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'string', 'email', 'max:255', 'unique:tenant_users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'plan_id' => ['required', 'exists:plans,id'],
+            'plan_id' => ['required', 'string'],
             'billing_cycle' => ['required', 'in:monthly,yearly'],
             'timezone' => ['nullable', 'string', 'max:255'],
             'currency' => ['nullable', 'string', 'max:3'],
@@ -77,7 +118,20 @@ class TenantRegistrationController extends Controller
         }
 
         try {
-            $plan = Plan::findOrFail($request->plan_id);
+            // Get the selected plan and billing cycle
+            $planId = $request->plan_id;
+            $billingCycle = $request->billing_cycle; // This will be 'monthly' or 'yearly'
+            
+            // If plan ID is > 1000, it's a yearly plan, extract the base plan ID
+            if ($planId > 1000) {
+                $basePlanId = intval($planId / 1000);
+                $billingCycle = 'yearly';
+            } else {
+                $basePlanId = $planId;
+                $billingCycle = $billingCycle ?: 'monthly';
+            }
+            
+            $plan = Plan::findOrFail($basePlanId);
             
             // Validate domain format
             $domain = strtolower(trim($request->domain));
@@ -86,7 +140,7 @@ class TenantRegistrationController extends Controller
             }
             
             // Wrap entire registration process in transaction
-            DB::transaction(function () use ($request, $plan, $domain, &$tenant, &$owner, &$subscription) {
+            DB::transaction(function () use ($request, $plan, $domain, $billingCycle, &$tenant, &$owner, &$subscription) {
                 // Create tenant
                 $tenant = $this->tenantService->createTenant([
                     'name' => $request->company_name,
@@ -95,7 +149,7 @@ class TenantRegistrationController extends Controller
                     'settings' => [
                         'timezone' => $request->timezone ?? 'UTC',
                         'currency' => $request->currency ?? 'USD',
-                        'billing_cycle' => $request->billing_cycle,
+                        'billing_cycle' => $billingCycle,
                         'registration_ip' => $request->ip(),
                         'registered_at' => now()->toDateTimeString(),
                     ]
@@ -232,8 +286,8 @@ class TenantRegistrationController extends Controller
 
         $domain = strtolower(trim($request->domain));
         
-        // Check if domain exists in tenants table
-        $exists = Tenant::where('domain', $domain)->exists();
+        // Check if domain exists in domains table
+        $exists = Domain::where('domain', $domain)->exists();
         
         return response()->json([
             'available' => !$exists,

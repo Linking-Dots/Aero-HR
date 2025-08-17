@@ -17,8 +17,8 @@ class PlanSeeder extends Seeder
                 'name' => 'Starter',
                 'slug' => 'starter',
                 'description' => 'Perfect for small teams getting started with HR management',
-                'price' => 29.00,
-                'billing_cycle' => 'monthly',
+                'price_monthly' => 2900, // $29.00 in cents
+                'price_yearly' => 29000, // $290.00 in cents (savings for yearly)
                 'features' => [
                     'modules' => [
                         'employee_management',
@@ -26,23 +26,19 @@ class PlanSeeder extends Seeder
                         'basic_reporting'
                     ]
                 ],
-                'limits' => [
-                    'employees' => 25,
-                    'storage' => 5 * 1024 * 1024 * 1024, // 5GB in bytes
-                    'api_calls' => 1000
-                ],
-                'stripe_price_id' => 'price_starter_monthly', // Replace with actual Stripe price IDs
-                'stripe_monthly_price_id' => 'price_starter_monthly',
-                'stripe_yearly_price_id' => 'price_starter_yearly',
+                'max_users' => 25,
+                'max_storage_gb' => 5,
+                'stripe_price_id_monthly' => 'price_starter_monthly',
+                'stripe_price_id_yearly' => 'price_starter_yearly',
+                'stripe_product_id' => 'prod_starter',
                 'is_active' => true,
-                'trial_days' => 14,
             ],
             [
                 'name' => 'Professional',
                 'slug' => 'professional',
-                'description' => 'Comprehensive HR solution for growing businesses',
-                'price' => 79.00,
-                'billing_cycle' => 'monthly',
+                'description' => 'Advanced features for growing businesses and HR teams',
+                'price_monthly' => 4900, // $49.00 in cents
+                'price_yearly' => 49000, // $490.00 in cents (savings for yearly)
                 'features' => [
                     'modules' => [
                         'employee_management',
@@ -50,41 +46,41 @@ class PlanSeeder extends Seeder
                         'payroll',
                         'performance_management',
                         'advanced_reporting',
-                        'document_management'
+                        'leave_management'
                     ]
                 ],
-                'limits' => [
-                    'employees' => 100,
-                    'storage' => 25 * 1024 * 1024 * 1024, // 25GB in bytes
-                    'api_calls' => 10000
-                ],
-                'stripe_price_id' => 'price_professional_monthly',
-                'stripe_monthly_price_id' => 'price_professional_monthly',
-                'stripe_yearly_price_id' => 'price_professional_yearly',
+                'max_users' => 100,
+                'max_storage_gb' => 20,
+                'stripe_price_id_monthly' => 'price_professional_monthly',
+                'stripe_price_id_yearly' => 'price_professional_yearly',
+                'stripe_product_id' => 'prod_professional',
                 'is_active' => true,
-                'trial_days' => 14,
             ],
             [
                 'name' => 'Enterprise',
                 'slug' => 'enterprise',
-                'description' => 'Full-featured platform for large organizations',
-                'price' => 199.00,
-                'billing_cycle' => 'monthly',
+                'description' => 'Complete HR solution for large organizations',
+                'price_monthly' => 9900, // $99.00 in cents
+                'price_yearly' => 99000, // $990.00 in cents (savings for yearly)
                 'features' => [
                     'modules' => [
-                        'all_modules'
+                        'employee_management',
+                        'time_tracking',
+                        'payroll',
+                        'performance_management',
+                        'advanced_reporting',
+                        'leave_management',
+                        'recruitment',
+                        'training_management',
+                        'compliance_management'
                     ]
                 ],
-                'limits' => [
-                    'employees' => null, // Unlimited
-                    'storage' => null, // Unlimited
-                    'api_calls' => null // Unlimited
-                ],
-                'stripe_price_id' => 'price_enterprise_monthly',
-                'stripe_monthly_price_id' => 'price_enterprise_monthly',
-                'stripe_yearly_price_id' => 'price_enterprise_yearly',
+                'max_users' => null, // Unlimited
+                'max_storage_gb' => 100,
+                'stripe_price_id_monthly' => 'price_enterprise_monthly',
+                'stripe_price_id_yearly' => 'price_enterprise_yearly',
+                'stripe_product_id' => 'prod_enterprise',
                 'is_active' => true,
-                'trial_days' => 30,
             ]
         ];
 

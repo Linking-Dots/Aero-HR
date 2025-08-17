@@ -76,6 +76,30 @@ export default function Login({ status, canResetPassword }) {
 
     const tenantInfo = getCurrentTenantInfo();
 
+    // Get user type display information
+    const getUserTypeDisplay = (type) => {
+        switch (type) {
+            case 'tenant':
+                return {
+                    title: 'Employee Account',
+                    icon: <BuildingOfficeIcon className="w-4 h-4" />,
+                    color: 'blue'
+                };
+            case 'central':
+                return {
+                    title: 'Admin Account',
+                    icon: <UserIcon className="w-4 h-4" />,
+                    color: 'green'
+                };
+            default:
+                return {
+                    title: 'Unknown Account',
+                    icon: <InformationCircleIcon className="w-4 h-4" />,
+                    color: 'gray'
+                };
+        }
+    };
+
     // Helper function to get the correct password reset URL
     const getPasswordResetUrl = () => {
         if (isTenantDomain() && tenantInfo) {
@@ -95,13 +119,42 @@ export default function Login({ status, canResetPassword }) {
         }
     }, [status]);
 
+    // Check for pending login data from central domain redirect
+    useEffect(() => {
+        if (isTenantDomain()) {
+            const pendingLogin = sessionStorage.getItem('pendingLogin');
+            if (pendingLogin) {
+                try {
+                    const loginData = JSON.parse(pendingLogin);
+                    setData({
+                        email: loginData.email || '',
+                        password: loginData.password || '',
+                        remember: loginData.remember || false
+                    });
+                    sessionStorage.removeItem('pendingLogin');
+                    
+                    // Auto-submit if we have both email and password
+                    if (loginData.email && loginData.password) {
+                        setTimeout(() => {
+                            const form = document.querySelector('form');
+                            if (form) form.requestSubmit();
+                        }, 500);
+                    }
+                } catch (error) {
+                    console.error('Error parsing pending login data:', error);
+                    sessionStorage.removeItem('pendingLogin');
+                }
+            }
+        }
+    }, []);
+
     // Check user type when email changes (for central domain only)
     useEffect(() => {
         if (!isTenantDomain() && data.email && data.email.includes('@')) {
             const timeoutId = setTimeout(() => {
                 checkUserType(data.email);
-            }, 500); // Debounce
-            
+            }, 500);
+
             return () => clearTimeout(timeoutId);
         } else {
             setUserTypeHint(null);
@@ -109,39 +162,72 @@ export default function Login({ status, canResetPassword }) {
     }, [data.email]);
 
     const checkUserType = async (email) => {
-        if (!email || !email.includes('@')) return;
+        if (!email || isCheckingUserType) return;
         
         setIsCheckingUserType(true);
-        
         try {
             const response = await axios.post(route('check-user-type'), { email });
             setUserTypeHint(response.data);
         } catch (error) {
             console.error('Error checking user type:', error);
+            // Only set to null if it's a client error, otherwise keep existing hint
+            if (error.response?.status < 500) {
+                setUserTypeHint(null);
+            }
         } finally {
             setIsCheckingUserType(false);
         }
     };
 
-    const submit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         
+        if (redirecting) return;
+        
         setRedirecting(true);
+        
+        // Smart redirection logic based on user type
+        if (!isTenantDomain() && userTypeHint) {
+            if (userTypeHint.type === 'tenant') {
+                // For tenant users detected on central domain, redirect to their tenant domain
+                const tenantDomain = userTypeHint.tenant?.domain;
+                if (tenantDomain) {
+                    const tenantUrl = `http://${tenantDomain}.aero-hr.com/login`;
+                    // Store login data for the tenant domain
+                    sessionStorage.setItem('pendingLogin', JSON.stringify({
+                        email: data.email,
+                        password: data.password,
+                        remember: data.remember
+                    }));
+                    window.location.href = tenantUrl;
+                    return;
+                }
+            }
+        }
         
         const loginRoute = isTenantDomain() && tenantInfo 
             ? route('tenant.login.store', { tenant: tenantInfo.domain })
             : route('central.login.store');
         
         post(loginRoute, {
-            onFinish: () => {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: (page) => {
+                // Handle successful login - the backend will redirect appropriately
+                if (page.props.redirect_url) {
+                    window.location.href = page.props.redirect_url;
+                }
+            },
+            onError: (errors) => {
+                setRedirecting(false);
                 reset('password');
-                setRedirecting(false);
             },
-            onSuccess: () => {
-                // Handle success - redirection will be handled by backend
-            },
-            onError: () => {
-                setRedirecting(false);
+            onFinish: () => {
+                if (!errors.email && !errors.password) {
+                    // Keep redirecting state if no errors
+                } else {
+                    setRedirecting(false);
+                }
             }
         });
     };
@@ -213,7 +299,7 @@ export default function Login({ status, canResetPassword }) {
                 )}
             </AnimatePresence>
 
-            <form onSubmit={submit} className="auth-form-spacing">
+            <form onSubmit={handleSubmit} className="auth-form-spacing">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -269,8 +355,12 @@ export default function Login({ status, canResetPassword }) {
                                 <motion.div
                                     className="mt-2 p-3 rounded-lg border"
                                     style={{
-                                        background: userTypeHint.type === 'tenant' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                                        borderColor: userTypeHint.type === 'tenant' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.3)',
+                                        background: userTypeHint.type === 'tenant' ? 'rgba(59, 130, 246, 0.1)' : 
+                                                   userTypeHint.type === 'super_admin' ? 'rgba(139, 92, 246, 0.1)' :
+                                                   userTypeHint.type === 'central' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                                        borderColor: userTypeHint.type === 'tenant' ? 'rgba(59, 130, 246, 0.3)' : 
+                                                    userTypeHint.type === 'super_admin' ? 'rgba(139, 92, 246, 0.3)' :
+                                                    userTypeHint.type === 'central' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(107, 114, 128, 0.3)',
                                     }}
                                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -281,6 +371,8 @@ export default function Login({ status, canResetPassword }) {
                                         <div className="flex-shrink-0">
                                             {userTypeHint.type === 'tenant' ? (
                                                 <BuildingOfficeIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                            ) : userTypeHint.type === 'super_admin' ? (
+                                                <UserIcon className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5" />
                                             ) : userTypeHint.type === 'central' ? (
                                                 <UserIcon className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
                                             ) : (
@@ -300,13 +392,22 @@ export default function Login({ status, canResetPassword }) {
                                                         Portal: {userTypeHint.tenant?.domain}.aero-hr.com
                                                     </p>
                                                 </>
+                                            ) : userTypeHint.type === 'super_admin' ? (
+                                                <>
+                                                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                                                        Super Admin Account Detected
+                                                    </p>
+                                                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                                                        You'll access the platform administration dashboard
+                                                    </p>
+                                                </>
                                             ) : userTypeHint.type === 'central' ? (
                                                 <>
                                                     <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                                                        Admin Account Detected
+                                                        Platform Staff Account Detected
                                                     </p>
                                                     <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                                                        You'll access the admin dashboard
+                                                        You'll access the platform support dashboard
                                                     </p>
                                                 </>
                                             ) : (

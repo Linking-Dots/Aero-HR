@@ -3,248 +3,333 @@
 namespace App\Services;
 
 use App\Models\Tenant;
-use App\Models\Plan;
-use App\Models\TenantUser;
 use App\Models\Domain;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Stancl\Tenancy\Facades\Tenancy;
 
 class TenantService
 {
     /**
-     * Create a new tenant with database and default setup
+     * Create a new tenant using package standards
      */
     public function createTenant(array $data): Tenant
     {
         return DB::transaction(function () use ($data) {
             try {
-                // Create tenant record
+                // Create tenant record using package standards
                 $tenant = Tenant::create([
                     'id' => (string) Str::uuid(),
                     'name' => $data['name'],
-                    'slug' => Str::slug($data['name']),
-                    'domain' => $data['domain'] ?? Str::slug($data['name']),
-                    'database_name' => 'tenant_' . Str::random(8),
-                    'plan_id' => $data['plan_id'],
                     'status' => 'active',
-                    'trial_ends_at' => now()->addDays(14),
-                    'settings' => $data['settings'] ?? []
+                    'data' => $data['settings'] ?? []
                 ]);
 
-                // Create domain records for the tenant
+                // Create domain record for the tenant
                 $domain = $data['domain'] ?? Str::slug($data['name']);
                 
-                // Production domain (subdomain)
                 Domain::create([
-                    'domain' => $domain . '.' . config('app.domain', 'aero-hr.local'),
-                    'tenant_id' => $tenant->id
+                    'domain' => $domain,
+                    'tenant_id' => $tenant->id,
+                    'is_primary' => true
                 ]);
-                
-                // Development domain (path-based)
-                if (app()->environment('local')) {
-                    Domain::create([
-                        'domain' => '127.0.0.1:8000/tenant/' . $domain,
-                        'tenant_id' => $tenant->id
-                    ]);
-                }
 
                 Log::info('Tenant created successfully', [
                     'tenant_id' => $tenant->id,
-                    'domain' => $tenant->domain,
-                    'plan_id' => $tenant->plan_id
+                    'name' => $tenant->name,
+                    'domain' => $domain
                 ]);
-
-                // The tenancy package will automatically create the database
-                // and run migrations through the TenantCreated event
 
                 return $tenant;
-                
+
             } catch (\Exception $e) {
-                Log::error('Tenant creation failed', [
+                Log::error('Failed to create tenant', [
                     'error' => $e->getMessage(),
-                    'data' => $data,
-                    'trace' => $e->getTraceAsString()
+                    'data' => $data
                 ]);
-                throw new \Exception("Failed to create tenant: " . $e->getMessage());
+                throw $e;
             }
         });
     }
 
     /**
-     * Create tenant owner user in the tenant database
-     */
-    public function createTenantOwner(Tenant $tenant, array $ownerData): TenantUser
-    {
-        try {
-            // Create in central database for tracking
-            $tenantUser = TenantUser::create([
-                'tenant_id' => $tenant->id,
-                'name' => $ownerData['name'],
-                'email' => $ownerData['email'],
-                'role' => 'owner',
-                'accepted_at' => now()
-            ]);
-
-            // Initialize tenant context and create user in tenant database
-            Tenancy::initialize($tenant);
-            
-            // Check if User model exists in tenant context
-            if (!class_exists(\App\Models\User::class)) {
-                throw new \Exception("User model not found in tenant context");
-            }
-            
-            $user = \App\Models\User::create([
-                'name' => $ownerData['name'],
-                'email' => $ownerData['email'],
-                'password' => bcrypt($ownerData['password']),
-                'is_active' => true,
-                'email_verified_at' => now(),
-                'role' => 'Super Administrator', // Ensure owner gets admin role
-            ]);
-
-            // Assign owner role if Spatie Permission package is available
-            if (class_exists(\Spatie\Permission\Models\Role::class)) {
-                try {
-                    $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate([
-                        'name' => 'Super Administrator',
-                        'guard_name' => 'web'
-                    ]);
-                    $user->assignRole($ownerRole);
-                } catch (\Exception $e) {
-                    Log::warning("Failed to assign role to tenant owner: " . $e->getMessage());
-                }
-            }
-
-            Tenancy::end();
-            
-            return $tenantUser;
-            
-        } catch (\Exception $e) {
-            Tenancy::end();
-            throw new \Exception("Failed to create tenant owner: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Seed default data for new tenant
-     */
-    public function seedTenantDefaults(Tenant $tenant): void
-    {
-        try {
-            Tenancy::initialize($tenant);
-            
-            // Run tenant-specific seeders
-            Artisan::call('db:seed', [
-                '--class' => 'MinimalTenantSeeder',
-                '--force' => true
-            ]);
-            
-            Tenancy::end();
-            
-        } catch (\Exception $e) {
-            Tenancy::end();
-            Log::error("Failed to seed tenant defaults for {$tenant->id}: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Get tenant by domain
+     * Get tenant by domain using package standards
      */
     public function getTenantByDomain(string $domain): ?Tenant
     {
-        return Tenant::where('domain', $domain)->first();
+        $domainModel = Domain::where('domain', $domain)->first();
+        return $domainModel ? $domainModel->tenant : null;
     }
 
     /**
-     * Check if tenant has reached plan limits
+     * Get user's accessible tenants using package standards
      */
-    public function checkPlanLimits(Tenant $tenant, string $limitType): bool
+    public function getUserTenants(string $email): array
     {
-        if (!$tenant->plan) {
-            return false;
+        $tenants = [];
+        
+        foreach (Tenant::with('domains')->get() as $tenant) {
+            try {
+                tenancy()->initialize($tenant);
+                
+                $user = User::where('email', $email)->first();
+                if ($user) {
+                    $domain = $tenant->domains()->first();
+                    $tenants[] = [
+                        'tenant' => $tenant,
+                        'domain' => $domain,
+                        'user' => $user
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking user access to tenant', [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'error' => $e->getMessage()
+                ]);
+            } finally {
+                tenancy()->end();
+            }
         }
 
-        Tenancy::initialize($tenant);
-        
-        $currentCount = match($limitType) {
-            'max_employees' => \App\Models\User::count(),
-            'max_departments' => \App\Models\HRM\Department::count(),
-            'max_projects' => \App\Models\Project::count(),
-            default => 0
-        };
-        
-        Tenancy::end();
-
-        return $tenant->plan->isWithinLimits($limitType, $currentCount);
+        return $tenants;
     }
 
     /**
-     * Suspend tenant (disable access)
+     * Get tenant statistics
      */
-    public function suspendTenant(Tenant $tenant, string $reason = ''): bool
+    public function getTenantStats(Tenant $tenant): array
     {
         try {
-            $tenant->update([
-                'status' => 'suspended',
-                'settings' => array_merge($tenant->settings ?? [], [
-                    'suspension_reason' => $reason,
-                    'suspended_at' => now()->toDateTimeString()
-                ])
-            ]);
+            tenancy()->initialize($tenant);
+            
+            $userCount = User::count();
+            $activeUsers = User::whereNotNull('last_login_at')
+                ->where('last_login_at', '>=', now()->subDays(30))
+                ->count();
+            
+            $lastLogin = User::whereNotNull('last_login_at')
+                ->orderBy('last_login_at', 'desc')
+                ->first();
 
-            return true;
+            return [
+                'users_count' => $userCount,
+                'active_users' => $activeUsers,
+                'last_login' => $lastLogin ? $lastLogin->last_login_at : null
+            ];
+            
         } catch (\Exception $e) {
-            Log::error("Failed to suspend tenant {$tenant->id}: " . $e->getMessage());
-            return false;
+            Log::error('Error getting tenant stats', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'users_count' => 0,
+                'active_users' => 0,
+                'last_login' => null
+            ];
+        } finally {
+            tenancy()->end();
         }
     }
 
     /**
-     * Reactivate suspended tenant
-     */
-    public function reactivateTenant(Tenant $tenant): bool
-    {
-        try {
-            $settings = $tenant->settings ?? [];
-            unset($settings['suspension_reason'], $settings['suspended_at']);
-
-            $tenant->update([
-                'status' => 'active',
-                'settings' => $settings
-            ]);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Failed to reactivate tenant {$tenant->id}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Delete tenant and all associated data
+     * Delete tenant using package standards
      */
     public function deleteTenant(Tenant $tenant): bool
     {
         try {
-            // Delete tenant-specific data
-            TenantUser::where('tenant_id', $tenant->id)->delete();
-            
-            // Delete subscription if exists
-            if ($tenant->subscription) {
-                $tenant->subscription->delete();
-            }
-            
-            // The tenancy package will handle database deletion
+            // The package handles database cleanup automatically
             $tenant->delete();
+            
+            Log::info('Tenant deleted successfully', [
+                'tenant_id' => $tenant->id,
+                'name' => $tenant->name
+            ]);
             
             return true;
             
         } catch (\Exception $e) {
-            Log::error("Failed to delete tenant {$tenant->id}: " . $e->getMessage());
+            Log::error('Failed to delete tenant', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            
             return false;
         }
+    }
+
+    /**
+     * Check if tenant domain is available
+     */
+    public function isDomainAvailable(string $domain): bool
+    {
+        return !Domain::where('domain', $domain)->exists();
+    }
+
+    /**
+     * Get tenant by ID with relations
+     */
+    public function getTenantWithDetails(string $tenantId): ?Tenant
+    {
+        return Tenant::with('domains')->find($tenantId);
+    }
+
+    /**
+     * Update tenant information
+     */
+    public function updateTenant(Tenant $tenant, array $data): bool
+    {
+        try {
+            $tenant->update([
+                'name' => $data['name'] ?? $tenant->name,
+                'status' => $data['status'] ?? $tenant->status,
+                'data' => array_merge($tenant->data ?? [], $data['settings'] ?? [])
+            ]);
+
+            Log::info('Tenant updated successfully', [
+                'tenant_id' => $tenant->id,
+                'changes' => $data
+            ]);
+
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to update tenant', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Initialize tenant with advanced features
+     */
+    public function initializeTenantAdvancedFeatures(Tenant $tenant): array
+    {
+        $results = [
+            'success' => false,
+            'storage_initialized' => false,
+            'cache_initialized' => false,
+            'features_enabled' => []
+        ];
+
+        try {
+            // Initialize storage
+            $storageService = app(TenantStorageService::class);
+            $storageService->createTenantStorage($tenant);
+            $results['storage_initialized'] = true;
+            $results['features_enabled'][] = 'storage';
+
+            // Initialize cache
+            $cacheService = app(TenantCacheService::class);
+            $cacheService->put($tenant, 'advanced_features_initialized', true, 3600);
+            $results['cache_initialized'] = true;
+            $results['features_enabled'][] = 'cache';
+
+            $results['success'] = true;
+
+            Log::info('Tenant advanced features initialized', [
+                'tenant_id' => $tenant->id,
+                'results' => $results
+            ]);
+
+            return $results;
+        } catch (\Exception $e) {
+            Log::error('Failed to initialize tenant advanced features', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            $results['error'] = $e->getMessage();
+            return $results;
+        }
+    }
+
+    /**
+     * Get comprehensive tenant overview
+     */
+    public function getTenantOverview(Tenant $tenant): array
+    {
+        try {
+            $monitoringService = app(TenantMonitoringService::class);
+            $storageService = app(TenantStorageService::class);
+
+            return [
+                'basic_stats' => $this->getTenantStats($tenant),
+                'health_metrics' => $monitoringService->getTenantHealthMetrics($tenant),
+                'storage_stats' => $storageService->getTenantStorageStats($tenant),
+                'overview_generated_at' => now()->toISOString()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to get tenant overview', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'error' => $e->getMessage(),
+                'tenant_id' => $tenant->id
+            ];
+        }
+    }
+
+    /**
+     * Perform tenant maintenance
+     */
+    public function performTenantMaintenance(Tenant $tenant, array $options = []): array
+    {
+        $results = [
+            'success' => false,
+            'cache_cleared' => false,
+            'storage_cleaned' => false,
+            'health_checked' => false,
+            'backup_created' => false,
+            'maintenance_completed_at' => now()->toISOString()
+        ];
+
+        try {
+            // Clear cache if requested
+            if ($options['cache'] ?? false) {
+                $cacheService = app(TenantCacheService::class);
+                $cacheService->forget($tenant, 'temp_maintenance');
+                $results['cache_cleared'] = true;
+            }
+
+            // Check health
+            $monitoringService = app(TenantMonitoringService::class);
+            $health = $monitoringService->checkTenantHealth($tenant);
+            $results['health_checked'] = true;
+            $results['health_score'] = $health['health_score'];
+
+            // Create backup if requested
+            if ($options['backup'] ?? false) {
+                $storageService = app(TenantStorageService::class);
+                $backup = $storageService->createTenantBackup($tenant);
+                $results['backup_created'] = !is_null($backup);
+                if ($backup) {
+                    $results['backup_file'] = $backup;
+                }
+            }
+
+            $results['success'] = true;
+
+            Log::info('Tenant maintenance completed', [
+                'tenant_id' => $tenant->id,
+                'results' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Tenant maintenance failed', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            $results['error'] = $e->getMessage();
+        }
+
+        return $results;
     }
 }

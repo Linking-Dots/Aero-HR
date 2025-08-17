@@ -53,40 +53,98 @@ Route::middleware('guest')->group(function () {
         ->name('check-domain')
         ->middleware('throttle:30,1'); // Allow 30 domain checks per minute per IP
 
-    // User type checking for smart login - moved to web routes
+    // User type checking for smart login - context-aware
     Route::post('/check-user-type', function (Illuminate\Http\Request $request) {
         $request->validate(['email' => 'required|email']);
         
         $email = $request->email;
         
-        // Check central users first
-        $centralUser = \App\Models\User::where('email', $email)->first();
-        if ($centralUser) {
+        try {
+            // For central domain, check platform users first (super admins)
+            $platformUser = \Illuminate\Support\Facades\DB::connection('mysql')
+                ->table('platform_users')
+                ->where('email', $email)
+                ->where('is_active', true)
+                ->first();
+                
+            if ($platformUser) {
+                return response()->json([
+                    'type' => $platformUser->role === 'super_admin' ? 'super_admin' : 'central',
+                    'user' => ['name' => $platformUser->name, 'email' => $platformUser->email],
+                    'tenant' => null
+                ]);
+            }
+            
+            // If not found in platform, check tenant users for smart redirection
+            $tenants = \App\Models\Tenant::with('domains')->get();
+            
+            foreach ($tenants as $tenant) {
+                try {
+                    // Initialize tenant context
+                    tenancy()->initialize($tenant);
+                    
+                    // Check if user exists in this tenant's database
+                    $user = \App\Models\User::where('email', $email)->first();
+                    
+                    if ($user) {
+                        // Get the primary domain for this tenant
+                        $domain = $tenant->domains()->first();
+                        
+                        $result = [
+                            'type' => 'tenant',
+                            'user' => [
+                                'name' => $user->name, 
+                                'email' => $user->email
+                            ],
+                            'tenant' => [
+                                'name' => $tenant->name ?? $tenant->id,
+                                'domain' => $domain ? $domain->domain : $tenant->id
+                            ]
+                        ];
+                        
+                        // End tenant context before returning
+                        tenancy()->end();
+                        
+                        return response()->json($result);
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Error checking tenant for user', [
+                        'email' => $email,
+                        'tenant_id' => $tenant->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
+                } finally {
+                    // Always end tenant context
+                    try {
+                        tenancy()->end();
+                    } catch (\Exception $e) {
+                        // Ignore errors when ending context
+                    }
+                }
+            }
+            
+            // User not found in any database
             return response()->json([
-                'type' => 'central',
-                'user' => ['name' => $centralUser->name, 'email' => $centralUser->email],
+                'type' => 'unknown',
+                'user' => null,
                 'tenant' => null
             ]);
-        }
-        
-        // Check tenant users
-        $tenantUser = \App\Models\TenantUser::where('email', $email)->with('tenant')->first();
-        if ($tenantUser && $tenantUser->tenant) {
-            return response()->json([
-                'type' => 'tenant',
-                'user' => ['name' => $tenantUser->name, 'email' => $tenantUser->email],
-                'tenant' => [
-                    'name' => $tenantUser->tenant->name,
-                    'domain' => $tenantUser->tenant->domain
-                ]
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error in check-user-type route', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+            
+            return response()->json([
+                'type' => 'error',
+                'user' => null,
+                'tenant' => null,
+                'message' => 'Unable to check user type at this time'
+            ], 500);
         }
-        
-        return response()->json([
-            'type' => 'unknown',
-            'user' => null,
-            'tenant' => null
-        ]);
     })->name('check-user-type')->middleware('throttle:60,1');
     
     // Plan and payment related routes - moved to web routes
@@ -144,8 +202,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Tenant Actions
         Route::post('/{tenant}/suspend', [SuperAdminTenantController::class, 'suspend'])->name('suspend');
-        Route::post('/{tenant}/activate', [SuperAdminTenantController::class, 'activate'])->name('activate');
-        Route::get('/{tenant}/activity-logs', [SuperAdminTenantController::class, 'activityLogs'])->name('activity-logs');
+        Route::post('/{tenant}/reactivate', [SuperAdminTenantController::class, 'reactivate'])->name('reactivate');
     });
     
     // ============================================================================

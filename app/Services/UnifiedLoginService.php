@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\TenantUser;
-use App\Models\User as CentralUser;
+use App\Models\User;
 use App\Models\Tenant;
+use App\Models\Domain;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class UnifiedLoginService
@@ -20,30 +21,55 @@ class UnifiedLoginService
     }
 
     /**
-     * Determine user type and location based on email
+     * Determine user type and location based on email using package standards
      */
     public function findUserByEmail(string $email): array
     {
-        // First check if it's a central admin user
-        $centralUser = CentralUser::where('email', $email)->first();
+        // First check if it's a central admin user (using platform_users table)
+        $centralUser = DB::connection('mysql')->table('platform_users')->where('email', $email)->first();
         if ($centralUser) {
             return [
-                'type' => 'central',
+                'type' => $centralUser->role === 'super_admin' ? 'super_admin' : 'central',
                 'user' => $centralUser,
                 'tenant' => null,
                 'login_url' => null
             ];
         }
 
-        // Check if it's a tenant user
-        $tenantUser = TenantUser::where('email', $email)->with('tenant')->first();
-        if ($tenantUser && $tenantUser->tenant) {
-            return [
-                'type' => 'tenant',
-                'user' => $tenantUser,
-                'tenant' => $tenantUser->tenant,
-                'login_url' => $this->getTenantLoginUrl($tenantUser->tenant->domain)
-            ];
+        // Search for user across all tenant databases using package standards
+        $tenants = Tenant::with('domains')->get();
+        
+        foreach ($tenants as $tenant) {
+            try {
+                // Initialize tenant context
+                tenancy()->initialize($tenant);
+                
+                // Check if user exists in this tenant
+                $user = User::where('email', $email)->first();
+                
+                if ($user) {
+                    // Get the primary domain for this tenant
+                    $domain = $tenant->domains()->first();
+                    
+                    return [
+                        'type' => 'tenant',
+                        'user' => $user,
+                        'tenant' => $tenant,
+                        'login_url' => $this->getTenantLoginUrl($domain ? $domain->domain : null),
+                        'domain' => $domain
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking tenant for user', [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'error' => $e->getMessage()
+                ]);
+                continue;
+            } finally {
+                // Always end tenant context
+                tenancy()->end();
+            }
         }
 
         return [
@@ -55,32 +81,39 @@ class UnifiedLoginService
     }
 
     /**
-     * Validate credentials for tenant user
+     * Validate credentials for tenant user using package standards
      */
-    public function validateTenantCredentials(string $email, string $password): ?TenantUser
+    public function validateTenantCredentials(string $email, string $password, ?Tenant $tenant = null): ?array
     {
-        $tenantUser = TenantUser::where('email', $email)->with('tenant')->first();
-        
-        if (!$tenantUser || !$tenantUser->tenant) {
-            return null;
+        if (!$tenant) {
+            // If no tenant specified, find the tenant for this email
+            $userInfo = $this->findUserByEmail($email);
+            if ($userInfo['type'] !== 'tenant') {
+                return null;
+            }
+            $tenant = $userInfo['tenant'];
         }
 
-        // Initialize tenant context to check password in tenant database
         try {
-            tenancy()->initialize($tenantUser->tenant);
+            // Initialize tenant context to check password in tenant database
+            tenancy()->initialize($tenant);
             
-            $user = \App\Models\User::where('email', $email)->first();
+            $user = User::where('email', $email)->first();
             
             if ($user && Hash::check($password, $user->password)) {
-                return $tenantUser;
+                return [
+                    'user' => $user,
+                    'tenant' => $tenant
+                ];
             }
         } catch (\Exception $e) {
             Log::error('Error validating tenant credentials', [
                 'email' => $email,
-                'tenant_id' => $tenantUser->tenant->id,
+                'tenant_id' => $tenant->id,
                 'error' => $e->getMessage()
             ]);
         } finally {
+            // Always end tenant context
             tenancy()->end();
         }
 
@@ -88,213 +121,227 @@ class UnifiedLoginService
     }
 
     /**
-     * Authenticate user from central domain - detects type and redirects appropriately
+     * Central login handling using package standards
      */
-    public function authenticateFromCentral(string $email, string $password): array
+    public function handleCentralLogin(string $email, string $password): array
     {
-        Log::info('Central domain login attempt', [
-            'email' => $email,
-            'ip' => request()->ip()
-        ]);
+        // Check for central admin user
+        $centralUser = DB::connection('mysql')->table('users')
+            ->where('email', $email)
+            ->first();
 
-        // First, check if it's a central admin user
-        $centralUser = CentralUser::where('email', $email)->first();
-        
-        if ($centralUser && Hash::check($password, $centralUser->password)) {
-            Log::info('Central admin login successful', ['email' => $email]);
-            
-            return [
-                'success' => true,
-                'user_type' => 'central',
-                'user' => $centralUser,
-                'redirect_url' => route('admin.dashboard'),
-                'message' => 'Welcome back, Admin!'
-            ];
-        }
-
-        // If not central admin, check tenant users
-        $tenantUser = $this->validateTenantCredentials($email, $password);
-        
-        if (!$tenantUser) {
-            Log::warning('Central login failed - invalid credentials', ['email' => $email]);
-            
+        if (!$centralUser || !Hash::check($password, $centralUser->password)) {
             return [
                 'success' => false,
-                'error' => 'Invalid credentials. Please check your email and password.',
-                'suggestions' => [
-                    'Double-check your email address',
-                    'Try resetting your password',
-                    'Make sure you\'re using the right login portal'
-                ]
+                'message' => 'Invalid credentials for central admin'
             ];
         }
-
-        // Check if tenant is active
-        if ($tenantUser->tenant->status !== 'active') {
-            Log::warning('Login attempt for inactive tenant', [
-                'email' => $email,
-                'tenant_id' => $tenantUser->tenant_id,
-                'tenant_status' => $tenantUser->tenant->status
-            ]);
-            
-            return [
-                'success' => false,
-                'error' => 'Your company account is currently inactive. Please contact support.',
-                'tenant_status' => $tenantUser->tenant->status
-            ];
-        }
-
-        // Generate auto-login token for subdomain redirect
-        $autoLoginUrl = $this->getTenantLoginUrlWithToken($tenantUser);
-
-        Log::info('Tenant user login from central - redirecting to subdomain', [
-            'email' => $email,
-            'tenant_domain' => $tenantUser->tenant->domain
-        ]);
 
         return [
             'success' => true,
-            'user_type' => 'tenant',
-            'user' => $tenantUser,
-            'tenant' => $tenantUser->tenant,
-            'redirect_url' => $autoLoginUrl,
-            'message' => "Welcome back! Redirecting to {$tenantUser->tenant->name}..."
+            'type' => 'central',
+            'user' => $centralUser,
+            'redirect_url' => '/admin'
         ];
     }
 
     /**
-     * Authenticate user directly on tenant subdomain
+     * Tenant login handling using package standards
      */
-    public function authenticateOnTenantDomain(string $email, string $password): array
+    public function handleTenantLogin(string $email, string $password): array
     {
-        $tenant = tenancy()->tenant;
-        
-        if (!$tenant) {
-            Log::error('Tenant authentication attempted without tenant context');
+        $credentials = $this->validateTenantCredentials($email, $password);
+
+        if (!$credentials) {
             return [
                 'success' => false,
-                'error' => 'Invalid tenant context. Please try again.'
+                'message' => 'Invalid credentials or user not found in any tenant'
             ];
         }
 
-        Log::info('Direct tenant login attempt', [
-            'email' => $email,
-            'tenant_id' => $tenant->id,
-            'tenant_domain' => $tenant->domain,
-            'ip' => request()->ip()
-        ]);
+        $user = $credentials['user'];
+        $tenant = $credentials['tenant'];
 
-        // Find user in current tenant database
-        $user = \App\Models\User::where('email', $email)->first();
-        
-        if (!$user || !Hash::check($password, $user->password)) {
-            Log::warning('Direct tenant login failed', [
+        // Check tenant status
+        if ($tenant->status !== 'active') {
+            Log::warning('Login attempt to inactive tenant', [
                 'email' => $email,
                 'tenant_id' => $tenant->id,
-                'user_found' => !!$user
+                'tenant_status' => $tenant->status
             ]);
-            
+
             return [
                 'success' => false,
-                'error' => 'Invalid credentials. Please check your email and password.',
-                'suggestions' => [
-                    'Make sure you\'re logging into the correct company portal',
-                    'Try resetting your password',
-                    'Contact your company admin for assistance'
-                ]
+                'message' => 'Tenant is not active'
             ];
         }
 
-        // Check if user is active
-        if (!$user->is_active) {
-            Log::warning('Login attempt for inactive tenant user', [
-                'email' => $email,
-                'tenant_id' => $tenant->id,
-                'user_id' => $user->id
-            ]);
-            
-            return [
-                'success' => false,
-                'error' => 'Your account is inactive. Please contact your company administrator.'
-            ];
-        }
+        // Generate auto-login token for tenant
+        $domain = $tenant->domains()->first();
+        $autoLoginUrl = $this->getTenantLoginUrlWithToken($user, $tenant);
 
-        Log::info('Direct tenant login successful', [
+        Log::info('Successful tenant login', [
             'email' => $email,
-            'tenant_id' => $tenant->id,
-            'user_id' => $user->id
+            'tenant_domain' => $domain ? $domain->domain : 'No domain set'
         ]);
 
         return [
             'success' => true,
-            'user_type' => 'tenant_direct',
+            'type' => 'tenant',
             'user' => $user,
             'tenant' => $tenant,
-            'redirect_url' => route('dashboard'),
-            'message' => 'Welcome back!'
+            'redirect_url' => $autoLoginUrl,
+            'message' => "Welcome back! Redirecting to {$tenant->name}..."
         ];
     }
 
     /**
-     * Create secure login token for tenant user
+     * Unified login - handles both central and tenant logins
      */
-    public function createTenantLoginToken(TenantUser $tenantUser): string
+    public function unifiedLogin(string $email, string $password): array
     {
-        return $this->tokenService->generateLoginToken($tenantUser->tenant, $tenantUser);
+        $userInfo = $this->findUserByEmail($email);
+
+        if ($userInfo['type'] === 'central') {
+            return $this->handleCentralLogin($email, $password);
+        } elseif ($userInfo['type'] === 'tenant') {
+            return $this->handleTenantLogin($email, $password);
+        }
+
+        return [
+            'success' => false,
+            'message' => 'User not found in any system'
+        ];
+    }
+
+    /**
+     * Get tenant login URL with environment-specific routing
+     */
+    private function getTenantLoginUrl(?string $domain): ?string
+    {
+        if (!$domain) {
+            return null;
+        }
+
+        if (app()->environment('local')) {
+            // Development: path-based routing
+            return url("/{$domain}");
+        } else {
+            // Production: subdomain routing
+            return "https://{$domain}." . config('app.url');
+        }
+    }
+
+    /**
+     * Create tenant login token
+     */
+    public function createTenantLoginToken(User $user, Tenant $tenant): string
+    {
+        return $this->tokenService->generateLoginToken($tenant, $user);
     }
 
     /**
      * Get tenant login URL with auto-login token
      */
-    public function getTenantLoginUrlWithToken(TenantUser $tenantUser): string
+    public function getTenantLoginUrlWithToken(User $user, Tenant $tenant): string
     {
-        $token = $this->createTenantLoginToken($tenantUser);
-        $baseUrl = $this->getTenantLoginUrl($tenantUser->tenant->domain);
+        $token = $this->createTenantLoginToken($user, $tenant);
+        $domain = $tenant->domains()->first();
         
+        if (!$domain) {
+            throw new \Exception("No domain configured for tenant {$tenant->id}");
+        }
+
+        $baseUrl = $this->getTenantLoginUrl($domain->domain);
         return "{$baseUrl}/auto-login?token={$token}";
     }
 
     /**
-     * Generate tenant base login URL
+     * Validate login token
      */
-    private function getTenantLoginUrl(string $domain): string
+    public function validateLoginToken(string $token): ?array
     {
-        // For development server (path-based routing)
-        if (app()->environment('local') && 
-            (request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost')) {
-            $port = request()->getPort();
-            $portSuffix = ($port && $port != 80 && $port != 443) ? ":{$port}" : '';
-            return "http://127.0.0.1{$portSuffix}/tenant/{$domain}";
-        }
-        
-        // For production (subdomain-based routing)
-        $appDomain = config('app.domain', 'aero-hr.local');
-        
-        if (app()->environment('local')) {
-            return "http://{$domain}.{$appDomain}";
-        }
-        
-        return "https://{$domain}.{$appDomain}";
+        return $this->tokenService->validateToken($token);
     }
 
     /**
-     * Check if email belongs to tenant user (for quick lookup)
+     * Get user's accessible tenants using package standards
      */
-    public function isTenantUser(string $email): bool
+    public function getUserTenants(string $email): array
     {
-        $cacheKey = 'tenant_user_check:' . md5($email);
+        $tenants = [];
         
+        foreach (Tenant::with('domains')->get() as $tenant) {
+            try {
+                tenancy()->initialize($tenant);
+                
+                $user = User::where('email', $email)->first();
+                if ($user) {
+                    $domain = $tenant->domains()->first();
+                    $tenants[] = [
+                        'tenant' => $tenant,
+                        'domain' => $domain ? $domain->domain : null,
+                        'login_url' => $this->getTenantLoginUrl($domain ? $domain->domain : null),
+                        'user' => $user
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking user access to tenant', [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'error' => $e->getMessage()
+                ]);
+            } finally {
+                tenancy()->end();
+            }
+        }
+
+        return $tenants;
+    }
+
+    /**
+     * Check if email exists in any tenant using package standards
+     */
+    public function emailExistsInAnyTenant(string $email): bool
+    {
+        foreach (Tenant::all() as $tenant) {
+            try {
+                tenancy()->initialize($tenant);
+                
+                if (User::where('email', $email)->exists()) {
+                    return true;
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking email in tenant', [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'error' => $e->getMessage()
+                ]);
+            } finally {
+                tenancy()->end();
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get tenant by domain using package standards
+     */
+    public function getTenantByDomain(string $domain): ?Tenant
+    {
+        $domainModel = Domain::where('domain', $domain)->first();
+        return $domainModel ? $domainModel->tenant : null;
+    }
+
+    /**
+     * Cache helper for tenant discovery
+     */
+    private function getCachedTenantForEmail(string $email): ?array
+    {
+        $cacheKey = "tenant_lookup:{$email}";
         return Cache::remember($cacheKey, 300, function () use ($email) {
-            return TenantUser::where('email', $email)->exists();
+            return $this->findUserByEmail($email);
         });
-    }
-
-    /**
-     * Clear user type cache (call when user changes)
-     */
-    public function clearUserCache(string $email): void
-    {
-        $cacheKey = 'tenant_user_check:' . md5($email);
-        Cache::forget($cacheKey);
     }
 }

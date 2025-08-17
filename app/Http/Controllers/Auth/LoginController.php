@@ -3,233 +3,469 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\ModernAuthenticationService;
-use App\Services\UnifiedLoginService;
+use App\Models\Tenant;
+use App\Models\PlatformUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
+use Stancl\Tenancy\Facades\Tenancy;
 
 class LoginController extends Controller
 {
-    protected ModernAuthenticationService $authService;
-    protected UnifiedLoginService $unifiedLoginService;
 
-    public function __construct(
-        ModernAuthenticationService $authService,
-        UnifiedLoginService $unifiedLoginService
-    ) {
-        $this->authService = $authService;
-        $this->unifiedLoginService = $unifiedLoginService;
+    /**
+     * Where to redirect users after login.
+     *
+     * @var string
+     */
+    protected $redirectTo = '/dashboard';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
     }
 
     /**
-     * Display the login view.
+     * Show the application's login form.
      */
-    public function create(): Response
+    public function showLoginForm()
     {
-        return Inertia::render('Auth/Login', [
-            'canResetPassword' => true,
-            'status' => session('status'),
-        ]);
+        return Inertia::render('Auth/Login');
     }
 
     /**
-     * Handle an incoming authentication request.
-     * Supports both central and tenant domain authentication
+     * Show the application's login form (alias for route compatibility).
      */
-    public function store(Request $request)
+    public function create()
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-            'remember' => 'boolean',
-        ]);
+        return $this->showLoginForm();
+    }
 
-        $email = $request->email;
-        $password = $request->password;
-        $remember = $request->boolean('remember');
+    /**
+     * Handle a login request to the application.
+     * This method implements context-aware authentication:
+     * - Central domain: Only allow platform users (super admin, support, billing)
+     * - Tenant domain: Only allow tenant users
+     */
+    public function login(Request $request)
+    {
+        $this->validateLogin($request);
 
-        // Check rate limiting
-        $key = 'login.' . $request->ip();
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
+        // Determine context based on current domain/route
+        $isTenantContext = $this->isTenantContext($request);
 
-            $this->authService->logAuthenticationEvent(
-                null,
-                'login_rate_limited',
-                'failure',
-                $request,
-                ['email' => $email, 'retry_after' => $seconds]
-            );
-
-            throw ValidationException::withMessages([
-                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
-            ]);
-        }
-
-        // Check if account is locked
-        if ($this->authService->isAccountLocked($email)) {
-            $this->authService->logAuthenticationEvent(
-                null,
-                'login_account_locked',
-                'failure',
-                $request,
-                ['email' => $email]
-            );
-
-            throw ValidationException::withMessages([
-                'email' => 'This account has been temporarily locked due to multiple failed login attempts.',
-            ]);
-        }
-
-        // Determine if this is central domain or tenant domain login
-        $isTenantDomain = $this->isTenantDomain($request);
-        
-        if ($isTenantDomain) {
-            // Handle direct tenant domain login
-            return $this->handleTenantDomainLogin($request, $email, $password, $remember);
+        if ($isTenantContext) {
+            // On tenant domain - only allow tenant users
+            return $this->attemptTenantUserLogin($request);
         } else {
-            // Handle central domain login with smart redirection
-            return $this->handleCentralDomainLogin($request, $email, $password, $remember);
+            // On central domain - only allow platform users
+            return $this->attemptPlatformUserLogin($request);
         }
     }
 
     /**
-     * Handle login from central domain (smart user detection and redirection)
+     * Determine if we're in a tenant context
      */
-    private function handleCentralDomainLogin(Request $request, string $email, string $password, bool $remember)
+    protected function isTenantContext($request)
     {
-        $authResult = $this->unifiedLoginService->authenticateFromCentral($email, $password);
-        
-        if (!$authResult['success']) {
-            RateLimiter::hit('login.' . $request->ip(), 60);
-            
-            throw ValidationException::withMessages([
-                'email' => $authResult['error'],
-            ]);
+        // Check if we have an active tenant context
+        if (tenant()) {
+            return true;
         }
 
-        // Clear rate limiting on successful authentication
-        RateLimiter::clear('login.' . $request->ip());
-
-        if ($authResult['user_type'] === 'central') {
-            // Central admin user - login normally
-            Auth::login($authResult['user'], $remember);
-            
-            $this->authService->updateLoginStats($authResult['user'], $request);
-            $this->authService->trackUserSession($authResult['user'], $request);
-            $this->authService->logAuthenticationEvent(
-                $authResult['user'],
-                'central_login_success',
-                'success',
-                $request
-            );
-
-            $request->session()->regenerate();
-            
-            return redirect()->intended($authResult['redirect_url'])->with('success', $authResult['message']);
-            
-        } else {
-            // Tenant user - redirect to their subdomain with auto-login token
-            return redirect($authResult['redirect_url'])->with([
-                'success' => $authResult['message'],
-                'tenant_name' => $authResult['tenant']->name
-            ]);
-        }
-    }
-
-    /**
-     * Handle login directly on tenant domain
-     */
-    private function handleTenantDomainLogin(Request $request, string $email, string $password, bool $remember)
-    {
-        $authResult = $this->unifiedLoginService->authenticateOnTenantDomain($email, $password);
-        
-        if (!$authResult['success']) {
-            RateLimiter::hit('login.' . $request->ip(), 60);
-            
-            throw ValidationException::withMessages([
-                'email' => $authResult['error'],
-            ]);
+        // Check route name patterns
+        $routeName = $request->route()->getName();
+        if (str_starts_with($routeName, 'tenant.')) {
+            return true;
         }
 
-        // Clear rate limiting on successful authentication
-        RateLimiter::clear('login.' . $request->ip());
-
-        // Login user in tenant context
-        Auth::login($authResult['user'], $remember);
-
-        // Update login statistics (tenant context)
-        $this->authService->updateLoginStats($authResult['user'], $request);
-        $this->authService->trackUserSession($authResult['user'], $request);
-        $this->authService->logAuthenticationEvent(
-            $authResult['user'],
-            'tenant_direct_login_success',
-            'success',
-            $request
-        );
-
-        $request->session()->regenerate();
-
-        return redirect()->intended($authResult['redirect_url'])->with('success', $authResult['message']);
-    }
-
-    /**
-     * Determine if current request is on a tenant domain
-     */
-    private function isTenantDomain(Request $request): bool
-    {
+        // Check domain patterns
         $host = $request->getHost();
-        
-        // For development (path-based routing)
-        if (app()->environment('local') && 
-            ($host === '127.0.0.1' || $host === 'localhost')) {
-            return str_contains($request->getPathInfo(), '/tenant/');
-        }
-        
-        // For production (subdomain-based routing)
-        $centralDomains = config('tenancy.central_domains', []);
+        $centralDomains = ['127.0.0.1', 'localhost', 'aero-hr.com', 'platform.aero-hr.com'];
         
         return !in_array($host, $centralDomains);
     }
 
     /**
-     * Destroy an authenticated session.
+     * Attempt platform user login (super admin, support, billing)
      */
-    public function destroy(Request $request)
+    protected function attemptPlatformUserLogin(Request $request)
     {
-        $user = Auth::user();
+        $credentials = $this->credentials($request);
 
-        if ($user) {
-            // Log logout event
-            $this->authService->logAuthenticationEvent(
-                $user,
-                'logout',
-                'success',
-                $request
-            );
+        // Use PlatformUser model for authentication
+        $platformUser = PlatformUser::where('email', $credentials['email'])
+            ->where('is_active', true)
+            ->first();
 
-            // Update session tracking
-            $sessionId = session()->getId();
-            DB::table('user_sessions')
-                ->where('session_id', $sessionId)
-                ->update([
-                    'is_current' => false,
-                    'updated_at' => now(),
-                ]);
+        if ($platformUser && Hash::check($credentials['password'], $platformUser->password)) {
+            Auth::login($platformUser, $request->filled('remember'));
+            $request->session()->regenerate();
+
+            Log::info('Platform user logged in', [
+                'email' => $credentials['email'],
+                'role' => $platformUser->role,
+                'ip' => $request->ip()
+            ]);
+
+            return $this->sendPlatformLoginResponse($request, $platformUser->role);
         }
 
-        Auth::guard('web')->logout();
+        // If platform authentication fails, show error
+        return back()->withErrors([
+            'email' => 'These credentials do not match our platform records.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Send the response after platform user authentication
+     */
+    protected function sendPlatformLoginResponse(Request $request, $role)
+    {
+        $this->clearLoginAttempts($request);
+
+        if ($response = $this->authenticated($request, $this->guard()->user())) {
+            return $response;
+        }
+
+        // Redirect based on role
+        $redirectPath = match($role) {
+            'super_admin' => '/admin',
+            'support' => '/support',
+            'billing' => '/billing',
+            default => '/dashboard'
+        };
+
+        return redirect()->intended($redirectPath)
+            ->with('success', 'Welcome to the platform dashboard!');
+    }
+
+    /**
+     * Handle a login request (alias for route compatibility).
+     */
+    public function store(Request $request)
+    {
+        return $this->login($request);
+    }
+
+    /**
+     * Validate the user login request.
+     */
+    protected function validateLogin(Request $request)
+    {
+        $request->validate([
+            $this->username() => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+    }
+
+    /**
+     * Attempt to log the user into their tenant.
+     */
+    protected function attemptTenantUserLogin(Request $request)
+    {
+        $credentials = $this->credentials($request);
+        $email = $credentials['email'];
+
+        // First, find which tenant this user belongs to
+        $tenant = $this->findUserTenant($email);
+
+        if (!$tenant) {
+            $this->incrementLoginAttempts($request);
+            throw ValidationException::withMessages([
+                $this->username() => [trans('auth.failed')],
+            ]);
+        }
+
+        // Initialize the tenant context
+        try {
+            Tenancy::initialize($tenant);
+
+            // Attempt authentication in the tenant database
+            if (Auth::attempt($credentials, $request->filled('remember'))) {
+                $request->session()->regenerate();
+                $this->clearLoginAttempts($request);
+
+                $user = Auth::user();
+                
+                Log::info('Tenant user logged in', [
+                    'tenant_id' => $tenant->id,
+                    'user_id' => $user->id,
+                    'email' => $email,
+                    'ip' => $request->ip()
+                ]);
+
+                return $this->sendTenantLoginResponse($request, $tenant);
+            }
+
+            // Authentication failed
+            $this->incrementLoginAttempts($request);
+            throw ValidationException::withMessages([
+                $this->username() => [trans('auth.failed')],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Tenant login error', [
+                'tenant_id' => $tenant->id,
+                'email' => $email,
+                'error' => $e->getMessage()
+            ]);
+
+            throw ValidationException::withMessages([
+                $this->username() => ['Login failed. Please try again.'],
+            ]);
+        } finally {
+            // Always end tenancy context
+            Tenancy::end();
+        }
+    }
+
+    /**
+     * Find which tenant a user belongs to based on their email.
+     */
+    protected function findUserTenant(string $email)
+    {
+        // Look up user in all active tenants
+        $tenants = Tenant::where('status', 'active')->get();
+
+        foreach ($tenants as $tenant) {
+            try {
+                Tenancy::initialize($tenant);
+                
+                $userExists = DB::table('users')
+                    ->where('email', $email)
+                    ->exists();
+
+                if ($userExists) {
+                    Tenancy::end();
+                    return $tenant;
+                }
+
+                Tenancy::end();
+            } catch (\Exception $e) {
+                Tenancy::end();
+                Log::warning('Error checking user in tenant', [
+                    'tenant_id' => $tenant->id,
+                    'email' => $email,
+                    'error' => $e->getMessage()
+                ]);
+                continue;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Send the response after the tenant user was authenticated.
+     */
+    protected function sendTenantLoginResponse(Request $request, Tenant $tenant)
+    {
+        // Check if we're already on the correct subdomain
+        $currentHost = $request->getHost();
+        $expectedSubdomain = $tenant->slug . '.' . config('app.main_domain', 'mysoftwaredomain.com');
+
+        if ($currentHost !== $expectedSubdomain) {
+            // Redirect to the tenant's subdomain
+            $protocol = $request->isSecure() ? 'https' : 'http';
+            $redirectUrl = "{$protocol}://{$expectedSubdomain}/dashboard";
+
+            // Store authentication token for seamless transition
+            $token = $this->generateTenantLoginToken($tenant, Auth::user());
+            $redirectUrl .= "?token={$token}";
+
+            return redirect()->away($redirectUrl);
+        }
+
+        // Already on correct subdomain, redirect to dashboard
+        return redirect()->intended('/dashboard')
+            ->with('success', 'Welcome back!');
+    }
+
+    /**
+     * Generate a secure token for tenant login transition.
+     */
+    protected function generateTenantLoginToken(Tenant $tenant, User $user)
+    {
+        $payload = [
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'expires_at' => now()->addMinutes(5)->timestamp,
+        ];
+
+        return encrypt($payload);
+    }
+
+    /**
+     * Handle token-based login for tenant transitions.
+     */
+    public function loginWithToken(Request $request)
+    {
+        $token = $request->get('token');
+        
+        if (!$token) {
+            return redirect('/')->with('error', 'Invalid login token.');
+        }
+
+        try {
+            $payload = decrypt($token);
+            
+            // Check if token is expired
+            if ($payload['expires_at'] < now()->timestamp) {
+                return redirect('/')->with('error', 'Login token has expired.');
+            }
+
+            // Find the tenant
+            $tenant = Tenant::find($payload['tenant_id']);
+            if (!$tenant || $tenant->status !== 'active') {
+                return redirect('/')->with('error', 'Tenant not found or inactive.');
+            }
+
+            // Initialize tenant context and find user
+            Tenancy::initialize($tenant);
+            
+            $user = User::find($payload['user_id']);
+            if (!$user) {
+                Tenancy::end();
+                return redirect('/')->with('error', 'User not found.');
+            }
+
+            // Log the user in
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            Log::info('User logged in via token', [
+                'tenant_id' => $tenant->id,
+                'user_id' => $user->id,
+                'ip' => $request->ip()
+            ]);
+
+            return redirect('/dashboard')->with('success', 'Welcome back!');
+
+        } catch (\Exception $e) {
+            Log::error('Token login failed', [
+                'error' => $e->getMessage(),
+                'ip' => $request->ip()
+            ]);
+
+            return redirect('/')->with('error', 'Invalid login token.');
+        }
+    }
+
+    /**
+     * Log the user out of the application.
+     */
+    public function logout(Request $request)
+    {
+        $user = Auth::user();
+        $isSuperAdmin = $user && $user->is_super_admin;
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        // Redirect super admins to main site, tenant users to their landing
+        if ($isSuperAdmin) {
+            return redirect('/')->with('success', 'You have been logged out.');
+        }
+
+        // For tenant users, redirect to main domain
+        $protocol = $request->isSecure() ? 'https' : 'http';
+        $mainDomain = config('app.main_domain', 'mysoftwaredomain.com');
+        
+        return redirect()->away("{$protocol}://{$mainDomain}")
+            ->with('success', 'You have been logged out.');
+    }
+
+    /**
+     * Get the login username to be used by the controller.
+     */
+    public function username()
+    {
+        return 'email';
+    }
+
+    /**
+     * Get the needed authorization credentials from the request.
+     */
+    protected function credentials(Request $request)
+    {
+        return $request->only($this->username(), 'password');
+    }
+
+    /**
+     * Get the guard to be used during authentication.
+     */
+    protected function guard()
+    {
+        return Auth::guard();
+    }
+
+    /**
+     * Determine if the user has too many failed login attempts.
+     */
+    protected function hasTooManyLoginAttempts(Request $request)
+    {
+        return RateLimiter::tooManyAttempts(
+            $this->throttleKey($request),
+            5 // max attempts
+        );
+    }
+
+    /**
+     * Increment the login attempts for the user.
+     */
+    protected function incrementLoginAttempts(Request $request)
+    {
+        RateLimiter::hit(
+            $this->throttleKey($request),
+            60 * 5 // 5 minutes
+        );
+    }
+
+    /**
+     * Clear the login attempts for the user.
+     */
+    protected function clearLoginAttempts(Request $request)
+    {
+        RateLimiter::clear($this->throttleKey($request));
+    }
+
+    /**
+     * Get the throttle key for the given request.
+     */
+    protected function throttleKey(Request $request)
+    {
+        return Str::transliterate(Str::lower($request->input($this->username())) . '|' . $request->ip());
+    }
+
+    /**
+     * The user has been authenticated.
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        return null;
+    }
+
+    /**
+     * Log the user out (alias for route compatibility).
+     */
+    public function destroy(Request $request)
+    {
+        return $this->logout($request);
     }
 }

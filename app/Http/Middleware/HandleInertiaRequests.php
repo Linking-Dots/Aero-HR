@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\CompanySetting;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -30,11 +29,30 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $userWithDesignation = $user ? \App\Models\User::with('designation')->find($user->id) : null;
+        $userWithDesignation = null;
+        $companySettings = null;
+        $companyName = config('app.name', 'Aero Enterprise Suite');
+
+        // Only fetch tenant-specific data if we're in tenant context
+        $isTenantContext = $this->isTenantContext($request);
         
-        // Get company settings for global use
-        $companySettings = CompanySetting::first();
-        $companyName = $companySettings?->companyName ?? config('app.name', 'DBEDC ERP');
+        if ($isTenantContext && $user) {
+            // In tenant context, fetch user with designation
+            $userWithDesignation = \App\Models\User::with('designation')->find($user->id);
+            
+            // Get company settings for tenant
+            try {
+                $companySettings = \App\Models\CompanySetting::first();
+                $companyName = $companySettings?->companyName ?? tenant()?->name ?? config('app.name', 'Aero-HR');
+            } catch (\Exception $e) {
+                // If CompanySetting table doesn't exist in tenant, use tenant name
+                $companyName = tenant()?->name ?? 'Tenant Company';
+            }
+        } else {
+            // In central context, use default settings
+            $userWithDesignation = $user;
+            $companyName = 'Aero-HR Enterprise Suite';
+        }
 
         return [
             ...parent::share($request),
@@ -42,11 +60,11 @@ class HandleInertiaRequests extends Middleware
                 'user' => $userWithDesignation ?: '',
                 'roles' => $user ? $user->roles->pluck('name')->toArray() : [],
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
-                'designation' => $userWithDesignation?->designation?->title,
+                'designation' => $userWithDesignation?->designation?->title ?? null,
             ],
             
-            // Company Settings
-            'companySettings' => $companySettings,
+            // Company Settings (only for tenant context)
+            'companySettings' => $isTenantContext ? $companySettings : null,
             
             // Tenant information for route generation
             'tenant' => function () use ($request) {
@@ -64,17 +82,7 @@ class HandleInertiaRequests extends Middleware
             },
             
             // Context information (central vs tenant)
-            'isTenant' => function () use ($request) {
-                // Check if we're in tenant context
-                if (function_exists('tenant') && tenant()) {
-                    return true;
-                }
-                // For development, check if URL starts with /tenant/
-                if (app()->environment('local')) {
-                    return str_starts_with($request->path(), 'tenant/');
-                }
-                return false;
-            },
+            'isTenant' => $isTenantContext,
             
             // Theme and UI Configuration
             'theme' => [
@@ -95,5 +103,23 @@ class HandleInertiaRequests extends Middleware
             'url' => $request->getPathInfo(),
             'csrfToken' => csrf_token(),
         ];
+    }
+
+    /**
+     * Check if we're in tenant context
+     */
+    private function isTenantContext(Request $request): bool
+    {
+        // Check if we're in tenant context using stancl/tenancy
+        if (function_exists('tenant') && tenant()) {
+            return true;
+        }
+        
+        // For development, check if URL starts with /tenant/
+        if (app()->environment('local')) {
+            return str_starts_with($request->path(), 'tenant/');
+        }
+        
+        return false;
     }
 }

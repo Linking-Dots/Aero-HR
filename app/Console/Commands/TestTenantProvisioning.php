@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Tenant;
 use App\Models\Domain;
-use App\Models\TenantUserLookup;
 use App\Jobs\ProvisionTenantJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -261,10 +260,7 @@ class TestTenantProvisioning extends Command
             // Remove domain entries
             Domain::where('tenant_id', $tenant->id)->delete();
             
-            // Remove user lookup entries
-            TenantUserLookup::where('tenant_id', $tenant->id)->delete();
-            
-            // Delete tenant record
+            // Delete tenant record (package handles database cleanup)
             $tenant->delete();
             
         } catch (Exception $e) {

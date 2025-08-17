@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Head } from '@inertiajs/react';
-import { Button, Card, CardBody, Divider, Image, Chip, Avatar, User } from "@heroui/react";
+import { Button, Card, CardBody, Divider, Image, Chip, Avatar, User, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeroUIProvider } from "@heroui/react";
 import { 
@@ -22,7 +22,9 @@ import {
     CubeTransparentIcon,
     CloudIcon,
     DevicePhoneMobileIcon,
-    ServerIcon
+    ServerIcon,
+    UserPlusIcon,
+    ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import GlassCard from '@/Components/GlassCard.jsx';
 
@@ -34,9 +36,9 @@ export default function Home({ title }) {
     const content = {
         en: {
             hero: {
-                badge: "Enterprise Multi-Tenant HR Suite",
+                badge: "Enterprise Multi-Tenant Suite",
                 title: "Transform Your Enterprise",
-                highlight: "HR Operations",
+                highlight: "Operations",
                 subtitle: "Empower thousands of organizations with our scalable, secure, and intelligent multi-tenant HR platform designed for enterprise excellence.",
                 cta1: "Start Enterprise Trial",
                 cta2: "Schedule Demo"
@@ -183,18 +185,19 @@ export default function Home({ title }) {
                                         as={Link}
                                         href="/login"
                                         variant="light"
-                                        className="text-gray-700 hover:text-blue-600"
+                                        className="text-gray-700 hover:text-blue-600 transition-all duration-200"
+                                        startContent={<ArrowRightOnRectangleIcon className="w-4 h-4" />}
                                     >
-                                        Login
+                                        Sign In
                                     </Button>
                                     <Button
                                         as={Link}
                                         href="/register"
                                         color="primary"
-                                        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-                                        startContent={<ArrowRightIcon className="w-4 h-4" />}
+                                        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                        startContent={<UserPlusIcon className="w-4 h-4" />}
                                     >
-                                        Get Started
+                                        Start Free Trial
                                     </Button>
                                 </div>
                             </div>

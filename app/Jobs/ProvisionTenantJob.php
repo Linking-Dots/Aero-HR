@@ -6,7 +6,7 @@ use App\Events\TenantProvisioned;
 use App\Events\TenantProvisioningFailed;
 use App\Models\Domain;
 use App\Models\Tenant;
-use App\Models\TenantUserLookup;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -169,15 +169,6 @@ class ProvisionTenantJob implements ShouldQueue
                 }
             }
 
-            // Create tenant user lookup record
-            \App\Models\TenantUserLookup::create([
-                'tenant_id' => $this->tenant->id,
-                'user_id' => $adminUser->id,
-                'email' => $adminUser->email,
-                'role' => 'tenant_admin',
-                'is_active' => true,
-            ]);
-
             Log::info("Created admin user for tenant: {$this->tenant->id}");
         });
     }
@@ -224,9 +215,6 @@ class ProvisionTenantJob implements ShouldQueue
 
             // Remove domain entries
             Domain::where('tenant_id', $this->tenant->id)->delete();
-
-            // Remove user lookup entries
-            TenantUserLookup::where('tenant_id', $this->tenant->id)->delete();
 
             Log::info("Cleaned up failed provisioning for tenant: {$this->tenant->id}");
 

@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Jobs\ProvisionTenantJob;
 use App\Models\Domain;
 use App\Models\Tenant;
-use App\Models\TenantUserLookup;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -327,24 +326,7 @@ class MigrateSingleCompanyCommand extends Command
     protected function createUserLookups(Tenant $tenant): void
     {
         $this->info("Creating user lookup entries...");
-        
-        $users = DB::connection($this->tenantConnection)
-            ->table('users')
-            ->select('email')
-            ->whereNotNull('email')
-            ->distinct()
-            ->get();
-
-        foreach ($users as $user) {
-            TenantUserLookup::firstOrCreate([
-                'email' => $user->email,
-                'tenant_id' => $tenant->id,
-            ], [
-                'is_admin' => false,
-            ]);
-        }
-
-        $this->info("Created " . count($users) . " user lookup entries");
+        $this->info("Migration uses tenant domain for user identification (no lookup table needed)");
     }
 
     /**

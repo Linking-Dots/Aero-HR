@@ -329,11 +329,12 @@ $tenantRoutes = function () {
 */
 
 if ($isDevelopment) {
-    // Development: Use path-based routing (127.0.0.1:8000/tenant/{tenant}/...)
-    Route::prefix('tenant/{tenant}')->middleware([
+    // Development: Use path-based routing (127.0.0.1:8000/{tenant}/...)
+    Route::prefix('{tenant}')->middleware([
         'web',
         InitializeTenancyByPath::class,
         PreventAccessFromCentralDomains::class,
+        'tenant.session',
     ])->group($tenantRoutes);
 } else {
     // Production: Use subdomain routing ({tenant}.domain.com/...)
@@ -341,5 +342,6 @@ if ($isDevelopment) {
         'web',
         InitializeTenancyByDomain::class,
         PreventAccessFromCentralDomains::class,
+        'tenant.session',
     ])->group($tenantRoutes);
 }

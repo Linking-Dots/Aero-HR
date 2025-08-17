@@ -25,7 +25,7 @@ class BillingController extends Controller
     public function pricing()
     {
         $plans = Plan::where('is_active', true)
-            ->orderBy('price')
+            ->orderBy('price_monthly')
             ->get()
             ->map(function ($plan) {
                 return [

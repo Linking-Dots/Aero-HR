@@ -21,7 +21,7 @@ class PlanController extends Controller
      */
     public function index()
     {
-        $plans = Plan::withCount('tenants')->orderBy('price')->get();
+        $plans = Plan::withCount('tenants')->orderBy('price_monthly')->get();
         
         $stats = [
             'total_plans' => Plan::count(),

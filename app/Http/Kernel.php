@@ -63,7 +63,7 @@ class Kernel extends HttpKernel
         'api_security' => \App\Http\Middleware\ApiSecurityMiddleware::class,
         'custom_permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'role_hierarchy' => \App\Http\Middleware\RoleHierarchyMiddleware::class,
-        // Tenancy Middleware
-        'tenancy.domain_path' => \App\Http\Middleware\InitializeTenancyByDomainPath::class,
+        // Tenant-specific Middleware
+        'tenant.session' => \App\Http\Middleware\TenantSessionMiddleware::class,
     ];
 }

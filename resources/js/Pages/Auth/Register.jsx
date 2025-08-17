@@ -108,17 +108,25 @@ export default function Register({ plans = [], features = {} }) {
     // Initialize with first plan if available
     useEffect(() => {
         if (plans.length > 0 && !data.plan_id) {
-            const defaultPlan = plans.find(p => p.name === 'Starter') || plans[0];
-            setData('plan_id', String(defaultPlan.id));
-            setSelectedPlan(defaultPlan);
+            // Find the Starter plan in monthly cycle first, fallback to first monthly plan
+            const monthlyPlans = plans.filter(p => p.billing_cycle === 'monthly');
+            const defaultPlan = monthlyPlans.find(p => p.name === 'Starter') || monthlyPlans[0];
+            
+            if (defaultPlan) {
+                setData('plan_id', String(defaultPlan.id));
+                setSelectedPlan(defaultPlan);
+            }
         }
     }, [plans]);
 
     // Keep selectedPlan in sync when billing cycle or plan changes
     useEffect(() => {
         if (!plans.length) return;
+        
         const selected = plans.find(p => String(p.id) === String(data.plan_id));
+        
         if (!selected) {
+            // No selected plan found, pick the first plan in the current billing cycle
             const byCycle = plans.filter(p => p.billing_cycle === data.billing_cycle);
             if (byCycle[0]) {
                 setData('plan_id', String(byCycle[0].id));
@@ -126,11 +134,24 @@ export default function Register({ plans = [], features = {} }) {
             }
             return;
         }
+        
         if (selected.billing_cycle !== data.billing_cycle) {
-            const byCycle = plans.filter(p => p.billing_cycle === data.billing_cycle);
-            if (byCycle[0]) {
-                setData('plan_id', String(byCycle[0].id));
-                setSelectedPlan(byCycle[0]);
+            // Billing cycle changed, find the equivalent plan in the new cycle
+            const samePlanNewCycle = plans.find(p => 
+                p.name === selected.name && 
+                p.billing_cycle === data.billing_cycle
+            );
+            
+            if (samePlanNewCycle) {
+                setData('plan_id', String(samePlanNewCycle.id));
+                setSelectedPlan(samePlanNewCycle);
+            } else {
+                // Fallback to first plan in new cycle
+                const byCycle = plans.filter(p => p.billing_cycle === data.billing_cycle);
+                if (byCycle[0]) {
+                    setData('plan_id', String(byCycle[0].id));
+                    setSelectedPlan(byCycle[0]);
+                }
             }
         } else {
             setSelectedPlan(selected);

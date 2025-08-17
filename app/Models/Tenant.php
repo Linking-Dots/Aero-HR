@@ -125,14 +125,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     }
 
     /**
-     * Get the tenant's user lookup entries.
-     */
-    public function userLookups(): HasMany
-    {
-        return $this->hasMany(TenantUserLookup::class);
-    }
-
-    /**
      * Accessor for decrypted database username.
      */
     public function getDbUsernameAttribute($value)

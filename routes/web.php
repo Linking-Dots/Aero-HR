@@ -126,7 +126,7 @@ Route::get('/registration-success', function () {
 
 // Static pages
 Route::get('/pricing', function () {
-    $plans = \App\Models\Plan::where('is_active', true)->orderBy('price')->get();
+    $plans = \App\Models\Plan::where('is_active', true)->orderBy('price_monthly')->get();
     return inertia('Pages/Pricing', ['plans' => $plans]);
 })->name('pricing');
 

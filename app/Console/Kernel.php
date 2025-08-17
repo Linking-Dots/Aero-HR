@@ -18,6 +18,13 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\TestTenantProvisioning::class,
         \App\Console\Commands\CreateTenantCommand::class,
         \App\Console\Commands\CleanupEmptyTenantDatabases::class,
+        \App\Console\Commands\TestMultiTenantAuth::class,
+        \App\Console\Commands\TestDomainRouting::class,
+        \App\Console\Commands\TestUrlPatterns::class,
+        \App\Console\Commands\TenantMaintenanceCommand::class,
+        \App\Console\Commands\TenantHealthDashboardCommand::class,
+        \App\Console\Commands\TenantPerformanceOptimizerCommand::class,
+        \App\Console\Commands\TenantAdvancedFeaturesTestCommand::class,
     ];
 
     /**
