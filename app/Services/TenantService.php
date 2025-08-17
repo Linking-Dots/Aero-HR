@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Tenant;
 use App\Models\Plan;
 use App\Models\TenantUser;
-use Stancl\Tenancy\Database\Models\Domain;
+use App\Models\Domain;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Stancl\Tenancy\Database\Models\Domain;
+use App\Models\Domain;
 use App\Models\Tenant;
 
 return [
@@ -13,22 +13,11 @@ return [
 
     /**
      * The list of domains hosting your central app.
-     *
-     * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    'central_domains' => [
-        '127.0.0.1',
-        'localhost',
-        'aero.com',
-        'linkingdots.dev',
-        env('CENTRAL_DOMAIN', 'aero.com'),
-    ],
+    'central_domains' => explode(',', env('CENTRAL_DOMAINS', 'mysoftwaredomain.com,localhost,127.0.0.1')),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
-     * Their responsibility is making Laravel features tenant-aware.
-     *
-     * To configure their behavior, see the config keys below.
      */
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
@@ -42,11 +31,10 @@ return [
      * Database tenancy config. Used by DatabaseTenancyBootstrapper.
      */
     'database' => [
-        'central_connection' => env('DB_CONNECTION', 'central'),
+        'central_connection' => env('DB_CONNECTION', 'platform'),
 
         /**
          * Connection used as a "template" for the dynamically created tenant database connection.
-         * Note: don't name your template connection tenant. That name is reserved by package.
          */
         'template_tenant_connection' => 'mysql',
 

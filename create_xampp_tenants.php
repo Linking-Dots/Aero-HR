@@ -11,7 +11,7 @@ require_once 'vendor/autoload.php';
 
 use App\Models\Tenant;
 use App\Models\Plan;
-use Stancl\Tenancy\Database\Models\Domain;
+use App\Models\Domain;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 

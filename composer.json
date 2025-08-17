@@ -21,6 +21,8 @@
         "laravel/sanctum": "^4.1",
         "laravel/tinker": "^2.9",
         "maatwebsite/excel": "^3.1",
+        "predis/predis": "^3.2",
+        "sentry/sentry-laravel": "^4.15",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-medialibrary": "^11.9",
