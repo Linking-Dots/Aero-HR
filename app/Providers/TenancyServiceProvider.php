@@ -141,13 +141,18 @@ class TenancyServiceProvider extends ServiceProvider
         $tenancyMiddleware = [
             // Even higher priority than the initialization middleware
             Middleware\PreventAccessFromCentralDomains::class,
-
-            Middleware\InitializeTenancyByDomain::class,
-            Middleware\InitializeTenancyBySubdomain::class,
-            Middleware\InitializeTenancyByDomainOrSubdomain::class,
-            Middleware\InitializeTenancyByPath::class,
-            Middleware\InitializeTenancyByRequestData::class,
         ];
+
+        // In development with path-based routing, skip standard domain middleware
+        // to prevent conflicts with our custom InitializeTenancyByDomainPath
+        if (!app()->environment('local')) {
+            $tenancyMiddleware[] = Middleware\InitializeTenancyByDomain::class;
+            $tenancyMiddleware[] = Middleware\InitializeTenancyBySubdomain::class;
+            $tenancyMiddleware[] = Middleware\InitializeTenancyByDomainOrSubdomain::class;
+        }
+        
+        $tenancyMiddleware[] = Middleware\InitializeTenancyByPath::class;
+        $tenancyMiddleware[] = Middleware\InitializeTenancyByRequestData::class;
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
             $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);

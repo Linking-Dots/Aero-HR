@@ -12,6 +12,13 @@
 				"$tsc"
 			],
 			"args": []
+		},
+		{
+			"label": "Start Laravel Development Server",
+			"type": "shell",
+			"command": "php artisan serve",
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

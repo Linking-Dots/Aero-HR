@@ -38,7 +38,7 @@ use App\Http\Controllers\Settings\LeaveSettingController;
 use App\Http\Controllers\Settings\AttendanceSettingController;
 use App\Http\Controllers\Tenant\AutoLoginController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
+use App\Http\Middleware\InitializeTenancyByDomainPath;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // Check if we're in development mode (127.0.0.1:8000)
@@ -91,11 +91,6 @@ $tenantRoutes = function () {
         Route::post('/email/verification-notification', [EmailVerificationController::class, 'store'])
             ->middleware('throttle:6,1')
             ->name('verification.send');
-
-        // Root redirect to dashboard
-        Route::get('/', function () {
-            return redirect()->route('dashboard');
-        });
 
         /*
         |--------------------------------------------------------------------------
@@ -332,9 +327,8 @@ if ($isDevelopment) {
     // Development: Use path-based routing (127.0.0.1:8000/{tenant}/...)
     Route::prefix('{tenant}')->middleware([
         'web',
-        InitializeTenancyByPath::class,
+        InitializeTenancyByDomainPath::class,
         PreventAccessFromCentralDomains::class,
-        'tenant.session',
     ])->group($tenantRoutes);
 } else {
     // Production: Use subdomain routing ({tenant}.domain.com/...)
@@ -342,6 +336,5 @@ if ($isDevelopment) {
         'web',
         InitializeTenancyByDomain::class,
         PreventAccessFromCentralDomains::class,
-        'tenant.session',
     ])->group($tenantRoutes);
 }

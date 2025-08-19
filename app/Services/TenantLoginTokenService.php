@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TenantLoginTokenService
 {
     private const TOKEN_EXPIRY = 600; // 10 minutes
+
     private const TOKEN_PREFIX = 'tenant_login_token:';
 
     /**
@@ -19,11 +20,11 @@ class TenantLoginTokenService
     public function generateLoginToken(Tenant $tenant, User $user): string
     {
         $token = Str::random(64);
-        $cacheKey = self::TOKEN_PREFIX . $token;
-        
+        $cacheKey = self::TOKEN_PREFIX.$token;
+
         // Get tenant domain
         $domain = $tenant->domains()->first();
-        
+
         $tokenData = [
             'tenant_id' => $tenant->id,
             'tenant_domain' => $domain ? $domain->domain : null,
@@ -51,14 +52,15 @@ class TenantLoginTokenService
      */
     public function validateAndConsumeToken(string $token): ?array
     {
-        $cacheKey = self::TOKEN_PREFIX . $token;
+        $cacheKey = self::TOKEN_PREFIX.$token;
         $tokenData = Cache::get($cacheKey);
 
-        if (!$tokenData) {
+        if (! $tokenData) {
             Log::warning('Invalid or expired tenant login token used', [
-                'token' => substr($token, 0, 8) . '...',
+                'token' => substr($token, 0, 8).'...',
                 'ip_address' => request()->ip(),
             ]);
+
             return null;
         }
 
@@ -79,10 +81,10 @@ class TenantLoginTokenService
      */
     public function validateToken(string $token): ?array
     {
-        $cacheKey = self::TOKEN_PREFIX . $token;
+        $cacheKey = self::TOKEN_PREFIX.$token;
         $tokenData = Cache::get($cacheKey);
 
-        if (!$tokenData) {
+        if (! $tokenData) {
             return null;
         }
 
@@ -97,7 +99,7 @@ class TenantLoginTokenService
         $token = $this->generateLoginToken($tenant, $user);
         $domain = $tenant->domains()->first();
         $baseUrl = $this->getTenantBaseUrl($domain ? $domain->domain : null);
-        
+
         return "{$baseUrl}/auto-login?token={$token}";
     }
 
@@ -106,18 +108,21 @@ class TenantLoginTokenService
      */
     private function getTenantBaseUrl(?string $domain): string
     {
-        if (!$domain) {
+        if (! $domain) {
             throw new \Exception('No domain configured for tenant');
         }
 
         if (app()->environment('local')) {
-            // Development: path-based routing
+            // Development: path-based routing with {tenant} parameter
             $port = request()->getPort();
             $portSuffix = ($port && $port != 80 && $port != 443) ? ":{$port}" : '';
-            return "http://127.0.0.1{$portSuffix}/{$domain}";
+            $host = request()->getHost();
+
+            return "http://{$host}{$portSuffix}/{$domain}";
         } else {
             // Production: subdomain-based routing
             $appDomain = config('app.domain', 'aero-hr.local');
+
             return "https://{$domain}.{$appDomain}";
         }
     }

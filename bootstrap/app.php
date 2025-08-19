@@ -51,9 +51,15 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Configure authentication redirect
         $middleware->redirectTo(function ($request) {
+            // Check if we're in a tenant context
             if (function_exists('tenant') && tenant()) {
-                $tenant = tenant();
-                return route('tenant.login', ['tenant' => $tenant->domain]);
+                // Get the tenant domain from the current request path
+                $pathSegments = explode('/', trim($request->getPathInfo(), '/'));
+                $tenantParam = $pathSegments[0] ?? null;
+                
+                if ($tenantParam) {
+                    return route('tenant.login', ['tenant' => $tenantParam]);
+                }
             }
             return route('central.login');
         });

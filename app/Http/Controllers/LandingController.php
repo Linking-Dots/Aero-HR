@@ -14,6 +14,8 @@ class LandingController extends Controller
     {
         return Inertia::render('Landing/Home', [
             'title' => 'Welcome to Aero-HR',
+            'domain' => request()->getHost(),
+            'timestamp' => now()->toDateTimeString(),
         ]);
     }
 

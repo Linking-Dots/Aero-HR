@@ -19,7 +19,7 @@ class AutoLoginController extends Controller
     /**
      * Handle auto-login with token from registration flow
      */
-    public function autoLogin(Request $request)
+    public function autoLogin(Request $request, string $tenant)
     {
         $token = $request->input('token');
         
@@ -29,7 +29,7 @@ class AutoLoginController extends Controller
                 'user_agent' => $request->userAgent(),
             ]);
             
-            return redirect()->route('tenant.login')->withErrors([
+            return redirect()->route('tenant.login', ['tenant' => $tenant])->withErrors([
                 'error' => 'Invalid login link. Please log in manually.'
             ]);
         }
@@ -38,7 +38,7 @@ class AutoLoginController extends Controller
         $tokenData = $this->tokenService->validateAndConsumeToken($token);
         
         if (!$tokenData) {
-            return redirect()->route('tenant.login')->withErrors([
+            return redirect()->route('tenant.login', ['tenant' => $tenant])->withErrors([
                 'error' => 'This login link has expired or is invalid. Please log in manually.'
             ]);
         }
@@ -53,7 +53,7 @@ class AutoLoginController extends Controller
                     'user_email' => $tokenData['user_email'],
                 ]);
                 
-                return redirect()->route('tenant.login')->withErrors([
+                return redirect()->route('tenant.login', ['tenant' => $tenant])->withErrors([
                     'error' => 'Account not found. Please contact support.'
                 ]);
             }
@@ -83,7 +83,7 @@ class AutoLoginController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
             
-            return redirect()->route('tenant.login')->withErrors([
+            return redirect()->route('tenant.login', ['tenant' => $tenant])->withErrors([
                 'error' => 'Login failed. Please try logging in manually.'
             ]);
         }

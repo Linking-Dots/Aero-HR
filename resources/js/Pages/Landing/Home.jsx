@@ -175,9 +175,9 @@ export default function Home({ title }) {
                                     </div>
                                     <div className="hidden md:flex items-center space-x-6">
                                         <Link href="/features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</Link>
-                                        <Link href="/landing-pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</Link>
+                                        <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</Link>
                                         <Link href="#integrations" className="text-gray-700 hover:text-blue-600 transition-colors">Integrations</Link>
-                                        <Link href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</Link>
+                                        <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">About</Link>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
@@ -665,7 +665,7 @@ export default function Home({ title }) {
                                     <h3 className="text-lg font-semibold mb-6 text-blue-400">Product</h3>
                                     <ul className="space-y-3">
                                         <li><Link href="/features" className="text-gray-300 hover:text-blue-400 transition">Features</Link></li>
-                                        <li><Link href="/landing-pricing" className="text-gray-300 hover:text-blue-400 transition">Pricing</Link></li>
+                                        <li><Link href="/pricing" className="text-gray-300 hover:text-blue-400 transition">Pricing</Link></li>
                                         <li><Link href="#integrations" className="text-gray-300 hover:text-blue-400 transition">Integrations</Link></li>
                                         <li><Link href="#security" className="text-gray-300 hover:text-blue-400 transition">Security</Link></li>
                                         <li><Link href="#api" className="text-gray-300 hover:text-blue-400 transition">API</Link></li>
@@ -675,9 +675,9 @@ export default function Home({ title }) {
                                 <div>
                                     <h3 className="text-lg font-semibold mb-6 text-blue-400">Company</h3>
                                     <ul className="space-y-3">
-                                        <li><Link href="#about" className="text-gray-300 hover:text-blue-400 transition">About Us</Link></li>
+                                        <li><Link href="/about" className="text-gray-300 hover:text-blue-400 transition">About Us</Link></li>
                                         <li><Link href="#careers" className="text-gray-300 hover:text-blue-400 transition">Careers</Link></li>
-                                        <li><Link href="#contact" className="text-gray-300 hover:text-blue-400 transition">Contact</Link></li>
+                                        <li><Link href="/contact" className="text-gray-300 hover:text-blue-400 transition">Contact</Link></li>
                                         <li><Link href="#blog" className="text-gray-300 hover:text-blue-400 transition">Blog</Link></li>
                                         <li><Link href="#partners" className="text-gray-300 hover:text-blue-400 transition">Partners</Link></li>
                                     </ul>

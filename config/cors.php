@@ -14,13 +14,22 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'tenant/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        'http://aeos365.com',
+        'http://*.aeos365.com',
+        'https://aeos365.com',
+        'https://*.aeos365.com',
+        'http://localhost*',
+        'http://127.0.0.1*',
+        'https://localhost*',
+        'https://127.0.0.1*',
+    ],
 
     'allowed_headers' => ['*'],
 
@@ -28,5 +37,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];
